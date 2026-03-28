@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -24,6 +26,15 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)) -> dic
         if order:
             order.status = "paid"
             order.stripe_payment_intent_id = str(data_object.get("payment_intent") or "")
+            if data_object.get("amount_total") is not None:
+                paid_total = (
+                    Decimal(int(data_object["amount_total"])) / Decimal("100")
+                    if data_object["amount_total"]
+                    else Decimal("0")
+                )
+                if paid_total > 0:
+                    order.total_amount = paid_total
+                    order.net_amount = paid_total - Decimal(order.commission_amount)
             db.commit()
             send_purchase_receipt(order)
     elif event_type == "payment_intent.succeeded":
@@ -31,6 +42,13 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)) -> dic
         if order:
             order.status = "paid"
             order.stripe_payment_intent_id = str(data_object.get("id") or "")
+            amount_received = data_object.get("amount_received")
+            if amount_received is not None:
+                order.total_amount = Decimal(int(amount_received)) / Decimal("100")
+            application_fee = data_object.get("application_fee_amount")
+            if application_fee is not None:
+                order.commission_amount = Decimal(int(application_fee)) / Decimal("100")
+            order.net_amount = Decimal(order.total_amount) - Decimal(order.commission_amount)
             db.commit()
     elif event_type == "payment_intent.payment_failed":
         order = _find_order_from_payment_intent(db, data_object)
