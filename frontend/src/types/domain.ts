@@ -5,6 +5,7 @@ export interface Tenant {
   subdomain: string;
   business_type: "products" | "services" | "mixed" | string;
   is_active: boolean;
+  plan_id?: number | null;
 }
 
 export interface User {
@@ -31,6 +32,7 @@ export interface Plan {
   commission_low_rate: number;
   commission_high_rate: number;
   commission_threshold: number;
+  commission_enabled: boolean;
   notes?: string;
 }
 
@@ -41,6 +43,7 @@ export interface StripeConfig {
   secret_key: string;
   webhook_secret?: string;
   is_reinpia_managed: boolean;
+  stripe_account_id?: string;
 }
 
 export interface TenantBranding {
@@ -93,12 +96,76 @@ export interface StorefrontConfig {
 export interface Banner {
   id: number;
   tenant_id: number;
-  storefront_config_id: number;
+  storefront_config_id?: number;
   title: string;
   subtitle?: string;
   image_url?: string;
-  position: number;
+  target_type: string;
+  target_value?: string;
+  position: "hero" | "store_top" | "distributors_top" | "checkout_upsell" | string;
+  priority: number;
+  starts_at?: string;
+  ends_at?: string;
   is_active: boolean;
+}
+
+export interface Coupon {
+  id: number;
+  tenant_id: number;
+  code: string;
+  description?: string;
+  discount_type: "fixed" | "percentage" | string;
+  discount_value: number;
+  min_order_amount?: number;
+  max_uses?: number;
+  used_count: number;
+  starts_at?: string;
+  ends_at?: string;
+  applies_to: "public" | "distributor" | "all" | string;
+  is_active: boolean;
+}
+
+export interface MembershipPlan {
+  id: number;
+  tenant_id: number;
+  name: string;
+  description?: string;
+  duration_days: number;
+  price: number;
+  points_multiplier: number;
+  benefits_json?: string;
+  is_active: boolean;
+}
+
+export interface LoyaltyProgram {
+  id: number;
+  tenant_id: number;
+  name: string;
+  is_active: boolean;
+  points_enabled: boolean;
+  points_conversion_rate: number;
+  welcome_points: number;
+  birthday_points?: number;
+}
+
+export interface ProductReview {
+  id: number;
+  tenant_id: number;
+  product_id: number;
+  customer_id?: number;
+  rating: number;
+  title?: string;
+  comment?: string;
+  is_approved: boolean;
+  created_at: string;
+}
+
+export interface WishlistItem {
+  id: number;
+  tenant_id: number;
+  customer_id: number;
+  product_id: number;
+  created_at: string;
 }
 
 export interface StorefrontPayload {
@@ -108,6 +175,15 @@ export interface StorefrontPayload {
   categories: Category[];
   featured_products: Product[];
   recent_products: Product[];
+  banners?: Banner[];
+  coupons?: Coupon[];
+  average_rating?: number;
+}
+
+export interface StorefrontHomePayload extends StorefrontPayload {
+  promo_products: Product[];
+  best_sellers: Product[];
+  membership_plans: MembershipPlan[];
 }
 
 export interface CheckoutSessionRequest {
@@ -115,12 +191,18 @@ export interface CheckoutSessionRequest {
   items: Array<{ product_id: number; quantity: number }>;
   success_url: string;
   cancel_url: string;
+  coupon_code?: string;
+  use_loyalty_points?: boolean;
+  customer_id?: number;
+  applies_to?: string;
 }
 
 export interface CheckoutSessionResponse {
   order_id: number;
   session_id: string;
   session_url: string;
+  subtotal_amount: number;
+  discount_amount: number;
   total_amount: number;
   commission_amount: number;
   net_amount: number;
@@ -131,12 +213,16 @@ export interface Order {
   id: number;
   tenant_id: number;
   customer_id: number | null;
+  subtotal_amount: number;
+  discount_amount: number;
   total_amount: number;
   commission_amount: number;
   net_amount: number;
   currency: string;
   status: "pending" | "paid" | "failed" | string;
   payment_mode: "plan1" | "plan2" | string;
+  coupon_code?: string;
+  loyalty_points_used: number;
   stripe_session_id?: string;
   stripe_payment_intent_id?: string;
   created_at: string;
@@ -158,4 +244,5 @@ export interface StorefrontDistributorsPayload {
     phone?: string;
     is_active: boolean;
   }>;
+  banners?: Banner[];
 }

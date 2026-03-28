@@ -6,6 +6,11 @@ const navItems = [
   { label: "Tenants", to: "/tenants" },
   { label: "Plans", to: "/plans" },
   { label: "Payments", to: "/admin/payments" },
+  { label: "Loyalty", to: "/admin/loyalty" },
+  { label: "Memberships", to: "/admin/memberships" },
+  { label: "Coupons", to: "/admin/coupons" },
+  { label: "Banners", to: "/admin/banners" },
+  { label: "Reviews", to: "/admin/reviews" },
   { label: "Categories", to: "/categories" },
   { label: "Products", to: "/products" }
 ];
