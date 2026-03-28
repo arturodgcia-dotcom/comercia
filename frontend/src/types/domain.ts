@@ -110,6 +110,45 @@ export interface StorefrontPayload {
   recent_products: Product[];
 }
 
+export interface CheckoutSessionRequest {
+  tenant_id: number;
+  items: Array<{ product_id: number; quantity: number }>;
+  success_url: string;
+  cancel_url: string;
+}
+
+export interface CheckoutSessionResponse {
+  order_id: number;
+  session_id: string;
+  session_url: string;
+  total_amount: number;
+  commission_amount: number;
+  net_amount: number;
+  payment_mode: "plan1" | "plan2" | string;
+}
+
+export interface Order {
+  id: number;
+  tenant_id: number;
+  customer_id: number | null;
+  total_amount: number;
+  commission_amount: number;
+  net_amount: number;
+  currency: string;
+  status: "pending" | "paid" | "failed" | string;
+  payment_mode: "plan1" | "plan2" | string;
+  stripe_session_id?: string;
+  stripe_payment_intent_id?: string;
+  created_at: string;
+}
+
+export interface PaymentsDashboard {
+  orders: Order[];
+  total_sold: number;
+  total_commission: number;
+  total_net: number;
+}
+
 export interface StorefrontDistributorsPayload {
   tenant: Tenant;
   distributors: Array<{

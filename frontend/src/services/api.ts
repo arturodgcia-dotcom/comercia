@@ -1,6 +1,9 @@
 import {
   Category,
+  CheckoutSessionRequest,
+  CheckoutSessionResponse,
   LoginResponse,
+  PaymentsDashboard,
   Plan,
   Product,
   StorefrontDistributorsPayload,
@@ -89,7 +92,14 @@ export const api = {
     request<Product>(`/api/v1/products/${productId}`, { method: "PUT", body: JSON.stringify(payload) }, token),
   getStorefront: (tenantSlug: string) => request<StorefrontPayload>(`/api/v1/storefront/${tenantSlug}`),
   getStorefrontDistributors: (tenantSlug: string) =>
-    request<StorefrontDistributorsPayload>(`/api/v1/storefront/${tenantSlug}/distribuidores`)
+    request<StorefrontDistributorsPayload>(`/api/v1/storefront/${tenantSlug}/distribuidores`),
+  createCheckoutSession: (payload: CheckoutSessionRequest) =>
+    request<CheckoutSessionResponse>("/api/v1/checkout/create-session", {
+      method: "POST",
+      body: JSON.stringify(payload)
+    }),
+  getPaymentsDashboard: (token: string, tenantId?: number) =>
+    request<PaymentsDashboard>(`/api/v1/payments/dashboard${tenantId ? `?tenant_id=${tenantId}` : ""}`, {}, token)
 };
 
 export { ApiError };
