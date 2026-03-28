@@ -18,6 +18,9 @@
 | Contratos digitales | Inicial funcional | templates + firma textual |
 | Ordenes recurrentes | Base funcional | schedule + items |
 | Logistica | Base funcional | ordenes + eventos + schedule/reschedule/delivered |
+| Landing corporativa COMERCIA | Inicial funcional | ruta `/comercia`, enfoque conversion, paquetes y lead form |
+| Landing tenant REINPIA | Inicial funcional | ruta `/store/reinpia`, enfoque servicios y canal distribuidor |
+| Seed tenant demo REINPIA | Inicial funcional | tenant + branding + banners + 6 servicios de demo |
 | Bots / agentes | Base arquitectura | pendiente implementacion |
 
 ## Endpoints operacion comercial (nuevos)

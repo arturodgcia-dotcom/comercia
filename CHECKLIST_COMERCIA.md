@@ -61,3 +61,16 @@
 - [x] Migraciones Alembic actualizadas hasta `20260328_05`
 - [x] README y docs actualizados con flujo operativo
 - [x] Validacion: backend compile, alembic upgrade head, frontend build
+
+## Entregables ejecucion 6 (Landings COMERCIA + REINPIA)
+- [x] Landing corporativa COMERCIA de alto impacto en `/comercia`
+- [x] Seccion comercial completa de paquetes IMPULSA y ESCALA
+- [x] Widget placeholder de agente "Lia de COMERCIA"
+- [x] Landing principal REINPIA en `/store/reinpia`
+- [x] Secciones REINPIA: que hacemos, soluciones, modelo comercial y CTA
+- [x] Widget placeholder de agente "SofIA by REINPIA"
+- [x] Componentes visuales reutilizables de marketing
+- [x] Seed idempotente de tenant REINPIA + branding + banners + servicios demo
+- [x] Storefront servicios REINPIA orientado a ecommerce de servicios
+- [x] README, docs/modules y docs/architecture actualizados
+- [x] Validacion: backend compile + frontend build

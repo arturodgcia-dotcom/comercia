@@ -35,6 +35,7 @@ npm run dev
 ```
 
 - Admin: `http://localhost:5173`
+- Landing COMERCIA: `http://localhost:5173/comercia`
 - Storefront: `http://localhost:5173/store/{tenantSlug}`
 
 ## Bloques funcionales implementados
@@ -69,6 +70,21 @@ npm run dev
 - logistica base:
   - `/api/v1/logistics/*`
 
+### Landings comerciales (actual)
+- Landing corporativa COMERCIA:
+  - ruta: `/comercia`
+  - enfoque: captacion de leads, paquetes IMPULSA / ESCALA, widget placeholder "Lia de COMERCIA"
+- Landing tenant REINPIA:
+  - ruta: `/store/reinpia`
+  - enfoque: venta de servicios, canal agencias/distribuidores, widget placeholder "SofIA by REINPIA"
+- Componentes visuales reutilizables:
+  - `HeroSection`
+  - `SolutionCard`
+  - `PackageCard`
+  - `CTASection`
+  - `AgentWidgetPlaceholder`
+  - `AudienceSplitSection`
+
 ## Frontend agregado (actual)
 
 ### Admin
@@ -85,6 +101,21 @@ npm run dev
 - `/store/:tenantSlug/service/:serviceId`
 - `/store/:tenantSlug/distribuidores/registro`
 - `/store/:tenantSlug/distribuidores/login-placeholder`
+- `/store/reinpia` con layout comercial orientado a servicios
+
+## Seed demo REINPIA
+En `init_db` se deja seed idempotente para:
+- tenant `REINPIA` (`slug=reinpia`)
+- branding inicial REINPIA
+- banners comerciales base
+- categoria de servicios
+- servicios demo:
+  - Implementacion COMERCIA
+  - Renta de plataforma COMERCIA
+  - Automatizacion comercial con IA
+  - Implementacion NERVIA
+  - Implementacion SprintPilot
+  - Desarrollo a la medida
 
 ## Validacion ejecutada
 - backend: `python -m compileall app`

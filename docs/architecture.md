@@ -61,3 +61,20 @@ No hay firma biometrica en esta fase.
 - `python -m compileall app` (backend)
 - `alembic upgrade head` (SQLite local)
 - `npm run build` (frontend)
+
+## 10) Landings comerciales
+- Landing corporativa COMERCIA:
+  - ruta `/comercia`
+  - mensajes de conversion y seleccion de paquetes
+  - widget placeholder "Lia de COMERCIA"
+- Landing tenant REINPIA:
+  - ruta `/store/reinpia`
+  - enfoque en servicios y captacion de agencias/distribuidores
+  - widget placeholder "SofIA by REINPIA"
+
+## 11) Seed tenant REINPIA
+`init_db` crea/actualiza de forma idempotente:
+- tenant `reinpia`
+- branding y banners base
+- categoria de servicios
+- servicios demo orientados a implementacion/renta/automatizacion
