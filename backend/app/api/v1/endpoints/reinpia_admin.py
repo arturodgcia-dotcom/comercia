@@ -2,7 +2,7 @@ from datetime import datetime
 
 from fastapi import APIRouter, Depends
 from fastapi.responses import Response
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_reinpia_admin
@@ -40,6 +40,7 @@ from app.services.analytics_service import (
 from app.services.commission_agents_service import (
     create_commission_agent,
     create_sales_referral,
+    get_commission_sales_kpis,
     get_agent_sales_summary,
     get_pending_internal_alerts,
     mark_alert_as_read,
@@ -54,7 +55,15 @@ from app.services.export_service import (
     export_sales_summary_csv,
     export_tenants_summary_csv,
 )
-from app.models.models import PlanPurchaseLead, SalesCommissionAgent, SalesReferral
+from app.services.reporting_service import (
+    get_coupon_performance,
+    get_customer_repeat_vs_new_summary,
+    get_distributor_summary as get_tenant_distributor_summary,
+    get_logistics_summary as get_tenant_logistics_summary,
+    get_sales_summary as get_tenant_sales_summary,
+    get_services_summary as get_tenant_services_summary,
+)
+from app.models.models import PlanPurchaseLead, SalesCommissionAgent, SalesReferral, Tenant
 
 router = APIRouter(dependencies=[Depends(get_reinpia_admin)])
 
@@ -383,3 +392,119 @@ def mark_internal_alert_read(alert_id: int, db: Session = Depends(get_db)):
 
         raise HTTPException(status_code=404, detail="alerta no encontrada")
     return alert
+
+
+@router.get("/reports/overview")
+def reinpia_reports_overview(
+    date_from: datetime | None = None,
+    date_to: datetime | None = None,
+    db: Session = Depends(get_db),
+):
+    return {
+        "global_kpis": get_global_kpis(db, date_from=date_from, date_to=date_to),
+        "sales_summary": get_tenant_sales_summary(db, date_from=date_from, date_to=date_to),
+        "commissions_summary": get_commissions_summary(db, date_from=date_from, date_to=date_to),
+    }
+
+
+@router.get("/reports/tenants-growth")
+def reinpia_reports_tenants_growth(
+    date_from: datetime | None = None,
+    date_to: datetime | None = None,
+    limit: int = 10,
+    db: Session = Depends(get_db),
+):
+    summary = get_tenants_summary(db, date_from=date_from, date_to=date_to)
+    top_growth = sorted(summary, key=lambda row: row["revenue"], reverse=True)[:limit]
+    low_movement = sorted(summary, key=lambda row: row["revenue"])[:limit]
+    return {"top_growth": top_growth, "low_movement": low_movement}
+
+
+@router.get("/reports/commissions")
+def reinpia_reports_commissions(
+    date_from: datetime | None = None,
+    date_to: datetime | None = None,
+    db: Session = Depends(get_db),
+):
+    return {
+        "commission_sales_kpis": get_commission_sales_kpis(db, date_from=date_from, date_to=date_to),
+        "payment_commissions": get_commissions_summary(db, date_from=date_from, date_to=date_to),
+    }
+
+
+@router.get("/reports/leads")
+def reinpia_reports_leads(
+    date_from: datetime | None = None,
+    date_to: datetime | None = None,
+    db: Session = Depends(get_db),
+):
+    filters = []
+    if date_from:
+        filters.append(PlanPurchaseLead.created_at >= date_from)
+    if date_to:
+        filters.append(PlanPurchaseLead.created_at <= date_to)
+    total = db.scalar(select(func.count(PlanPurchaseLead.id)).where(*filters)) or 0
+    commissioned = db.scalar(
+        select(func.count(PlanPurchaseLead.id)).where(*filters, PlanPurchaseLead.is_commissioned_sale.is_(True))
+    ) or 0
+    direct = db.scalar(
+        select(func.count(PlanPurchaseLead.id)).where(*filters, PlanPurchaseLead.is_commissioned_sale.is_(False))
+    ) or 0
+    by_status = db.execute(
+        select(PlanPurchaseLead.purchase_status, func.count(PlanPurchaseLead.id))
+        .where(*filters)
+        .group_by(PlanPurchaseLead.purchase_status)
+    ).all()
+    return {
+        "total_leads": total,
+        "commissioned_leads": commissioned,
+        "direct_leads": direct,
+        "by_status": [{"status": r[0], "count": int(r[1] or 0)} for r in by_status],
+    }
+
+
+@router.get("/reports/marketing-opportunities")
+def reinpia_reports_marketing_opportunities(
+    date_from: datetime | None = None,
+    date_to: datetime | None = None,
+    db: Session = Depends(get_db),
+):
+    tenants = db.scalars(select(Tenant).where(Tenant.is_active.is_(True))).all()
+    opportunities: list[dict] = []
+    for tenant in tenants:
+        repeat_data = get_customer_repeat_vs_new_summary(db, tenant_id=tenant.id, date_from=date_from, date_to=date_to)
+        if repeat_data["repeat_customers"] < repeat_data["new_customers"]:
+            opportunities.append(
+                {
+                    "tenant_id": tenant.id,
+                    "tenant_name": tenant.name,
+                    "opportunity_type": "low_repeat_purchase",
+                    "message": "Baja recompra detectada; sugerir campaña de fidelizacion.",
+                }
+            )
+        coupons = get_coupon_performance(db, tenant_id=tenant.id, date_from=date_from, date_to=date_to)
+        if not coupons:
+            opportunities.append(
+                {
+                    "tenant_id": tenant.id,
+                    "tenant_name": tenant.name,
+                    "opportunity_type": "coupon_strategy",
+                    "message": "Sin traccion de cupones; sugerir activacion promocional.",
+                }
+            )
+    return {"opportunities": opportunities}
+
+
+@router.get("/reports/commercial-summary")
+def reinpia_reports_commercial_summary(
+    date_from: datetime | None = None,
+    date_to: datetime | None = None,
+    db: Session = Depends(get_db),
+):
+    return {
+        "sales": get_tenant_sales_summary(db, date_from=date_from, date_to=date_to),
+        "distributors": get_tenant_distributor_summary(db, date_from=date_from, date_to=date_to),
+        "logistics": get_tenant_logistics_summary(db, date_from=date_from, date_to=date_to),
+        "services": get_tenant_services_summary(db, date_from=date_from, date_to=date_to),
+        "leads": reinpia_reports_leads(date_from=date_from, date_to=date_to, db=db),
+    }

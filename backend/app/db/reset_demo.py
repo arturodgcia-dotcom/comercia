@@ -27,6 +27,7 @@ from app.models.models import (
     LoyaltyProgram,
     LoyaltyRule,
     MembershipPlan,
+    MarketingInsight,
     Notification,
     Order,
     OrderItem,
@@ -40,6 +41,8 @@ from app.models.models import (
     ProductReview,
     RecurringOrderItem,
     RecurringOrderSchedule,
+    ReportInsight,
+    ReportRequest,
     RiskScore,
     SalesCommissionAgent,
     SecurityAlert,
@@ -145,6 +148,9 @@ def reset_demo_data(db: Session) -> None:
         db.execute(delete(SecurityAlert).where(SecurityAlert.tenant_id.in_(tenant_ids)))
         db.execute(delete(SecurityEvent).where(SecurityEvent.tenant_id.in_(tenant_ids)))
         db.execute(delete(RiskScore).where(RiskScore.tenant_id.in_(tenant_ids)))
+        db.execute(delete(MarketingInsight).where(MarketingInsight.tenant_id.in_(tenant_ids)))
+        db.execute(delete(ReportInsight).where(ReportInsight.tenant_id.in_(tenant_ids)))
+        db.execute(delete(ReportRequest).where(ReportRequest.tenant_id.in_(tenant_ids)))
         db.execute(delete(SalesReferral).where(SalesReferral.tenant_id.in_(tenant_ids)))
         db.execute(delete(PlanPurchaseLead).where(PlanPurchaseLead.buyer_email.in_(DEMO_PLAN_LEAD_EMAILS)))
         db.execute(delete(LogisticsOrder).where(LogisticsOrder.tenant_id.in_(tenant_ids)))
@@ -181,6 +187,9 @@ def reset_demo_data(db: Session) -> None:
     db.execute(delete(RiskScore))
     db.execute(delete(SecurityRule))
     db.execute(delete(BlockedEntity))
+    db.execute(delete(MarketingInsight))
+    db.execute(delete(ReportInsight))
+    db.execute(delete(ReportRequest))
     db.execute(delete(ExchangeRate).where(ExchangeRate.source_name.in_(["demo_manual", "local_fallback"])))
 
     db.commit()

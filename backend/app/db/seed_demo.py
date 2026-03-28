@@ -52,6 +52,7 @@ from app.models.models import (
 )
 from app.services.commission_agents_service import register_plan_purchase_lead
 from app.services.currency_service import create_manual_exchange_rate, upsert_currency_settings
+from app.services.marketing_insights_service import generate_tenant_growth_insights
 from app.services.security_watch_service import block_entity
 from app.services.storefront_initializer import initialize_storefront
 
@@ -81,6 +82,10 @@ def seed_demo_data(db: Session) -> None:
     _seed_pos_data(db, tenants)
     _seed_agents_and_leads(db)
     _seed_security_demo_data(db, tenants)
+    _spread_demo_timestamps(db, tenants)
+    for tenant in tenants:
+        if tenant.is_active:
+            generate_tenant_growth_insights(db, tenant.id)
     db.commit()
 
 
@@ -564,6 +569,31 @@ def _seed_security_demo_data(db: Session, tenants: list[Tenant]) -> None:
         blocked_until=None,
         auto_commit=False,
     )
+
+
+def _spread_demo_timestamps(db: Session, tenants: list[Tenant]) -> None:
+    now = datetime.utcnow()
+    for tenant in tenants:
+        orders = db.scalars(select(Order).where(Order.tenant_id == tenant.id).order_by(Order.id.asc())).all()
+        for idx, row in enumerate(orders):
+            row.created_at = now - timedelta(days=idx * 17 + 2)
+        customers = db.scalars(select(Customer).where(Customer.tenant_id == tenant.id).order_by(Customer.id.asc())).all()
+        for idx, row in enumerate(customers):
+            row.created_at = now - timedelta(days=idx * 13 + 1)
+        apps = db.scalars(
+            select(DistributorApplication).where(DistributorApplication.tenant_id == tenant.id).order_by(DistributorApplication.id.asc())
+        ).all()
+        for idx, row in enumerate(apps):
+            row.created_at = now - timedelta(days=idx * 19 + 3)
+        logistics = db.scalars(select(LogisticsOrder).where(LogisticsOrder.tenant_id == tenant.id).order_by(LogisticsOrder.id.asc())).all()
+        for idx, row in enumerate(logistics):
+            row.created_at = now - timedelta(days=idx * 11 + 1)
+            if row.status == "delivered":
+                row.delivered_at = row.created_at + timedelta(days=2)
+        appointments = db.scalars(select(Appointment).where(Appointment.tenant_id == tenant.id).order_by(Appointment.id.asc())).all()
+        for idx, row in enumerate(appointments):
+            row.created_at = now - timedelta(days=idx * 9 + 4)
+            row.scheduled_for = row.created_at + timedelta(days=3)
 
 
 def run() -> None:

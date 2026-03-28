@@ -20,6 +20,7 @@ from app.api.v1.endpoints import (
     plans,
     pos,
     products,
+    reports,
     recurring_orders,
     reinpia_admin,
     reviews,
@@ -41,6 +42,7 @@ api_router.include_router(plans.router, prefix="/plans", tags=["plans"])
 api_router.include_router(stripe_config.router, prefix="/stripe-config", tags=["stripe-config"])
 api_router.include_router(categories.router, prefix="/categories", tags=["categories"])
 api_router.include_router(products.router, prefix="/products", tags=["products"])
+api_router.include_router(reports.router, prefix="/reports", tags=["reports"])
 api_router.include_router(storefront.router, prefix="/storefront", tags=["storefront"])
 api_router.include_router(checkout.router, prefix="/checkout", tags=["checkout"])
 api_router.include_router(stripe_webhook.router, prefix="/stripe", tags=["stripe"])

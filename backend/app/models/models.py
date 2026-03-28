@@ -688,6 +688,46 @@ class BlockedEntity(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False, index=True)
 
 
+class ReportRequest(Base, TimestampMixin):
+    __tablename__ = "report_requests"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    tenant_id: Mapped[int | None] = mapped_column(ForeignKey("tenants.id"), nullable=True, index=True)
+    requested_by_user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True, index=True)
+    report_type: Mapped[str] = mapped_column(String(80), nullable=False, index=True)
+    date_from: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    date_to: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    filters_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+    status: Mapped[str] = mapped_column(String(20), default="pending", nullable=False, index=True)
+    output_format: Mapped[str] = mapped_column(String(20), default="json", nullable=False)
+
+
+class ReportInsight(Base):
+    __tablename__ = "report_insights"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    tenant_id: Mapped[int | None] = mapped_column(ForeignKey("tenants.id"), nullable=True, index=True)
+    report_type: Mapped[str] = mapped_column(String(80), nullable=False, index=True)
+    title: Mapped[str] = mapped_column(String(220), nullable=False)
+    message: Mapped[str] = mapped_column(Text, nullable=False)
+    severity: Mapped[str] = mapped_column(String(20), default="info", nullable=False, index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+
+
+class MarketingInsight(Base):
+    __tablename__ = "marketing_insights"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id"), nullable=False, index=True)
+    insight_type: Mapped[str] = mapped_column(String(60), nullable=False, index=True)
+    category: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    product_id: Mapped[int | None] = mapped_column(ForeignKey("products.id"), nullable=True, index=True)
+    message: Mapped[str] = mapped_column(Text, nullable=False)
+    recommendation: Mapped[str] = mapped_column(Text, nullable=False)
+    period_label: Mapped[str] = mapped_column(String(40), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+
+
 class OnboardingGuide(Base, TimestampMixin):
     __tablename__ = "onboarding_guides"
 
