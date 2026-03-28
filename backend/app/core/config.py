@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     jwt_algorithm: str = Field(default="HS256", alias="JWT_ALGORITHM")
     jwt_expire_minutes: int = Field(default=120, alias="JWT_EXPIRE_MINUTES")
     default_currency: str = Field(default="mxn", alias="DEFAULT_CURRENCY")
+    data_mode: str = Field(default="demo", alias="DATA_MODE")
 
     model_config = SettingsConfigDict(
         env_file=".env",

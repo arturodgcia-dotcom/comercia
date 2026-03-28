@@ -1,0 +1,374 @@
+from __future__ import annotations
+
+from datetime import datetime, timedelta
+from decimal import Decimal
+
+from passlib.context import CryptContext
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
+from app.db.seed_app_base import seed_app_base
+from app.db.session import SessionLocal, engine
+from app.models.models import (
+    Appointment,
+    Banner,
+    Base,
+    Category,
+    CommissionDetail,
+    Coupon,
+    Customer,
+    CustomerLoyaltyAccount,
+    DistributorApplication,
+    DistributorProfile,
+    LogisticsEvent,
+    LogisticsOrder,
+    LoyaltyProgram,
+    MembershipPlan,
+    Order,
+    OrderItem,
+    Plan,
+    PlanPurchaseLead,
+    Product,
+    ProductReview,
+    RecurringOrderItem,
+    RecurringOrderSchedule,
+    SalesCommissionAgent,
+    ServiceOffering,
+    StorefrontConfig,
+    Subscription,
+    Tenant,
+    TenantBranding,
+    User,
+    WishlistItem,
+)
+from app.services.commission_agents_service import register_plan_purchase_lead
+from app.services.storefront_initializer import initialize_storefront
+
+pwd_context = CryptContext(schemes=["bcrypt", "pbkdf2_sha256"], deprecated="auto")
+
+
+def seed_demo_data(db: Session) -> None:
+    seed_app_base(db)
+    plans = {p.code: p for p in db.scalars(select(Plan)).all()}
+    tenants = [
+        _tenant(db, "REINPIA", "reinpia", "services", True, plans["PLAN_1"].id),
+        _tenant(db, "NATURA VIDA", "natura-vida", "mixed", True, plans["PLAN_2"].id),
+        _tenant(db, "CAFE MONTE ALTO", "cafe-monte-alto", "products", True, plans["PLAN_1"].id),
+        _tenant(db, "TENANT DEMO INACTIVO", "demo-inactivo", "mixed", False, plans["PLAN_1"].id),
+    ]
+    db.commit()
+    for t in tenants:
+        initialize_storefront(db, t)
+    db.commit()
+
+    _seed_reinpia(db, tenants[0])
+    _seed_products_tenant(db, tenants[1], "NAT")
+    _seed_products_tenant(db, tenants[2], "CAF")
+    _seed_subscriptions(db, tenants, plans)
+    _seed_users(db, tenants)
+    _seed_agents_and_leads(db)
+    db.commit()
+
+
+def _tenant(db: Session, name: str, slug: str, business_type: str, is_active: bool, plan_id: int) -> Tenant:
+    t = db.scalar(select(Tenant).where(Tenant.slug == slug))
+    if not t:
+        t = Tenant(name=name, slug=slug, subdomain=slug, business_type=business_type, is_active=is_active, plan_id=plan_id)
+        db.add(t)
+        db.flush()
+        return t
+    t.name, t.subdomain, t.business_type, t.is_active, t.plan_id = name, slug, business_type, is_active, plan_id
+    return t
+
+
+def _seed_reinpia(db: Session, tenant: Tenant) -> None:
+    _branding(db, tenant.id, "#0F3E5A", "#E6F4FA", "https://placehold.co/300x80?text=REINPIA", "Desarrollamos tecnologia que convierte procesos en crecimiento")
+    cfg = _storefront(db, tenant.id, "Soluciones REINPIA listas para activacion comercial")
+    categories = [
+        _category(db, tenant.id, "Implementacion", "implementacion"),
+        _category(db, tenant.id, "Automatizacion", "automatizacion"),
+        _category(db, tenant.id, "Plataformas", "plataformas"),
+        _category(db, tenant.id, "Consultoria", "consultoria"),
+    ]
+    services = [
+        _service(db, tenant.id, categories[0].id, "Implementacion COMERCIA", "implementacion-comercia", 14500),
+        _service(db, tenant.id, categories[2].id, "Renta de COMERCIA", "renta-comercia", 8900),
+        _service(db, tenant.id, categories[0].id, "Implementacion NERVIA", "implementacion-nervia", 15200),
+        _service(db, tenant.id, categories[0].id, "Implementacion SprintPilot", "implementacion-sprintpilot", 13800),
+        _service(db, tenant.id, categories[1].id, "Automatizacion comercial con IA", "automatizacion-ia", 16800),
+        _service(db, tenant.id, categories[3].id, "Desarrollo a la medida", "desarrollo-a-la-medida", 22000),
+    ]
+    prod_cat = _category(db, tenant.id, "Paquetes tecnologicos", "paquetes-tecnologicos")
+    p1 = _product(db, tenant.id, prod_cat.id, "Pack Implementacion COMERCIA", "pack-implementacion-comercia", 18900, True)
+    p2 = _product(db, tenant.id, prod_cat.id, "Bundle Automatizacion IA", "bundle-automatizacion-ia", 22900, True)
+    _banner(db, tenant.id, cfg.id, "Soluciones REINPIA para crecer mas rapido", "hero", "/store/reinpia/services")
+    _banner(db, tenant.id, cfg.id, "Canal agencias y distribuidores REINPIA", "distributors_top", "/store/reinpia/distribuidores/registro")
+    _coupon(db, tenant.id, "REINPIA10", "percentage", 10)
+    _coupon(db, tenant.id, "REINPIA500", "fixed", 500)
+    lp = _loyalty(db, tenant.id, "Club REINPIA")
+    c1 = _customer(db, tenant.id, "Monica Solis", "monica@empresa.demo")
+    c2 = _customer(db, tenant.id, "Ramon Cardenas", "ramon@empresa.demo")
+    c3 = _customer(db, tenant.id, "Erika Vidal", "erika@empresa.demo")
+    _loyalty_account(db, tenant.id, lp.id, c1.id, 480)
+    _loyalty_account(db, tenant.id, lp.id, c2.id, 210)
+    _review(db, tenant.id, p1.id, 5, "Excelente implementacion", True)
+    _review(db, tenant.id, p1.id, 4, "Buen arranque", True)
+    _review(db, tenant.id, p2.id, 5, "Automatizacion real", True)
+    _review(db, tenant.id, p2.id, 4, "Servicio recomendado", True)
+    _review(db, tenant.id, p1.id, 3, "Pendiente de aprobacion", False)
+    _review(db, tenant.id, p2.id, 4, "Pendiente de moderacion", False)
+    _dist_profile(db, tenant.id, "Agencia Andromeda", "ali@andromeda.demo", True)
+    _dist_profile(db, tenant.id, "Canal Norte Tech", "jorge@norte.demo", True)
+    _dist_app(db, tenant.id, "Canal Delta", "carlos@delta.demo")
+    _appointment(db, tenant.id, c1.id, services[0].id, "confirmed")
+    _appointment(db, tenant.id, c2.id, services[4].id, "pending")
+    o1 = _order(db, tenant.id, c1.id, "reinpia-ord-1", 14500, 500, 14000, 0, 14000, "paid", "plan1")
+    _order_item(db, o1.id, service_id=services[0].id, unit=14500, qty=1)
+    o2 = _order(db, tenant.id, c2.id, "reinpia-ord-2", 16800, 0, 16800, 0, 16800, "failed", "plan1")
+    _order_item(db, o2.id, service_id=services[4].id, unit=16800, qty=1)
+    o3 = _order(db, tenant.id, c3.id, "reinpia-ord-3", 22900, 900, 22000, 0, 22000, "paid", "plan1")
+    _order_item(db, o3.id, product_id=p2.id, unit=22900, qty=1)
+    _logistics(db, tenant.id, o1.id, c1.id, "scheduled")
+    _logistics(db, tenant.id, o3.id, c3.id, "in_transit")
+
+
+def _seed_products_tenant(db: Session, tenant: Tenant, prefix: str) -> None:
+    _branding(db, tenant.id, "#2F7D32" if prefix == "NAT" else "#5A3A22", "#ECF8EE" if prefix == "NAT" else "#F6EFE9", f"https://placehold.co/300x80?text={tenant.slug.upper()}", f"{tenant.name}: tienda demo lista para venta")
+    cfg = _storefront(db, tenant.id, f"Promociones activas de {tenant.name}")
+    c1, c2, c3, c4 = (
+        _category(db, tenant.id, "Tes y bebidas", "tes-bebidas"),
+        _category(db, tenant.id, "Accesorios", "accesorios"),
+        _category(db, tenant.id, "Kits", "kits"),
+        _category(db, tenant.id, "Promociones", "promociones"),
+    )
+    products = [
+        _product(db, tenant.id, c1.id, f"{prefix} Blend Energia", f"blend-energia-{tenant.slug}", 320, True),
+        _product(db, tenant.id, c1.id, f"{prefix} Infusion Relax", f"infusion-relax-{tenant.slug}", 290, True),
+        _product(db, tenant.id, c1.id, f"{prefix} Cafe Especial", f"cafe-especial-{tenant.slug}", 410, False),
+        _product(db, tenant.id, c2.id, f"{prefix} Taza Premium", f"taza-premium-{tenant.slug}", 220, False),
+        _product(db, tenant.id, c2.id, f"{prefix} Termo Smart", f"termo-smart-{tenant.slug}", 560, True),
+        _product(db, tenant.id, c3.id, f"{prefix} Kit Bienestar", f"kit-bienestar-{tenant.slug}", 890, True),
+        _product(db, tenant.id, c3.id, f"{prefix} Kit Oficina", f"kit-oficina-{tenant.slug}", 980, False),
+        _product(db, tenant.id, c4.id, f"{prefix} Pack Promo", f"pack-promo-{tenant.slug}", 760, True),
+        _product(db, tenant.id, c4.id, f"{prefix} Pack Distribuidor", f"pack-distribuidor-{tenant.slug}", 1450, False),
+        _product(db, tenant.id, c1.id, f"{prefix} Seasonal", f"seasonal-{tenant.slug}", 370, False),
+    ]
+    _banner(db, tenant.id, cfg.id, f"{tenant.name}: banner hero", "hero", f"/store/{tenant.slug}")
+    _banner(db, tenant.id, cfg.id, f"{tenant.name}: promo principal", "store_top", "promociones")
+    _banner(db, tenant.id, cfg.id, f"{tenant.name}: upsell checkout", "checkout_upsell", "upsell-demo")
+    _coupon(db, tenant.id, f"{prefix}10", "percentage", 10)
+    _coupon(db, tenant.id, f"{prefix}150", "fixed", 150)
+    lp = _loyalty(db, tenant.id, f"Club {tenant.name}")
+    _membership(db, tenant.id, "Membresia Oro", 30, 399)
+    ca, cb = _customer(db, tenant.id, f"Cliente {tenant.slug} A", f"cliente-a@{tenant.slug}.demo"), _customer(db, tenant.id, f"Cliente {tenant.slug} B", f"cliente-b@{tenant.slug}.demo")
+    _loyalty_account(db, tenant.id, lp.id, ca.id, 160)
+    _wishlist(db, tenant.id, ca.id, products[0].id)
+    _wishlist(db, tenant.id, ca.id, products[4].id)
+    _review(db, tenant.id, products[0].id, 5, "Muy buen producto", True)
+    _review(db, tenant.id, products[1].id, 4, "Buena compra", True)
+    _review(db, tenant.id, products[2].id, 3, "Pendiente", False)
+    _dist_profile(db, tenant.id, f"Distribuidor {tenant.slug} Norte", f"dist@{tenant.slug}.demo", True)
+    _dist_app(db, tenant.id, f"Canal {tenant.slug} Centro", f"solicitud@{tenant.slug}.demo")
+    op = _order(db, tenant.id, ca.id, f"{tenant.slug}-ord-paid", 1720, 150, 1570, 39.25 if tenant.slug == "natura-vida" else 0, 1530.75 if tenant.slug == "natura-vida" else 1570, "paid", "plan2" if tenant.slug == "natura-vida" else "plan1")
+    _order_item(db, op.id, product_id=products[0].id, unit=320, qty=2)
+    _order_item(db, op.id, product_id=products[4].id, unit=560, qty=1)
+    if tenant.slug == "natura-vida":
+        _commission(db, op.id, "LOW_2_5", 0.025, 16)
+        _commission(db, op.id, "LOW_2_5", 0.025, 23.25)
+    of = _order(db, tenant.id, cb.id, f"{tenant.slug}-ord-failed", 980, 0, 980, 0, 980, "failed", "plan1")
+    _order_item(db, of.id, product_id=products[6].id, unit=980, qty=1)
+    rs = _recurring(db, tenant.id, ca.id)
+    _recurring_item(db, rs.id, products[0].id, 1, 320)
+    _logistics(db, tenant.id, op.id, ca.id, "delivered")
+    _logistics(db, tenant.id, of.id, cb.id, "failed")
+
+
+def _seed_subscriptions(db: Session, tenants: list[Tenant], plans: dict[str, Plan]) -> None:
+    for slug, plan_code, status in [("reinpia", "PLAN_1", "active"), ("natura-vida", "PLAN_2", "active"), ("cafe-monte-alto", "PLAN_1", "trial"), ("demo-inactivo", "PLAN_1", "cancelled")]:
+        t = next(x for x in tenants if x.slug == slug)
+        s = db.scalar(select(Subscription).where(Subscription.tenant_id == t.id))
+        if not s:
+            db.add(Subscription(tenant_id=t.id, plan_id=plans[plan_code].id, status=status, started_at=datetime.utcnow() - timedelta(days=45), ends_at=None if status != "cancelled" else datetime.utcnow() - timedelta(days=1)))
+        else:
+            s.plan_id, s.status = plans[plan_code].id, status
+
+
+def _seed_users(db: Session, tenants: list[Tenant]) -> None:
+    tenant_map = {t.slug: t.id for t in tenants}
+    users = [
+        ("admin@reinpia.demo", "REINPIA Global Admin", "reinpia_admin", None),
+        ("admin@reinpia-tenant.demo", "REINPIA Tenant Admin", "tenant_admin", tenant_map["reinpia"]),
+        ("admin@natura.demo", "NATURA VIDA Admin", "tenant_admin", tenant_map["natura-vida"]),
+        ("admin@cafe.demo", "CAFE MONTE ALTO Admin", "tenant_admin", tenant_map["cafe-monte-alto"]),
+        ("distributor1@natura.demo", "Distribuidor NATURA", "distributor_user", tenant_map["natura-vida"]),
+        ("distributor2@cafe.demo", "Distribuidor CAFE", "distributor_user", tenant_map["cafe-monte-alto"]),
+    ]
+    for email, name, role, tenant_id in users:
+        u = db.scalar(select(User).where(User.email == email))
+        if not u:
+            db.add(User(email=email, full_name=name, hashed_password=pwd_context.hash("Admin12345!", scheme="pbkdf2_sha256"), role=role, is_active=True, tenant_id=tenant_id))
+        else:
+            u.full_name, u.role, u.tenant_id, u.is_active = name, role, tenant_id, True
+
+
+def _seed_agents_and_leads(db: Session) -> None:
+    for code, name, email in [("COD-REINPIA-1001", "Laura Mendoza", "laura@reinpia.demo"), ("COD-REINPIA-1002", "Carlos Ibarra", "carlos@reinpia.demo")]:
+        a = db.scalar(select(SalesCommissionAgent).where(SalesCommissionAgent.code == code))
+        if not a:
+            db.add(SalesCommissionAgent(code=code, full_name=name, email=email, phone="+52 555 810 1000", is_active=True, commission_percentage=Decimal("30"), notes="Comisionista demo"))
+    db.flush()
+    if db.scalar(select(PlanPurchaseLead).where(PlanPurchaseLead.buyer_email == "ceo@reinpia.demo")):
+        return
+    register_plan_purchase_lead(db, "Vision Digital SA", "constituted_company", "Ana Lozano", "ceo@reinpia.demo", "+52 555 990 1001", "COMERCIA_ESCALA", referral_code="COD-REINPIA-1001", source_type="query_param", needs_followup=False, needs_appointment=False, purchase_status="paid", notes="Venta comisionada demo")
+    register_plan_purchase_lead(db, "Opera Plus", "actividad_empresarial", "Diego Salas", "ventas@reinpia.demo", "+52 555 990 1002", "COMERCIA_IMPULSA", referral_code=None, source_type="direct", needs_followup=False, needs_appointment=False, purchase_status="initiated", notes="Venta directa demo")
+    register_plan_purchase_lead(db, "Canal Norte", "constituted_company", "Lucia Fuentes", "contacto@reinpia.demo", "+52 555 990 1003", "COMERCIA_IMPULSA", referral_code=None, source_type="direct", needs_followup=True, needs_appointment=True, purchase_status="pending_contact", notes="Lead con seguimiento pendiente demo")
+
+
+def _branding(db: Session, tenant_id: int, p: str, s: str, logo: str, title: str) -> None:
+    b = db.scalar(select(TenantBranding).where(TenantBranding.tenant_id == tenant_id)) or TenantBranding(tenant_id=tenant_id)
+    b.primary_color, b.secondary_color, b.logo_url, b.hero_title, b.hero_subtitle, b.contact_email, b.contact_whatsapp, b.font_family = p, s, logo, title, "Storefront demo multi-tenant", f"ventas{tenant_id}@demo.com", "+52 555 000 0000", "Segoe UI"
+    db.add(b)
+
+
+def _storefront(db: Session, tenant_id: int, promo: str) -> StorefrontConfig:
+    c = db.scalar(select(StorefrontConfig).where(StorefrontConfig.tenant_id == tenant_id)) or StorefrontConfig(tenant_id=tenant_id, is_initialized=True, ecommerce_enabled=True, landing_enabled=True)
+    c.promotion_text = promo
+    db.add(c)
+    db.flush()
+    return c
+
+
+def _category(db: Session, tenant_id: int, name: str, slug: str) -> Category:
+    c = db.scalar(select(Category).where(Category.tenant_id == tenant_id, Category.slug == slug)) or Category(tenant_id=tenant_id, name=name, slug=slug, description=f"{name} demo", is_active=True)
+    c.name, c.is_active = name, True
+    db.add(c); db.flush(); return c
+
+
+def _service(db: Session, tenant_id: int, cat_id: int, name: str, slug: str, price: float) -> ServiceOffering:
+    s = db.scalar(select(ServiceOffering).where(ServiceOffering.tenant_id == tenant_id, ServiceOffering.slug == slug)) or ServiceOffering(tenant_id=tenant_id, category_id=cat_id, name=name, slug=slug, description=f"{name} demo", duration_minutes=90, price=Decimal(str(price)), is_active=True, is_featured=True, requires_schedule=True)
+    s.category_id, s.name, s.price, s.is_active = cat_id, name, Decimal(str(price)), True
+    db.add(s); db.flush(); return s
+
+
+def _product(db: Session, tenant_id: int, cat_id: int, name: str, slug: str, price: float, featured: bool) -> Product:
+    p = db.scalar(select(Product).where(Product.tenant_id == tenant_id, Product.slug == slug)) or Product(tenant_id=tenant_id, category_id=cat_id, name=name, slug=slug, description=f"{name} demo", price_public=Decimal(str(price)), price_wholesale=Decimal(str(price))*Decimal("0.85"), price_retail=Decimal(str(price))*Decimal("0.93"), is_featured=featured, is_active=True)
+    p.category_id, p.name, p.price_public, p.price_wholesale, p.price_retail, p.is_featured, p.is_active = cat_id, name, Decimal(str(price)), (Decimal(str(price))*Decimal("0.85")).quantize(Decimal("0.01")), (Decimal(str(price))*Decimal("0.93")).quantize(Decimal("0.01")), featured, True
+    db.add(p); db.flush(); return p
+
+
+def _banner(db: Session, tenant_id: int, cfg_id: int, title: str, position: str, value: str) -> None:
+    b = db.scalar(select(Banner).where(Banner.tenant_id == tenant_id, Banner.title == title, Banner.position == position)) or Banner(tenant_id=tenant_id, storefront_config_id=cfg_id, title=title, subtitle="Demo comercial", image_url=None, target_type="promotion", target_value=value, position=position, priority=1, is_active=True)
+    b.storefront_config_id, b.target_value, b.is_active = cfg_id, value, True
+    db.add(b)
+
+
+def _coupon(db: Session, tenant_id: int, code: str, kind: str, value: float) -> None:
+    c = db.scalar(select(Coupon).where(Coupon.tenant_id == tenant_id, Coupon.code == code)) or Coupon(tenant_id=tenant_id, code=code, description="Coupon demo", discount_type=kind, discount_value=Decimal(str(value)), min_order_amount=Decimal("300"), max_uses=200, used_count=0, applies_to="all", is_active=True)
+    c.discount_type, c.discount_value, c.is_active = kind, Decimal(str(value)), True
+    db.add(c)
+
+
+def _loyalty(db: Session, tenant_id: int, name: str) -> LoyaltyProgram:
+    l = db.scalar(select(LoyaltyProgram).where(LoyaltyProgram.tenant_id == tenant_id)) or LoyaltyProgram(tenant_id=tenant_id, name=name, is_active=True, points_enabled=True, points_conversion_rate=Decimal("1.2"), welcome_points=120, birthday_points=80)
+    l.name, l.is_active = name, True
+    db.add(l); db.flush(); return l
+
+
+def _membership(db: Session, tenant_id: int, name: str, days: int, price: float) -> None:
+    m = db.scalar(select(MembershipPlan).where(MembershipPlan.tenant_id == tenant_id, MembershipPlan.name == name)) or MembershipPlan(tenant_id=tenant_id, name=name, description="Plan demo", duration_days=days, price=Decimal(str(price)), points_multiplier=Decimal("1.5"), benefits_json='{"shipping":"preferente"}', is_active=True)
+    m.duration_days, m.price, m.is_active = days, Decimal(str(price)), True
+    db.add(m)
+
+
+def _customer(db: Session, tenant_id: int, name: str, email: str) -> Customer:
+    c = db.scalar(select(Customer).where(Customer.tenant_id == tenant_id, Customer.email == email)) or Customer(tenant_id=tenant_id, full_name=name, email=email, phone="+52 555 000 0000", loyalty_points=0)
+    c.full_name = name
+    db.add(c); db.flush(); return c
+
+
+def _loyalty_account(db: Session, tenant_id: int, lp_id: int, cust_id: int, points: int) -> None:
+    a = db.scalar(select(CustomerLoyaltyAccount).where(CustomerLoyaltyAccount.tenant_id == tenant_id, CustomerLoyaltyAccount.customer_id == cust_id)) or CustomerLoyaltyAccount(tenant_id=tenant_id, customer_id=cust_id, loyalty_program_id=lp_id, points_balance=points)
+    a.loyalty_program_id, a.points_balance = lp_id, points
+    db.add(a)
+
+
+def _review(db: Session, tenant_id: int, product_id: int, rating: int, title: str, ok: bool) -> None:
+    r = db.scalar(select(ProductReview).where(ProductReview.tenant_id == tenant_id, ProductReview.product_id == product_id, ProductReview.title == title)) or ProductReview(tenant_id=tenant_id, product_id=product_id, customer_id=None, rating=rating, title=title, comment="Review demo", is_approved=ok)
+    r.rating, r.is_approved = rating, ok
+    db.add(r)
+
+
+def _dist_profile(db: Session, tenant_id: int, business: str, email: str, authorized: bool) -> None:
+    d = db.scalar(select(DistributorProfile).where(DistributorProfile.tenant_id == tenant_id, DistributorProfile.email == email)) or DistributorProfile(tenant_id=tenant_id, business_name=business, contact_name=business, email=email, phone="+52 555 777 0000", is_authorized=authorized, authorization_date=datetime.utcnow() if authorized else None, can_purchase_wholesale=True, can_sell_as_franchise=False)
+    d.business_name, d.is_authorized, d.authorization_date = business, authorized, datetime.utcnow() if authorized else None
+    db.add(d)
+
+
+def _dist_app(db: Session, tenant_id: int, company: str, email: str) -> None:
+    d = db.scalar(select(DistributorApplication).where(DistributorApplication.tenant_id == tenant_id, DistributorApplication.email == email)) or DistributorApplication(tenant_id=tenant_id, company_name=company, contact_name=company, email=email, phone="+52 555 666 0000", city="CDMX", state="CDMX", country="Mexico", status="pending", notes="Solicitud demo")
+    d.status = "pending"
+    db.add(d)
+
+
+def _appointment(db: Session, tenant_id: int, customer_id: int, service_id: int, status: str) -> None:
+    key = f"{tenant_id}-{customer_id}-{service_id}-{status}"
+    a = db.scalar(select(Appointment).where(Appointment.notes == key)) or Appointment(tenant_id=tenant_id, customer_id=customer_id, service_offering_id=service_id, scheduled_for=datetime.utcnow() + timedelta(days=2), service_name="Servicio demo", starts_at=datetime.utcnow() + timedelta(days=2), ends_at=datetime.utcnow() + timedelta(days=2, minutes=90), status=status, is_gift=status == "pending", notes=key)
+    a.status = status
+    db.add(a)
+
+
+def _order(db: Session, tenant_id: int, customer_id: int, key: str, subtotal: float, discount: float, total: float, commission: float, net: float, status: str, mode: str) -> Order:
+    o = db.scalar(select(Order).where(Order.service_payload_json == key)) or Order(tenant_id=tenant_id, customer_id=customer_id, subtotal_amount=Decimal(str(subtotal)), discount_amount=Decimal(str(discount)), total_amount=Decimal(str(total)), commission_amount=Decimal(str(commission)), net_amount=Decimal(str(net)), currency="mxn", status=status, payment_mode=mode, service_payload_json=key)
+    o.subtotal_amount, o.discount_amount, o.total_amount, o.commission_amount, o.net_amount, o.status, o.payment_mode = Decimal(str(subtotal)), Decimal(str(discount)), Decimal(str(total)), Decimal(str(commission)), Decimal(str(net)), status, mode
+    db.add(o); db.flush(); return o
+
+
+def _order_item(db: Session, order_id: int, product_id: int | None = None, service_id: int | None = None, unit: float = 0, qty: int = 1) -> None:
+    q = select(OrderItem).where(OrderItem.order_id == order_id)
+    q = q.where(OrderItem.product_id == product_id) if product_id else q.where(OrderItem.service_offering_id == service_id)
+    i = db.scalar(q) or OrderItem(order_id=order_id, product_id=product_id, service_offering_id=service_id, quantity=qty, unit_price=Decimal(str(unit)), total_price=Decimal(str(unit)) * qty)
+    i.quantity, i.unit_price, i.total_price = qty, Decimal(str(unit)), (Decimal(str(unit)) * qty).quantize(Decimal("0.01"))
+    db.add(i)
+
+
+def _commission(db: Session, order_id: int, rule: str, pct: float, amount: float) -> None:
+    c = db.scalar(select(CommissionDetail).where(CommissionDetail.order_id == order_id, CommissionDetail.rule_applied == rule, CommissionDetail.amount == Decimal(str(amount))))
+    if c:
+        return
+    db.add(CommissionDetail(order_id=order_id, rule_applied=rule, percentage=Decimal(str(pct)), amount=Decimal(str(amount))))
+
+
+def _recurring(db: Session, tenant_id: int, customer_id: int) -> RecurringOrderSchedule:
+    r = db.scalar(select(RecurringOrderSchedule).where(RecurringOrderSchedule.tenant_id == tenant_id, RecurringOrderSchedule.customer_id == customer_id)) or RecurringOrderSchedule(tenant_id=tenant_id, customer_id=customer_id, frequency="monthly", next_run_at=datetime.utcnow() + timedelta(days=30), is_active=True, notes="Schedule demo")
+    r.is_active = True
+    db.add(r); db.flush(); return r
+
+
+def _recurring_item(db: Session, schedule_id: int, product_id: int, qty: int, unit: float) -> None:
+    i = db.scalar(select(RecurringOrderItem).where(RecurringOrderItem.recurring_order_schedule_id == schedule_id, RecurringOrderItem.product_id == product_id)) or RecurringOrderItem(recurring_order_schedule_id=schedule_id, product_id=product_id, quantity=qty, unit_price_snapshot=Decimal(str(unit)))
+    i.quantity, i.unit_price_snapshot = qty, Decimal(str(unit))
+    db.add(i)
+
+
+def _logistics(db: Session, tenant_id: int, order_id: int, customer_id: int, status: str) -> None:
+    l = db.scalar(select(LogisticsOrder).where(LogisticsOrder.tenant_id == tenant_id, LogisticsOrder.order_id == order_id)) or LogisticsOrder(tenant_id=tenant_id, order_id=order_id, customer_id=customer_id, delivery_type="public", status=status, warehouse_address="Bodega demo", delivery_address="Direccion demo", scheduled_delivery_at=datetime.utcnow() + timedelta(days=2), delivered_at=datetime.utcnow() if status == "delivered" else None, tracking_reference=f"TRK-{tenant_id}-{order_id}", courier_name="Courier Demo", delivery_notes="Envio demo")
+    l.status = status
+    db.add(l); db.flush()
+    if not db.scalar(select(LogisticsEvent).where(LogisticsEvent.logistics_order_id == l.id, LogisticsEvent.event_type == status)):
+        db.add(LogisticsEvent(logistics_order_id=l.id, event_type=status, notes="Evento demo"))
+
+
+def _wishlist(db: Session, tenant_id: int, customer_id: int, product_id: int) -> None:
+    if db.scalar(select(WishlistItem).where(WishlistItem.tenant_id == tenant_id, WishlistItem.customer_id == customer_id, WishlistItem.product_id == product_id)):
+        return
+    db.add(WishlistItem(tenant_id=tenant_id, customer_id=customer_id, product_id=product_id))
+
+
+def run() -> None:
+    Base.metadata.create_all(bind=engine)
+    with SessionLocal() as db:
+        seed_demo_data(db)
+
+
+if __name__ == "__main__":
+    run()
