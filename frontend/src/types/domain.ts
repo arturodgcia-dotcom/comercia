@@ -15,6 +15,7 @@ export interface User {
   role: "reinpia_admin" | "tenant_admin" | "tenant_staff" | "distributor_user" | string;
   is_active: boolean;
   tenant_id: number | null;
+  preferred_language?: string;
 }
 
 export interface LoginResponse {
@@ -560,5 +561,145 @@ export interface InternalAlert {
   message: string;
   severity: "info" | "warning" | "high" | string;
   is_read: boolean;
+  created_at: string;
+}
+
+export interface OnboardingStep {
+  id: number;
+  guide_id: number;
+  step_order: number;
+  title: string;
+  content: string;
+  cta_label?: string | null;
+  cta_path?: string | null;
+  is_required: boolean;
+}
+
+export interface OnboardingGuide {
+  id: number;
+  code: string;
+  title: string;
+  audience: string;
+  description?: string | null;
+  is_active: boolean;
+  steps: OnboardingStep[];
+}
+
+export interface OnboardingProgressRow {
+  id: number;
+  user_id: number;
+  guide_id: number;
+  step_id: number;
+  completed: boolean;
+  completed_at?: string | null;
+}
+
+export interface OnboardingProgressResponse {
+  progress: OnboardingProgressRow[];
+  total_steps: number;
+  completed_steps: number;
+}
+
+export interface CurrencySettings {
+  id: number;
+  tenant_id: number;
+  base_currency: string;
+  enabled_currencies: string[];
+  display_mode: string;
+  exchange_mode: string;
+  auto_update_enabled: boolean;
+  rounding_mode: string;
+}
+
+export interface ExchangeRate {
+  id: number;
+  base_currency: string;
+  target_currency: string;
+  rate: number;
+  source_name: string;
+  is_manual: boolean;
+  valid_at: string;
+  created_at: string;
+}
+
+export interface PosLocation {
+  id: number;
+  tenant_id: number;
+  name: string;
+  code: string;
+  location_type: string;
+  address: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PosEmployee {
+  id: number;
+  tenant_id: number;
+  pos_location_id: number;
+  distributor_profile_id?: number | null;
+  full_name: string;
+  email: string;
+  phone?: string | null;
+  role_name: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PosSale {
+  id: number;
+  tenant_id: number;
+  pos_location_id: number;
+  customer_id?: number | null;
+  employee_id?: number | null;
+  subtotal_amount: number;
+  discount_amount: number;
+  total_amount: number;
+  currency: string;
+  payment_method: string;
+  notes?: string | null;
+  created_at: string;
+}
+
+export interface PosCustomer {
+  id: number;
+  tenant_id: number;
+  full_name: string;
+  email?: string | null;
+  phone?: string | null;
+  loyalty_points: number;
+}
+
+export interface BotChannelConfig {
+  id: number;
+  tenant_id?: number | null;
+  channel: string;
+  is_enabled: boolean;
+  provider_name?: string | null;
+  config_json?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BotMessageTemplate {
+  id: number;
+  tenant_id?: number | null;
+  event_type: string;
+  channel: string;
+  template_text: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AutomationEventLog {
+  id: number;
+  tenant_id?: number | null;
+  event_type: string;
+  related_entity_type?: string | null;
+  related_entity_id?: number | null;
+  payload_json?: string | null;
   created_at: string;
 }

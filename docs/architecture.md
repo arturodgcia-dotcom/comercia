@@ -172,3 +172,13 @@ Incluye data para:
 - ordenes paid/failed, logistics y recurrencia
 - comisionistas, leads de planes y alertas internas
 - panel global REINPIA con metricas visibles desde primer arranque
+
+## 20) Cierre funcional local
+Se agregaron bloques de cierre para operacion demostrable local:
+- onboarding vendedor y cliente con progreso por usuario
+- base i18n ES/EN en admin, login, landing COMERCIA y storefront
+- moneda por tenant (MXN/USD/EUR), tipos manuales y refresh automatico (fallback local)
+- POS webapp base con ubicaciones, empleados, clientes y ventas
+- fidelizacion integrada al flujo POS (uso y suma de puntos)
+- separacion operativa de punto propio, franquicia y punto distribuidor por `location_type`
+- base de automation/bots con eventos + plantillas + canales sin proveedor externo

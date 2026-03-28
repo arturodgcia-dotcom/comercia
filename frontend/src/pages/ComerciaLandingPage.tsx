@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
+import { LanguageSelector } from "../components/LanguageSelector";
 import { AgentWidgetPlaceholder } from "../components/marketing/AgentWidgetPlaceholder";
 import { AudienceSplitSection } from "../components/marketing/AudienceSplitSection";
 import { CTASection } from "../components/marketing/CTASection";
@@ -53,6 +54,9 @@ export function ComerciaLandingPage() {
 
   return (
     <main className="marketing-shell">
+      <div className="row-gap" style={{ justifyContent: "flex-end" }}>
+        <LanguageSelector />
+      </div>
       <HeroSection
         eyebrow="COMERCIA by REINPIA"
         title="Convierte tu negocio en una maquina de ventas con COMERCIA"

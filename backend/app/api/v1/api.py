@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 
 from app.api.v1.endpoints import (
+    automation,
     appointments,
     auth,
     banners,
@@ -9,12 +10,15 @@ from app.api.v1.endpoints import (
     checkout,
     contracts,
     coupons,
+    currency,
     distributors_ops,
     logistics,
     loyalty,
     memberships,
+    onboarding,
     payments,
     plans,
+    pos,
     products,
     recurring_orders,
     reinpia_admin,
@@ -52,5 +56,9 @@ api_router.include_router(distributors_ops.router, prefix="/distributors", tags=
 api_router.include_router(contracts.router, prefix="/contracts", tags=["contracts"])
 api_router.include_router(recurring_orders.router, prefix="/recurring-orders", tags=["recurring-orders"])
 api_router.include_router(logistics.router, prefix="/logistics", tags=["logistics"])
+api_router.include_router(onboarding.router, prefix="/onboarding", tags=["onboarding"])
+api_router.include_router(currency.router, tags=["currency"])
+api_router.include_router(pos.router, prefix="/pos", tags=["pos"])
+api_router.include_router(automation.router, prefix="/automation", tags=["automation"])
 api_router.include_router(reinpia_admin.router, prefix="/reinpia", tags=["reinpia-admin"])
 api_router.include_router(comercia_public.router, prefix="/comercia", tags=["comercia-public"])

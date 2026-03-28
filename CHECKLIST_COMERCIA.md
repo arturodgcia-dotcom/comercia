@@ -115,3 +115,16 @@
 - [x] Data de comisionistas/leads/alertas incluida en demo para flujo comercial-contable
 - [x] Documentacion actualizada con comandos DEMO/APP y limpieza
 - [x] Validacion ejecutada: compile backend + build frontend + seed/reset/seed
+
+## Entregables ejecucion 10 (Cierre funcional local)
+- [x] Panel global REINPIA estabilizado con KPIs y exportes
+- [x] Onboarding vendedor y cliente con progreso por usuario
+- [x] Base i18n ES/EN con selector visible y persistencia local
+- [x] Multi-moneda por tenant con settings + exchange rates manual/refresh
+- [x] Selector de moneda visible en storefront y aviso de fallback checkout
+- [x] POS WebApp base con ubicaciones, empleados, clientes y ventas
+- [x] Integracion de fidelizacion en flujo POS (uso/suma de puntos)
+- [x] Base de puntos propios/franquicia/distribuidor por `PosLocation.location_type`
+- [x] Base automation para bots/WhatsApp: canales, templates y eventos
+- [x] Seeds DEMO/APP actualizados para onboarding, currency, POS y automation
+- [x] Validacion: backend compile + alembic upgrade head + seed_app_base + seed_demo + frontend build

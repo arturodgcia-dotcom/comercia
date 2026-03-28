@@ -138,6 +138,11 @@ body {
   color: var(--brand);
 }
 
+.active-step {
+  background: var(--brand-soft);
+  color: var(--brand);
+}
+
 .inline-form,
 .detail-form {
   display: grid;
@@ -166,6 +171,12 @@ textarea {
   border: 1px solid var(--line);
   border-radius: 8px;
   padding: 9px 10px;
+}
+
+.input-inline {
+  border: 1px solid #355585;
+  background: #0f2a4d;
+  color: #fff;
 }
 
 textarea {

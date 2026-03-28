@@ -1,20 +1,31 @@
 import {
   Appointment,
+  AutomationEventLog,
   Banner,
+  BotChannelConfig,
+  BotMessageTemplate,
   Category,
   CheckoutSessionRequest,
   CheckoutSessionResponse,
   ContractTemplate,
   Coupon,
+  CurrencySettings,
   DistributorApplication,
   DistributorEmployee,
   DistributorProfile,
+  ExchangeRate,
   InternalAlert,
   LogisticsEvent,
   LogisticsOrder,
   LoginResponse,
   LoyaltyProgram,
   MembershipPlan,
+  OnboardingGuide,
+  OnboardingProgressResponse,
+  PosCustomer,
+  PosEmployee,
+  PosLocation,
+  PosSale,
   PlanPurchaseLead,
   Order,
   PaymentsDashboard,
@@ -306,7 +317,68 @@ export const api = {
   getComerciaReferralValidation: (refCode: string) =>
     request<{ valid: boolean; code: string; agent_name?: string }>(`/api/v1/comercia/referral/${encodeURIComponent(refCode)}`),
   createComerciaPlanPurchaseLead: (payload: Record<string, unknown>) =>
-    request<PlanPurchaseLead>("/api/v1/comercia/plan-purchase-leads", { method: "POST", body: JSON.stringify(payload) })
+    request<PlanPurchaseLead>("/api/v1/comercia/plan-purchase-leads", { method: "POST", body: JSON.stringify(payload) }),
+
+  getOnboardingGuides: (token: string) => request<OnboardingGuide[]>("/api/v1/onboarding/guides", {}, token),
+  getOnboardingGuide: (token: string, guideId: number) =>
+    request<OnboardingGuide>(`/api/v1/onboarding/guides/${guideId}`, {}, token),
+  getOnboardingProgressMe: (token: string) =>
+    request<OnboardingProgressResponse>("/api/v1/onboarding/progress/me", {}, token),
+  completeOnboardingStep: (token: string, payload: { guide_id: number; step_id: number; completed: boolean }) =>
+    request("/api/v1/onboarding/progress/step-complete", { method: "POST", body: JSON.stringify(payload) }, token),
+
+  getCurrencySettings: (tenantId: number) => request<CurrencySettings>(`/api/v1/currency-settings/${tenantId}`),
+  upsertCurrencySettings: (token: string, tenantId: number, payload: Record<string, unknown>) =>
+    request<CurrencySettings>(`/api/v1/currency-settings/${tenantId}`, { method: "PUT", body: JSON.stringify(payload) }, token),
+  getExchangeRates: (query = "") =>
+    request<ExchangeRate[]>(`/api/v1/exchange-rates${query ? `?${query}` : ""}`),
+  createManualExchangeRate: (token: string, payload: Record<string, unknown>) =>
+    request<ExchangeRate>("/api/v1/exchange-rates/manual", { method: "POST", body: JSON.stringify(payload) }, token),
+  refreshExchangeRates: (token: string) =>
+    request<ExchangeRate[]>("/api/v1/exchange-rates/refresh", { method: "POST" }, token),
+  previewConversion: (payload: Record<string, unknown>) =>
+    request<{ converted_amount: number; rate: number }>("/api/v1/exchange-rates/preview", {
+      method: "POST",
+      body: JSON.stringify(payload)
+    }),
+
+  getPosLocations: (token: string, tenantId: number) =>
+    request<PosLocation[]>(`/api/v1/pos/locations/by-tenant/${tenantId}`, {}, token),
+  createPosLocation: (token: string, payload: Record<string, unknown>) =>
+    request<PosLocation>("/api/v1/pos/locations", { method: "POST", body: JSON.stringify(payload) }, token),
+  updatePosLocation: (token: string, id: number, payload: Record<string, unknown>) =>
+    request<PosLocation>(`/api/v1/pos/locations/${id}`, { method: "PUT", body: JSON.stringify(payload) }, token),
+  getPosEmployeesByLocation: (token: string, locationId: number) =>
+    request<PosEmployee[]>(`/api/v1/pos/employees/by-location/${locationId}`, {}, token),
+  createPosEmployee: (token: string, payload: Record<string, unknown>) =>
+    request<PosEmployee>("/api/v1/pos/employees", { method: "POST", body: JSON.stringify(payload) }, token),
+  updatePosEmployee: (token: string, id: number, payload: Record<string, unknown>) =>
+    request<PosEmployee>(`/api/v1/pos/employees/${id}`, { method: "PUT", body: JSON.stringify(payload) }, token),
+  createPosSale: (token: string, payload: Record<string, unknown>) =>
+    request<PosSale>("/api/v1/pos/sales", { method: "POST", body: JSON.stringify(payload) }, token),
+  getPosSalesByTenant: (token: string, tenantId: number) =>
+    request<PosSale[]>(`/api/v1/pos/sales/by-tenant/${tenantId}`, {}, token),
+  getPosSalesByLocation: (token: string, locationId: number) =>
+    request<PosSale[]>(`/api/v1/pos/sales/by-location/${locationId}`, {}, token),
+  getPosCustomersByTenant: (token: string, tenantId: number) =>
+    request<PosCustomer[]>(`/api/v1/pos/customers/by-tenant/${tenantId}`, {}, token),
+  createPosCustomer: (token: string, payload: Record<string, unknown>) =>
+    request<PosCustomer>("/api/v1/pos/customers", { method: "POST", body: JSON.stringify(payload) }, token),
+
+  getAutomationEvents: (token: string, query = "") =>
+    request<AutomationEventLog[]>(`/api/v1/automation/events${query ? `?${query}` : ""}`, {}, token),
+  createAutomationEvent: (token: string, payload: Record<string, unknown>) =>
+    request<AutomationEventLog>("/api/v1/automation/events", { method: "POST", body: JSON.stringify(payload) }, token),
+  getAutomationChannels: (token: string, query = "") =>
+    request<BotChannelConfig[]>(`/api/v1/automation/channels${query ? `?${query}` : ""}`, {}, token),
+  upsertAutomationChannel: (token: string, payload: Record<string, unknown>) =>
+    request<BotChannelConfig>("/api/v1/automation/channels", { method: "POST", body: JSON.stringify(payload) }, token),
+  updateAutomationChannel: (token: string, id: number, payload: Record<string, unknown>) =>
+    request<BotChannelConfig>(`/api/v1/automation/channels/${id}`, { method: "PUT", body: JSON.stringify(payload) }, token),
+  getAutomationTemplates: (token: string, query = "") =>
+    request<BotMessageTemplate[]>(`/api/v1/automation/templates${query ? `?${query}` : ""}`, {}, token),
+  upsertAutomationTemplate: (token: string, payload: Record<string, unknown>) =>
+    request<BotMessageTemplate>("/api/v1/automation/templates", { method: "POST", body: JSON.stringify(payload) }, token)
 };
 
 export { ApiError };

@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import { LanguageSelector } from "../components/LanguageSelector";
 import { ReinpiaStorefrontLanding } from "./ReinpiaStorefrontLanding";
 import { api } from "../services/api";
-import { Product, StorefrontHomePayload, WishlistItem } from "../types/domain";
+import { CurrencySettings, ExchangeRate, Product, StorefrontHomePayload, WishlistItem } from "../types/domain";
 
 type CartMap = Record<number, number>;
 const DEMO_CUSTOMER_ID = 1;
@@ -19,6 +20,9 @@ export function StorefrontPage() {
   const [usePoints, setUsePoints] = useState(false);
   const [wantsRecurring, setWantsRecurring] = useState(false);
   const [upsell, setUpsell] = useState<Product[]>([]);
+  const [currencySettings, setCurrencySettings] = useState<CurrencySettings | null>(null);
+  const [rates, setRates] = useState<ExchangeRate[]>([]);
+  const [selectedCurrency, setSelectedCurrency] = useState("MXN");
 
   useEffect(() => {
     if (!tenantSlug) return;
@@ -26,6 +30,13 @@ export function StorefrontPage() {
       .getStorefrontHomeData(tenantSlug)
       .then(async (homeData) => {
         setData(homeData);
+        const settings = await api.getCurrencySettings(homeData.tenant.id).catch(() => null);
+        const exchangeRates = await api.getExchangeRates().catch(() => []);
+        if (settings) {
+          setCurrencySettings(settings);
+          setSelectedCurrency(settings.base_currency);
+        }
+        setRates(exchangeRates);
         try {
           setWishlist(await api.getWishlist(homeData.tenant.id, DEMO_CUSTOMER_ID));
         } catch {
@@ -65,9 +76,17 @@ export function StorefrontPage() {
   }, [data, cartItems.length]);
 
   const subtotal = useMemo(
-    () => cartItems.reduce((acc, item) => acc + Number(item.product.price_public) * item.quantity, 0),
-    [cartItems]
+    () => cartItems.reduce((acc, item) => acc + getDisplayPrice(item.product.price_public, selectedCurrency) * item.quantity, 0),
+    [cartItems, selectedCurrency, rates, currencySettings]
   );
+
+  const getDisplayPrice = (amount: number, currency: string) => {
+    const settings = currencySettings;
+    if (!settings || currency === settings.base_currency) return Number(amount);
+    const rate = rates.find((r) => r.base_currency === settings.base_currency && r.target_currency === currency);
+    if (!rate) return Number(amount);
+    return Number(amount) * Number(rate.rate);
+  };
 
   const addToWishlist = async (productId: number) => {
     if (!data) return;
@@ -108,6 +127,16 @@ export function StorefrontPage() {
   return (
     <main className="storefront">
       <section className="store-hero">
+        <div className="row-gap" style={{ justifyContent: "space-between" }}>
+          <LanguageSelector />
+          {currencySettings ? (
+            <select value={selectedCurrency} onChange={(e) => setSelectedCurrency(e.target.value)}>
+              {currencySettings.enabled_currencies.map((currency) => (
+                <option key={currency} value={currency}>{currency}</option>
+              ))}
+            </select>
+          ) : null}
+        </div>
         <h1>{data.branding?.hero_title ?? data.tenant.name}</h1>
         <p>{data.branding?.hero_subtitle ?? "Landing base multitenant de COMERCIA"}</p>
         <div className="store-actions">
@@ -139,22 +168,22 @@ export function StorefrontPage() {
 
       <section>
         <h2>Destacados</h2>
-        <ProductGrid products={data.featured_products} tenantSlug={data.tenant.slug} cart={cart} onAdd={updateCart} onWishlist={addToWishlist} wishlist={wishlist} />
+        <ProductGrid products={data.featured_products} tenantSlug={data.tenant.slug} cart={cart} onAdd={updateCart} onWishlist={addToWishlist} wishlist={wishlist} selectedCurrency={selectedCurrency} getDisplayPrice={getDisplayPrice} />
       </section>
 
       <section>
         <h2>Nuevos</h2>
-        <ProductGrid products={data.recent_products} tenantSlug={data.tenant.slug} cart={cart} onAdd={updateCart} onWishlist={addToWishlist} wishlist={wishlist} />
+        <ProductGrid products={data.recent_products} tenantSlug={data.tenant.slug} cart={cart} onAdd={updateCart} onWishlist={addToWishlist} wishlist={wishlist} selectedCurrency={selectedCurrency} getDisplayPrice={getDisplayPrice} />
       </section>
 
       <section>
         <h2>Promociones</h2>
-        <ProductGrid products={data.promo_products} tenantSlug={data.tenant.slug} cart={cart} onAdd={updateCart} onWishlist={addToWishlist} wishlist={wishlist} />
+        <ProductGrid products={data.promo_products} tenantSlug={data.tenant.slug} cart={cart} onAdd={updateCart} onWishlist={addToWishlist} wishlist={wishlist} selectedCurrency={selectedCurrency} getDisplayPrice={getDisplayPrice} />
       </section>
 
       <section>
         <h2>Mas vendidos (placeholder inteligente)</h2>
-        <ProductGrid products={data.best_sellers} tenantSlug={data.tenant.slug} cart={cart} onAdd={updateCart} onWishlist={addToWishlist} wishlist={wishlist} />
+        <ProductGrid products={data.best_sellers} tenantSlug={data.tenant.slug} cart={cart} onAdd={updateCart} onWishlist={addToWishlist} wishlist={wishlist} selectedCurrency={selectedCurrency} getDisplayPrice={getDisplayPrice} />
       </section>
 
       <section className="store-banner">
@@ -173,7 +202,12 @@ export function StorefrontPage() {
 
       <section className="store-banner">
         <h2>Checkout</h2>
-        <p>Subtotal: ${subtotal.toLocaleString("es-MX")}</p>
+        <p>Subtotal: {selectedCurrency} {subtotal.toLocaleString("es-MX")}</p>
+        {currencySettings?.display_mode === "localized_checkout" ? (
+          <p>Checkout intentara cobrar en moneda local si el flujo de pago lo soporta. Fallback: moneda base.</p>
+        ) : (
+          <p>Checkout opera en moneda base. La moneda seleccionada se usa para visualizacion.</p>
+        )}
         <input placeholder="Coupon code" value={couponCode} onChange={(e) => setCouponCode(e.target.value)} />
         <label className="checkbox">
           <input type="checkbox" checked={usePoints} onChange={(e) => setUsePoints(e.target.checked)} />
@@ -210,7 +244,9 @@ function ProductGrid({
   cart,
   onAdd,
   onWishlist,
-  wishlist
+  wishlist,
+  selectedCurrency,
+  getDisplayPrice
 }: {
   products: Product[];
   tenantSlug: string;
@@ -218,6 +254,8 @@ function ProductGrid({
   onAdd: (productId: number, quantity: number) => void;
   onWishlist: (productId: number) => void;
   wishlist: WishlistItem[];
+  selectedCurrency: string;
+  getDisplayPrice: (amount: number, currency: string) => number;
 }) {
   return (
     <div className="card-grid">
@@ -225,7 +263,7 @@ function ProductGrid({
         <article key={product.id} className="card">
           <h3>{product.name}</h3>
           <p>{product.description}</p>
-          <p>${Number(product.price_public).toLocaleString("es-MX")}</p>
+          <p>{selectedCurrency} {Number(getDisplayPrice(Number(product.price_public), selectedCurrency)).toLocaleString("es-MX")}</p>
           <div className="row-gap">
             <button className="button button-outline" type="button" onClick={() => onAdd(product.id, (cart[product.id] ?? 0) + 1)}>
               Agregar

@@ -1,6 +1,7 @@
 import { createContext, ReactNode, useContext, useEffect, useMemo, useState } from "react";
 import { api } from "../services/api";
 import { User } from "../types/domain";
+import i18n from "../i18n";
 
 const TOKEN_KEY = "comercia_access_token";
 
@@ -27,7 +28,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     api.me(token)
-      .then(setUser)
+      .then((loadedUser) => {
+        setUser(loadedUser);
+        if (loadedUser.preferred_language) {
+          i18n.changeLanguage(loadedUser.preferred_language);
+          localStorage.setItem("comercia_lang", loadedUser.preferred_language);
+        }
+      })
       .catch(() => {
         localStorage.removeItem(TOKEN_KEY);
         setToken(null);

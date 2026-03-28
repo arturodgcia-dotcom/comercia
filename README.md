@@ -50,6 +50,18 @@ npm run dev
   - `http://localhost:5173/reinpia/reports`
   - `http://localhost:5173/reinpia/commission-agents`
   - `http://localhost:5173/reinpia/alerts`
+- Onboarding:
+  - `http://localhost:5173/onboarding/sales`
+  - `http://localhost:5173/onboarding/client`
+- Monedas:
+  - `http://localhost:5173/admin/currency`
+- POS:
+  - `http://localhost:5173/pos`
+  - `http://localhost:5173/pos/locations`
+  - `http://localhost:5173/pos/sales`
+  - `http://localhost:5173/pos/customers`
+- Automation base:
+  - `http://localhost:5173/admin/automation`
 
 ## Bloques funcionales implementados
 
@@ -102,6 +114,68 @@ npm run dev
 - seguridad por rol:
   - backend protegido por `reinpia_admin`
   - frontend oculto para roles no autorizados
+
+### Onboarding (actual)
+- guias y pasos persistidos en backend:
+  - `GET /api/v1/onboarding/guides`
+  - `GET /api/v1/onboarding/guides/{id}`
+  - `GET /api/v1/onboarding/progress/me`
+  - `POST /api/v1/onboarding/progress/step-complete`
+- flujos visuales:
+  - onboarding ventas (`/onboarding/sales`)
+  - onboarding cliente (`/onboarding/client`)
+- progreso por usuario en `UserOnboardingProgress`
+
+### i18n (actual)
+- base bilingue ES/EN con `i18next + react-i18next`
+- selector de idioma visible en:
+  - admin
+  - landing COMERCIA
+  - storefront
+- preferencia persistida en `localStorage` y campo `User.preferred_language`
+
+### Monedas y tipo de cambio (actual)
+- modelos:
+  - `CurrencySettings`
+  - `ExchangeRate`
+- endpoints:
+  - `GET/POST/PUT /api/v1/currency-settings/{tenant_id}`
+  - `GET /api/v1/exchange-rates`
+  - `POST /api/v1/exchange-rates/manual`
+  - `POST /api/v1/exchange-rates/refresh`
+  - `POST /api/v1/exchange-rates/preview`
+- soporte de modo manual y automatico (fallback local adapter)
+- storefront con selector de moneda y aviso de fallback de checkout
+
+### POS / WebApp base (actual)
+- modelos:
+  - `PosLocation`, `PosEmployee`, `PosSale`, `PosSaleItem`, `PosMembershipRegistration`
+- endpoints:
+  - `/api/v1/pos/locations/*`
+  - `/api/v1/pos/employees/*`
+  - `/api/v1/pos/sales/*`
+  - `/api/v1/pos/customers/*`
+- frontend:
+  - `/pos`, `/pos/locations`, `/pos/sales`, `/pos/customers`
+- fidelizacion en POS:
+  - consume y suma puntos cuando aplica
+  - permite registro base de membresia desde venta POS
+
+### Automation base para bots/WhatsApp futuro
+- modelos:
+  - `BotChannelConfig`
+  - `BotMessageTemplate`
+  - `AutomationEventLog`
+- endpoints:
+  - `/api/v1/automation/events`
+  - `/api/v1/automation/channels`
+  - `/api/v1/automation/templates`
+- eventos base registrados:
+  - `new_plan_lead`
+  - `appointment_created`
+  - `order_paid`
+  - `logistics_delivered`
+  - `followup_required`
 
 ### Comisionistas y alertas internas (actual)
 - comisionistas comerciales (`SalesCommissionAgent`) con clave unica

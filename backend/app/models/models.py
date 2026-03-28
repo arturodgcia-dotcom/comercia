@@ -46,6 +46,7 @@ class User(Base, TimestampMixin):
     role: Mapped[str] = mapped_column(String(30), nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     tenant_id: Mapped[int | None] = mapped_column(ForeignKey("tenants.id"), nullable=True, index=True)
+    preferred_language: Mapped[str] = mapped_column(String(10), default="es", nullable=False)
 
 
 class TenantBranding(Base, TimestampMixin):
@@ -614,4 +615,165 @@ class InternalAlert(Base):
     message: Mapped[str] = mapped_column(Text, nullable=False)
     severity: Mapped[str] = mapped_column(String(20), default="info", nullable=False)
     is_read: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+
+
+class OnboardingGuide(Base, TimestampMixin):
+    __tablename__ = "onboarding_guides"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    code: Mapped[str] = mapped_column(String(60), unique=True, nullable=False, index=True)
+    title: Mapped[str] = mapped_column(String(180), nullable=False)
+    audience: Mapped[str] = mapped_column(String(30), nullable=False)  # sales | client
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+
+
+class OnboardingStep(Base, TimestampMixin):
+    __tablename__ = "onboarding_steps"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    guide_id: Mapped[int] = mapped_column(ForeignKey("onboarding_guides.id"), nullable=False, index=True)
+    step_order: Mapped[int] = mapped_column(Integer, nullable=False)
+    title: Mapped[str] = mapped_column(String(180), nullable=False)
+    content: Mapped[str] = mapped_column(Text, nullable=False)
+    cta_label: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    cta_path: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    is_required: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+
+
+class UserOnboardingProgress(Base, TimestampMixin):
+    __tablename__ = "user_onboarding_progress"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)
+    guide_id: Mapped[int] = mapped_column(ForeignKey("onboarding_guides.id"), nullable=False, index=True)
+    step_id: Mapped[int] = mapped_column(ForeignKey("onboarding_steps.id"), nullable=False, index=True)
+    completed: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+
+
+class CurrencySettings(Base, TimestampMixin):
+    __tablename__ = "currency_settings"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id"), nullable=False, unique=True, index=True)
+    base_currency: Mapped[str] = mapped_column(String(10), default="MXN", nullable=False)
+    enabled_currencies_json: Mapped[str] = mapped_column(Text, default='["MXN"]', nullable=False)
+    display_mode: Mapped[str] = mapped_column(String(30), default="base_only", nullable=False)
+    exchange_mode: Mapped[str] = mapped_column(String(20), default="manual", nullable=False)
+    auto_update_enabled: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    rounding_mode: Mapped[str] = mapped_column(String(20), default="none", nullable=False)
+
+
+class ExchangeRate(Base):
+    __tablename__ = "exchange_rates"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    base_currency: Mapped[str] = mapped_column(String(10), nullable=False, index=True)
+    target_currency: Mapped[str] = mapped_column(String(10), nullable=False, index=True)
+    rate: Mapped[Decimal] = mapped_column(Numeric(16, 6), nullable=False)
+    source_name: Mapped[str] = mapped_column(String(60), default="manual", nullable=False)
+    is_manual: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    valid_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+
+
+class PosLocation(Base, TimestampMixin):
+    __tablename__ = "pos_locations"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id"), nullable=False, index=True)
+    name: Mapped[str] = mapped_column(String(180), nullable=False)
+    code: Mapped[str] = mapped_column(String(60), nullable=False, index=True)
+    location_type: Mapped[str] = mapped_column(String(30), nullable=False)  # brand_store|franchise|distributor_point
+    address: Mapped[str] = mapped_column(Text, nullable=False)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+
+
+class PosEmployee(Base, TimestampMixin):
+    __tablename__ = "pos_employees"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id"), nullable=False, index=True)
+    pos_location_id: Mapped[int] = mapped_column(ForeignKey("pos_locations.id"), nullable=False, index=True)
+    distributor_profile_id: Mapped[int | None] = mapped_column(ForeignKey("distributor_profiles.id"), nullable=True, index=True)
+    full_name: Mapped[str] = mapped_column(String(180), nullable=False)
+    email: Mapped[str] = mapped_column(String(180), nullable=False)
+    phone: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    role_name: Mapped[str] = mapped_column(String(80), nullable=False)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+
+
+class PosSale(Base):
+    __tablename__ = "pos_sales"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id"), nullable=False, index=True)
+    pos_location_id: Mapped[int] = mapped_column(ForeignKey("pos_locations.id"), nullable=False, index=True)
+    customer_id: Mapped[int | None] = mapped_column(ForeignKey("customers.id"), nullable=True, index=True)
+    employee_id: Mapped[int | None] = mapped_column(ForeignKey("pos_employees.id"), nullable=True, index=True)
+    subtotal_amount: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False, default=0)
+    discount_amount: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False, default=0)
+    total_amount: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False, default=0)
+    currency: Mapped[str] = mapped_column(String(10), default="MXN", nullable=False)
+    payment_method: Mapped[str] = mapped_column(String(20), nullable=False, default="cash")
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+
+
+class PosSaleItem(Base):
+    __tablename__ = "pos_sale_items"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    pos_sale_id: Mapped[int] = mapped_column(ForeignKey("pos_sales.id"), nullable=False, index=True)
+    product_id: Mapped[int] = mapped_column(ForeignKey("products.id"), nullable=False, index=True)
+    quantity: Mapped[int] = mapped_column(Integer, nullable=False)
+    unit_price: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
+    total_price: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+
+
+class PosMembershipRegistration(Base):
+    __tablename__ = "pos_membership_registrations"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id"), nullable=False, index=True)
+    customer_id: Mapped[int] = mapped_column(ForeignKey("customers.id"), nullable=False, index=True)
+    pos_location_id: Mapped[int] = mapped_column(ForeignKey("pos_locations.id"), nullable=False, index=True)
+    registration_source: Mapped[str] = mapped_column(String(40), nullable=False, default="pos")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+
+
+class BotChannelConfig(Base, TimestampMixin):
+    __tablename__ = "bot_channel_configs"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    tenant_id: Mapped[int | None] = mapped_column(ForeignKey("tenants.id"), nullable=True, index=True)
+    channel: Mapped[str] = mapped_column(String(30), nullable=False)  # whatsapp|telegram|webchat
+    is_enabled: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    provider_name: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    config_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+
+class BotMessageTemplate(Base, TimestampMixin):
+    __tablename__ = "bot_message_templates"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    tenant_id: Mapped[int | None] = mapped_column(ForeignKey("tenants.id"), nullable=True, index=True)
+    event_type: Mapped[str] = mapped_column(String(60), nullable=False, index=True)
+    channel: Mapped[str] = mapped_column(String(30), nullable=False)
+    template_text: Mapped[str] = mapped_column(Text, nullable=False)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+
+
+class AutomationEventLog(Base):
+    __tablename__ = "automation_event_logs"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    tenant_id: Mapped[int | None] = mapped_column(ForeignKey("tenants.id"), nullable=True, index=True)
+    event_type: Mapped[str] = mapped_column(String(60), nullable=False, index=True)
+    related_entity_type: Mapped[str | None] = mapped_column(String(60), nullable=True)
+    related_entity_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    payload_json: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)

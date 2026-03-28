@@ -13,6 +13,7 @@ from app.services.email_service import send_purchase_receipt
 from app.services.loyalty_service import apply_points_for_order, consume_points
 from app.services.notifications_service import send_email_notification, send_whatsapp_placeholder
 from app.services.stripe_service import construct_webhook_event
+from app.services.automation_service import log_automation_event
 
 router = APIRouter()
 
@@ -44,6 +45,13 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)) -> dic
             db.commit()
             if not was_paid:
                 _run_post_payment_actions(db, order)
+                log_automation_event(
+                    db,
+                    event_type="order_paid",
+                    tenant_id=order.tenant_id,
+                    related_entity_type="order",
+                    related_entity_id=order.id,
+                )
             send_purchase_receipt(order)
     elif event_type == "payment_intent.succeeded":
         order = _find_order_from_payment_intent(db, data_object)
@@ -61,6 +69,13 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)) -> dic
             db.commit()
             if not was_paid:
                 _run_post_payment_actions(db, order)
+                log_automation_event(
+                    db,
+                    event_type="order_paid",
+                    tenant_id=order.tenant_id,
+                    related_entity_type="order",
+                    related_entity_id=order.id,
+                )
     elif event_type == "payment_intent.payment_failed":
         order = _find_order_from_payment_intent(db, data_object)
         if order:

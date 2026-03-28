@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 
 from app.models.models import Appointment, ServiceOffering
+from app.services.automation_service import log_automation_event
 from app.services.notifications_service import send_email_notification, send_whatsapp_placeholder
 
 
@@ -32,6 +33,13 @@ def create_appointment_for_self(
     db.add(appointment)
     db.commit()
     db.refresh(appointment)
+    log_automation_event(
+        db,
+        event_type="appointment_created",
+        tenant_id=tenant_id,
+        related_entity_type="appointment",
+        related_entity_id=appointment.id,
+    )
     return appointment
 
 
@@ -74,6 +82,13 @@ def create_appointment_as_gift(
     db.add(appointment)
     db.commit()
     db.refresh(appointment)
+    log_automation_event(
+        db,
+        event_type="appointment_created",
+        tenant_id=tenant_id,
+        related_entity_type="appointment",
+        related_entity_id=appointment.id,
+    )
     return appointment
 
 

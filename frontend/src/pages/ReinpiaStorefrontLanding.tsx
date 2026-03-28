@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { LanguageSelector } from "../components/LanguageSelector";
 import { AgentWidgetPlaceholder } from "../components/marketing/AgentWidgetPlaceholder";
 import { AudienceSplitSection } from "../components/marketing/AudienceSplitSection";
 import { CTASection } from "../components/marketing/CTASection";
@@ -10,6 +11,9 @@ export function ReinpiaStorefrontLanding({ data }: { data: StorefrontHomePayload
   const services = data.services ?? [];
   return (
     <main className="marketing-shell">
+      <div className="row-gap" style={{ justifyContent: "flex-end" }}>
+        <LanguageSelector />
+      </div>
       <HeroSection
         eyebrow="REINPIA | Tecnologia aplicada a resultados"
         title="Desarrollamos tecnologia que convierte procesos en crecimiento"
@@ -100,4 +104,3 @@ function ServiceCard({ service, tenantSlug }: { service: ServiceOffering; tenant
     </article>
   );
 }
-

@@ -6,6 +6,8 @@ from sqlalchemy.orm import Session
 
 from app.db.session import SessionLocal, engine
 from app.models.models import Base, Plan, User
+from app.services.automation_service import upsert_bot_channel, upsert_bot_template
+from app.services.onboarding_service import ensure_default_onboarding_guides
 
 pwd_context = CryptContext(schemes=["bcrypt", "pbkdf2_sha256"], deprecated="auto")
 
@@ -13,6 +15,8 @@ pwd_context = CryptContext(schemes=["bcrypt", "pbkdf2_sha256"], deprecated="auto
 def seed_app_base(db: Session) -> None:
     _seed_plans(db)
     _seed_system_user(db)
+    ensure_default_onboarding_guides(db)
+    _seed_automation_base(db)
     db.commit()
 
 
@@ -71,6 +75,7 @@ def _seed_system_user(db: Session) -> None:
         admin.full_name = "REINPIA Admin"
         admin.role = "reinpia_admin"
         admin.is_active = True
+        admin.preferred_language = "es"
         if not pwd_context.verify("admin123", admin.hashed_password):
             admin.hashed_password = pwd_context.hash("admin123", scheme="pbkdf2_sha256")
         return
@@ -83,8 +88,31 @@ def _seed_system_user(db: Session) -> None:
             role="reinpia_admin",
             is_active=True,
             tenant_id=None,
+            preferred_language="es",
         )
     )
+
+
+def _seed_automation_base(db: Session) -> None:
+    upsert_bot_channel(db, channel="whatsapp", tenant_id=None, is_enabled=False, provider_name="pending", auto_commit=False)
+    upsert_bot_channel(db, channel="webchat", tenant_id=None, is_enabled=True, provider_name="internal", auto_commit=False)
+    templates = {
+        "new_plan_lead": "Nuevo lead registrado: {{buyer_name}} / {{selected_plan_code}}.",
+        "appointment_created": "Nueva cita creada para seguimiento operativo.",
+        "order_paid": "Nueva orden pagada detectada.",
+        "logistics_delivered": "Entrega confirmada y cerrada.",
+        "followup_required": "Lead requiere seguimiento comercial prioritario.",
+    }
+    for event_type, template_text in templates.items():
+        upsert_bot_template(
+            db,
+            event_type=event_type,
+            channel="whatsapp",
+            template_text=template_text,
+            tenant_id=None,
+            is_active=True,
+            auto_commit=False,
+        )
 
 
 def run(clean_demo: bool = True) -> None:

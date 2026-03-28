@@ -16,10 +16,12 @@ from app.models.models import (
     Category,
     CommissionDetail,
     Coupon,
+    CurrencySettings,
     Customer,
     CustomerLoyaltyAccount,
     DistributorApplication,
     DistributorProfile,
+    ExchangeRate,
     LogisticsEvent,
     LogisticsOrder,
     LoyaltyProgram,
@@ -28,6 +30,10 @@ from app.models.models import (
     OrderItem,
     Plan,
     PlanPurchaseLead,
+    PosEmployee,
+    PosLocation,
+    PosSale,
+    PosSaleItem,
     Product,
     ProductReview,
     RecurringOrderItem,
@@ -42,6 +48,7 @@ from app.models.models import (
     WishlistItem,
 )
 from app.services.commission_agents_service import register_plan_purchase_lead
+from app.services.currency_service import create_manual_exchange_rate, upsert_currency_settings
 from app.services.storefront_initializer import initialize_storefront
 
 pwd_context = CryptContext(schemes=["bcrypt", "pbkdf2_sha256"], deprecated="auto")
@@ -66,6 +73,8 @@ def seed_demo_data(db: Session) -> None:
     _seed_products_tenant(db, tenants[2], "CAF")
     _seed_subscriptions(db, tenants, plans)
     _seed_users(db, tenants)
+    _seed_currency_settings(db, tenants)
+    _seed_pos_data(db, tenants)
     _seed_agents_and_leads(db)
     db.commit()
 
@@ -206,9 +215,10 @@ def _seed_users(db: Session, tenants: list[Tenant]) -> None:
     for email, name, role, tenant_id in users:
         u = db.scalar(select(User).where(User.email == email))
         if not u:
-            db.add(User(email=email, full_name=name, hashed_password=pwd_context.hash("Admin12345!", scheme="pbkdf2_sha256"), role=role, is_active=True, tenant_id=tenant_id))
+            db.add(User(email=email, full_name=name, hashed_password=pwd_context.hash("Admin12345!", scheme="pbkdf2_sha256"), role=role, is_active=True, tenant_id=tenant_id, preferred_language="es"))
         else:
             u.full_name, u.role, u.tenant_id, u.is_active = name, role, tenant_id, True
+            u.preferred_language = "es"
 
 
 def _seed_agents_and_leads(db: Session) -> None:
@@ -362,6 +372,91 @@ def _wishlist(db: Session, tenant_id: int, customer_id: int, product_id: int) ->
     if db.scalar(select(WishlistItem).where(WishlistItem.tenant_id == tenant_id, WishlistItem.customer_id == customer_id, WishlistItem.product_id == product_id)):
         return
     db.add(WishlistItem(tenant_id=tenant_id, customer_id=customer_id, product_id=product_id))
+
+
+def _seed_currency_settings(db: Session, tenants: list[Tenant]) -> None:
+    for tenant in tenants:
+        if tenant.slug == "demo-inactivo":
+            continue
+        enabled = ["MXN", "USD", "EUR"] if tenant.slug in {"reinpia", "natura-vida"} else ["MXN", "USD"]
+        upsert_currency_settings(
+            db,
+            tenant.id,
+            base_currency="MXN",
+            enabled_currencies=enabled,
+            display_mode="converted_display",
+            exchange_mode="manual",
+            auto_update_enabled=False,
+            rounding_mode=".99" if tenant.slug == "natura-vida" else "none",
+        )
+    if not db.scalar(select(ExchangeRate).where(ExchangeRate.base_currency == "MXN", ExchangeRate.target_currency == "USD")):
+        create_manual_exchange_rate(db, "MXN", "USD", Decimal("0.058"), "demo_manual")
+    if not db.scalar(select(ExchangeRate).where(ExchangeRate.base_currency == "MXN", ExchangeRate.target_currency == "EUR")):
+        create_manual_exchange_rate(db, "MXN", "EUR", Decimal("0.053"), "demo_manual")
+    if not db.scalar(select(ExchangeRate).where(ExchangeRate.base_currency == "USD", ExchangeRate.target_currency == "MXN")):
+        create_manual_exchange_rate(db, "USD", "MXN", Decimal("17.2"), "demo_manual")
+
+
+def _seed_pos_data(db: Session, tenants: list[Tenant]) -> None:
+    for tenant in tenants:
+        if tenant.slug == "demo-inactivo":
+            continue
+        location = db.scalar(select(PosLocation).where(PosLocation.tenant_id == tenant.id, PosLocation.code == "MAIN"))
+        if not location:
+            location = PosLocation(
+                tenant_id=tenant.id,
+                name=f"Punto principal {tenant.name}",
+                code="MAIN",
+                location_type="brand_store",
+                address="Direccion demo principal",
+                is_active=True,
+            )
+            db.add(location)
+            db.flush()
+        employee = db.scalar(select(PosEmployee).where(PosEmployee.tenant_id == tenant.id, PosEmployee.email == f"pos@{tenant.slug}.demo"))
+        if not employee:
+            employee = PosEmployee(
+                tenant_id=tenant.id,
+                pos_location_id=location.id,
+                distributor_profile_id=None,
+                full_name=f"Cajero {tenant.slug}",
+                email=f"pos@{tenant.slug}.demo",
+                phone="+52 555 888 0000",
+                role_name="cashier",
+                is_active=True,
+            )
+            db.add(employee)
+            db.flush()
+        customer = db.scalar(select(Customer).where(Customer.tenant_id == tenant.id))
+        product = db.scalar(select(Product).where(Product.tenant_id == tenant.id))
+        if not customer or not product:
+            continue
+        sale = db.scalar(select(PosSale).where(PosSale.tenant_id == tenant.id, PosSale.notes == "demo-pos-sale"))
+        if not sale:
+            sale = PosSale(
+                tenant_id=tenant.id,
+                pos_location_id=location.id,
+                customer_id=customer.id,
+                employee_id=employee.id,
+                subtotal_amount=Decimal("640"),
+                discount_amount=Decimal("40"),
+                total_amount=Decimal("600"),
+                currency="MXN",
+                payment_method="card",
+                notes="demo-pos-sale",
+            )
+            db.add(sale)
+            db.flush()
+        if not db.scalar(select(PosSaleItem).where(PosSaleItem.pos_sale_id == sale.id, PosSaleItem.product_id == product.id)):
+            db.add(
+                PosSaleItem(
+                    pos_sale_id=sale.id,
+                    product_id=product.id,
+                    quantity=2,
+                    unit_price=Decimal("320"),
+                    total_price=Decimal("640"),
+                )
+            )
 
 
 def run() -> None:

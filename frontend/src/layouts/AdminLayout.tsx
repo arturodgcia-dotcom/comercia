@@ -1,25 +1,32 @@
 import { NavLink, Outlet } from "react-router-dom";
 import { useAuth } from "../app/AuthContext";
+import { LanguageSelector } from "../components/LanguageSelector";
+import { useTranslation } from "react-i18next";
 
 const navItems = [
-  { label: "Dashboard", to: "/" },
-  { label: "Tenants", to: "/tenants" },
-  { label: "Plans", to: "/plans" },
-  { label: "Payments", to: "/admin/payments" },
-  { label: "Loyalty", to: "/admin/loyalty" },
-  { label: "Memberships", to: "/admin/memberships" },
-  { label: "Coupons", to: "/admin/coupons" },
-  { label: "Banners", to: "/admin/banners" },
-  { label: "Reviews", to: "/admin/reviews" },
-  { label: "Services", to: "/admin/services" },
-  { label: "Appointments", to: "/admin/appointments" },
-  { label: "Dist. Apps", to: "/admin/distributor-applications" },
-  { label: "Distributors", to: "/admin/distributors" },
-  { label: "Contracts", to: "/admin/contracts" },
-  { label: "Recurring", to: "/admin/recurring-orders" },
-  { label: "Logistics", to: "/admin/logistics" },
-  { label: "Categories", to: "/categories" },
-  { label: "Products", to: "/products" }
+  { labelKey: "nav.dashboard", to: "/" },
+  { labelKey: "nav.tenants", to: "/tenants" },
+  { labelKey: "nav.plans", to: "/plans" },
+  { labelKey: "nav.payments", to: "/admin/payments" },
+  { labelKey: "nav.loyalty", to: "/admin/loyalty" },
+  { labelKey: "nav.memberships", to: "/admin/memberships" },
+  { labelKey: "nav.coupons", to: "/admin/coupons" },
+  { labelKey: "nav.banners", to: "/admin/banners" },
+  { labelKey: "nav.reviews", to: "/admin/reviews" },
+  { labelKey: "nav.services", to: "/admin/services" },
+  { labelKey: "nav.appointments", to: "/admin/appointments" },
+  { labelKey: "nav.distApps", to: "/admin/distributor-applications" },
+  { labelKey: "nav.distributors", to: "/admin/distributors" },
+  { labelKey: "nav.contracts", to: "/admin/contracts" },
+  { labelKey: "nav.recurring", to: "/admin/recurring-orders" },
+  { labelKey: "nav.logistics", to: "/admin/logistics" },
+  { labelKey: "nav.categories", to: "/categories" },
+  { labelKey: "nav.products", to: "/products" },
+  { labelKey: "nav.currency", to: "/admin/currency" },
+  { labelKey: "nav.onboardingSales", to: "/onboarding/sales" },
+  { labelKey: "nav.onboardingClient", to: "/onboarding/client" },
+  { labelKey: "nav.pos", to: "/pos" },
+  { labelKey: "nav.automation", to: "/admin/automation" }
 ];
 
 const reinpiaItems = [
@@ -34,14 +41,16 @@ const reinpiaItems = [
 
 export function AdminLayout() {
   const { logout, user } = useAuth();
+  const { t } = useTranslation();
 
   return (
     <div className="app-shell">
       <aside className="sidebar">
-        <h1>COMERCIA</h1>
-        <p className="brand-subtitle">by REINPIA</p>
+        <h1>{t("app.title")}</h1>
+        <p className="brand-subtitle">{t("app.subtitle")}</p>
         <p className="sidebar-user">{user?.full_name}</p>
         <p className="sidebar-role">{user?.role}</p>
+        <LanguageSelector />
         <nav>
           {navItems.map((item) => (
             <NavLink
@@ -50,7 +59,7 @@ export function AdminLayout() {
               className={({ isActive }) => (isActive ? "nav-link active" : "nav-link")}
               end={item.to === "/"}
             >
-              {item.label}
+              {t(item.labelKey)}
             </NavLink>
           ))}
           {user?.role === "reinpia_admin"
@@ -66,7 +75,7 @@ export function AdminLayout() {
             : null}
         </nav>
         <button className="button button-outline" onClick={logout} type="button">
-          Cerrar sesion
+          {t("common.logout")}
         </button>
       </aside>
       <main className="content">

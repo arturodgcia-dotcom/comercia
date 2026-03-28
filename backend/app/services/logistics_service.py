@@ -4,6 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models.models import LogisticsEvent, LogisticsOrder
+from app.services.automation_service import log_automation_event
 
 
 def add_logistics_event(db: Session, logistics_order_id: int, event_type: str, notes: str | None = None) -> LogisticsEvent:
@@ -19,7 +20,7 @@ def create_logistics_order(db: Session, **values) -> LogisticsOrder:
     db.add(row)
     db.commit()
     db.refresh(row)
-    add_logistics_event(db, row.id, "scheduled", "Orden logística creada")
+    add_logistics_event(db, row.id, "scheduled", "Orden logistica creada")
     return row
 
 
@@ -49,6 +50,13 @@ def mark_delivered(db: Session, logistics_order: LogisticsOrder) -> LogisticsOrd
     db.commit()
     db.refresh(logistics_order)
     add_logistics_event(db, logistics_order.id, "delivered", "Entrega confirmada")
+    log_automation_event(
+        db,
+        event_type="logistics_delivered",
+        tenant_id=logistics_order.tenant_id,
+        related_entity_type="logistics_order",
+        related_entity_id=logistics_order.id,
+    )
     return logistics_order
 
 

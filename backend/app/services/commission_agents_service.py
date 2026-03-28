@@ -18,6 +18,7 @@ from app.services.internal_alerts_service import (
     create_plan_purchase_alert,
     create_purchase_status_alert,
 )
+from app.services.automation_service import log_automation_event
 
 
 def generate_unique_commission_code(db: Session, agent_name: str) -> str:
@@ -156,6 +157,14 @@ def register_plan_purchase_lead(
     )
     db.add(lead)
     db.flush()
+    log_automation_event(
+        db,
+        event_type="new_plan_lead",
+        related_entity_type="plan_purchase_lead",
+        related_entity_id=lead.id,
+        payload_json=f'{{"selected_plan_code":"{selected_plan_code}","source_type":"{effective_source_type}"}}',
+        auto_commit=False,
+    )
 
     create_sales_referral(
         db=db,
@@ -205,6 +214,13 @@ def register_plan_purchase_lead(
     )
     if needs_followup:
         create_followup_required_alert(db, related_entity_type="plan_purchase_lead", related_entity_id=lead.id)
+        log_automation_event(
+            db,
+            event_type="followup_required",
+            related_entity_type="plan_purchase_lead",
+            related_entity_id=lead.id,
+            auto_commit=False,
+        )
     if needs_appointment:
         create_appointment_request_alert(db, related_entity_type="plan_purchase_lead", related_entity_id=lead.id)
     create_purchase_status_alert(

@@ -31,6 +31,12 @@
 | Modo DEMO de datos | Inicial funcional | seed multi-tenant idempotente para pruebas comerciales y demos |
 | Modo APP limpio | Inicial funcional | base minima sin data demo comercial |
 | Reset de demo | Inicial funcional | limpieza controlada de tenants/usuarios/datos demo |
+| Onboarding vendedor/cliente | Inicial funcional | guias, pasos, progreso y vistas `/onboarding/*` |
+| Internacionalizacion (i18n) | Base funcional | ES/EN con selector global y persistencia local |
+| Monedas y tipo de cambio | Inicial funcional | settings por tenant + rates manual/refresh + preview |
+| POS / WebApp base | Inicial funcional | ubicaciones, empleados, clientes y ventas POS |
+| Fidelizacion en POS | Base funcional | uso/suma de puntos en cierre de venta |
+| Automation bots/WhatsApp base | Inicial funcional | eventos, canales y templates sin proveedor externo |
 | Bots / agentes | Base arquitectura | pendiente implementacion |
 
 ## Endpoints operacion comercial (nuevos)

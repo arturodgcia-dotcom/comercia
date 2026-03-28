@@ -20,3 +20,4 @@ class UserRead(TimestampSchema):
     role: str
     is_active: bool
     tenant_id: int | None
+    preferred_language: str

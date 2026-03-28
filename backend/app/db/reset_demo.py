@@ -12,12 +12,14 @@ from app.models.models import (
     CommissionDetail,
     ContractTemplate,
     Coupon,
+    CurrencySettings,
     Customer,
     CustomerLoyaltyAccount,
     Distributor,
     DistributorApplication,
     DistributorEmployee,
     DistributorProfile,
+    ExchangeRate,
     InternalAlert,
     LogisticsEvent,
     LogisticsOrder,
@@ -28,6 +30,11 @@ from app.models.models import (
     Order,
     OrderItem,
     PlanPurchaseLead,
+    PosEmployee,
+    PosLocation,
+    PosMembershipRegistration,
+    PosSale,
+    PosSaleItem,
     Product,
     ProductReview,
     RecurringOrderItem,
@@ -43,6 +50,9 @@ from app.models.models import (
     TenantBranding,
     User,
     WishlistItem,
+    BotChannelConfig,
+    BotMessageTemplate,
+    AutomationEventLog,
 )
 
 DEMO_TENANT_SLUGS = {"reinpia", "natura-vida", "cafe-monte-alto", "demo-inactivo"}
@@ -112,6 +122,19 @@ def reset_demo_data(db: Session) -> None:
         db.execute(delete(SignedContract).where(SignedContract.contract_template_id.in_(contract_template_ids)))
 
     if tenant_ids:
+        pos_location_ids = list(db.scalars(select(PosLocation.id).where(PosLocation.tenant_id.in_(tenant_ids))).all())
+        pos_sale_ids = list(db.scalars(select(PosSale.id).where(PosSale.tenant_id.in_(tenant_ids))).all())
+        if pos_sale_ids:
+            db.execute(delete(PosSaleItem).where(PosSaleItem.pos_sale_id.in_(pos_sale_ids)))
+        if pos_location_ids:
+            db.execute(delete(PosEmployee).where(PosEmployee.pos_location_id.in_(pos_location_ids)))
+            db.execute(delete(PosMembershipRegistration).where(PosMembershipRegistration.pos_location_id.in_(pos_location_ids)))
+        db.execute(delete(PosSale).where(PosSale.tenant_id.in_(tenant_ids)))
+        db.execute(delete(PosLocation).where(PosLocation.tenant_id.in_(tenant_ids)))
+        db.execute(delete(CurrencySettings).where(CurrencySettings.tenant_id.in_(tenant_ids)))
+        db.execute(delete(BotChannelConfig).where(BotChannelConfig.tenant_id.in_(tenant_ids)))
+        db.execute(delete(BotMessageTemplate).where(BotMessageTemplate.tenant_id.in_(tenant_ids)))
+        db.execute(delete(AutomationEventLog).where(AutomationEventLog.tenant_id.in_(tenant_ids)))
         db.execute(delete(Notification).where(Notification.tenant_id.in_(tenant_ids)))
         db.execute(delete(InternalAlert).where(InternalAlert.tenant_id.in_(tenant_ids)))
         db.execute(delete(SalesReferral).where(SalesReferral.tenant_id.in_(tenant_ids)))
@@ -145,6 +168,7 @@ def reset_demo_data(db: Session) -> None:
     db.execute(delete(SalesReferral).where(SalesReferral.referral_code_entered.like(f"{DEMO_AGENT_CODE_PREFIX}%")))
     db.execute(delete(InternalAlert).where(InternalAlert.commission_agent_id.in_(select(SalesCommissionAgent.id).where(SalesCommissionAgent.code.in_(DEMO_AGENT_CODES)))))
     db.execute(delete(SalesCommissionAgent).where(SalesCommissionAgent.code.in_(DEMO_AGENT_CODES) | SalesCommissionAgent.code.like(f"{DEMO_AGENT_CODE_PREFIX}%")))
+    db.execute(delete(ExchangeRate).where(ExchangeRate.source_name.in_(["demo_manual", "local_fallback"])))
 
     db.commit()
 

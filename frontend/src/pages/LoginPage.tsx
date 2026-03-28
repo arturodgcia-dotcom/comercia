@@ -1,9 +1,12 @@
 import { FormEvent, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../app/AuthContext";
+import { LanguageSelector } from "../components/LanguageSelector";
+import { useTranslation } from "react-i18next";
 
 export function LoginPage() {
   const { login } = useAuth();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const redirectTo = (location.state as { from?: string } | undefined)?.from ?? "/";
@@ -30,22 +33,25 @@ export function LoginPage() {
   return (
     <main className="auth-shell">
       <form className="auth-card" onSubmit={handleSubmit}>
-        <h1>COMERCIA Admin</h1>
-        <p>Acceso al panel multitenant by REINPIA</p>
+        <div className="row-gap" style={{ justifyContent: "space-between" }}>
+          <h1>{t("auth.loginTitle")}</h1>
+          <LanguageSelector />
+        </div>
+        <p>{t("auth.loginSubtitle")}</p>
         {error ? <p className="error">{error}</p> : null}
         <label>
-          Email
+          {t("auth.email")}
           <input value={email} onChange={(e) => setEmail(e.target.value)} />
         </label>
         <label>
-          Password
+          {t("auth.password")}
           <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
         </label>
         <button className="button" type="submit" disabled={loading}>
-          {loading ? "Ingresando..." : "Iniciar sesion"}
+          {loading ? t("auth.loading") : t("auth.login")}
         </button>
         <Link className="button button-outline" to="/comercia">
-          Ver landing COMERCIA
+          {t("auth.goLanding")}
         </Link>
       </form>
     </main>
