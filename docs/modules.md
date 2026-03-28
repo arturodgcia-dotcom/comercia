@@ -22,8 +22,12 @@
 | Landing tenant REINPIA | Inicial funcional | ruta `/store/reinpia`, enfoque servicios y canal distribuidor |
 | Seed tenant demo REINPIA | Inicial funcional | tenant + branding + banners + 6 servicios de demo |
 | Panel global REINPIA | Inicial funcional | dashboard multi-tenant con KPIs, filtros y detalle por tenant |
-| Reporting / export CSV | Inicial funcional | exportes de ventas, comisiones, tenants y ordenes |
+| Reporting / export CSV | Inicial funcional | exportes de ventas, comisiones, tenants, ordenes, comisionistas y plan purchase leads |
 | Seguridad por rol global | Inicial funcional | acceso `/reinpia/*` restringido a `reinpia_admin` |
+| Comisionistas comerciales | Inicial funcional | CRUD de agentes, codigo unico, resumen y KPIs |
+| Referidos y leads de plan | Inicial funcional | `SalesReferral` + `PlanPurchaseLead` con trazabilidad por codigo |
+| Alertas internas | Inicial funcional | alertas para seguimiento comercial y aviso contable |
+| Landing COMERCIA lead capture | Inicial funcional | formulario real + soporte `?ref=` + registro backend |
 | Bots / agentes | Base arquitectura | pendiente implementacion |
 
 ## Endpoints operacion comercial (nuevos)
@@ -34,3 +38,18 @@
 - `/api/v1/recurring-orders/*`
 - `/api/v1/logistics/*`
 - `/api/v1/storefront/{tenant_slug}/services`
+
+## Endpoints REINPIA global y comisionistas
+- `/api/v1/reinpia/dashboard/*`
+- `/api/v1/reinpia/tenants/*`
+- `/api/v1/reinpia/payments/*`
+- `/api/v1/reinpia/appointments/*`
+- `/api/v1/reinpia/logistics/*`
+- `/api/v1/reinpia/distributors/*`
+- `/api/v1/reinpia/exports/*`
+- `/api/v1/reinpia/commission-agents/*`
+- `/api/v1/reinpia/referrals*`
+- `/api/v1/reinpia/plan-purchase-leads*`
+- `/api/v1/reinpia/alerts*`
+- `/api/v1/comercia/plan-purchase-leads`
+- `/api/v1/comercia/referral/{code}`

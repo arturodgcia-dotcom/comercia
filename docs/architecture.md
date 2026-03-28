@@ -112,3 +112,34 @@ Objetivo: base estable para BI/reporting sin dependencias de Excel en esta fase.
 - Backend: dependencia `get_reinpia_admin`.
 - Frontend: `RoleRoute` para vistas `/reinpia/*`.
 - `tenant_admin` no accede al dashboard global multi-tenant.
+
+## 15) Flujo de comisionistas y referidos
+1. COMERCIA landing acepta clave de comisionista manual y por query param `?ref=CODIGO`.
+2. Backend valida codigo en `SalesCommissionAgent`.
+3. Se registra `PlanPurchaseLead` con trazabilidad completa del comprador y plan elegido.
+4. Si hay codigo valido:
+- `is_commissioned_sale=true`
+- se crea alerta `commission_sale`
+- se crea alerta `accountant_notice`
+5. Si no hay codigo:
+- se registra venta directa
+- se crea alerta `direct_sale`
+- se crea alerta `plan_purchase`
+6. Si el lead solicita atencion o cita:
+- `needs_followup` y/o `needs_appointment`
+- alertas internas de seguimiento comercial.
+
+## 16) Alertas internas y base para bots/WhatsApp
+- `InternalAlert` centraliza eventos de operacion comercial y contable.
+- `internal_alerts_service` expone creacion tipada de alertas legibles para equipo interno.
+- base de integracion futura:
+  - bots comerciales
+  - notificaciones WhatsApp reales
+  - derivacion automatica a procesos de backoffice
+
+## 17) Exportes comerciales extendidos
+Ademas de los CSV base de reporting, se exportan:
+- `commission-agents.csv`
+- `plan-purchase-leads.csv`
+
+Esto habilita seguimiento de rendimiento por comisionista y control de pipeline de ventas de planes COMERCIA.

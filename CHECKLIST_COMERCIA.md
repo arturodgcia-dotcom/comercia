@@ -88,3 +88,17 @@
 - [x] Seed idempotente con subscription activa REINPIA para reporting base
 - [x] README/docs/checklist actualizados
 - [x] Validacion: backend compile + frontend build
+
+## Entregables ejecucion 8 (Panel Global + Comisionistas/Afiliados)
+- [x] Modelos `SalesCommissionAgent`, `SalesReferral`, `PlanPurchaseLead`, `InternalAlert`
+- [x] Servicios `commission_agents_service` e `internal_alerts_service`
+- [x] Analytics global extendido con KPIs de comisionistas y ventas directas
+- [x] Export CSV extendido: commission agents y plan purchase leads
+- [x] Endpoints REINPIA para comisionistas, referidos, leads y alertas
+- [x] Endpoints publicos COMERCIA para validar referral y registrar lead de plan
+- [x] Landing `/comercia` con captura real de lead y clave de comisionista (`?ref=`)
+- [x] Frontend REINPIA: pages `/reinpia/commission-agents` y `/reinpia/alerts`
+- [x] Dashboard REINPIA con resumen de comisionistas y alertas recientes
+- [x] Seeds idempotentes de comisionistas demo
+- [x] Documentacion actualizada (README + architecture + modules + checklist)
+- [x] Validacion: backend compile, alembic upgrade head, frontend build

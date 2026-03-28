@@ -43,6 +43,8 @@ npm run dev
   - `http://localhost:5173/reinpia/payments`
   - `http://localhost:5173/reinpia/operations`
   - `http://localhost:5173/reinpia/reports`
+  - `http://localhost:5173/reinpia/commission-agents`
+  - `http://localhost:5173/reinpia/alerts`
 
 ## Bloques funcionales implementados
 
@@ -90,14 +92,40 @@ npm run dev
   - `/api/v1/reinpia/exports/commissions.csv`
   - `/api/v1/reinpia/exports/tenants.csv`
   - `/api/v1/reinpia/exports/orders.csv`
+  - `/api/v1/reinpia/exports/commission-agents.csv`
+  - `/api/v1/reinpia/exports/plan-purchase-leads.csv`
 - seguridad por rol:
   - backend protegido por `reinpia_admin`
   - frontend oculto para roles no autorizados
+
+### Comisionistas y alertas internas (actual)
+- comisionistas comerciales (`SalesCommissionAgent`) con clave unica
+- trazabilidad de referidos (`SalesReferral`) por codigo manual o query param `?ref=`
+- captura de compra de plan COMERCIA (`PlanPurchaseLead`) con:
+  - empresa, contacto, plan seleccionado, estado de compra y flags de seguimiento
+- alertas internas (`InternalAlert`) para:
+  - venta con comisionista
+  - venta directa
+  - compra de plan
+  - seguimiento comercial
+  - aviso para contador
+- endpoints REINPIA:
+  - `/api/v1/reinpia/commission-agents*`
+  - `/api/v1/reinpia/referrals*`
+  - `/api/v1/reinpia/plan-purchase-leads*`
+  - `/api/v1/reinpia/alerts*`
+- endpoint publico para landing COMERCIA:
+  - `POST /api/v1/comercia/plan-purchase-leads`
+  - `GET /api/v1/comercia/referral/{code}`
 
 ### Landings comerciales (actual)
 - Landing corporativa COMERCIA:
   - ruta: `/comercia`
   - enfoque: captacion de leads, paquetes IMPULSA / ESCALA, widget placeholder "Lia de COMERCIA"
+  - formulario de lead comercial con:
+    - `company_name`, `legal_type`, `buyer_name`, `buyer_email`, `buyer_phone`
+    - `selected_plan_code`, `referral_code`, `needs_followup`, `needs_appointment`, `notes`
+  - autollenado de clave de comisionista por query param `?ref=`
 - Landing tenant REINPIA:
   - ruta: `/store/reinpia`
   - enfoque: venta de servicios, canal agencias/distribuidores, widget placeholder "SofIA by REINPIA"
