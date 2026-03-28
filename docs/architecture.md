@@ -182,3 +182,49 @@ Se agregaron bloques de cierre para operacion demostrable local:
 - fidelizacion integrada al flujo POS (uso y suma de puntos)
 - separacion operativa de punto propio, franquicia y punto distribuidor por `location_type`
 - base de automation/bots con eventos + plantillas + canales sin proveedor externo
+
+## 21) Centinela seguridad / antifraude (MVP)
+Se implemento un modulo de vigilancia operativa llamado "centinela":
+
+Dominio:
+- `SecurityEvent`: bitacora de eventos de riesgo.
+- `SecurityRule`: umbrales y acciones configurables.
+- `SecurityAlert`: alertas accionables para revision.
+- `RiskScore`: scoring base por entidad.
+- `BlockedEntity`: bloqueo temporal/manual de IP, usuario, cupon o referral.
+
+Reglas iniciales:
+- `LOGIN_FAIL_5_IN_10`
+- `FAILED_PAYMENTS_3_IN_15`
+- `COUPON_ABUSE_10_IN_30`
+- `REFERRAL_ABUSE_8_IN_30`
+- `ADMIN_ACTION_SPIKE`
+- `WEBHOOK_FAILURE_REPEAT`
+
+Integraciones actuales:
+- Auth:
+  - login fallido -> evento `login_failed`
+  - login exitoso -> evento `login_success`
+  - umbral excedido -> alerta + bloqueo temporal IP (si aplica)
+- Pagos:
+  - `payment_intent.payment_failed` -> evento + evaluacion de pagos fallidos
+- Cupones:
+  - validaciones fallidas repetidas -> evento `coupon_abuse`
+- Comisionistas/referral:
+  - codigos invalidos o uso anormal -> `referral_code_abuse` / `suspicious_commission_activity`
+- Stripe webhooks:
+  - falla de verificacion -> `webhook_verification_failed`
+- POS:
+  - venta con monto inusualmente alto -> `abnormal_pos_activity`
+
+Paneles frontend REINPIA:
+- `/reinpia/security`
+- `/reinpia/security/alerts`
+- `/reinpia/security/rules`
+- `/reinpia/security/blocked`
+
+Limitaciones MVP:
+- no sustituye soluciones de seguridad perimetral (WAF/IDS/SIEM)
+- no aplica bloqueo a nivel infraestructura de red
+- no integra proveedores externos antifraude en esta fase
+- sirve como capa de observabilidad, alertado y control interno base

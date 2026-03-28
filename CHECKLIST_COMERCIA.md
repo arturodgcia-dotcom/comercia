@@ -128,3 +128,16 @@
 - [x] Base automation para bots/WhatsApp: canales, templates y eventos
 - [x] Seeds DEMO/APP actualizados para onboarding, currency, POS y automation
 - [x] Validacion: backend compile + alembic upgrade head + seed_app_base + seed_demo + frontend build
+
+## Entregables ejecucion 11 (Centinela seguridad / antifraude)
+- [x] Auditoria inicial: modulo centinela faltante identificado (modelos/servicios/endpoints/frontend)
+- [x] Modelos creados: `SecurityEvent`, `SecurityRule`, `SecurityAlert`, `RiskScore`, `BlockedEntity`
+- [x] Servicios creados: `security_watch_service`, `security_rules_service`, `security_hooks`
+- [x] Reglas iniciales sembradas (`LOGIN_FAIL_5_IN_10`, `FAILED_PAYMENTS_3_IN_15`, `COUPON_ABUSE_10_IN_30`, `REFERRAL_ABUSE_8_IN_30`, `ADMIN_ACTION_SPIKE`, `WEBHOOK_FAILURE_REPEAT`)
+- [x] Endpoints `/api/v1/security/*` protegidos para `reinpia_admin`
+- [x] Integraciones reales en auth, cupones, referral/comisionistas, webhook Stripe y POS
+- [x] Frontend seguridad REINPIA: dashboard, alerts, rules y blocked entities
+- [x] Componentes UI centinela: `SecurityKpiCard`, `SecurityEventTable`, `SecurityAlertList`, `RuleEditorCard`, `BlockedEntityTable`
+- [x] Seeds demo idempotentes de eventos, alertas, bloqueos y reglas de seguridad
+- [x] Documentacion actualizada (README, architecture, modules, checklist)
+- [x] Validacion: backend compile + alembic upgrade head + frontend build

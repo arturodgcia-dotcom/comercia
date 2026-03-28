@@ -37,6 +37,7 @@
 | POS / WebApp base | Inicial funcional | ubicaciones, empleados, clientes y ventas POS |
 | Fidelizacion en POS | Base funcional | uso/suma de puntos en cierre de venta |
 | Automation bots/WhatsApp base | Inicial funcional | eventos, canales y templates sin proveedor externo |
+| Centinela seguridad/antifraude | Inicial funcional | eventos, reglas, alertas, bloqueos y panel REINPIA security |
 | Bots / agentes | Base arquitectura | pendiente implementacion |
 
 ## Endpoints operacion comercial (nuevos)
@@ -62,3 +63,14 @@
 - `/api/v1/reinpia/alerts*`
 - `/api/v1/comercia/plan-purchase-leads`
 - `/api/v1/comercia/referral/{code}`
+
+## Endpoints centinela seguridad
+- `/api/v1/security/events`
+- `/api/v1/security/alerts`
+- `/api/v1/security/alerts/{id}/read`
+- `/api/v1/security/rules`
+- `/api/v1/security/rules/{id}`
+- `/api/v1/security/rules/{id}/toggle`
+- `/api/v1/security/blocked-entities`
+- `/api/v1/security/blocked-entities/{id}/unblock`
+- `/api/v1/security/kpis`

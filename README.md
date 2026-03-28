@@ -74,6 +74,10 @@ npm run dev
   - `http://localhost:5173/reinpia/reports`
   - `http://localhost:5173/reinpia/commission-agents`
   - `http://localhost:5173/reinpia/alerts`
+  - `http://localhost:5173/reinpia/security`
+  - `http://localhost:5173/reinpia/security/alerts`
+  - `http://localhost:5173/reinpia/security/rules`
+  - `http://localhost:5173/reinpia/security/blocked`
 - Onboarding:
   - `http://localhost:5173/onboarding/sales`
   - `http://localhost:5173/onboarding/client`
@@ -220,6 +224,48 @@ npm run dev
 - endpoint publico para landing COMERCIA:
   - `POST /api/v1/comercia/plan-purchase-leads`
   - `GET /api/v1/comercia/referral/{code}`
+
+### Centinela seguridad / antifraude (actual)
+- modelos:
+  - `SecurityEvent`
+  - `SecurityRule`
+  - `SecurityAlert`
+  - `RiskScore`
+  - `BlockedEntity`
+- endpoints:
+  - `GET /api/v1/security/events`
+  - `GET /api/v1/security/alerts`
+  - `PUT /api/v1/security/alerts/{id}/read`
+  - `GET /api/v1/security/rules`
+  - `PUT /api/v1/security/rules/{id}`
+  - `POST /api/v1/security/rules/{id}/toggle`
+  - `GET /api/v1/security/blocked-entities`
+  - `POST /api/v1/security/blocked-entities`
+  - `PUT /api/v1/security/blocked-entities/{id}/unblock`
+  - `GET /api/v1/security/kpis`
+- reglas iniciales sembradas:
+  - `LOGIN_FAIL_5_IN_10`
+  - `FAILED_PAYMENTS_3_IN_15`
+  - `COUPON_ABUSE_10_IN_30`
+  - `REFERRAL_ABUSE_8_IN_30`
+  - `ADMIN_ACTION_SPIKE`
+  - `WEBHOOK_FAILURE_REPEAT`
+- integraciones reales:
+  - login fallido/exitoso
+  - fallos de pago por webhook Stripe
+  - validacion fallida de cupon
+  - validacion fallida de referral/comisionista
+  - falla de verificacion de webhook
+  - alerta base por actividad POS inusual
+- paneles frontend:
+  - `/reinpia/security`
+  - `/reinpia/security/alerts`
+  - `/reinpia/security/rules`
+  - `/reinpia/security/blocked`
+- limitaciones MVP:
+  - no reemplaza un SIEM/WAF/IDS dedicado
+  - no integra bloqueo de red real ni proveedores antifraude externos
+  - enfocado a monitoreo operativo, scoring base y respuesta inicial interna
 
 ### Landings comerciales (actual)
 - Landing corporativa COMERCIA:
