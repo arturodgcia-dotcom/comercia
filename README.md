@@ -72,6 +72,11 @@ npm run dev
   - `http://localhost:5173/reinpia/payments`
   - `http://localhost:5173/reinpia/operations`
   - `http://localhost:5173/reinpia/reports`
+  - `http://localhost:5173/reinpia/reports/overview`
+  - `http://localhost:5173/reinpia/reports/growth`
+  - `http://localhost:5173/reinpia/reports/commissions`
+  - `http://localhost:5173/reinpia/reports/leads`
+  - `http://localhost:5173/reinpia/reports/marketing-opportunities`
   - `http://localhost:5173/reinpia/commission-agents`
   - `http://localhost:5173/reinpia/alerts`
   - `http://localhost:5173/reinpia/security`
@@ -88,6 +93,15 @@ npm run dev
   - `http://localhost:5173/pos/locations`
   - `http://localhost:5173/pos/sales`
   - `http://localhost:5173/pos/customers`
+- Reportes tenant:
+  - `http://localhost:5173/admin/reports`
+  - `http://localhost:5173/admin/reports/sales`
+  - `http://localhost:5173/admin/reports/products`
+  - `http://localhost:5173/admin/reports/loyalty`
+  - `http://localhost:5173/admin/reports/distributors`
+  - `http://localhost:5173/admin/reports/logistics`
+  - `http://localhost:5173/admin/reports/services`
+  - `http://localhost:5173/admin/reports/marketing`
 - Automation base:
   - `http://localhost:5173/admin/automation`
 
@@ -142,6 +156,31 @@ npm run dev
 - seguridad por rol:
   - backend protegido por `reinpia_admin`
   - frontend oculto para roles no autorizados
+
+### Reportes e insights (actual)
+- reportes tenant (`/api/v1/reports/tenant/{tenant_id}/*`):
+  - overview, users, sales, memberships, loyalty
+  - products (top-selling, low-selling, unsold)
+  - distributors, logistics, services
+  - marketing-insights
+- reportes REINPIA global:
+  - `/api/v1/reinpia/reports/overview`
+  - `/api/v1/reinpia/reports/tenants-growth`
+  - `/api/v1/reinpia/reports/commissions`
+  - `/api/v1/reinpia/reports/leads`
+  - `/api/v1/reinpia/reports/marketing-opportunities`
+  - `/api/v1/reinpia/reports/commercial-summary`
+- periodos soportados:
+  - `day`, `week`, `fortnight`, `month`, `quarter`, `half_year`, `year`, `custom`
+- exports tenant:
+  - `users.csv`, `sales.csv`, `products.csv`, `loyalty.csv`, `distributors.csv`, `logistics.csv`, `services.csv`, `marketing-insights.csv`
+- insights de marketing:
+  - producto mas vendido/menos vendido/sin ventas
+  - categoria fuerte/debil
+  - cupon efectivo
+  - baja recompra
+  - canal distribuidor activo/inactivo
+  - servicio mas reservado y cancelaciones
 
 ### Onboarding (actual)
 - guias y pasos persistidos en backend:

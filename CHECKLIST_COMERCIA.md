@@ -141,3 +141,17 @@
 - [x] Seeds demo idempotentes de eventos, alertas, bloqueos y reglas de seguridad
 - [x] Documentacion actualizada (README, architecture, modules, checklist)
 - [x] Validacion: backend compile + alembic upgrade head + frontend build
+
+## Entregables ejecucion 12 (Reportes e insights comerciales)
+- [x] Modelos de soporte reportes: `ReportRequest`, `ReportInsight`, `MarketingInsight`
+- [x] Servicios: `reporting_periods`, `reporting_service`, `marketing_insights_service`, `report_export_service`
+- [x] Endpoints tenant: overview/users/sales/memberships/loyalty/products/distributors/logistics/services/marketing-insights
+- [x] Endpoints REINPIA global: overview/tenants-growth/commissions/leads/marketing-opportunities/commercial-summary
+- [x] Exports tenant CSV: users, sales, products, loyalty, distributors, logistics, services, marketing-insights
+- [x] Soporte de periodos: day, week, fortnight, month, quarter, half_year, year, custom
+- [x] Frontend tenant reports pages implementadas bajo `/admin/reports*`
+- [x] Frontend REINPIA reportes ejecutivos implementados bajo `/reinpia/reports/*`
+- [x] Componentes UI de reportes: `ReportKpiCard`, `PeriodSelector`, `InsightCard`, `ReportSection`, `RankingTable`, `StatusSummaryCard`, `ExportCsvButton`
+- [x] Permisos: tenant report routes restringidas a `tenant_admin|tenant_staff|reinpia_admin`; global REINPIA a `reinpia_admin`
+- [x] Seed demo ajustado para fechas distribuidas y marketing insights idempotentes
+- [x] Validacion ejecutada: backend compile, alembic upgrade head, seed_demo, frontend build

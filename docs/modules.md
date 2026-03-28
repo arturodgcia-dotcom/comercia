@@ -23,6 +23,7 @@
 | Seed tenant demo REINPIA | Inicial funcional | tenant + branding + banners + 6 servicios de demo |
 | Panel global REINPIA | Inicial funcional | dashboard multi-tenant con KPIs, filtros y detalle por tenant |
 | Reporting / export CSV | Inicial funcional | exportes de ventas, comisiones, tenants, ordenes, comisionistas y plan purchase leads |
+| Reportes tenant e insights marketing | Inicial funcional | reportes por modulo (ventas, productos, loyalty, distribuidores, logistica, servicios) + recomendaciones |
 | Seguridad por rol global | Inicial funcional | acceso `/reinpia/*` restringido a `reinpia_admin` |
 | Comisionistas comerciales | Inicial funcional | CRUD de agentes, codigo unico, resumen y KPIs |
 | Referidos y leads de plan | Inicial funcional | `SalesReferral` + `PlanPurchaseLead` con trazabilidad por codigo |
@@ -61,8 +62,29 @@
 - `/api/v1/reinpia/referrals*`
 - `/api/v1/reinpia/plan-purchase-leads*`
 - `/api/v1/reinpia/alerts*`
+- `/api/v1/reinpia/reports/overview`
+- `/api/v1/reinpia/reports/tenants-growth`
+- `/api/v1/reinpia/reports/commissions`
+- `/api/v1/reinpia/reports/leads`
+- `/api/v1/reinpia/reports/marketing-opportunities`
+- `/api/v1/reinpia/reports/commercial-summary`
 - `/api/v1/comercia/plan-purchase-leads`
 - `/api/v1/comercia/referral/{code}`
+
+## Endpoints reportes tenant
+- `/api/v1/reports/tenant/{tenant_id}/overview`
+- `/api/v1/reports/tenant/{tenant_id}/users`
+- `/api/v1/reports/tenant/{tenant_id}/sales`
+- `/api/v1/reports/tenant/{tenant_id}/memberships`
+- `/api/v1/reports/tenant/{tenant_id}/loyalty`
+- `/api/v1/reports/tenant/{tenant_id}/products/top-selling`
+- `/api/v1/reports/tenant/{tenant_id}/products/low-selling`
+- `/api/v1/reports/tenant/{tenant_id}/products/unsold`
+- `/api/v1/reports/tenant/{tenant_id}/distributors`
+- `/api/v1/reports/tenant/{tenant_id}/logistics`
+- `/api/v1/reports/tenant/{tenant_id}/services`
+- `/api/v1/reports/tenant/{tenant_id}/marketing-insights`
+- `/api/v1/reports/tenant/{tenant_id}/export/*.csv`
 
 ## Endpoints centinela seguridad
 - `/api/v1/security/events`

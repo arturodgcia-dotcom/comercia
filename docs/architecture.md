@@ -228,3 +228,49 @@ Limitaciones MVP:
 - no aplica bloqueo a nivel infraestructura de red
 - no integra proveedores externos antifraude en esta fase
 - sirve como capa de observabilidad, alertado y control interno base
+
+## 22) Modulo de reportes e insights (tenant + REINPIA)
+Se agrego una capa de reporting transversal para operacion, comercial y marketing:
+
+Modelos de soporte:
+- `ReportRequest` (preparado para solicitudes asinc/report queue en fases futuras)
+- `ReportInsight` (insights sintetizados por reporte)
+- `MarketingInsight` (insights accionables por tenant)
+
+Servicios:
+- `reporting_service.py`:
+  - usuarios, ventas, memberships, loyalty
+  - top/low/unsold products
+  - categorias fuertes/debiles
+  - distribuidores, logistica, servicios, citas
+  - cupones y recompra (repeat vs new)
+  - revenue timeseries
+- `marketing_insights_service.py`:
+  - reglas simples sin IA externa para recomendaciones comerciales accionables
+- `report_export_service.py`:
+  - export CSV por modulo tenant
+- `reporting_periods.py`:
+  - periodos: `day`, `week`, `fortnight`, `month`, `quarter`, `half_year`, `year`, `custom`
+  - helper de rango y agrupacion temporal
+
+Vistas tenant:
+- `/admin/reports`
+- `/admin/reports/sales`
+- `/admin/reports/products`
+- `/admin/reports/loyalty`
+- `/admin/reports/distributors`
+- `/admin/reports/logistics`
+- `/admin/reports/services`
+- `/admin/reports/marketing`
+
+Vistas REINPIA ejecutivas:
+- `/reinpia/reports/overview`
+- `/reinpia/reports/growth`
+- `/reinpia/reports/commissions`
+- `/reinpia/reports/leads`
+- `/reinpia/reports/marketing-opportunities`
+
+Permisos:
+- `tenant_admin` / `tenant_staff` / `reinpia_admin` acceden a reportes tenant
+- `reinpia_admin` accede a reportes globales REINPIA
+- `distributor_user` queda fuera de vistas admin de reportes
