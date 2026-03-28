@@ -11,6 +11,14 @@ class TenantCreate(BaseModel):
     is_active: bool = True
 
 
+class TenantUpdate(BaseModel):
+    name: str | None = None
+    slug: str | None = None
+    subdomain: str | None = None
+    business_type: str | None = None
+    is_active: bool | None = None
+
+
 class TenantRead(TimestampSchema):
     id: int
     name: str
