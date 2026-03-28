@@ -1,8 +1,9 @@
 type ExportButtonsProps = {
-  onExport: (type: "sales" | "commissions" | "tenants" | "orders") => void;
+  onExport: (type: "sales" | "commissions" | "tenants" | "orders" | "commission-agents" | "plan-purchase-leads") => void;
+  extended?: boolean;
 };
 
-export function ExportButtons({ onExport }: ExportButtonsProps) {
+export function ExportButtons({ onExport, extended = false }: ExportButtonsProps) {
   return (
     <div className="row-gap">
       <button className="button button-outline" type="button" onClick={() => onExport("sales")}>
@@ -17,7 +18,16 @@ export function ExportButtons({ onExport }: ExportButtonsProps) {
       <button className="button button-outline" type="button" onClick={() => onExport("orders")}>
         Export orders CSV
       </button>
+      {extended ? (
+        <>
+          <button className="button button-outline" type="button" onClick={() => onExport("commission-agents")}>
+            Export comisionistas CSV
+          </button>
+          <button className="button button-outline" type="button" onClick={() => onExport("plan-purchase-leads")}>
+            Export leads planes CSV
+          </button>
+        </>
+      ) : null}
     </div>
   );
 }
-

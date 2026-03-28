@@ -1,22 +1,53 @@
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { AgentWidgetPlaceholder } from "../components/marketing/AgentWidgetPlaceholder";
 import { AudienceSplitSection } from "../components/marketing/AudienceSplitSection";
 import { CTASection } from "../components/marketing/CTASection";
 import { HeroSection } from "../components/marketing/HeroSection";
 import { PackageCard } from "../components/marketing/PackageCard";
 import { SolutionCard } from "../components/marketing/SolutionCard";
+import { api } from "../services/api";
 
 export function ComerciaLandingPage() {
-  const [leadForm, setLeadForm] = useState({
-    company: "",
-    contact: "",
-    plan_interest: "COMERCIA IMPULSA"
-  });
+  const [searchParams] = useSearchParams();
+  const refQuery = searchParams.get("ref") ?? "";
+  const [refStatus, setRefStatus] = useState<"unknown" | "valid" | "invalid">("unknown");
   const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState("");
+  const [leadForm, setLeadForm] = useState({
+    company_name: "",
+    legal_type: "constituted_company",
+    buyer_name: "",
+    buyer_email: "",
+    buyer_phone: "",
+    selected_plan_code: "COMERCIA_IMPULSA",
+    referral_code: refQuery,
+    needs_followup: true,
+    needs_appointment: false,
+    notes: ""
+  });
 
-  const handleLeadSubmit = (event: FormEvent) => {
+  useEffect(() => {
+    if (!refQuery) return;
+    api
+      .getComerciaReferralValidation(refQuery)
+      .then((result) => setRefStatus(result.valid ? "valid" : "invalid"))
+      .catch(() => setRefStatus("invalid"));
+  }, [refQuery]);
+
+  const handleLeadSubmit = async (event: FormEvent) => {
     event.preventDefault();
-    setSubmitted(true);
+    try {
+      setError("");
+      await api.createComerciaPlanPurchaseLead({
+        ...leadForm,
+        purchase_status: "initiated",
+        referral_code: leadForm.referral_code || undefined
+      });
+      setSubmitted(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "No fue posible registrar el lead comercial");
+    }
   };
 
   return (
@@ -50,7 +81,7 @@ export function ComerciaLandingPage() {
         <div className="card-grid">
           <SolutionCard title="Landing profesional por marca" description="Mensajes y conversion orientados a performance comercial." tag="Branding" />
           <SolutionCard title="Ecommerce para publico y distribuidores" description="Venta directa y canal comercial en una sola operacion." tag="Ventas" />
-          <SolutionCard title="Marketing de arranque" description="Activacion inicial para captar demanda con campañas ordenadas." tag="Arranque" />
+          <SolutionCard title="Marketing de arranque" description="Activacion inicial para captar demanda con campanas ordenadas." tag="Arranque" />
           <SolutionCard title="Automatizacion comercial" description="Flujos para responder, vender y dar seguimiento con menos friccion." tag="IA" />
           <SolutionCard title="Fidelizacion y recompra" description="Puntos, cupones y membresias para elevar ticket y recurrencia." tag="Growth" />
           <SolutionCard title="Escalamiento por etapas" description="Base robusta para crecer sin rehacer toda la operacion." tag="Escala" />
@@ -91,58 +122,56 @@ export function ComerciaLandingPage() {
       <AgentWidgetPlaceholder
         name="Lia de COMERCIA"
         description="Agente comercial que te orienta para elegir paquete segun etapa del negocio, formalidad y objetivo comercial."
-        bullets={[
-          "Evalua etapa comercial",
-          "Sugiere paquete recomendado",
-          "Deja ruta de implementacion inicial"
-        ]}
+        bullets={["Evalua etapa comercial", "Sugiere paquete recomendado", "Deja ruta de implementacion inicial"]}
         accent="#1c5fd4"
       />
 
       <AudienceSplitSection
         title="Ruta de activacion comercial"
         leftTitle="Quiero diagnostico rapido"
-        leftBullets={[
-          "Diagnostico comercial inicial",
-          "Recomendacion de paquete",
-          "Plan de arranque en etapas"
-        ]}
+        leftBullets={["Diagnostico comercial inicial", "Recomendacion de paquete", "Plan de arranque en etapas"]}
         rightTitle="Quiero hablar con asesor"
-        rightBullets={[
-          "Sesion de enfoque comercial",
-          "Definicion de alcance y tiempos",
-          "Ruta operativa para implementacion"
-        ]}
+        rightBullets={["Sesion de enfoque comercial", "Definicion de alcance y tiempos", "Ruta operativa para implementacion"]}
       />
 
       <section id="diagnostico" className="store-banner">
         <h2>Diagnostico comercial</h2>
-        <p>Comparte tus datos y te guiamos al paquete correcto.</p>
+        <p>Comparte tus datos y te guiamos al paquete correcto. Solo para empresas constituidas o actividad empresarial.</p>
         <form className="inline-form" onSubmit={handleLeadSubmit}>
-          <input
-            required
-            placeholder="Nombre de empresa"
-            value={leadForm.company}
-            onChange={(e) => setLeadForm((p) => ({ ...p, company: e.target.value }))}
-          />
-          <input
-            required
-            placeholder="Contacto"
-            value={leadForm.contact}
-            onChange={(e) => setLeadForm((p) => ({ ...p, contact: e.target.value }))}
-          />
-          <select
-            value={leadForm.plan_interest}
-            onChange={(e) => setLeadForm((p) => ({ ...p, plan_interest: e.target.value }))}
-          >
-            <option value="COMERCIA IMPULSA">COMERCIA IMPULSA</option>
-            <option value="COMERCIA ESCALA">COMERCIA ESCALA</option>
+          <input required placeholder="Empresa" value={leadForm.company_name} onChange={(e) => setLeadForm((p) => ({ ...p, company_name: e.target.value }))} />
+          <select value={leadForm.legal_type} onChange={(e) => setLeadForm((p) => ({ ...p, legal_type: e.target.value }))}>
+            <option value="constituted_company">Empresa constituida</option>
+            <option value="actividad_empresarial">Actividad empresarial</option>
+            <option value="other">Otro</option>
           </select>
+          <input required placeholder="Nombre comprador" value={leadForm.buyer_name} onChange={(e) => setLeadForm((p) => ({ ...p, buyer_name: e.target.value }))} />
+          <input required placeholder="Email comprador" value={leadForm.buyer_email} onChange={(e) => setLeadForm((p) => ({ ...p, buyer_email: e.target.value }))} />
+          <input required placeholder="Telefono comprador" value={leadForm.buyer_phone} onChange={(e) => setLeadForm((p) => ({ ...p, buyer_phone: e.target.value }))} />
+          <select value={leadForm.selected_plan_code} onChange={(e) => setLeadForm((p) => ({ ...p, selected_plan_code: e.target.value }))}>
+            <option value="COMERCIA_IMPULSA">COMERCIA IMPULSA</option>
+            <option value="COMERCIA_ESCALA">COMERCIA ESCALA</option>
+          </select>
+          <input
+            placeholder="Clave de comisionista (opcional)"
+            value={leadForm.referral_code}
+            onChange={(e) => setLeadForm((p) => ({ ...p, referral_code: e.target.value.toUpperCase() }))}
+          />
+          <label className="checkbox">
+            <input type="checkbox" checked={leadForm.needs_followup} onChange={(e) => setLeadForm((p) => ({ ...p, needs_followup: e.target.checked }))} />
+            Solicito seguimiento comercial
+          </label>
+          <label className="checkbox">
+            <input type="checkbox" checked={leadForm.needs_appointment} onChange={(e) => setLeadForm((p) => ({ ...p, needs_appointment: e.target.checked }))} />
+            Solicito cita de diagnostico
+          </label>
+          <input placeholder="Notas" value={leadForm.notes} onChange={(e) => setLeadForm((p) => ({ ...p, notes: e.target.value }))} />
           <button className="button" type="submit">
-            Solicitar diagnostico
+            Registrar lead de plan
           </button>
         </form>
-        {submitted ? <p>Solicitud recibida. Un asesor de COMERCIA te contactara pronto.</p> : null}
+        {refQuery ? <p>Referencia detectada: {refQuery} ({refStatus === "valid" ? "valida" : refStatus === "invalid" ? "invalida" : "verificando"})</p> : null}
+        {error ? <p className="error">{error}</p> : null}
+        {submitted ? <p>Lead registrado. El equipo comercial y contable ya fue notificado internamente.</p> : null}
       </section>
 
       <CTASection

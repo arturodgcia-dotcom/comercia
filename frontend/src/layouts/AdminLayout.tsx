@@ -27,7 +27,9 @@ const reinpiaItems = [
   { label: "RG Tenants", to: "/reinpia/tenants" },
   { label: "RG Payments", to: "/reinpia/payments" },
   { label: "RG Operations", to: "/reinpia/operations" },
-  { label: "RG Reports", to: "/reinpia/reports" }
+  { label: "RG Reports", to: "/reinpia/reports" },
+  { label: "RG Agents", to: "/reinpia/commission-agents" },
+  { label: "RG Alerts", to: "/reinpia/alerts" }
 ];
 
 export function AdminLayout() {

@@ -18,7 +18,9 @@ export function ReinpiaReportsPage() {
     return params.toString();
   }, [filters]);
 
-  const handleExport = async (type: "sales" | "commissions" | "tenants" | "orders") => {
+  const handleExport = async (
+    type: "sales" | "commissions" | "tenants" | "orders" | "commission-agents" | "plan-purchase-leads"
+  ) => {
     if (!token) return;
     const url = `${import.meta.env.VITE_API_URL ?? "http://localhost:8000"}/api/v1/reinpia/exports/${type}.csv${query ? `?${query}` : ""}`;
     const response = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
@@ -39,10 +41,9 @@ export function ReinpiaReportsPage() {
       <section className="store-banner">
         <h3>Exportables disponibles</h3>
         <p>Ventas globales, comisiones, resumen de tenants y ordenes completas.</p>
-        <ExportButtons onExport={handleExport} />
+        <ExportButtons onExport={handleExport} extended />
       </section>
       {message ? <p>{message}</p> : null}
     </section>
   );
 }
-

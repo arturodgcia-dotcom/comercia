@@ -425,6 +425,13 @@ export interface ReinpiaGlobalKpis {
   total_appointments: number;
   total_logistics_orders: number;
   delivered_logistics_orders: number;
+  total_commission_agents: number;
+  total_commission_sales: number;
+  total_direct_sales: number;
+  total_plan_purchase_leads: number;
+  total_leads_requiring_followup: number;
+  total_leads_requesting_appointment: number;
+  total_accountant_notices_pending: number;
 }
 
 export interface ReinpiaKpisResponse {
@@ -488,4 +495,70 @@ export interface ReinpiaSummaryByStatus {
 export interface ReinpiaDistributorsSummary {
   total_applications: number;
   approved_profiles: number;
+}
+
+export interface SalesCommissionAgent {
+  id: number;
+  code: string;
+  full_name: string;
+  email: string;
+  phone?: string | null;
+  is_active: boolean;
+  commission_percentage: number;
+  valid_from?: string | null;
+  valid_until?: string | null;
+  notes?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SalesReferral {
+  id: number;
+  commission_agent_id?: number | null;
+  tenant_id?: number | null;
+  lead_email?: string | null;
+  lead_name?: string | null;
+  lead_phone?: string | null;
+  source_type: string;
+  referral_code_entered?: string | null;
+  plan_code?: string | null;
+  needs_followup: boolean;
+  needs_appointment: boolean;
+  requested_contact: boolean;
+  status: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PlanPurchaseLead {
+  id: number;
+  company_name: string;
+  legal_type: string;
+  buyer_name: string;
+  buyer_email: string;
+  buyer_phone: string;
+  selected_plan_code: string;
+  commission_agent_id?: number | null;
+  referral_code?: string | null;
+  is_commissioned_sale: boolean;
+  needs_followup: boolean;
+  needs_appointment: boolean;
+  purchase_status: string;
+  notes?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface InternalAlert {
+  id: number;
+  alert_type: string;
+  related_entity_type?: string | null;
+  related_entity_id?: number | null;
+  tenant_id?: number | null;
+  commission_agent_id?: number | null;
+  title: string;
+  message: string;
+  severity: "info" | "warning" | "high" | string;
+  is_read: boolean;
+  created_at: string;
 }

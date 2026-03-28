@@ -24,11 +24,13 @@ import { ProductDetailPage } from "../pages/ProductDetailPage";
 import { ProductsPage } from "../pages/ProductsPage";
 import { RecurringOrdersAdminPage } from "../pages/RecurringOrdersAdminPage";
 import { ReinpiaDashboardPage } from "../pages/ReinpiaDashboardPage";
+import { ReinpiaCommissionAgentsPage } from "../pages/ReinpiaCommissionAgentsPage";
 import { ReinpiaOperationsPage } from "../pages/ReinpiaOperationsPage";
 import { ReinpiaPaymentsPage } from "../pages/ReinpiaPaymentsPage";
 import { ReinpiaReportsPage } from "../pages/ReinpiaReportsPage";
 import { ReinpiaTenantDetailPage } from "../pages/ReinpiaTenantDetailPage";
 import { ReinpiaTenantsPage } from "../pages/ReinpiaTenantsPage";
+import { ReinpiaAlertsPage } from "../pages/ReinpiaAlertsPage";
 import { ReviewsAdminPage } from "../pages/ReviewsAdminPage";
 import { ServiceDetailPage } from "../pages/ServiceDetailPage";
 import { ServicesAdminPage } from "../pages/ServicesAdminPage";
@@ -78,6 +80,8 @@ export function AppRouter() {
             <Route path="reinpia/payments" element={<ReinpiaPaymentsPage />} />
             <Route path="reinpia/operations" element={<ReinpiaOperationsPage />} />
             <Route path="reinpia/reports" element={<ReinpiaReportsPage />} />
+            <Route path="reinpia/commission-agents" element={<ReinpiaCommissionAgentsPage />} />
+            <Route path="reinpia/alerts" element={<ReinpiaAlertsPage />} />
           </Route>
           <Route path="categories" element={<CategoriesPage />} />
           <Route path="products" element={<ProductsPage />} />

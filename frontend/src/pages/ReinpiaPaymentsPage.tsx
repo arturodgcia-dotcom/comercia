@@ -40,7 +40,9 @@ export function ReinpiaPaymentsPage() {
       .catch((err) => setError(err instanceof Error ? err.message : "No fue posible cargar payments globales"));
   }, [token, query]);
 
-  const handleExport = async (type: "sales" | "commissions" | "tenants" | "orders") => {
+  const handleExport = async (
+    type: "sales" | "commissions" | "tenants" | "orders" | "commission-agents" | "plan-purchase-leads"
+  ) => {
     if (!token) return;
     const { url } = api.getReinpiaExportUrl(token, type, query);
     const response = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
@@ -93,4 +95,3 @@ export function ReinpiaPaymentsPage() {
     </section>
   );
 }
-

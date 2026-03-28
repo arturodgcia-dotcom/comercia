@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "../app/AuthContext";
+import { AlertsList } from "../components/AlertsList";
 import { EmptyState } from "../components/EmptyState";
 import { FilterBar } from "../components/FilterBar";
 import { KpiCard } from "../components/KpiCard";
@@ -7,7 +8,7 @@ import { PageHeader } from "../components/PageHeader";
 import { SimpleChartSection } from "../components/SimpleChartSection";
 import { SummaryTable } from "../components/SummaryTable";
 import { api } from "../services/api";
-import { ReinpiaKpisResponse, ReinpiaTimeseriesPoint } from "../types/domain";
+import { InternalAlert, ReinpiaKpisResponse, ReinpiaTimeseriesPoint } from "../types/domain";
 
 export function ReinpiaDashboardPage() {
   const { token } = useAuth();
@@ -15,6 +16,7 @@ export function ReinpiaDashboardPage() {
   const [kpis, setKpis] = useState<ReinpiaKpisResponse | null>(null);
   const [timeseries, setTimeseries] = useState<ReinpiaTimeseriesPoint[]>([]);
   const [topTenants, setTopTenants] = useState<Array<{ tenant_id: number; tenant_name: string; revenue: number; commissions: number; net_amount: number }>>([]);
+  const [alerts, setAlerts] = useState<InternalAlert[]>([]);
   const [error, setError] = useState("");
 
   const query = useMemo(() => {
@@ -31,12 +33,14 @@ export function ReinpiaDashboardPage() {
     Promise.all([
       api.getReinpiaDashboardKpis(token, query),
       api.getReinpiaOrdersTimeseries(token, query),
-      api.getReinpiaTopTenants(token, query)
+      api.getReinpiaTopTenants(token, query),
+      api.getReinpiaAlerts(token, "is_read=false")
     ])
-      .then(([kpiData, tsData, top]) => {
+      .then(([kpiData, tsData, top, alertsData]) => {
         setKpis(kpiData);
         setTimeseries(tsData);
         setTopTenants(top);
+        setAlerts(alertsData.slice(0, 6));
       })
       .catch((err) => setError(err instanceof Error ? err.message : "No fue posible cargar dashboard global"));
   }, [token, query]);
@@ -65,6 +69,13 @@ export function ReinpiaDashboardPage() {
         <KpiCard label="Citas" value={kpis.kpis.total_appointments} />
         <KpiCard label="Logistica total" value={kpis.kpis.total_logistics_orders} />
         <KpiCard label="Logistica entregada" value={kpis.kpis.delivered_logistics_orders} />
+        <KpiCard label="Comisionistas" value={kpis.kpis.total_commission_agents} />
+        <KpiCard label="Ventas comisionadas" value={kpis.kpis.total_commission_sales} />
+        <KpiCard label="Ventas directas" value={kpis.kpis.total_direct_sales} />
+        <KpiCard label="Leads planes" value={kpis.kpis.total_plan_purchase_leads} />
+        <KpiCard label="Leads followup" value={kpis.kpis.total_leads_requiring_followup} />
+        <KpiCard label="Leads con cita" value={kpis.kpis.total_leads_requesting_appointment} />
+        <KpiCard label="Avisos contador pendientes" value={kpis.kpis.total_accountant_notices_pending} />
       </div>
 
       {timeseries.length === 0 ? <EmptyState title="Sin datos de timeseries" description="No hay ordenes para el filtro actual." /> : null}
@@ -113,7 +124,11 @@ export function ReinpiaDashboardPage() {
           rows={kpis.business_type_distribution.map((item) => [item.business_type, item.count])}
         />
       </section>
+
+      <section>
+        <h3>Alertas recientes</h3>
+        <AlertsList alerts={alerts} />
+      </section>
     </section>
   );
 }
-

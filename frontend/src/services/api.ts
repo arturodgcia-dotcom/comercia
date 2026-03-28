@@ -9,16 +9,20 @@ import {
   DistributorApplication,
   DistributorEmployee,
   DistributorProfile,
+  InternalAlert,
   LogisticsEvent,
   LogisticsOrder,
   LoginResponse,
   LoyaltyProgram,
   MembershipPlan,
+  PlanPurchaseLead,
   Order,
   PaymentsDashboard,
   Plan,
   Product,
   ProductReview,
+  SalesCommissionAgent,
+  SalesReferral,
   ReinpiaDistributorsSummary,
   ReinpiaKpisResponse,
   ReinpiaSubscription,
@@ -271,10 +275,38 @@ export const api = {
     ),
   getReinpiaDistributorsSummary: (token: string, query = "") =>
     request<ReinpiaDistributorsSummary>(`/api/v1/reinpia/distributors/summary${query ? `?${query}` : ""}`, {}, token),
-  getReinpiaExportUrl: (token: string, type: "sales" | "commissions" | "tenants" | "orders", query = "") => {
+  getReinpiaExportUrl: (
+    token: string,
+    type: "sales" | "commissions" | "tenants" | "orders" | "commission-agents" | "plan-purchase-leads",
+    query = ""
+  ) => {
     const url = `${BASE_URL}/api/v1/reinpia/exports/${type}.csv${query ? `?${query}` : ""}`;
     return { url, token };
-  }
+  },
+  getReinpiaCommissionAgents: (token: string) =>
+    request<SalesCommissionAgent[]>("/api/v1/reinpia/commission-agents", {}, token),
+  createReinpiaCommissionAgent: (token: string, payload: Record<string, unknown>) =>
+    request<SalesCommissionAgent>("/api/v1/reinpia/commission-agents", { method: "POST", body: JSON.stringify(payload) }, token),
+  updateReinpiaCommissionAgent: (token: string, id: number, payload: Record<string, unknown>) =>
+    request<SalesCommissionAgent>(`/api/v1/reinpia/commission-agents/${id}`, { method: "PUT", body: JSON.stringify(payload) }, token),
+  getReinpiaCommissionAgentSummary: (token: string, id: number, query = "") =>
+    request<Record<string, number | string>>(`/api/v1/reinpia/commission-agents/${id}/summary${query ? `?${query}` : ""}`, {}, token),
+  createReinpiaReferral: (token: string, payload: Record<string, unknown>) =>
+    request<SalesReferral>("/api/v1/reinpia/referrals", { method: "POST", body: JSON.stringify(payload) }, token),
+  getReinpiaReferrals: (token: string, query = "") =>
+    request<SalesReferral[]>(`/api/v1/reinpia/referrals${query ? `?${query}` : ""}`, {}, token),
+  createReinpiaPlanPurchaseLead: (token: string, payload: Record<string, unknown>) =>
+    request<PlanPurchaseLead>("/api/v1/reinpia/plan-purchase-leads", { method: "POST", body: JSON.stringify(payload) }, token),
+  getReinpiaPlanPurchaseLeads: (token: string, query = "") =>
+    request<PlanPurchaseLead[]>(`/api/v1/reinpia/plan-purchase-leads${query ? `?${query}` : ""}`, {}, token),
+  getReinpiaAlerts: (token: string, query = "") =>
+    request<InternalAlert[]>(`/api/v1/reinpia/alerts${query ? `?${query}` : ""}`, {}, token),
+  markReinpiaAlertRead: (token: string, id: number) =>
+    request<InternalAlert>(`/api/v1/reinpia/alerts/${id}/read`, { method: "PUT" }, token),
+  getComerciaReferralValidation: (refCode: string) =>
+    request<{ valid: boolean; code: string; agent_name?: string }>(`/api/v1/comercia/referral/${encodeURIComponent(refCode)}`),
+  createComerciaPlanPurchaseLead: (payload: Record<string, unknown>) =>
+    request<PlanPurchaseLead>("/api/v1/comercia/plan-purchase-leads", { method: "POST", body: JSON.stringify(payload) })
 };
 
 export { ApiError };
