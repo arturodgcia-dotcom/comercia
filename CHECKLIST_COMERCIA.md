@@ -1,13 +1,13 @@
-# CHECKLIST COMERCIA
+ï»¿# CHECKLIST COMERCIA
 
-## Entregables ejecución 1
+## Entregables ejecucion 1
 - [x] A. Estructura completa del monorepo
-- [ ] B. Backend FastAPI corriendo con módulos iniciales
-- [ ] C. Frontend React/Vite corriendo con layout inicial
-- [ ] D. Modelos iniciales del dominio
-- [ ] E. Endpoints iniciales solicitados
-- [ ] F. Migraciones base
-- [ ] G. CHECKLIST actualizado
-- [ ] H. README con instrucciones de arranque local
-- [ ] I. docs/architecture.md
-- [ ] J. docs/modules.md
+- [x] B. Backend FastAPI corriendo con modulos iniciales
+- [x] C. Frontend React/Vite corriendo con layout inicial
+- [x] D. Modelos iniciales del dominio
+- [x] E. Endpoints iniciales solicitados
+- [x] F. Migraciones base
+- [x] G. CHECKLIST actualizado
+- [x] H. README con instrucciones de arranque local
+- [x] I. docs/architecture.md
+- [x] J. docs/modules.md

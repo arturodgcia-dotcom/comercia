@@ -1,3 +1,6 @@
-# Documentación COMERCIA
+ï»¿# Documentacion COMERCIA
 
-Aquí vive la documentación funcional y técnica del monorepo.
+Documentacion funcional y tecnica del monorepo:
+
+- `architecture.md`: arquitectura SaaS multitenant y componentes base.
+- `modules.md`: listado de modulos y estado inicial de implementacion.
