@@ -10,6 +10,30 @@ Plataforma SaaS multitenant para landing, ecommerce, growth comercial y operacio
 
 ## Arranque local
 
+### Arranque unificado (1 comando)
+Desde la raiz:
+```bash
+start_all.bat
+```
+o
+```bash
+powershell -ExecutionPolicy Bypass -File .\start_all.ps1
+```
+
+Alternativa Node (raiz):
+```bash
+npm install
+npm run dev:all
+```
+
+Scripts por servicio:
+- `start_backend_only.bat` / `start_backend_only.ps1`
+- `start_frontend_only.bat` / `start_frontend_only.ps1`
+
+Prerequisito backend:
+- debe existir `backend/.venv` con dependencias instaladas.
+- los scripts no recrean la venv automaticamente.
+
 ### Backend
 ```bash
 cd backend
