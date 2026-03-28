@@ -97,6 +97,7 @@
 - [x] Endpoints REINPIA para comisionistas, referidos, leads y alertas
 - [x] Endpoints publicos COMERCIA para validar referral y registrar lead de plan
 - [x] Landing `/comercia` con captura real de lead y clave de comisionista (`?ref=`)
+- [x] Trazabilidad de origen de lead (`query_param`, `manual_code`, `direct`) y alertas por `failed` / `pending_contact`
 - [x] Frontend REINPIA: pages `/reinpia/commission-agents` y `/reinpia/alerts`
 - [x] Dashboard REINPIA con resumen de comisionistas y alertas recientes
 - [x] Seeds idempotentes de comisionistas demo

@@ -80,6 +80,7 @@ class PlanPurchaseLeadCreate(BaseModel):
     buyer_phone: str
     selected_plan_code: str
     referral_code: str | None = None
+    source_type: str = "direct"
     needs_followup: bool = True
     needs_appointment: bool = False
     notes: str | None = None

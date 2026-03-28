@@ -16,6 +16,7 @@ from app.services.internal_alerts_service import (
     create_direct_sale_alert,
     create_followup_required_alert,
     create_plan_purchase_alert,
+    create_purchase_status_alert,
 )
 
 
@@ -117,6 +118,7 @@ def register_plan_purchase_lead(
     buyer_phone: str,
     selected_plan_code: str,
     referral_code: str | None = None,
+    source_type: str = "direct",
     needs_followup: bool = True,
     needs_appointment: bool = False,
     notes: str | None = None,
@@ -131,6 +133,11 @@ def register_plan_purchase_lead(
                 SalesCommissionAgent.is_active.is_(True),
             )
         )
+    effective_source_type = source_type
+    if referral_code_clean and source_type not in {"manual_code", "query_param"}:
+        effective_source_type = "manual_code"
+    if not referral_code_clean and source_type not in {"direct", "internal"}:
+        effective_source_type = "direct"
 
     lead = PlanPurchaseLead(
         company_name=company_name,
@@ -152,7 +159,7 @@ def register_plan_purchase_lead(
 
     create_sales_referral(
         db=db,
-        source_type="manual_code" if referral_code_clean else "direct",
+        source_type=effective_source_type,
         commission_agent_id=agent.id if agent else None,
         lead_email=buyer_email,
         lead_name=buyer_name,
@@ -200,6 +207,13 @@ def register_plan_purchase_lead(
         create_followup_required_alert(db, related_entity_type="plan_purchase_lead", related_entity_id=lead.id)
     if needs_appointment:
         create_appointment_request_alert(db, related_entity_type="plan_purchase_lead", related_entity_id=lead.id)
+    create_purchase_status_alert(
+        db,
+        purchase_status=purchase_status,
+        plan_code=selected_plan_code,
+        related_entity_type="plan_purchase_lead",
+        related_entity_id=lead.id,
+    )
 
     db.commit()
     db.refresh(lead)
@@ -287,4 +301,3 @@ def mark_alert_as_read(db: Session, alert_id: int) -> InternalAlert | None:
     db.commit()
     db.refresh(alert)
     return alert
-

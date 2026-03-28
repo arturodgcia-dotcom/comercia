@@ -1,5 +1,6 @@
-from app.models.models import InternalAlert
 from sqlalchemy.orm import Session
+
+from app.models.models import InternalAlert
 
 
 def create_internal_alert(
@@ -41,7 +42,7 @@ def create_commission_sale_alert(
         db=db,
         alert_type="commission_sale",
         title="Nueva compra de plan con comisionista",
-        message=f"Nueva compra del plan {plan_code} asociada al comisionista {referral_code}. Revisar comisión para contador.",
+        message=f"Nueva compra del plan {plan_code} asociada al comisionista {referral_code}. Revisar comision para contador.",
         severity="high",
         related_entity_type=related_entity_type,
         related_entity_id=related_entity_id,
@@ -70,7 +71,7 @@ def create_plan_purchase_alert(
         db=db,
         alert_type="plan_purchase",
         title="Nueva compra o inicio de compra de plan",
-        message=f"Se registró un proceso de compra para el plan {plan_code}.",
+        message=f"Se registro un proceso de compra para el plan {plan_code}.",
         severity="info",
         related_entity_type=related_entity_type,
         related_entity_id=related_entity_id,
@@ -83,8 +84,8 @@ def create_appointment_request_alert(
     return create_internal_alert(
         db=db,
         alert_type="appointment_request",
-        title="Lead solicitó cita de diagnóstico",
-        message="Lead solicitó cita de diagnóstico.",
+        title="Lead solicito cita de diagnostico",
+        message="Lead solicito cita de diagnostico.",
         severity="warning",
         related_entity_type=related_entity_type,
         related_entity_id=related_entity_id,
@@ -97,8 +98,8 @@ def create_followup_required_alert(
     return create_internal_alert(
         db=db,
         alert_type="followup_required",
-        title="Lead requiere atención comercial",
-        message="Lead solicitó atención comercial y requiere seguimiento.",
+        title="Lead requiere atencion comercial",
+        message="Lead solicito atencion comercial y requiere seguimiento.",
         severity="warning",
         related_entity_type=related_entity_type,
         related_entity_id=related_entity_id,
@@ -125,3 +126,32 @@ def create_accountant_notice_alert(
         commission_agent_id=commission_agent_id,
     )
 
+
+def create_purchase_status_alert(
+    db: Session,
+    purchase_status: str,
+    plan_code: str,
+    related_entity_type: str,
+    related_entity_id: int,
+) -> InternalAlert | None:
+    if purchase_status == "failed":
+        return create_internal_alert(
+            db=db,
+            alert_type="followup_required",
+            title="Compra de plan fallida",
+            message=f"El proceso de compra del plan {plan_code} fallo y requiere seguimiento comercial.",
+            severity="high",
+            related_entity_type=related_entity_type,
+            related_entity_id=related_entity_id,
+        )
+    if purchase_status == "pending_contact":
+        return create_internal_alert(
+            db=db,
+            alert_type="followup_required",
+            title="Compra de plan pendiente de contacto",
+            message=f"El proceso de compra del plan {plan_code} quedo pendiente y requiere contacto del equipo comercial.",
+            severity="warning",
+            related_entity_type=related_entity_type,
+            related_entity_id=related_entity_id,
+        )
+    return None

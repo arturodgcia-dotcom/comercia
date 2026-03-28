@@ -42,6 +42,7 @@ export function ComerciaLandingPage() {
       await api.createComerciaPlanPurchaseLead({
         ...leadForm,
         purchase_status: "initiated",
+        source_type: refQuery ? "query_param" : leadForm.referral_code ? "manual_code" : "direct",
         referral_code: leadForm.referral_code || undefined
       });
       setSubmitted(true);
@@ -185,4 +186,3 @@ export function ComerciaLandingPage() {
     </main>
   );
 }
-
