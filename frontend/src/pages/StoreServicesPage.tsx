@@ -26,8 +26,12 @@ export function StoreServicesPage() {
   return (
     <main className="storefront">
       <section className="store-hero">
-        <h1>Servicios de {tenant.name}</h1>
-        <p>Reserva para ti o compra como regalo desde esta seccion.</p>
+        <h1>{tenant.slug === "reinpia" ? "Ecommerce de servicios REINPIA" : `Servicios de ${tenant.name}`}</h1>
+        <p>
+          {tenant.slug === "reinpia"
+            ? "Renta de plataformas, implementaciones y automatizacion comercial orientada a crecimiento."
+            : "Reserva para ti o compra como regalo desde esta seccion."}
+        </p>
         <Link className="button button-outline" to={`/store/${tenant.slug}`}>
           Volver a tienda
         </Link>
@@ -50,4 +54,3 @@ export function StoreServicesPage() {
     </main>
   );
 }
-

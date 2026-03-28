@@ -237,6 +237,108 @@ textarea {
   padding: 7px 12px;
 }
 
+.marketing-shell {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 24px;
+  display: grid;
+  gap: 18px;
+}
+
+.marketing-hero {
+  background: linear-gradient(130deg, #0b2450, #1748a0 55%, #2d74f0);
+  color: #f5f8ff;
+  border-radius: 16px;
+  padding: 28px;
+  border: 1px solid #215cc4;
+  box-shadow: 0 14px 40px rgba(8, 33, 87, 0.28);
+}
+
+.marketing-hero h1 {
+  margin: 10px 0;
+  font-size: clamp(30px, 4vw, 44px);
+  line-height: 1.12;
+}
+
+.marketing-hero p {
+  max-width: 840px;
+  color: #d9e8ff;
+}
+
+.marketing-eyebrow {
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: #8fc2ff !important;
+  font-weight: 700;
+  font-size: 12px;
+}
+
+.marketing-card {
+  border-radius: 14px;
+}
+
+.marketing-tag {
+  margin: 0 0 8px;
+  color: #1a4da8;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.marketing-subtitle {
+  color: #0f3f91;
+  font-weight: 700;
+}
+
+.package-card {
+  border: 1px solid #b9cff5;
+}
+
+.marketing-list {
+  margin: 0 0 12px;
+  padding-left: 18px;
+  color: #33445d;
+}
+
+.marketing-list li {
+  margin-bottom: 7px;
+}
+
+.agent-widget {
+  display: grid;
+  grid-template-columns: 70px 1fr;
+  gap: 16px;
+  background: #fff;
+  border: 1px dashed #87a9df;
+  border-radius: 14px;
+  padding: 18px;
+}
+
+.agent-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 20% 20%, #8dd0ff, #1c5fd4);
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-weight: 700;
+}
+
+.audience-split {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.marketing-cta {
+  background: linear-gradient(120deg, #e9f1ff, #f4f8ff 60%, #ddeafd);
+  border: 1px solid #c9daf5;
+  border-radius: 14px;
+  padding: 22px;
+}
+
 @media (max-width: 900px) {
   .app-shell {
     grid-template-columns: 1fr;

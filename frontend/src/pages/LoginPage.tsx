@@ -1,5 +1,5 @@
 import { FormEvent, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../app/AuthContext";
 
 export function LoginPage() {
@@ -44,6 +44,9 @@ export function LoginPage() {
         <button className="button" type="submit" disabled={loading}>
           {loading ? "Ingresando..." : "Iniciar sesion"}
         </button>
+        <Link className="button button-outline" to="/comercia">
+          Ver landing COMERCIA
+        </Link>
       </form>
     </main>
   );

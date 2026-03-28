@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import { ReinpiaStorefrontLanding } from "./ReinpiaStorefrontLanding";
 import { api } from "../services/api";
 import { Product, StorefrontHomePayload, WishlistItem } from "../types/domain";
 
@@ -102,6 +103,7 @@ export function StorefrontPage() {
 
   if (error) return <p className="error">{error}</p>;
   if (!data) return <p>Cargando storefront...</p>;
+  if (data.tenant.slug.toLowerCase() === "reinpia") return <ReinpiaStorefrontLanding data={data} />;
 
   return (
     <main className="storefront">

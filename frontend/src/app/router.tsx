@@ -5,6 +5,7 @@ import { AppointmentsAdminPage } from "../pages/AppointmentsAdminPage";
 import { BrandingEditorPage } from "../pages/BrandingEditorPage";
 import { BannersAdminPage } from "../pages/BannersAdminPage";
 import { CategoriesPage } from "../pages/CategoriesPage";
+import { ComerciaLandingPage } from "../pages/ComerciaLandingPage";
 import { ContractsAdminPage } from "../pages/ContractsAdminPage";
 import { CouponsAdminPage } from "../pages/CouponsAdminPage";
 import { DashboardPage } from "../pages/DashboardPage";
@@ -33,6 +34,7 @@ import { TenantsPage } from "../pages/TenantsPage";
 export function AppRouter() {
   return (
     <Routes>
+      <Route path="/comercia" element={<ComerciaLandingPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/store/:tenantSlug" element={<StorefrontPage />} />
       <Route path="/store/:tenantSlug/product/:productId" element={<ProductDetailPage />} />
