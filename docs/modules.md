@@ -2,34 +2,34 @@
 
 | Modulo | Estado | Implementacion actual |
 |---|---|---|
-| Autenticacion y usuarios | Inicial funcional | JWT login/me, modelo `User`, roles base |
-| Tenants / Marcas | Inicial funcional | CRUD base + inicializacion storefront + `plan_id` |
-| Branding por tenant | Inicial funcional | Modelo y endpoints GET/POST/PUT |
-| Landing generator logico | Inicial funcional | `StorefrontConfig` + `Banner` + servicio de inicializacion |
-| Ecommerce multitenant | Inicial funcional | CRUD categorias/productos + filtros por tenant |
-| Storefront publico | Inicial funcional | `/storefront/{slug}` y `/distribuidores` + carrito base |
-| Stripe por tenant | Inicial funcional | `stripe_account_id` + endpoint config |
-| Checkout Stripe | Inicial funcional | `POST /checkout/create-session` (Plan1/Plan2) |
-| Comisiones dinamicas | Inicial funcional | Servicio por item 2.5%/3% + `CommissionDetail` |
-| Webhooks Stripe | Inicial funcional | `POST /stripe/webhook` con actualizacion de orden |
-| Dashboard pagos admin | Inicial funcional | `GET /payments/dashboard` + frontend `/admin/payments` |
-| Planes comerciales | Inicial funcional | PLAN_1 fixed / PLAN_2 commission (`commission_enabled`) |
-| Suscripciones | Base de dominio | Modelo `Subscription` |
-| Clientes publicos | Base de dominio | Modelo `Customer` |
-| Distribuidores | Inicial funcional | Modelo + consumo publico por slug |
-| Servicios / Agenda | Base de dominio | Modelo `Appointment` |
-| Fidelizacion | Base de dominio | Modelo `LoyaltyRule` |
-| Logistica | Base de arquitectura | Pendiente implementacion funcional |
-| Bots / Agentes | Base de arquitectura | Pendiente implementacion funcional |
-| Dashboard central REINPIA | Inicial funcional | Admin dashboard base |
-| Notificaciones | Base de dominio | Modelo `Notification` |
+| Autenticacion y usuarios | Inicial funcional | JWT login/me, roles base |
+| Tenants / Marcas | Inicial funcional | CRUD + plan + storefront init |
+| Branding por tenant | Inicial funcional | Config visual/contacto |
+| Ecommerce multitenant | Inicial funcional | CRUD categorias/productos + aislamiento tenant |
+| Pagos Stripe | Inicial funcional | Checkout Plan1/Plan2 + webhook + dashboard |
+| Fidelizacion | Inicial funcional | LoyaltyProgram + account + apply points |
+| Membresias | Inicial funcional | MembershipPlan CRUD por tenant |
+| Cupones | Inicial funcional | Coupon CRUD + validate + consumo |
+| Banners dinamicos | Inicial funcional | Target, position, priority, vigencia |
+| Wishlist | Inicial funcional | Alta/lista/borrado por cliente |
+| Reviews + moderacion | Inicial funcional | Submit pending + approve admin |
+| Upsell / recomendaciones | Inicial funcional | helpers home-data y checkout-upsell |
+| Dashboard central REINPIA | Inicial funcional | admin shell + payments + growth modules |
+| Logistica | Base arquitectura | pendiente funcional |
+| Bots / Agentes | Base arquitectura | pendiente funcional |
 
-## Endpoints pagos clave
-- `POST /api/v1/checkout/create-session`
-- `POST /api/v1/stripe/webhook`
-- `GET /api/v1/payments/dashboard`
+## Endpoints growth clave
+- `/api/v1/loyalty/*`
+- `/api/v1/memberships/*`
+- `/api/v1/coupons/*`
+- `/api/v1/banners/*`
+- `/api/v1/wishlist/*`
+- `/api/v1/reviews/*`
+- `/api/v1/storefront/{slug}/home-data`
+- `/api/v1/storefront/{slug}/checkout-upsell`
 
-## Estado de calidad actual
-- Backend compila (`python -m compileall app`)
-- Frontend build ok (`npm run build`)
-- Migraciones Alembic hasta `20260328_03`
+## Estado de calidad
+- backend compila
+- frontend build estable
+- swagger actualizado con rutas growth
+- migraciones alembic hasta `20260328_04`

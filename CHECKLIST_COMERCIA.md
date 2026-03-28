@@ -21,7 +21,7 @@
 - [x] F. Frontend storefront base por tenant slug
 - [x] G. Documentacion actualizada
 - [x] H. Modelo de dominio adicional (`User`, `StorefrontConfig`, `Banner`)
-- [x] I. Calidad minima validada (compile backend + build frontend)
+- [x] I. Calidad minima validada
 
 ## Entregables ejecucion 3 (Pagos Stripe)
 - [x] Stripe config por tenant (incluye `stripe_account_id`)
@@ -33,4 +33,18 @@
 - [x] Dashboard admin de pagos
 - [x] Base email de comprobante y desglose
 - [x] Documentacion de pagos actualizada
-- [x] Validacion tecnica (backend compile + frontend build)
+- [x] Validacion tecnica
+
+## Entregables ejecucion 4 (Growth comercial)
+- [x] Fidelizacion (`LoyaltyProgram`, cuentas y puntos)
+- [x] Membresias (`MembershipPlan`)
+- [x] Cupones (`Coupon` + validacion)
+- [x] Banners dinamicos por posicion/target/prioridad
+- [x] Upsell / cross-sell previo al checkout
+- [x] Wishlist por cliente
+- [x] Reseñas basicas con moderacion
+- [x] Checkout extendido (coupon_code + points + customer_id)
+- [x] Admin frontend growth pages
+- [x] Storefront extendido (home-data, product detail, checkout UI)
+- [x] Documentacion y arquitectura actualizadas
+- [x] Validacion backend/frontend completada

@@ -1,29 +1,16 @@
 ﻿# COMERCIA by REINPIA
 
-Plataforma SaaS multitenant para landing, ecommerce, fidelizacion, distribuidores, servicios y pagos con Stripe, preparada para evolucionar a WebApp POS.
+Plataforma SaaS multitenant para landing, ecommerce, fidelizacion, distribuidores, servicios y pagos Stripe.
 
-## Monorepo
-
+## Stack
 - `backend/`: FastAPI + SQLAlchemy + Alembic + JWT + Stripe.
-- `frontend/`: React + Vite + TypeScript (admin shell + storefront + checkout).
-- `docs/`: arquitectura y estado de modulos.
+- `frontend/`: React + Vite + TypeScript.
+- `docs/`: arquitectura y estado modular.
 - `infra/`: Docker base local.
 
-## Requisitos
+## Arranque local
 
-- Python 3.11+
-- Node.js 20+
-- npm 10+
-
-## Variables de entorno
-
-1. Backend:
-   - Copiar `backend/.env.example` a `backend/.env`
-2. Frontend:
-   - Copiar `frontend/.env.example` a `frontend/.env`
-
-## Arranque local - Backend
-
+### Backend
 ```bash
 cd backend
 python -m venv .venv
@@ -33,15 +20,13 @@ alembic upgrade head
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-Swagger:
-- `http://localhost:8000/docs`
+Swagger: `http://localhost:8000/docs`
 
 Credenciales seed:
-- email: `admin@reinpia.com`
-- password: `admin123`
+- `admin@reinpia.com`
+- `admin123`
 
-## Arranque local - Frontend
-
+### Frontend
 ```bash
 cd frontend
 npm install
@@ -49,51 +34,104 @@ npm run dev
 ```
 
 - Admin: `http://localhost:5173`
-- Storefront por tenant: `http://localhost:5173/store/{tenantSlug}`
+- Storefront: `http://localhost:5173/store/{tenantSlug}`
 
-## Endpoints de pagos Stripe
+## Bloque comercial implementado
 
-Configuracion Stripe por tenant:
-- `GET /api/v1/stripe-config`
-- `POST /api/v1/stripe-config`
+### Fidelizacion
+- `LoyaltyProgram`
+- `LoyaltyRule` extendido
+- `CustomerLoyaltyAccount`
+- endpoints:
+  - `GET/POST/PUT /api/v1/loyalty/program/{tenant_id}`
+  - `GET /api/v1/loyalty/account/{tenant_id}/{customer_id}`
+  - `POST /api/v1/loyalty/account/{tenant_id}/{customer_id}/apply-points`
 
-Checkout:
-- `POST /api/v1/checkout/create-session`
+### Membresias
+- `MembershipPlan`
+- endpoints:
+  - `GET /api/v1/memberships/by-tenant/{tenant_id}`
+  - `POST /api/v1/memberships`
+  - `PUT /api/v1/memberships/{id}`
 
-Webhook:
-- `POST /api/v1/stripe/webhook`
+### Cupones
+- `Coupon`
+- endpoints:
+  - `GET /api/v1/coupons/by-tenant/{tenant_id}`
+  - `POST /api/v1/coupons`
+  - `PUT /api/v1/coupons/{id}`
+  - `POST /api/v1/coupons/validate`
 
-Dashboard admin pagos:
-- `GET /api/v1/payments/dashboard`
+### Banners dinamicos
+- `Banner` extendido con target/position/priority/vigencia
+- endpoints:
+  - `GET /api/v1/banners/by-tenant/{tenant_id}`
+  - `POST /api/v1/banners`
+  - `PUT /api/v1/banners/{id}`
 
-## Regla de comision PLAN_2
+### Wishlist
+- `WishlistItem`
+- endpoints:
+  - `GET /api/v1/wishlist/{tenant_id}/{customer_id}`
+  - `POST /api/v1/wishlist`
+  - `DELETE /api/v1/wishlist/{id}`
 
-Implementada por item en `backend/app/services/commission_service.py`:
-- si `precio <= 2000` -> `2.5%`
-- si `precio > 2000` -> `3%`
+### Reseñas y moderacion
+- `ProductReview`
+- nuevas reseñas en `is_approved=false`
+- storefront solo muestra aprobadas
+- endpoints:
+  - `GET /api/v1/reviews/product/{product_id}`
+  - `POST /api/v1/reviews`
+  - `PUT /api/v1/reviews/{id}/approve`
 
-## Flujo Plan 1 / Plan 2
+### Recomendaciones / storefront helpers
+- `GET /api/v1/storefront/{tenant_slug}/home-data`
+- `GET /api/v1/storefront/{tenant_slug}/checkout-upsell`
 
-- PLAN_1 (`fixed`): checkout sin comision.
-- PLAN_2 (`commission`): checkout con `application_fee_amount` + `transfer_data[destination]` usando `stripe_account_id` del tenant.
+### Checkout extendido
+`POST /api/v1/checkout/create-session` ahora soporta:
+- `coupon_code` opcional
+- `use_loyalty_points` opcional
+- `customer_id` opcional
 
-## Frontend de pagos
+Persistencia en `Order`:
+- `subtotal_amount`
+- `discount_amount`
+- `commission_amount`
+- `total_amount`
+- `net_amount`
 
-Storefront:
-- carrito base
-- boton `Comprar`
-- llamada a checkout backend
-- redireccion a Stripe Checkout
+Post pago webhook:
+- suma puntos
+- consume puntos usados
+- incrementa uso de cupon
 
-Admin:
+## Frontend agregado
+
+### Admin
+- `/admin/loyalty`
+- `/admin/memberships`
+- `/admin/coupons`
+- `/admin/banners`
+- `/admin/reviews`
 - `/admin/payments`
-- total vendido
-- comision generada
-- neto al comercio
-- listado de ordenes
+
+### Storefront
+- Home con:
+  - banners
+  - destacados
+  - nuevos
+  - promociones
+  - mas vendidos (placeholder inteligente)
+- Wishlist por producto
+- Upsell antes de checkout
+- Campo de cupón + opción de puntos
+- Product detail:
+  - `/store/:tenantSlug/product/:productId`
+  - reseñas aprobadas + formulario de reseña
 
 ## Documentacion
-
 - [docs/architecture.md](docs/architecture.md)
 - [docs/modules.md](docs/modules.md)
 - [CHECKLIST_COMERCIA.md](CHECKLIST_COMERCIA.md)

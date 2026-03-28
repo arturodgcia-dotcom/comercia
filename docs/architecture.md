@@ -1,84 +1,95 @@
 ﻿# Arquitectura COMERCIA by REINPIA
 
-## 1) Vision
-COMERCIA es una plataforma SaaS multitenant para productos/servicios con operaciones de cobro centralizadas en Stripe.
+## 1) Alcance actual
+COMERCIA opera como SaaS multitenant con:
+- autenticacion JWT
+- ecommerce por tenant
+- pagos Stripe (Plan 1 / Plan 2)
+- crecimiento comercial (fidelizacion, cupones, membresias, banners dinamicos, wishlist, reseñas)
 
-Esta iteracion incorpora el flujo de dinero completo para Plan 1 y Plan 2:
-- configuracion Stripe por tenant
-- checkout
-- comision dinamica por item
-- webhook
-- dashboard de pagos
-- base para Stripe Connect
+## 2) Flujo comercial de crecimiento
 
-## 2) Flujo de dinero
+1. El storefront consume `/storefront/{slug}/home-data` para renderizar:
+- banners por posicion
+- destacados, nuevos, promociones
+- best sellers placeholder (featured + recent)
+- membresias publicables
 
-### PLAN_1 (fixed)
-1. Cliente crea carrito en storefront.
-2. Backend crea `Order` sin comision.
-3. Stripe Checkout procesa pago total.
-4. Webhook marca orden como `paid`.
+2. En checkout:
+- calcula subtotal
+- aplica cupón opcional
+- aplica puntos opcionales
+- calcula total
+- si tenant es PLAN_2 aplica comision por item (2.5% / 3%)
 
-### PLAN_2 (commission)
-1. Cliente crea carrito en storefront.
-2. Backend calcula comision por item (2.5% o 3%).
-3. Guarda `Order`, `OrderItem` y `CommissionDetail`.
-4. Crea Checkout con:
-   - `application_fee_amount` = comision total
-   - `transfer_data[destination]` = `stripe_account_id` del tenant
-5. Webhook actualiza estado (`paid`/`failed`) y montos finales.
+3. Al pago exitoso (webhook):
+- order -> `paid`
+- incrementa uso de cupón
+- consume puntos usados
+- acredita puntos del pedido
 
-## 3) Backend pagos
+## 3) Dominio growth agregado
+- `LoyaltyProgram`
+- `LoyaltyRule` (extendido)
+- `MembershipPlan`
+- `Coupon`
+- `CustomerLoyaltyAccount`
+- `Banner` (extendido)
+- `WishlistItem`
+- `ProductReview`
 
-Modelos agregados/extensiones:
-- `StripeConfig` (+ `stripe_account_id`)
-- `Order`
-- `OrderItem`
-- `CommissionDetail`
-- `Plan` (+ `commission_enabled`)
-- `Tenant` (+ `plan_id`)
+## 4) Servicios
+- `loyalty_service.py`
+  - cuenta de fidelidad
+  - descuento por puntos
+  - enrolamiento de membresia
+- `coupon_service.py`
+  - validacion/aplicacion de cupon
+  - incremento de uso
+- `recommendation_service.py`
+  - destacados / recientes / promo / best sellers placeholder / upsell
 
-Servicios:
-- `commission_service.py`
-- `stripe_service.py`
-- `email_service.py` (base)
+## 5) Moderacion de reseñas
+- Toda reseña nueva queda con `is_approved=false`.
+- Storefront publica solo aprobadas.
+- Admin aprueba desde `/admin/reviews`.
 
-Endpoints:
-- `POST /api/v1/checkout/create-session`
-- `POST /api/v1/stripe/webhook`
-- `GET /api/v1/payments/dashboard`
+## 6) API growth
+- Loyalty:
+  - `GET/POST/PUT /api/v1/loyalty/program/{tenant_id}`
+  - `GET /api/v1/loyalty/account/{tenant_id}/{customer_id}`
+  - `POST /api/v1/loyalty/account/{tenant_id}/{customer_id}/apply-points`
+- Memberships:
+  - `GET /api/v1/memberships/by-tenant/{tenant_id}`
+  - `POST /api/v1/memberships`
+  - `PUT /api/v1/memberships/{id}`
+- Coupons:
+  - `GET /api/v1/coupons/by-tenant/{tenant_id}`
+  - `POST /api/v1/coupons`
+  - `PUT /api/v1/coupons/{id}`
+  - `POST /api/v1/coupons/validate`
+- Banners:
+  - `GET /api/v1/banners/by-tenant/{tenant_id}`
+  - `POST /api/v1/banners`
+  - `PUT /api/v1/banners/{id}`
+- Wishlist:
+  - `GET /api/v1/wishlist/{tenant_id}/{customer_id}`
+  - `POST /api/v1/wishlist`
+  - `DELETE /api/v1/wishlist/{id}`
+- Reviews:
+  - `GET /api/v1/reviews/product/{product_id}`
+  - `POST /api/v1/reviews`
+  - `PUT /api/v1/reviews/{id}/approve`
+- Storefront helpers:
+  - `GET /api/v1/storefront/{tenant_slug}/home-data`
+  - `GET /api/v1/storefront/{tenant_slug}/checkout-upsell`
 
-## 4) Regla de comision
+## 7) Migraciones
+- `20260327_01`: esquema base
+- `20260327_02`: auth/storefront
+- `20260328_03`: pagos
+- `20260328_04`: growth comercial
 
-`compute_order_commission(order_items)` en `commission_service.py`:
-- por item, no por total global
-- `unit_price <= 2000` => `LOW_2_5`
-- `unit_price > 2000` => `HIGH_3`
-- retorno:
-  - `total_commission`
-  - `details` por item
-
-## 5) Frontend pagos
-
-Storefront (`/store/:tenantSlug`):
-- seleccion de productos
-- carrito base
-- boton `Comprar`
-- redireccion a Stripe
-
-Admin (`/admin/payments`):
-- orders
-- total vendido
-- comision generada
-- neto al comercio
-
-## 6) Persistencia y migraciones
-
-Revisiones Alembic:
-- `20260327_01` esquema base
-- `20260327_02` auth/storefront
-- `20260328_03` pagos base y extensiones Stripe/Plan/Tenant
-
-## 7) Validacion tecnica ejecutada
-- backend compila (`python -m compileall app`)
-- frontend build ok (`npm run build`)
+## 8) Validacion ejecutada
+- backend compile: `python -m compileall app`
+- frontend build: `npm run build`
