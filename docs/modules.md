@@ -21,6 +21,9 @@
 | Landing corporativa COMERCIA | Inicial funcional | ruta `/comercia`, enfoque conversion, paquetes y lead form |
 | Landing tenant REINPIA | Inicial funcional | ruta `/store/reinpia`, enfoque servicios y canal distribuidor |
 | Seed tenant demo REINPIA | Inicial funcional | tenant + branding + banners + 6 servicios de demo |
+| Panel global REINPIA | Inicial funcional | dashboard multi-tenant con KPIs, filtros y detalle por tenant |
+| Reporting / export CSV | Inicial funcional | exportes de ventas, comisiones, tenants y ordenes |
+| Seguridad por rol global | Inicial funcional | acceso `/reinpia/*` restringido a `reinpia_admin` |
 | Bots / agentes | Base arquitectura | pendiente implementacion |
 
 ## Endpoints operacion comercial (nuevos)

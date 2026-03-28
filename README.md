@@ -37,6 +37,12 @@ npm run dev
 - Admin: `http://localhost:5173`
 - Landing COMERCIA: `http://localhost:5173/comercia`
 - Storefront: `http://localhost:5173/store/{tenantSlug}`
+- Panel global REINPIA (solo reinpia_admin):
+  - `http://localhost:5173/reinpia/dashboard`
+  - `http://localhost:5173/reinpia/tenants`
+  - `http://localhost:5173/reinpia/payments`
+  - `http://localhost:5173/reinpia/operations`
+  - `http://localhost:5173/reinpia/reports`
 
 ## Bloques funcionales implementados
 
@@ -69,6 +75,24 @@ npm run dev
   - `/api/v1/recurring-orders/*`
 - logistica base:
   - `/api/v1/logistics/*`
+
+### Panel Global REINPIA (actual)
+- KPIs globales consolidados multi-tenant
+- ventas, comisiones y netos por tenant
+- top tenants y series temporales de ordenes
+- distribucion por plan y tipo de negocio
+- operaciones consolidadas:
+  - citas
+  - logistica
+  - distribuidores
+- exportables CSV:
+  - `/api/v1/reinpia/exports/sales.csv`
+  - `/api/v1/reinpia/exports/commissions.csv`
+  - `/api/v1/reinpia/exports/tenants.csv`
+  - `/api/v1/reinpia/exports/orders.csv`
+- seguridad por rol:
+  - backend protegido por `reinpia_admin`
+  - frontend oculto para roles no autorizados
 
 ### Landings comerciales (actual)
 - Landing corporativa COMERCIA:

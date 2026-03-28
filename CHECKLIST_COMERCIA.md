@@ -74,3 +74,17 @@
 - [x] Storefront servicios REINPIA orientado a ecommerce de servicios
 - [x] README, docs/modules y docs/architecture actualizados
 - [x] Validacion: backend compile + frontend build
+
+## Entregables ejecucion 7 (Panel Global REINPIA)
+- [x] Servicios backend de analytics multi-tenant
+- [x] Servicios backend de export CSV
+- [x] Endpoints `/api/v1/reinpia/*` para dashboard, tenants, payments, operations y exports
+- [x] KPIs globales y KPIs por tenant implementados
+- [x] Filtros `date_from`, `date_to`, `tenant_id`, `status`, `plan_id`, `business_type`
+- [x] Frontend global pages: dashboard, tenants, tenant detail, payments, operations, reports
+- [x] Componentes UI reutilizables: KpiCard, FilterBar, SummaryTable, ExportButtons, EmptyState, SimpleChartSection
+- [x] Seguridad por rol: solo `reinpia_admin` puede acceder a `/reinpia/*`
+- [x] Export CSV funcional desde frontend
+- [x] Seed idempotente con subscription activa REINPIA para reporting base
+- [x] README/docs/checklist actualizados
+- [x] Validacion: backend compile + frontend build
