@@ -18,6 +18,18 @@ class ProductCreate(BaseModel):
     is_active: bool = True
 
 
+class ProductUpdate(BaseModel):
+    category_id: int | None = None
+    name: str | None = None
+    slug: str | None = None
+    description: str | None = None
+    price_public: Decimal | None = None
+    price_wholesale: Decimal | None = None
+    price_retail: Decimal | None = None
+    is_featured: bool | None = None
+    is_active: bool | None = None
+
+
 class ProductRead(TimestampSchema):
     id: int
     tenant_id: int
