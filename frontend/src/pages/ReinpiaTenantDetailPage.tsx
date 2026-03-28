@@ -5,7 +5,17 @@ import { KpiCard } from "../components/KpiCard";
 import { PageHeader } from "../components/PageHeader";
 import { SummaryTable } from "../components/SummaryTable";
 import { api } from "../services/api";
-import { Order, ReinpiaSubscription, ReinpiaTenantKpis, Tenant, TenantBranding } from "../types/domain";
+import {
+  Appointment,
+  DistributorApplication,
+  DistributorProfile,
+  LogisticsOrder,
+  Order,
+  ReinpiaSubscription,
+  ReinpiaTenantKpis,
+  Tenant,
+  TenantBranding
+} from "../types/domain";
 
 export function ReinpiaTenantDetailPage() {
   const { tenantId } = useParams();
@@ -18,6 +28,10 @@ export function ReinpiaTenantDetailPage() {
   const [appointmentSummary, setAppointmentSummary] = useState<{ total: number; by_status: Array<{ status: string; count: number }> } | null>(null);
   const [logisticsSummary, setLogisticsSummary] = useState<{ total: number; delivered: number; by_status: Array<{ status: string; count: number }> } | null>(null);
   const [distributorSummary, setDistributorSummary] = useState<{ total_applications: number; approved_profiles: number } | null>(null);
+  const [appointmentsRecent, setAppointmentsRecent] = useState<Appointment[]>([]);
+  const [logisticsRecent, setLogisticsRecent] = useState<LogisticsOrder[]>([]);
+  const [distributorApplicationsRecent, setDistributorApplicationsRecent] = useState<DistributorApplication[]>([]);
+  const [distributorsRecent, setDistributorsRecent] = useState<DistributorProfile[]>([]);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -30,9 +44,27 @@ export function ReinpiaTenantDetailPage() {
       api.getReinpiaTenantSubscriptions(token, Number(tenantId)),
       api.getReinpiaAppointmentsSummary(token, `tenant_id=${tenantId}`),
       api.getReinpiaLogisticsSummary(token, `tenant_id=${tenantId}`),
-      api.getReinpiaDistributorsSummary(token, `tenant_id=${tenantId}`)
+      api.getReinpiaDistributorsSummary(token, `tenant_id=${tenantId}`),
+      api.getAppointmentsByTenant(token, Number(tenantId)),
+      api.getLogisticsByTenant(token, Number(tenantId)),
+      api.getDistributorApplicationsByTenant(token, Number(tenantId)),
+      api.getDistributorsByTenant(token, Number(tenantId))
     ])
-      .then(([tenantData, brandingData, kpisData, orderData, subscriptionData, appSummary, logSummary, distSummary]) => {
+      .then(
+        ([
+          tenantData,
+          brandingData,
+          kpisData,
+          orderData,
+          subscriptionData,
+          appSummary,
+          logSummary,
+          distSummary,
+          appointmentsRows,
+          logisticsRows,
+          distributorApplicationsRows,
+          distributorsRows
+        ]) => {
         setTenant(tenantData);
         setBranding(brandingData);
         setKpis(kpisData);
@@ -41,7 +73,12 @@ export function ReinpiaTenantDetailPage() {
         setAppointmentSummary(appSummary);
         setLogisticsSummary(logSummary);
         setDistributorSummary(distSummary);
-      })
+          setAppointmentsRecent(appointmentsRows.slice(0, 12));
+          setLogisticsRecent(logisticsRows.slice(0, 12));
+          setDistributorApplicationsRecent(distributorApplicationsRows.slice(0, 12));
+          setDistributorsRecent(distributorsRows.slice(0, 12));
+        }
+      )
       .catch((err) => setError(err instanceof Error ? err.message : "No fue posible cargar tenant detail"));
   }, [token, tenantId]);
 
@@ -115,7 +152,56 @@ export function ReinpiaTenantDetailPage() {
           ]}
         />
       </section>
+
+      <section>
+        <h3>Citas recientes</h3>
+        <SummaryTable
+          headers={["ID", "Status", "Scheduled", "Gift", "Created"]}
+          rows={appointmentsRecent.map((row) => [
+            row.id,
+            row.status,
+            row.scheduled_for ? new Date(row.scheduled_for).toLocaleString("es-MX") : "-",
+            row.is_gift ? "Si" : "No",
+            new Date(row.created_at).toLocaleString("es-MX")
+          ])}
+        />
+      </section>
+
+      <section>
+        <h3>Logistica reciente</h3>
+        <SummaryTable
+          headers={["ID", "Status", "Delivery type", "Scheduled", "Delivered"]}
+          rows={logisticsRecent.map((row) => [
+            row.id,
+            row.status,
+            row.delivery_type,
+            row.scheduled_delivery_at ? new Date(row.scheduled_delivery_at).toLocaleString("es-MX") : "-",
+            row.delivered_at ? new Date(row.delivered_at).toLocaleString("es-MX") : "-"
+          ])}
+        />
+      </section>
+
+      <section>
+        <h3>Solicitudes y distribuidores recientes</h3>
+        <SummaryTable
+          headers={["Solicitud", "Contacto", "Status", "Created"]}
+          rows={distributorApplicationsRecent.map((row) => [
+            row.company_name,
+            row.contact_name,
+            row.status,
+            new Date(row.created_at).toLocaleString("es-MX")
+          ])}
+        />
+        <SummaryTable
+          headers={["Distribuidor", "Contacto", "Autorizado", "Created"]}
+          rows={distributorsRecent.map((row) => [
+            row.business_name,
+            row.contact_name,
+            row.is_authorized ? "Si" : "No",
+            new Date(row.created_at).toLocaleString("es-MX")
+          ])}
+        />
+      </section>
     </section>
   );
 }
-
