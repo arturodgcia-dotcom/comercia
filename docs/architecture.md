@@ -1,143 +1,84 @@
 ﻿# Arquitectura COMERCIA by REINPIA
 
 ## 1) Vision
-COMERCIA es una plataforma SaaS multitenant para marcas de productos, servicios o modelos mixtos.
+COMERCIA es una plataforma SaaS multitenant para productos/servicios con operaciones de cobro centralizadas en Stripe.
 
-Base actual habilitada:
-- Admin SaaS con autenticacion JWT.
-- Gestion de tenants y branding por marca.
-- Landing generator logico por configuracion (sin clonado fisico de codigo).
-- Catalogo ecommerce multitenant aislado por `tenant_id`.
-- Storefront publico por slug de tenant.
+Esta iteracion incorpora el flujo de dinero completo para Plan 1 y Plan 2:
+- configuracion Stripe por tenant
+- checkout
+- comision dinamica por item
+- webhook
+- dashboard de pagos
+- base para Stripe Connect
 
-## 2) Estructura del monorepo
-- `backend/`: FastAPI, SQLAlchemy, Alembic, JWT.
-- `frontend/`: React + Vite + TypeScript.
-- `docs/`: arquitectura y estado modular.
-- `infra/`: Dockerfiles y docker compose local.
+## 2) Flujo de dinero
 
-## 3) Multitenancy
-- Aislamiento logico por columna `tenant_id` en entidades de negocio.
-- `Tenant` como raiz de marca/empresa.
-- `TenantBranding` para identidad visual y datos de contacto por tenant.
-- `StorefrontConfig` y `Banner` para configuracion de landing/ecommerce por tenant.
-- Endpoints de catalogo filtrados por tenant (`by-tenant`).
+### PLAN_1 (fixed)
+1. Cliente crea carrito en storefront.
+2. Backend crea `Order` sin comision.
+3. Stripe Checkout procesa pago total.
+4. Webhook marca orden como `paid`.
 
-## 4) Backend (FastAPI)
-- Swagger: `/docs`
-- Healthcheck: `GET /health`
-- Versionado: `/api/v1`
+### PLAN_2 (commission)
+1. Cliente crea carrito en storefront.
+2. Backend calcula comision por item (2.5% o 3%).
+3. Guarda `Order`, `OrderItem` y `CommissionDetail`.
+4. Crea Checkout con:
+   - `application_fee_amount` = comision total
+   - `transfer_data[destination]` = `stripe_account_id` del tenant
+5. Webhook actualiza estado (`paid`/`failed`) y montos finales.
 
-### 4.1 Autenticacion
-- Login con JWT: `POST /api/v1/auth/login`
-- Usuario actual: `GET /api/v1/auth/me`
-- Roles base:
-  - `reinpia_admin`
-  - `tenant_admin`
-  - `tenant_staff`
-  - `distributor_user`
+## 3) Backend pagos
 
-### 4.2 Tenants y storefront
-- CRUD base tenant:
-  - `GET /api/v1/tenants`
-  - `POST /api/v1/tenants`
-  - `GET /api/v1/tenants/{tenant_id}`
-  - `PUT /api/v1/tenants/{tenant_id}`
-- Inicializacion logica storefront:
-  - `POST /api/v1/tenants/{tenant_id}/initialize-storefront`
-  - `GET /api/v1/tenants/{tenant_id}/storefront-config`
+Modelos agregados/extensiones:
+- `StripeConfig` (+ `stripe_account_id`)
+- `Order`
+- `OrderItem`
+- `CommissionDetail`
+- `Plan` (+ `commission_enabled`)
+- `Tenant` (+ `plan_id`)
 
-Inicializacion logica (idempotente):
-- Branding default
-- Configuracion landing base
-- Configuracion ecommerce base
-- Banner placeholder inicial
+Servicios:
+- `commission_service.py`
+- `stripe_service.py`
+- `email_service.py` (base)
 
-### 4.3 Branding por tenant
-- `GET /api/v1/tenant-branding/{tenant_id}`
-- `POST /api/v1/tenant-branding/{tenant_id}`
-- `PUT /api/v1/tenant-branding/{tenant_id}`
+Endpoints:
+- `POST /api/v1/checkout/create-session`
+- `POST /api/v1/stripe/webhook`
+- `GET /api/v1/payments/dashboard`
 
-Campos base:
-- `primary_color`
-- `secondary_color`
-- `logo_url`
-- `hero_title`
-- `hero_subtitle`
-- `contact_whatsapp`
-- `contact_email`
+## 4) Regla de comision
 
-### 4.4 Catalogo multitenant
-Categorias:
-- `POST /api/v1/categories`
-- `PUT /api/v1/categories/{id}`
-- `GET /api/v1/categories/by-tenant/{tenant_id}`
+`compute_order_commission(order_items)` en `commission_service.py`:
+- por item, no por total global
+- `unit_price <= 2000` => `LOW_2_5`
+- `unit_price > 2000` => `HIGH_3`
+- retorno:
+  - `total_commission`
+  - `details` por item
 
-Productos:
-- `POST /api/v1/products`
-- `PUT /api/v1/products/{id}`
-- `GET /api/v1/products/by-tenant/{tenant_id}`
+## 5) Frontend pagos
 
-Se valida aislamiento tenant-categoria-producto.
+Storefront (`/store/:tenantSlug`):
+- seleccion de productos
+- carrito base
+- boton `Comprar`
+- redireccion a Stripe
 
-### 4.5 Storefront publico
-- `GET /api/v1/storefront/{tenant_slug}`
-- `GET /api/v1/storefront/{tenant_slug}/distribuidores`
-
-## 5) Modelos de dominio
-- Tenant
-- User
-- TenantBranding
-- StorefrontConfig
-- Banner
-- Plan
-- Subscription
-- StripeConfig
-- Category
-- Product
-- Customer
-- Distributor
-- LoyaltyRule
-- Appointment
-- Notification
-- CommissionRule
-
-Modelos clave con audit timestamps (`created_at`, `updated_at`).
+Admin (`/admin/payments`):
+- orders
+- total vendido
+- comision generada
+- neto al comercio
 
 ## 6) Persistencia y migraciones
-- SQLAlchemy declarativo.
-- Alembic con revisiones:
-  - `20260327_01` esquema base.
-  - `20260327_02` auth + storefront.
-- Local con SQLite.
-- Cambio a PostgreSQL via `DATABASE_URL`.
 
-## 7) Frontend
-### 7.1 Admin shell
-- Login + guard de rutas.
-- Páginas:
-  - Tenants list
-  - Tenant detail
-  - Branding editor
-  - Categories list
-  - Products list
-  - Plans
+Revisiones Alembic:
+- `20260327_01` esquema base
+- `20260327_02` auth/storefront
+- `20260328_03` pagos base y extensiones Stripe/Plan/Tenant
 
-### 7.2 Storefront
-- `/store/:tenantSlug`
-- `/store/:tenantSlug/distribuidores`
-
-Secciones base:
-- Hero
-- Banner principal placeholder
-- Categorias
-- Productos destacados
-- Productos recientes
-- Bloque promocion placeholder
-
-## 8) Proximos pasos recomendados
-- RBAC por endpoint (dependencias por rol).
-- Resolver tenant por subdominio/header para storefront y admin tenant.
-- Paginacion/filtros avanzados en catalogo.
-- Integracion Stripe operativa (checkout/webhooks).
-- Observabilidad y auditoria transaccional.
+## 7) Validacion tecnica ejecutada
+- backend compila (`python -m compileall app`)
+- frontend build ok (`npm run build`)

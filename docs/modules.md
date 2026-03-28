@@ -3,13 +3,17 @@
 | Modulo | Estado | Implementacion actual |
 |---|---|---|
 | Autenticacion y usuarios | Inicial funcional | JWT login/me, modelo `User`, roles base |
-| Tenants / Marcas | Inicial funcional | CRUD base + inicializacion storefront |
+| Tenants / Marcas | Inicial funcional | CRUD base + inicializacion storefront + `plan_id` |
 | Branding por tenant | Inicial funcional | Modelo y endpoints GET/POST/PUT |
 | Landing generator logico | Inicial funcional | `StorefrontConfig` + `Banner` + servicio de inicializacion |
 | Ecommerce multitenant | Inicial funcional | CRUD categorias/productos + filtros por tenant |
-| Storefront publico | Inicial funcional | `/storefront/{slug}` y `/distribuidores` |
-| Stripe por tenant | Base inicial | Modelo y endpoint base (`stripe-config`) |
-| Planes comerciales | Inicial funcional | Seed `PLAN_1` y `PLAN_2` |
+| Storefront publico | Inicial funcional | `/storefront/{slug}` y `/distribuidores` + carrito base |
+| Stripe por tenant | Inicial funcional | `stripe_account_id` + endpoint config |
+| Checkout Stripe | Inicial funcional | `POST /checkout/create-session` (Plan1/Plan2) |
+| Comisiones dinamicas | Inicial funcional | Servicio por item 2.5%/3% + `CommissionDetail` |
+| Webhooks Stripe | Inicial funcional | `POST /stripe/webhook` con actualizacion de orden |
+| Dashboard pagos admin | Inicial funcional | `GET /payments/dashboard` + frontend `/admin/payments` |
+| Planes comerciales | Inicial funcional | PLAN_1 fixed / PLAN_2 commission (`commission_enabled`) |
 | Suscripciones | Base de dominio | Modelo `Subscription` |
 | Clientes publicos | Base de dominio | Modelo `Customer` |
 | Distribuidores | Inicial funcional | Modelo + consumo publico por slug |
@@ -19,27 +23,13 @@
 | Bots / Agentes | Base de arquitectura | Pendiente implementacion funcional |
 | Dashboard central REINPIA | Inicial funcional | Admin dashboard base |
 | Notificaciones | Base de dominio | Modelo `Notification` |
-| Comisiones | Base de dominio | Modelo `CommissionRule` |
 
-## Endpoints clave actuales
-- `GET /health`
-- `POST /api/v1/auth/login`
-- `GET /api/v1/auth/me`
-- `GET|POST /api/v1/tenants`
-- `GET|PUT /api/v1/tenants/{tenant_id}`
-- `POST /api/v1/tenants/{tenant_id}/initialize-storefront`
-- `GET /api/v1/tenants/{tenant_id}/storefront-config`
-- `GET|POST|PUT /api/v1/tenant-branding/{tenant_id}`
-- `GET /api/v1/categories/by-tenant/{tenant_id}`
-- `POST /api/v1/categories`
-- `PUT /api/v1/categories/{id}`
-- `GET /api/v1/products/by-tenant/{tenant_id}`
-- `POST /api/v1/products`
-- `PUT /api/v1/products/{id}`
-- `GET /api/v1/storefront/{tenant_slug}`
-- `GET /api/v1/storefront/{tenant_slug}/distribuidores`
+## Endpoints pagos clave
+- `POST /api/v1/checkout/create-session`
+- `POST /api/v1/stripe/webhook`
+- `GET /api/v1/payments/dashboard`
 
 ## Estado de calidad actual
 - Backend compila (`python -m compileall app`)
 - Frontend build ok (`npm run build`)
-- Migraciones Alembic actualizadas a `20260327_02`
+- Migraciones Alembic hasta `20260328_03`

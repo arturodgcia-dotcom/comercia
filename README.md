@@ -4,8 +4,8 @@ Plataforma SaaS multitenant para landing, ecommerce, fidelizacion, distribuidore
 
 ## Monorepo
 
-- `backend/`: FastAPI + SQLAlchemy + Alembic + JWT auth.
-- `frontend/`: React + Vite + TypeScript (admin shell + storefront).
+- `backend/`: FastAPI + SQLAlchemy + Alembic + JWT + Stripe.
+- `frontend/`: React + Vite + TypeScript (admin shell + storefront + checkout).
 - `docs/`: arquitectura y estado de modulos.
 - `infra/`: Docker base local.
 
@@ -36,7 +36,7 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 Swagger:
 - `http://localhost:8000/docs`
 
-Credenciales iniciales seed:
+Credenciales seed:
 - email: `admin@reinpia.com`
 - password: `admin123`
 
@@ -51,71 +51,46 @@ npm run dev
 - Admin: `http://localhost:5173`
 - Storefront por tenant: `http://localhost:5173/store/{tenantSlug}`
 
-## Docker local
+## Endpoints de pagos Stripe
 
-```bash
-cd infra/docker
-docker compose up --build
-```
+Configuracion Stripe por tenant:
+- `GET /api/v1/stripe-config`
+- `POST /api/v1/stripe-config`
 
-Servicios:
-- Backend: `http://localhost:8000`
-- Frontend: `http://localhost:5173`
+Checkout:
+- `POST /api/v1/checkout/create-session`
 
-## Endpoints backend principales
+Webhook:
+- `POST /api/v1/stripe/webhook`
 
-Salud:
-- `GET /health`
+Dashboard admin pagos:
+- `GET /api/v1/payments/dashboard`
 
-Auth:
-- `POST /api/v1/auth/login`
-- `GET /api/v1/auth/me`
+## Regla de comision PLAN_2
 
-Tenants:
-- `GET /api/v1/tenants`
-- `POST /api/v1/tenants`
-- `GET /api/v1/tenants/{tenant_id}`
-- `PUT /api/v1/tenants/{tenant_id}`
-- `POST /api/v1/tenants/{tenant_id}/initialize-storefront`
-- `GET /api/v1/tenants/{tenant_id}/storefront-config`
+Implementada por item en `backend/app/services/commission_service.py`:
+- si `precio <= 2000` -> `2.5%`
+- si `precio > 2000` -> `3%`
 
-Branding:
-- `GET /api/v1/tenant-branding/{tenant_id}`
-- `POST /api/v1/tenant-branding/{tenant_id}`
-- `PUT /api/v1/tenant-branding/{tenant_id}`
+## Flujo Plan 1 / Plan 2
 
-Catalogo:
-- `GET /api/v1/categories/by-tenant/{tenant_id}`
-- `POST /api/v1/categories`
-- `PUT /api/v1/categories/{id}`
-- `GET /api/v1/products/by-tenant/{tenant_id}`
-- `POST /api/v1/products`
-- `PUT /api/v1/products/{id}`
+- PLAN_1 (`fixed`): checkout sin comision.
+- PLAN_2 (`commission`): checkout con `application_fee_amount` + `transfer_data[destination]` usando `stripe_account_id` del tenant.
 
-Storefront publico:
-- `GET /api/v1/storefront/{tenant_slug}`
-- `GET /api/v1/storefront/{tenant_slug}/distribuidores`
+## Frontend de pagos
 
-## Modelos base actuales
+Storefront:
+- carrito base
+- boton `Comprar`
+- llamada a checkout backend
+- redireccion a Stripe Checkout
 
-- Tenant
-- User
-- TenantBranding
-- StorefrontConfig
-- Banner
-- Plan
-- Subscription
-- StripeConfig
-- Category
-- Product
-- Customer
-- Distributor
-- LoyaltyRule
-- Appointment
-- Notification
-- CommissionRule
-
-Todos los modelos de negocio relevantes incluyen `tenant_id`.
+Admin:
+- `/admin/payments`
+- total vendido
+- comision generada
+- neto al comercio
+- listado de ordenes
 
 ## Documentacion
 
