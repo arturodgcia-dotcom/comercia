@@ -7,6 +7,20 @@ export interface Tenant {
   is_active: boolean;
 }
 
+export interface User {
+  id: number;
+  email: string;
+  full_name: string;
+  role: "reinpia_admin" | "tenant_admin" | "tenant_staff" | "distributor_user" | string;
+  is_active: boolean;
+  tenant_id: number | null;
+}
+
+export interface LoginResponse {
+  access_token: string;
+  token_type: string;
+}
+
 export interface Plan {
   id: number;
   code: string;
@@ -27,6 +41,19 @@ export interface StripeConfig {
   secret_key: string;
   webhook_secret?: string;
   is_reinpia_managed: boolean;
+}
+
+export interface TenantBranding {
+  id: number;
+  tenant_id: number;
+  primary_color?: string;
+  secondary_color?: string;
+  logo_url?: string;
+  hero_title?: string;
+  hero_subtitle?: string;
+  contact_whatsapp?: string;
+  contact_email?: string;
+  font_family?: string;
 }
 
 export interface Category {
@@ -50,4 +77,46 @@ export interface Product {
   price_retail?: number;
   is_featured: boolean;
   is_active: boolean;
+}
+
+export interface StorefrontConfig {
+  id: number;
+  tenant_id: number;
+  is_initialized: boolean;
+  hero_banner_url?: string;
+  promotion_text?: string;
+  ecommerce_enabled: boolean;
+  landing_enabled: boolean;
+  config_json?: string;
+}
+
+export interface Banner {
+  id: number;
+  tenant_id: number;
+  storefront_config_id: number;
+  title: string;
+  subtitle?: string;
+  image_url?: string;
+  position: number;
+  is_active: boolean;
+}
+
+export interface StorefrontPayload {
+  tenant: Tenant;
+  branding?: TenantBranding;
+  storefront_config?: StorefrontConfig;
+  categories: Category[];
+  featured_products: Product[];
+  recent_products: Product[];
+}
+
+export interface StorefrontDistributorsPayload {
+  tenant: Tenant;
+  distributors: Array<{
+    id: number;
+    full_name: string;
+    email?: string;
+    phone?: string;
+    is_active: boolean;
+  }>;
 }

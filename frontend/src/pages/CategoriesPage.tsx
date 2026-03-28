@@ -1,29 +1,94 @@
-import { useEffect, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
+import { useAuth } from "../app/AuthContext";
 import { PageHeader } from "../components/PageHeader";
-import { apiGet } from "../services/api";
-import { Category } from "../types/domain";
+import { api } from "../services/api";
+import { Category, Tenant } from "../types/domain";
 
 export function CategoriesPage() {
+  const { token } = useAuth();
+  const [tenants, setTenants] = useState<Tenant[]>([]);
+  const [tenantId, setTenantId] = useState<number | null>(null);
   const [items, setItems] = useState<Category[]>([]);
-  const [error, setError] = useState<string>("");
+  const [error, setError] = useState("");
+  const [form, setForm] = useState({ name: "", slug: "", description: "" });
+
+  const selectedTenant = useMemo(() => tenants.find((tenant) => tenant.id === tenantId), [tenantId, tenants]);
 
   useEffect(() => {
-    apiGet<Category[]>("/api/v1/categories")
+    if (!token) return;
+    api
+      .getTenants(token)
+      .then((list) => {
+        setTenants(list);
+        setTenantId((prev) => prev ?? (list[0]?.id ?? null));
+      })
+      .catch((err) => setError(err instanceof Error ? err.message : "No fue posible cargar tenants"));
+  }, [token]);
+
+  useEffect(() => {
+    if (!token || !tenantId) return;
+    api
+      .getCategoriesByTenant(token, tenantId)
       .then(setItems)
-      .catch((err) => setError(err.message));
-  }, []);
+      .catch((err) => setError(err instanceof Error ? err.message : "No fue posible cargar categorias"));
+  }, [token, tenantId]);
+
+  const handleCreate = async (event: FormEvent) => {
+    event.preventDefault();
+    if (!token || !tenantId) return;
+    try {
+      await api.createCategory(token, { tenant_id: tenantId, ...form, is_active: true });
+      setForm({ name: "", slug: "", description: "" });
+      setItems(await api.getCategoriesByTenant(token, tenantId));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "No fue posible crear categoria");
+    }
+  };
+
+  const toggleActive = async (category: Category) => {
+    if (!token) return;
+    try {
+      await api.updateCategory(token, category.id, { is_active: !category.is_active });
+      if (tenantId) setItems(await api.getCategoriesByTenant(token, tenantId));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "No fue posible actualizar categoria");
+    }
+  };
 
   return (
     <section>
-      <PageHeader title="Categories" subtitle="Categorias de ecommerce por tenant." />
+      <PageHeader title="Categories" subtitle="CRUD base de categorias por tenant." />
       {error ? <p className="error">{error}</p> : null}
+      <div className="row-gap">
+        <select value={tenantId ?? ""} onChange={(e) => setTenantId(Number(e.target.value))}>
+          {tenants.map((tenant) => (
+            <option key={tenant.id} value={tenant.id}>
+              {tenant.name} ({tenant.slug})
+            </option>
+          ))}
+        </select>
+        <span>Tenant activo: {selectedTenant?.name ?? "N/A"}</span>
+      </div>
+      <form className="inline-form" onSubmit={handleCreate}>
+        <input value={form.name} placeholder="Name" onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))} required />
+        <input value={form.slug} placeholder="Slug" onChange={(e) => setForm((prev) => ({ ...prev, slug: e.target.value }))} required />
+        <input
+          value={form.description}
+          placeholder="Description"
+          onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))}
+        />
+        <button className="button" type="submit">
+          Crear categoria
+        </button>
+      </form>
+
       <table className="table">
         <thead>
           <tr>
             <th>ID</th>
-            <th>Tenant</th>
             <th>Name</th>
             <th>Slug</th>
+            <th>Description</th>
             <th>Active</th>
           </tr>
         </thead>
@@ -31,10 +96,14 @@ export function CategoriesPage() {
           {items.map((category) => (
             <tr key={category.id}>
               <td>{category.id}</td>
-              <td>{category.tenant_id}</td>
               <td>{category.name}</td>
               <td>{category.slug}</td>
-              <td>{category.is_active ? "Yes" : "No"}</td>
+              <td>{category.description}</td>
+              <td>
+                <button className="button button-outline" type="button" onClick={() => toggleActive(category)}>
+                  {category.is_active ? "Desactivar" : "Activar"}
+                </button>
+              </td>
             </tr>
           ))}
         </tbody>

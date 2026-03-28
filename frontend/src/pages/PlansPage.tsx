@@ -1,21 +1,25 @@
 import { useEffect, useState } from "react";
+import { useAuth } from "../app/AuthContext";
 import { PageHeader } from "../components/PageHeader";
-import { apiGet } from "../services/api";
+import { api } from "../services/api";
 import { Plan } from "../types/domain";
 
 export function PlansPage() {
+  const { token } = useAuth();
   const [items, setItems] = useState<Plan[]>([]);
-  const [error, setError] = useState<string>("");
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    apiGet<Plan[]>("/api/v1/plans")
+    if (!token) return;
+    api
+      .getPlans(token)
       .then(setItems)
-      .catch((err) => setError(err.message));
-  }, []);
+      .catch((err) => setError(err instanceof Error ? err.message : "No fue posible cargar planes"));
+  }, [token]);
 
   return (
     <section>
-      <PageHeader title="Planes Comerciales" subtitle="Plan fijo y plan por comision configurados." />
+      <PageHeader title="Planes Comerciales" subtitle="Plan 1 y Plan 2 para operacion inicial." />
       {error ? <p className="error">{error}</p> : null}
       <div className="card-grid">
         {items.map((plan) => (
@@ -26,9 +30,7 @@ export function PlansPage() {
             <p>Tipo: {plan.type}</p>
             <p>Mensual base: {Number(plan.monthly_price).toLocaleString("es-MX")}</p>
             <p>Mes 3+: {Number(plan.monthly_price_after_month_2).toLocaleString("es-MX")}</p>
-            <p>
-              Comision: {Number(plan.commission_low_rate) * 100}% / {Number(plan.commission_high_rate) * 100}%
-            </p>
+            <p>Comision low/high: {Number(plan.commission_low_rate) * 100}% / {Number(plan.commission_high_rate) * 100}%</p>
             <p>Umbral: {Number(plan.commission_threshold).toLocaleString("es-MX")}</p>
             <p>{plan.notes}</p>
           </article>
