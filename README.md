@@ -1,9 +1,19 @@
-# COMERCIA
+# COMERCIA by REINPIA
 
-Plataforma SaaS multitenant de REINPIA para generaciÃ³n de landing, ecommerce, fidelizaciÃ³n, distribuciÃ³n y automatizaciÃ³n comercial con IA.
+Monorepo SaaS multitenant para:
+- Landing generator
+- Ecommerce
+- Fidelización
+- Distribuidores
+- Servicios y agenda
+- Integraciones de pago con Stripe
+- Dashboard central REINPIA
 
-## Estructura inicial
-- backend
-- frontend
-- docs
-- infra
+## Estructura
+
+- `backend/`: API FastAPI, dominio multitenant, migraciones Alembic.
+- `frontend/`: React + Vite + TypeScript para panel administrativo inicial.
+- `docs/`: arquitectura, módulos, decisiones y evolución.
+- `infra/`: configuración de Docker y scripts de infraestructura.
+
+> La guía de ejecución local se completará con detalle al final de esta ejecución.
