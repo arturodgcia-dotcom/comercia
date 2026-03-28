@@ -618,6 +618,76 @@ class InternalAlert(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
 
 
+class SecurityEvent(Base):
+    __tablename__ = "security_events"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    tenant_id: Mapped[int | None] = mapped_column(ForeignKey("tenants.id"), nullable=True, index=True)
+    user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True, index=True)
+    event_type: Mapped[str] = mapped_column(String(60), nullable=False, index=True)
+    source_ip: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    user_agent: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    severity: Mapped[str] = mapped_column(String(20), default="low", nullable=False, index=True)
+    status: Mapped[str] = mapped_column(String(20), default="new", nullable=False, index=True)
+    event_payload_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+
+
+class SecurityRule(Base, TimestampMixin):
+    __tablename__ = "security_rules"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    code: Mapped[str] = mapped_column(String(60), unique=True, nullable=False, index=True)
+    name: Mapped[str] = mapped_column(String(180), nullable=False)
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    rule_type: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
+    threshold_count: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    threshold_window_minutes: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    action_type: Mapped[str] = mapped_column(String(30), default="alert_only", nullable=False)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    severity: Mapped[str] = mapped_column(String(20), default="medium", nullable=False)
+
+
+class SecurityAlert(Base):
+    __tablename__ = "security_alerts"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    tenant_id: Mapped[int | None] = mapped_column(ForeignKey("tenants.id"), nullable=True, index=True)
+    security_event_id: Mapped[int | None] = mapped_column(ForeignKey("security_events.id"), nullable=True, index=True)
+    alert_type: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
+    title: Mapped[str] = mapped_column(String(220), nullable=False)
+    message: Mapped[str] = mapped_column(Text, nullable=False)
+    severity: Mapped[str] = mapped_column(String(20), default="medium", nullable=False, index=True)
+    is_read: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False, index=True)
+    assigned_to: Mapped[str | None] = mapped_column(String(180), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+
+
+class RiskScore(Base, TimestampMixin):
+    __tablename__ = "risk_scores"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    tenant_id: Mapped[int | None] = mapped_column(ForeignKey("tenants.id"), nullable=True, index=True)
+    user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True, index=True)
+    entity_type: Mapped[str] = mapped_column(String(30), nullable=False, index=True)
+    entity_key: Mapped[str] = mapped_column(String(120), nullable=False, index=True)
+    score: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    risk_level: Mapped[str] = mapped_column(String(20), default="low", nullable=False, index=True)
+    last_evaluated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+
+
+class BlockedEntity(Base):
+    __tablename__ = "blocked_entities"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    entity_type: Mapped[str] = mapped_column(String(30), nullable=False, index=True)
+    entity_key: Mapped[str] = mapped_column(String(180), nullable=False, index=True)
+    reason: Mapped[str] = mapped_column(Text, nullable=False)
+    blocked_until: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False, index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+
+
 class OnboardingGuide(Base, TimestampMixin):
     __tablename__ = "onboarding_guides"
 

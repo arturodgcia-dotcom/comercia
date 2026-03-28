@@ -18,6 +18,7 @@ from app.services.internal_alerts_service import (
     create_plan_purchase_alert,
     create_purchase_status_alert,
 )
+from app.services.security_watch_service import evaluate_suspicious_commission_activity, log_security_event
 from app.services.automation_service import log_automation_event
 
 
@@ -134,6 +135,16 @@ def register_plan_purchase_lead(
                 SalesCommissionAgent.is_active.is_(True),
             )
         )
+        if not agent:
+            log_security_event(
+                db,
+                event_type="referral_code_abuse",
+                severity="high",
+                payload={"code": referral_code_clean, "buyer_email": buyer_email},
+                auto_commit=False,
+            )
+        else:
+            evaluate_suspicious_commission_activity(db, referral_code=referral_code_clean)
     effective_source_type = source_type
     if referral_code_clean and source_type not in {"manual_code", "query_param"}:
         effective_source_type = "manual_code"

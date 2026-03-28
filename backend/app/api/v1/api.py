@@ -23,6 +23,7 @@ from app.api.v1.endpoints import (
     recurring_orders,
     reinpia_admin,
     reviews,
+    security,
     services,
     storefront,
     stripe_config,
@@ -50,6 +51,7 @@ api_router.include_router(coupons.router, prefix="/coupons", tags=["coupons"])
 api_router.include_router(banners.router, prefix="/banners", tags=["banners"])
 api_router.include_router(wishlist.router, prefix="/wishlist", tags=["wishlist"])
 api_router.include_router(reviews.router, prefix="/reviews", tags=["reviews"])
+api_router.include_router(security.router, prefix="/security", tags=["security"])
 api_router.include_router(services.router, prefix="/services", tags=["services"])
 api_router.include_router(appointments.router, prefix="/appointments", tags=["appointments"])
 api_router.include_router(distributors_ops.router, prefix="/distributors", tags=["distributors"])

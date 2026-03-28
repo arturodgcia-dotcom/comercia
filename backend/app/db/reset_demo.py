@@ -8,6 +8,7 @@ from app.models.models import (
     Appointment,
     Banner,
     Base,
+    BlockedEntity,
     Category,
     CommissionDetail,
     ContractTemplate,
@@ -39,7 +40,11 @@ from app.models.models import (
     ProductReview,
     RecurringOrderItem,
     RecurringOrderSchedule,
+    RiskScore,
     SalesCommissionAgent,
+    SecurityAlert,
+    SecurityEvent,
+    SecurityRule,
     SalesReferral,
     ServiceOffering,
     SignedContract,
@@ -137,6 +142,9 @@ def reset_demo_data(db: Session) -> None:
         db.execute(delete(AutomationEventLog).where(AutomationEventLog.tenant_id.in_(tenant_ids)))
         db.execute(delete(Notification).where(Notification.tenant_id.in_(tenant_ids)))
         db.execute(delete(InternalAlert).where(InternalAlert.tenant_id.in_(tenant_ids)))
+        db.execute(delete(SecurityAlert).where(SecurityAlert.tenant_id.in_(tenant_ids)))
+        db.execute(delete(SecurityEvent).where(SecurityEvent.tenant_id.in_(tenant_ids)))
+        db.execute(delete(RiskScore).where(RiskScore.tenant_id.in_(tenant_ids)))
         db.execute(delete(SalesReferral).where(SalesReferral.tenant_id.in_(tenant_ids)))
         db.execute(delete(PlanPurchaseLead).where(PlanPurchaseLead.buyer_email.in_(DEMO_PLAN_LEAD_EMAILS)))
         db.execute(delete(LogisticsOrder).where(LogisticsOrder.tenant_id.in_(tenant_ids)))
@@ -168,6 +176,11 @@ def reset_demo_data(db: Session) -> None:
     db.execute(delete(SalesReferral).where(SalesReferral.referral_code_entered.like(f"{DEMO_AGENT_CODE_PREFIX}%")))
     db.execute(delete(InternalAlert).where(InternalAlert.commission_agent_id.in_(select(SalesCommissionAgent.id).where(SalesCommissionAgent.code.in_(DEMO_AGENT_CODES)))))
     db.execute(delete(SalesCommissionAgent).where(SalesCommissionAgent.code.in_(DEMO_AGENT_CODES) | SalesCommissionAgent.code.like(f"{DEMO_AGENT_CODE_PREFIX}%")))
+    db.execute(delete(SecurityAlert))
+    db.execute(delete(SecurityEvent))
+    db.execute(delete(RiskScore))
+    db.execute(delete(SecurityRule))
+    db.execute(delete(BlockedEntity))
     db.execute(delete(ExchangeRate).where(ExchangeRate.source_name.in_(["demo_manual", "local_fallback"])))
 
     db.commit()

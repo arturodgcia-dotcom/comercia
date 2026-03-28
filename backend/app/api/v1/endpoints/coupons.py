@@ -1,6 +1,6 @@
 from decimal import Decimal
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -8,6 +8,7 @@ from app.db.session import get_db
 from app.models.models import Coupon
 from app.schemas.coupon import CouponCreate, CouponRead, CouponUpdate, CouponValidateRequest
 from app.services.coupon_service import apply_coupon
+from app.services.security_hooks import on_coupon_validation_failed
 
 router = APIRouter()
 
@@ -39,7 +40,7 @@ def update_coupon(coupon_id: int, payload: CouponUpdate, db: Session = Depends(g
 
 
 @router.post("/validate")
-def validate_coupon(payload: CouponValidateRequest, db: Session = Depends(get_db)) -> dict:
+def validate_coupon(payload: CouponValidateRequest, request: Request, db: Session = Depends(get_db)) -> dict:
     try:
         result = apply_coupon(
             db,
@@ -51,4 +52,11 @@ def validate_coupon(payload: CouponValidateRequest, db: Session = Depends(get_db
         coupon = result["coupon"]
         return {"valid": True, "coupon_id": coupon.id, "discount_amount": result["discount_amount"]}
     except ValueError as exc:
+        source_ip = request.client.host if request.client else None
+        on_coupon_validation_failed(
+            db,
+            code=payload.code,
+            tenant_id=payload.tenant_id,
+            source_ip=source_ip,
+        )
         raise HTTPException(status_code=400, detail=str(exc)) from exc

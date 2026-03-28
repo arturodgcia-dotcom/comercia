@@ -12,6 +12,7 @@ from app.services.coupon_service import increment_coupon_usage
 from app.services.email_service import send_purchase_receipt
 from app.services.loyalty_service import apply_points_for_order, consume_points
 from app.services.notifications_service import send_email_notification, send_whatsapp_placeholder
+from app.services.security_hooks import on_checkout_payment_failed, on_webhook_verification_failed
 from app.services.stripe_service import construct_webhook_event
 from app.services.automation_service import log_automation_event
 
@@ -22,7 +23,8 @@ router = APIRouter()
 async def stripe_webhook(request: Request, db: Session = Depends(get_db)) -> dict:
     payload = await request.body()
     sig_header = request.headers.get("stripe-signature")
-    event = _resolve_event(db, payload, sig_header)
+    source_ip = request.client.host if request.client else None
+    event = _resolve_event(db, payload, sig_header, source_ip=source_ip)
 
     event_type = event.get("type")
     data_object = event.get("data", {}).get("object", {})
@@ -82,11 +84,12 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)) -> dic
             order.status = "failed"
             order.stripe_payment_intent_id = str(data_object.get("id") or "")
             db.commit()
+            on_checkout_payment_failed(db, tenant_id=order.tenant_id, source_ip=source_ip)
 
     return {"received": True}
 
 
-def _resolve_event(db: Session, payload: bytes, sig_header: str | None) -> dict:
+def _resolve_event(db: Session, payload: bytes, sig_header: str | None, source_ip: str | None = None) -> dict:
     configs = db.scalars(select(StripeConfig).order_by(StripeConfig.id.desc())).all()
     for config in configs:
         try:
@@ -96,6 +99,7 @@ def _resolve_event(db: Session, payload: bytes, sig_header: str | None) -> dict:
     try:
         return construct_webhook_event(payload, sig_header, None)
     except Exception as exc:
+        on_webhook_verification_failed(db, source_ip=source_ip, reason="signature_mismatch")
         raise HTTPException(status_code=400, detail="evento webhook invalido") from exc
 
 

@@ -38,6 +38,9 @@ from app.models.models import (
     ProductReview,
     RecurringOrderItem,
     RecurringOrderSchedule,
+    SecurityAlert,
+    SecurityEvent,
+    SecurityRule,
     SalesCommissionAgent,
     ServiceOffering,
     StorefrontConfig,
@@ -49,6 +52,7 @@ from app.models.models import (
 )
 from app.services.commission_agents_service import register_plan_purchase_lead
 from app.services.currency_service import create_manual_exchange_rate, upsert_currency_settings
+from app.services.security_watch_service import block_entity
 from app.services.storefront_initializer import initialize_storefront
 
 pwd_context = CryptContext(schemes=["bcrypt", "pbkdf2_sha256"], deprecated="auto")
@@ -76,6 +80,7 @@ def seed_demo_data(db: Session) -> None:
     _seed_currency_settings(db, tenants)
     _seed_pos_data(db, tenants)
     _seed_agents_and_leads(db)
+    _seed_security_demo_data(db, tenants)
     db.commit()
 
 
@@ -457,6 +462,108 @@ def _seed_pos_data(db: Session, tenants: list[Tenant]) -> None:
                     total_price=Decimal("640"),
                 )
             )
+
+
+def _seed_security_demo_data(db: Session, tenants: list[Tenant]) -> None:
+    reinpia = next((t for t in tenants if t.slug == "reinpia"), None)
+    if not reinpia:
+        return
+    base_events = [
+        ("login_failed", "high", {"email": "bot@demo.invalid"}),
+        ("excessive_failed_payments", "high", {"tenant_slug": "reinpia"}),
+        ("coupon_abuse", "medium", {"code": "REINPIA10"}),
+        ("referral_code_abuse", "high", {"code": "COD-FAKE-9999"}),
+        ("webhook_verification_failed", "critical", {"reason": "signature_mismatch"}),
+    ]
+    for event_type, severity, payload in base_events:
+        exists = db.scalar(
+            select(SecurityEvent).where(
+                SecurityEvent.tenant_id == reinpia.id,
+                SecurityEvent.event_type == event_type,
+                SecurityEvent.event_payload_json.like(f"%{list(payload.values())[0]}%"),
+            )
+        )
+        if not exists:
+            db.add(
+                SecurityEvent(
+                    tenant_id=reinpia.id,
+                    user_id=None,
+                    event_type=event_type,
+                    source_ip="127.0.0.1",
+                    user_agent="seed-demo",
+                    severity=severity,
+                    status="new",
+                    event_payload_json=str(payload).replace("'", '"'),
+                )
+            )
+    db.flush()
+    first_event = db.scalar(select(SecurityEvent).where(SecurityEvent.tenant_id == reinpia.id).order_by(SecurityEvent.id.asc()))
+    if first_event and not db.scalar(select(SecurityAlert).where(SecurityAlert.title == "Posible fraude en login DEMO")):
+        db.add(
+            SecurityAlert(
+                tenant_id=reinpia.id,
+                security_event_id=first_event.id,
+                alert_type="possible_fraud_login",
+                title="Posible fraude en login DEMO",
+                message="Se detectaron intentos de login fallidos repetidos en ventana corta.",
+                severity="high",
+                is_read=False,
+                assigned_to="seguridad@reinpia.demo",
+            )
+        )
+    if first_event and not db.scalar(select(SecurityAlert).where(SecurityAlert.title == "Abuso de cupon DEMO")):
+        db.add(
+            SecurityAlert(
+                tenant_id=reinpia.id,
+                security_event_id=first_event.id,
+                alert_type="coupon_abuse",
+                title="Abuso de cupon DEMO",
+                message="Uso sospechoso de cupon detectado en tenant REINPIA.",
+                severity="medium",
+                is_read=False,
+                assigned_to="comercial@reinpia.demo",
+            )
+        )
+    if first_event and not db.scalar(select(SecurityAlert).where(SecurityAlert.title == "Falla reiterada webhook DEMO")):
+        db.add(
+            SecurityAlert(
+                tenant_id=reinpia.id,
+                security_event_id=first_event.id,
+                alert_type="webhook_verification_failed",
+                title="Falla reiterada webhook DEMO",
+                message="Se recomienda revision manual de firma de webhooks Stripe.",
+                severity="critical",
+                is_read=False,
+                assigned_to="tech@reinpia.demo",
+            )
+        )
+    if not db.scalar(
+        select(SecurityRule).where(SecurityRule.code.in_(["LOGIN_FAIL_5_IN_10", "FAILED_PAYMENTS_3_IN_15"]))
+    ):
+        from app.services.security_rules_service import seed_default_security_rules
+
+        seed_default_security_rules(db)
+    if not db.scalar(select(SecurityEvent).where(SecurityEvent.event_type == "rate_limit_triggered")):
+        db.add(
+            SecurityEvent(
+                tenant_id=reinpia.id,
+                user_id=None,
+                event_type="rate_limit_triggered",
+                source_ip="127.0.0.1",
+                user_agent="seed-demo",
+                severity="medium",
+                status="reviewed",
+                event_payload_json='{"path":"/api/v1/comercia/referral/COD-FAKE-9999"}',
+            )
+        )
+    block_entity(
+        db,
+        entity_type="ip",
+        entity_key="203.0.113.50",
+        reason="Entidad demo bloqueada por intentos de login.",
+        blocked_until=None,
+        auto_commit=False,
+    )
 
 
 def run() -> None:

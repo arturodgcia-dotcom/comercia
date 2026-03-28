@@ -8,6 +8,7 @@ from app.db.session import SessionLocal, engine
 from app.models.models import Base, Plan, User
 from app.services.automation_service import upsert_bot_channel, upsert_bot_template
 from app.services.onboarding_service import ensure_default_onboarding_guides
+from app.services.security_rules_service import seed_default_security_rules
 
 pwd_context = CryptContext(schemes=["bcrypt", "pbkdf2_sha256"], deprecated="auto")
 
@@ -17,6 +18,7 @@ def seed_app_base(db: Session) -> None:
     _seed_system_user(db)
     ensure_default_onboarding_guides(db)
     _seed_automation_base(db)
+    seed_default_security_rules(db)
     db.commit()
 
 

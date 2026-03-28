@@ -18,6 +18,7 @@ from app.schemas.pos import (
     PosSaleRead,
 )
 from app.services.pos_service import create_pos_sale
+from app.services.security_watch_service import create_security_alert, log_security_event
 
 router = APIRouter()
 
@@ -95,6 +96,27 @@ def create_sale(payload: PosSaleCreate, db: Session = Depends(get_db), _: User =
         use_loyalty_points=payload.use_loyalty_points,
         register_membership=payload.register_membership,
     )
+    if float(sale.total_amount) >= 50000:
+        event = log_security_event(
+            db,
+            event_type="abnormal_pos_activity",
+            severity="high",
+            tenant_id=sale.tenant_id,
+            source_ip=None,
+            payload={"pos_sale_id": sale.id, "total_amount": float(sale.total_amount)},
+            auto_commit=False,
+        )
+        create_security_alert(
+            db,
+            alert_type="abnormal_pos_activity",
+            title="Venta POS inusual detectada",
+            message=f"Venta POS #{sale.id} con monto alto: {sale.total_amount}.",
+            severity="high",
+            tenant_id=sale.tenant_id,
+            security_event_id=event.id,
+            auto_commit=False,
+        )
+        db.commit()
     return sale
 
 
