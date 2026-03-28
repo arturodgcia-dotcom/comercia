@@ -3,11 +3,14 @@ import { useAuth } from "../app/AuthContext";
 import { ExportButtons } from "../components/ExportButtons";
 import { FilterBar } from "../components/FilterBar";
 import { PageHeader } from "../components/PageHeader";
+import { StatusSummaryCard } from "../components/StatusSummaryCard";
+import { api } from "../services/api";
 
 export function ReinpiaReportsPage() {
   const { token } = useAuth();
   const [filters, setFilters] = useState({ tenantId: "", dateFrom: "", dateTo: "", status: "" });
   const [message, setMessage] = useState("");
+  const [summary, setSummary] = useState<Record<string, unknown>>({});
 
   const query = useMemo(() => {
     const params = new URLSearchParams();
@@ -34,15 +37,33 @@ export function ReinpiaReportsPage() {
     setMessage(`Reporte ${type}.csv generado correctamente.`);
   };
 
+  const loadSummary = async () => {
+    if (!token) return;
+    const data = await api.getReinpiaReportsCommercialSummary(token, query);
+    setSummary(data);
+  };
+
   return (
     <section>
       <PageHeader title="REINPIA Reports" subtitle="Exportes CSV globales para analitica y seguimiento comercial." />
       <FilterBar tenantId={filters.tenantId} dateFrom={filters.dateFrom} dateTo={filters.dateTo} status={filters.status} onChange={setFilters} />
+      <button type="button" className="button" onClick={loadSummary}>
+        Cargar resumen comercial
+      </button>
       <section className="store-banner">
         <h3>Exportables disponibles</h3>
         <p>Ventas globales, comisiones, resumen de tenants y ordenes completas.</p>
         <ExportButtons onExport={handleExport} extended />
       </section>
+      <StatusSummaryCard
+        title="Resumen comercial"
+        values={[
+          { label: "Ventas (ordenes)", value: Number((summary.sales as Record<string, number> | undefined)?.paid_orders ?? 0) },
+          { label: "Distribuidores activos", value: Number((summary.distributors as Record<string, number> | undefined)?.active_distributors ?? 0) },
+          { label: "Logistica entregada", value: Number((summary.logistics as Record<string, number> | undefined)?.delivered ?? 0) },
+          { label: "Leads totales", value: Number((summary.leads as Record<string, number> | undefined)?.total_leads ?? 0) }
+        ]}
+      />
       {message ? <p>{message}</p> : null}
     </section>
   );

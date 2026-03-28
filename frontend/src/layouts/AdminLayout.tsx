@@ -3,7 +3,7 @@ import { useAuth } from "../app/AuthContext";
 import { LanguageSelector } from "../components/LanguageSelector";
 import { useTranslation } from "react-i18next";
 
-const navItems = [
+const navItems: Array<{ labelKey: string; to: string; roles?: string[] }> = [
   { labelKey: "nav.dashboard", to: "/" },
   { labelKey: "nav.tenants", to: "/tenants" },
   { labelKey: "nav.plans", to: "/plans" },
@@ -23,6 +23,14 @@ const navItems = [
   { labelKey: "nav.categories", to: "/categories" },
   { labelKey: "nav.products", to: "/products" },
   { labelKey: "nav.currency", to: "/admin/currency" },
+  { labelKey: "nav.reports", to: "/admin/reports", roles: ["tenant_admin", "tenant_staff", "reinpia_admin"] },
+  { labelKey: "nav.reportSales", to: "/admin/reports/sales", roles: ["tenant_admin", "tenant_staff", "reinpia_admin"] },
+  { labelKey: "nav.reportProducts", to: "/admin/reports/products", roles: ["tenant_admin", "tenant_staff", "reinpia_admin"] },
+  { labelKey: "nav.reportLoyalty", to: "/admin/reports/loyalty", roles: ["tenant_admin", "tenant_staff", "reinpia_admin"] },
+  { labelKey: "nav.reportDistributors", to: "/admin/reports/distributors", roles: ["tenant_admin", "tenant_staff", "reinpia_admin"] },
+  { labelKey: "nav.reportLogistics", to: "/admin/reports/logistics", roles: ["tenant_admin", "tenant_staff", "reinpia_admin"] },
+  { labelKey: "nav.reportServices", to: "/admin/reports/services", roles: ["tenant_admin", "tenant_staff", "reinpia_admin"] },
+  { labelKey: "nav.reportMarketing", to: "/admin/reports/marketing", roles: ["tenant_admin", "tenant_staff", "reinpia_admin"] },
   { labelKey: "nav.onboardingSales", to: "/onboarding/sales" },
   { labelKey: "nav.onboardingClient", to: "/onboarding/client" },
   { labelKey: "nav.pos", to: "/pos" },
@@ -35,6 +43,11 @@ const reinpiaItems = [
   { label: "RG Payments", to: "/reinpia/payments" },
   { label: "RG Operations", to: "/reinpia/operations" },
   { label: "RG Reports", to: "/reinpia/reports" },
+  { label: "RG Rep Overview", to: "/reinpia/reports/overview" },
+  { label: "RG Rep Growth", to: "/reinpia/reports/growth" },
+  { label: "RG Rep Commissions", to: "/reinpia/reports/commissions" },
+  { label: "RG Rep Leads", to: "/reinpia/reports/leads" },
+  { label: "RG Rep Marketing", to: "/reinpia/reports/marketing-opportunities" },
   { label: "RG Agents", to: "/reinpia/commission-agents" },
   { label: "RG Alerts", to: "/reinpia/alerts" },
   { label: "RG Security", to: "/reinpia/security" },
@@ -56,7 +69,9 @@ export function AdminLayout() {
         <p className="sidebar-role">{user?.role}</p>
         <LanguageSelector />
         <nav>
-          {navItems.map((item) => (
+          {navItems
+            .filter((item) => !item.roles || item.roles.includes(user?.role ?? ""))
+            .map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
@@ -65,7 +80,7 @@ export function AdminLayout() {
             >
               {t(item.labelKey)}
             </NavLink>
-          ))}
+            ))}
           {user?.role === "reinpia_admin"
             ? reinpiaItems.map((item) => (
                 <NavLink

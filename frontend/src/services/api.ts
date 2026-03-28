@@ -52,6 +52,9 @@ import {
   StorefrontDistributorsPayload,
   StorefrontHomePayload,
   StorefrontPayload,
+  TenantReportOverview,
+  TenantReportSales,
+  TenantReportUsers,
   Tenant,
   TenantBranding,
   User,
@@ -299,6 +302,55 @@ export const api = {
     const url = `${BASE_URL}/api/v1/reinpia/exports/${type}.csv${query ? `?${query}` : ""}`;
     return { url, token };
   },
+  getTenantReportOverview: (token: string, tenantId: number, query = "") =>
+    request<TenantReportOverview>(`/api/v1/reports/tenant/${tenantId}/overview${query ? `?${query}` : ""}`, {}, token),
+  getTenantReportUsers: (token: string, tenantId: number, query = "") =>
+    request<TenantReportUsers>(`/api/v1/reports/tenant/${tenantId}/users${query ? `?${query}` : ""}`, {}, token),
+  getTenantReportSales: (token: string, tenantId: number, query = "") =>
+    request<TenantReportSales>(`/api/v1/reports/tenant/${tenantId}/sales${query ? `?${query}` : ""}`, {}, token),
+  getTenantReportMemberships: (token: string, tenantId: number, query = "") =>
+    request<Record<string, number>>(`/api/v1/reports/tenant/${tenantId}/memberships${query ? `?${query}` : ""}`, {}, token),
+  getTenantReportLoyalty: (token: string, tenantId: number, query = "") =>
+    request<Record<string, unknown>>(`/api/v1/reports/tenant/${tenantId}/loyalty${query ? `?${query}` : ""}`, {}, token),
+  getTenantTopProducts: (token: string, tenantId: number, query = "") =>
+    request<Array<Record<string, unknown>>>(`/api/v1/reports/tenant/${tenantId}/products/top-selling${query ? `?${query}` : ""}`, {}, token),
+  getTenantLowProducts: (token: string, tenantId: number, query = "") =>
+    request<Array<Record<string, unknown>>>(`/api/v1/reports/tenant/${tenantId}/products/low-selling${query ? `?${query}` : ""}`, {}, token),
+  getTenantUnsoldProducts: (token: string, tenantId: number, query = "") =>
+    request<Array<Record<string, unknown>>>(`/api/v1/reports/tenant/${tenantId}/products/unsold${query ? `?${query}` : ""}`, {}, token),
+  getTenantDistributorsReport: (token: string, tenantId: number, query = "") =>
+    request<Record<string, number>>(`/api/v1/reports/tenant/${tenantId}/distributors${query ? `?${query}` : ""}`, {}, token),
+  getTenantLogisticsReport: (token: string, tenantId: number, query = "") =>
+    request<Record<string, number>>(`/api/v1/reports/tenant/${tenantId}/logistics${query ? `?${query}` : ""}`, {}, token),
+  getTenantServicesReport: (token: string, tenantId: number, query = "") =>
+    request<Record<string, unknown>>(`/api/v1/reports/tenant/${tenantId}/services${query ? `?${query}` : ""}`, {}, token),
+  getTenantMarketingInsights: (token: string, tenantId: number, query = "") =>
+    request<{ insights: Array<Record<string, unknown>>; top_categories: Array<Record<string, unknown>> }>(
+      `/api/v1/reports/tenant/${tenantId}/marketing-insights${query ? `?${query}` : ""}`,
+      {},
+      token
+    ),
+  getTenantReportExportUrl: (
+    tenantId: number,
+    type: "users" | "sales" | "products" | "loyalty" | "distributors" | "logistics" | "services" | "marketing-insights",
+    query = ""
+  ) => `${BASE_URL}/api/v1/reports/tenant/${tenantId}/export/${type}.csv${query ? `?${query}` : ""}`,
+  getReinpiaReportsOverview: (token: string, query = "") =>
+    request<Record<string, unknown>>(`/api/v1/reinpia/reports/overview${query ? `?${query}` : ""}`, {}, token),
+  getReinpiaReportsGrowth: (token: string, query = "") =>
+    request<Record<string, Array<Record<string, unknown>>>>(`/api/v1/reinpia/reports/tenants-growth${query ? `?${query}` : ""}`, {}, token),
+  getReinpiaReportsCommissions: (token: string, query = "") =>
+    request<Record<string, unknown>>(`/api/v1/reinpia/reports/commissions${query ? `?${query}` : ""}`, {}, token),
+  getReinpiaReportsLeads: (token: string, query = "") =>
+    request<Record<string, unknown>>(`/api/v1/reinpia/reports/leads${query ? `?${query}` : ""}`, {}, token),
+  getReinpiaReportsMarketingOpportunities: (token: string, query = "") =>
+    request<{ opportunities: Array<Record<string, unknown>> }>(
+      `/api/v1/reinpia/reports/marketing-opportunities${query ? `?${query}` : ""}`,
+      {},
+      token
+    ),
+  getReinpiaReportsCommercialSummary: (token: string, query = "") =>
+    request<Record<string, unknown>>(`/api/v1/reinpia/reports/commercial-summary${query ? `?${query}` : ""}`, {}, token),
   getReinpiaCommissionAgents: (token: string) =>
     request<SalesCommissionAgent[]>("/api/v1/reinpia/commission-agents", {}, token),
   createReinpiaCommissionAgent: (token: string, payload: Record<string, unknown>) =>

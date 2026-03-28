@@ -35,6 +35,11 @@ import { ReinpiaCommissionAgentsPage } from "../pages/ReinpiaCommissionAgentsPag
 import { ReinpiaOperationsPage } from "../pages/ReinpiaOperationsPage";
 import { ReinpiaPaymentsPage } from "../pages/ReinpiaPaymentsPage";
 import { ReinpiaReportsPage } from "../pages/ReinpiaReportsPage";
+import { ReinpiaReportsOverviewPage } from "../pages/ReinpiaReportsOverviewPage";
+import { ReinpiaGrowthReportPage } from "../pages/ReinpiaGrowthReportPage";
+import { ReinpiaCommissionsReportPage } from "../pages/ReinpiaCommissionsReportPage";
+import { ReinpiaLeadsReportPage } from "../pages/ReinpiaLeadsReportPage";
+import { ReinpiaMarketingOpportunitiesPage } from "../pages/ReinpiaMarketingOpportunitiesPage";
 import { ReinpiaSecurityAlertsPage } from "../pages/ReinpiaSecurityAlertsPage";
 import { ReinpiaSecurityDashboardPage } from "../pages/ReinpiaSecurityDashboardPage";
 import { ReinpiaSecurityRulesPage } from "../pages/ReinpiaSecurityRulesPage";
@@ -51,6 +56,14 @@ import { StorefrontDistributorsPage } from "../pages/StorefrontDistributorsPage"
 import { StorefrontPage } from "../pages/StorefrontPage";
 import { StoreServicesPage } from "../pages/StoreServicesPage";
 import { TenantDetailPage } from "../pages/TenantDetailPage";
+import { TenantReportsOverviewPage } from "../pages/TenantReportsOverviewPage";
+import { TenantSalesReportPage } from "../pages/TenantSalesReportPage";
+import { TenantProductsReportPage } from "../pages/TenantProductsReportPage";
+import { TenantLoyaltyReportPage } from "../pages/TenantLoyaltyReportPage";
+import { TenantDistributorsReportPage } from "../pages/TenantDistributorsReportPage";
+import { TenantLogisticsReportPage } from "../pages/TenantLogisticsReportPage";
+import { TenantServicesReportPage } from "../pages/TenantServicesReportPage";
+import { TenantMarketingInsightsPage } from "../pages/TenantMarketingInsightsPage";
 import { TenantsPage } from "../pages/TenantsPage";
 
 export function AppRouter() {
@@ -88,6 +101,16 @@ export function AppRouter() {
           <Route path="admin/recurring-orders" element={<RecurringOrdersAdminPage />} />
           <Route path="admin/logistics" element={<LogisticsAdminPage />} />
           <Route path="admin/currency" element={<CurrencyAdminPage />} />
+          <Route element={<RoleRoute allowedRoles={["tenant_admin", "reinpia_admin", "tenant_staff"]} />}>
+            <Route path="admin/reports" element={<TenantReportsOverviewPage />} />
+            <Route path="admin/reports/sales" element={<TenantSalesReportPage />} />
+            <Route path="admin/reports/products" element={<TenantProductsReportPage />} />
+            <Route path="admin/reports/loyalty" element={<TenantLoyaltyReportPage />} />
+            <Route path="admin/reports/distributors" element={<TenantDistributorsReportPage />} />
+            <Route path="admin/reports/logistics" element={<TenantLogisticsReportPage />} />
+            <Route path="admin/reports/services" element={<TenantServicesReportPage />} />
+            <Route path="admin/reports/marketing" element={<TenantMarketingInsightsPage />} />
+          </Route>
           <Route path="onboarding/sales" element={<OnboardingSalesPage />} />
           <Route path="onboarding/client" element={<OnboardingClientPage />} />
           <Route path="pos" element={<PosPage />} />
@@ -102,6 +125,11 @@ export function AppRouter() {
             <Route path="reinpia/payments" element={<ReinpiaPaymentsPage />} />
             <Route path="reinpia/operations" element={<ReinpiaOperationsPage />} />
             <Route path="reinpia/reports" element={<ReinpiaReportsPage />} />
+            <Route path="reinpia/reports/overview" element={<ReinpiaReportsOverviewPage />} />
+            <Route path="reinpia/reports/growth" element={<ReinpiaGrowthReportPage />} />
+            <Route path="reinpia/reports/commissions" element={<ReinpiaCommissionsReportPage />} />
+            <Route path="reinpia/reports/leads" element={<ReinpiaLeadsReportPage />} />
+            <Route path="reinpia/reports/marketing-opportunities" element={<ReinpiaMarketingOpportunitiesPage />} />
             <Route path="reinpia/commission-agents" element={<ReinpiaCommissionAgentsPage />} />
             <Route path="reinpia/alerts" element={<ReinpiaAlertsPage />} />
             <Route path="reinpia/security" element={<ReinpiaSecurityDashboardPage />} />

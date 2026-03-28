@@ -766,3 +766,41 @@ export interface SecurityKpis {
   blocked_entities: number;
   top_event_types: Array<{ event_type: string; count: number }>;
 }
+
+export interface TenantReportUsers {
+  total_public_users: number;
+  total_distributor_users: number;
+  total_distributor_profiles: number;
+  total_authorized_distributors: number;
+  new_registrations: number;
+}
+
+export interface TenantReportSales {
+  total_sales: number;
+  paid_orders: number;
+  failed_orders: number;
+  average_ticket: number;
+  recurring_sales: number;
+  timeseries: Array<{ bucket: string; revenue: number; orders: number }>;
+}
+
+export interface TenantReportOverview {
+  users: TenantReportUsers;
+  sales: TenantReportSales;
+  memberships: Record<string, number>;
+  loyalty: Record<string, number>;
+  top_products: Array<{ product_id: number; name: string; units: number; revenue: number }>;
+  logistics: Record<string, number>;
+}
+
+export interface MarketingInsightItem {
+  id: number;
+  tenant_id: number;
+  insight_type: string;
+  category?: string | null;
+  product_id?: number | null;
+  message: string;
+  recommendation: string;
+  period_label: string;
+  created_at: string;
+}
