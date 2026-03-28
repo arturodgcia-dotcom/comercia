@@ -87,9 +87,13 @@ def _seed_system_user(db: Session) -> None:
     )
 
 
-def run() -> None:
+def run(clean_demo: bool = True) -> None:
     Base.metadata.create_all(bind=engine)
     with SessionLocal() as db:
+        if clean_demo:
+            from app.db.reset_demo import reset_demo_data
+
+            reset_demo_data(db)
         seed_app_base(db)
 
 
