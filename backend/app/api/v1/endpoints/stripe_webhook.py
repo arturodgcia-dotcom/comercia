@@ -5,8 +5,10 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
-from app.models.models import Order, StripeConfig
+from app.models.models import Coupon, Order, StripeConfig
+from app.services.coupon_service import increment_coupon_usage
 from app.services.email_service import send_purchase_receipt
+from app.services.loyalty_service import apply_points_for_order, consume_points
 from app.services.stripe_service import construct_webhook_event
 
 router = APIRouter()
@@ -24,6 +26,7 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)) -> dic
     if event_type == "checkout.session.completed":
         order = _find_order_from_checkout_session(db, data_object)
         if order:
+            was_paid = order.status == "paid"
             order.status = "paid"
             order.stripe_payment_intent_id = str(data_object.get("payment_intent") or "")
             if data_object.get("amount_total") is not None:
@@ -36,10 +39,13 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)) -> dic
                     order.total_amount = paid_total
                     order.net_amount = paid_total - Decimal(order.commission_amount)
             db.commit()
+            if not was_paid:
+                _run_post_payment_actions(db, order)
             send_purchase_receipt(order)
     elif event_type == "payment_intent.succeeded":
         order = _find_order_from_payment_intent(db, data_object)
         if order:
+            was_paid = order.status == "paid"
             order.status = "paid"
             order.stripe_payment_intent_id = str(data_object.get("id") or "")
             amount_received = data_object.get("amount_received")
@@ -50,6 +56,8 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)) -> dic
                 order.commission_amount = Decimal(int(application_fee)) / Decimal("100")
             order.net_amount = Decimal(order.total_amount) - Decimal(order.commission_amount)
             db.commit()
+            if not was_paid:
+                _run_post_payment_actions(db, order)
     elif event_type == "payment_intent.payment_failed":
         order = _find_order_from_payment_intent(db, data_object)
         if order:
@@ -91,3 +99,14 @@ def _find_order_from_payment_intent(db: Session, payment_intent_obj: dict) -> Or
     if not intent_id:
         return None
     return db.scalar(select(Order).where(Order.stripe_payment_intent_id == intent_id))
+
+
+def _run_post_payment_actions(db: Session, order: Order) -> None:
+    if order.customer_id:
+        if order.loyalty_points_used > 0:
+            consume_points(db, order.customer_id, order.tenant_id, order.loyalty_points_used)
+        apply_points_for_order(db, order)
+    if order.coupon_code:
+        coupon = db.scalar(select(Coupon).where(Coupon.tenant_id == order.tenant_id, Coupon.code == order.coupon_code))
+        if coupon:
+            increment_coupon_usage(db, coupon.id)

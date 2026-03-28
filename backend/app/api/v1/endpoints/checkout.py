@@ -9,6 +9,8 @@ from app.db.session import get_db
 from app.models.models import CommissionDetail, Order, OrderItem, Plan, Product, StripeConfig, Tenant
 from app.schemas.checkout import CheckoutSessionRequest, CheckoutSessionResponse
 from app.services.commission_service import compute_order_commission
+from app.services.coupon_service import apply_coupon
+from app.services.loyalty_service import compute_discount_from_points
 from app.services.stripe_service import create_checkout_session_plan1, create_checkout_session_plan2
 
 router = APIRouter()
@@ -30,12 +32,12 @@ def create_checkout_session(payload: CheckoutSessionRequest, db: Session = Depen
 
     line_items: list[dict] = []
     order_items_data: list[dict] = []
-    total_amount = Decimal("0")
+    subtotal_amount = Decimal("0")
     for item in payload.items:
         product = products[item.product_id]
         unit_price = Decimal(product.price_public).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
         line_total = (unit_price * Decimal(item.quantity)).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
-        total_amount += line_total
+        subtotal_amount += line_total
         order_items_data.append(
             {
                 "product_id": product.id,
@@ -55,25 +57,62 @@ def create_checkout_session(payload: CheckoutSessionRequest, db: Session = Depen
             }
         )
 
+    discount_amount = Decimal("0")
+    coupon_code: str | None = None
+    coupon_id: int | None = None
+    if payload.coupon_code:
+        try:
+            coupon_result = apply_coupon(
+                db,
+                code=payload.coupon_code,
+                tenant_id=tenant.id,
+                order_total=subtotal_amount,
+                applies_to=payload.applies_to,
+            )
+            discount_amount += Decimal(coupon_result["discount_amount"])
+            coupon_obj = coupon_result["coupon"]
+            coupon_code = coupon_obj.code
+            coupon_id = coupon_obj.id
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    loyalty_points_used = 0
+    if payload.use_loyalty_points and payload.customer_id:
+        points_result = compute_discount_from_points(
+            db,
+            customer_id=payload.customer_id,
+            tenant_id=tenant.id,
+            order_total=subtotal_amount - discount_amount,
+        )
+        discount_amount += Decimal(points_result["discount_amount"])
+        loyalty_points_used = points_result["points_to_consume"]
+
+    total_amount = (subtotal_amount - discount_amount).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+    if total_amount < Decimal("0"):
+        total_amount = Decimal("0.00")
     payment_mode = "plan2" if plan.code == "PLAN_2" and plan.commission_enabled else "plan1"
+
     commission_amount = Decimal("0")
     commission_detail_rows: list[dict] = []
-
     if payment_mode == "plan2":
         result = compute_order_commission(order_items_data)
         commission_amount = Decimal(result["total_commission"]).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
         commission_detail_rows = result["details"]
-    net_amount = (total_amount - commission_amount).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
+    net_amount = (total_amount - commission_amount).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
     order = Order(
         tenant_id=tenant.id,
-        customer_id=None,
+        customer_id=payload.customer_id,
+        subtotal_amount=subtotal_amount,
+        discount_amount=discount_amount,
         total_amount=total_amount,
         commission_amount=commission_amount,
         net_amount=net_amount,
         currency=settings.default_currency,
         status="pending",
         payment_mode=payment_mode,
+        coupon_code=coupon_code,
+        loyalty_points_used=loyalty_points_used,
     )
     db.add(order)
     db.flush()
@@ -90,7 +129,13 @@ def create_checkout_session(payload: CheckoutSessionRequest, db: Session = Depen
             )
         )
 
-    metadata = {"order_id": str(order.id), "tenant_id": str(tenant.id)}
+    metadata = {
+        "order_id": str(order.id),
+        "tenant_id": str(tenant.id),
+        "coupon_id": str(coupon_id or ""),
+        "customer_id": str(payload.customer_id or ""),
+        "loyalty_points_used": str(loyalty_points_used),
+    }
     if payment_mode == "plan1":
         session = create_checkout_session_plan1(
             secret_key=stripe_config.secret_key,
@@ -115,11 +160,12 @@ def create_checkout_session(payload: CheckoutSessionRequest, db: Session = Depen
     order.stripe_session_id = session.id
     db.commit()
     db.refresh(order)
-
     return CheckoutSessionResponse(
         order_id=order.id,
         session_id=session.id,
         session_url=session.url,
+        subtotal_amount=order.subtotal_amount,
+        discount_amount=order.discount_amount,
         total_amount=order.total_amount,
         commission_amount=order.commission_amount,
         net_amount=order.net_amount,

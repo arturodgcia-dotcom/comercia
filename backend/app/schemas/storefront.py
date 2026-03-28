@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from pydantic import BaseModel
 
 from app.schemas.common import TimestampSchema
@@ -7,11 +9,16 @@ from app.schemas.tenant_branding import TenantBrandingRead
 class BannerRead(TimestampSchema):
     id: int
     tenant_id: int
-    storefront_config_id: int
+    storefront_config_id: int | None
     title: str
     subtitle: str | None
     image_url: str | None
-    position: int
+    target_type: str
+    target_value: str | None
+    position: str
+    priority: int
+    starts_at: datetime | None
+    ends_at: datetime | None
     is_active: bool
 
 

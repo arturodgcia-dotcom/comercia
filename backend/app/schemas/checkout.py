@@ -15,12 +15,18 @@ class CheckoutSessionRequest(BaseModel):
     items: list[CheckoutItemInput] = Field(min_length=1)
     success_url: str
     cancel_url: str
+    coupon_code: str | None = None
+    use_loyalty_points: bool = False
+    customer_id: int | None = None
+    applies_to: str = "public"
 
 
 class CheckoutSessionResponse(BaseModel):
     order_id: int
     session_id: str
     session_url: str
+    subtotal_amount: Decimal
+    discount_amount: Decimal
     total_amount: Decimal
     commission_amount: Decimal
     net_amount: Decimal
@@ -40,12 +46,16 @@ class OrderRead(ORMBase):
     id: int
     tenant_id: int
     customer_id: int | None
+    subtotal_amount: Decimal
+    discount_amount: Decimal
     total_amount: Decimal
     commission_amount: Decimal
     net_amount: Decimal
     currency: str
     status: str
     payment_mode: str
+    coupon_code: str | None
+    loyalty_points_used: int
     stripe_session_id: str | None
     stripe_payment_intent_id: str | None
     created_at: datetime

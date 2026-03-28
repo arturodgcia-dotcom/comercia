@@ -1,4 +1,4 @@
-from sqlalchemy import select
+﻿from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models.models import Banner, StorefrontConfig, Tenant, TenantBranding
@@ -34,18 +34,19 @@ def initialize_storefront(db: Session, tenant: Tenant) -> StorefrontConfig:
         db.add(config)
         db.flush()
 
-    banner = db.scalar(
-        select(Banner).where(Banner.tenant_id == tenant.id, Banner.storefront_config_id == config.id)
-    )
+    banner = db.scalar(select(Banner).where(Banner.tenant_id == tenant.id, Banner.storefront_config_id == config.id))
     if not banner:
         db.add(
             Banner(
                 tenant_id=tenant.id,
                 storefront_config_id=config.id,
                 title=f"Banner principal de {tenant.name}",
-                subtitle="Placeholder inicial para campaña principal",
+                subtitle="Placeholder inicial para campana principal",
                 image_url=None,
-                position=1,
+                target_type="promotion",
+                target_value=None,
+                position="hero",
+                priority=1,
                 is_active=True,
             )
         )
