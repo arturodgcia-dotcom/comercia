@@ -13,9 +13,12 @@ from app.models.models import (
     LogisticsOrder,
     Order,
     Plan,
+    PlanPurchaseLead,
+    InternalAlert,
     Subscription,
     Tenant,
 )
+from app.services.commission_agents_service import get_commission_sales_kpis
 
 
 def get_global_kpis(db: Session, date_from: datetime | None = None, date_to: datetime | None = None) -> dict:
@@ -62,6 +65,7 @@ def get_global_kpis(db: Session, date_from: datetime | None = None, date_to: dat
         select(func.count(Subscription.id)).where(Subscription.status == "active")
     ) or 0
 
+    commission_kpis = get_commission_sales_kpis(db, date_from=date_from, date_to=date_to)
     return {
         "total_tenants": tenant_total,
         "tenants_active": tenant_active,
@@ -78,6 +82,7 @@ def get_global_kpis(db: Session, date_from: datetime | None = None, date_to: dat
         "total_appointments": appointments_total,
         "total_logistics_orders": logistics_total,
         "delivered_logistics_orders": logistics_delivered,
+        **commission_kpis,
     }
 
 
@@ -401,4 +406,3 @@ def _date_filters(date_col, date_from: datetime | None, date_to: datetime | None
 
 def _to_float(value: Decimal | int | float) -> float:
     return float(Decimal(value).quantize(Decimal("0.01")))
-

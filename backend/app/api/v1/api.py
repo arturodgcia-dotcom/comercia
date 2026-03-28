@@ -5,6 +5,7 @@ from app.api.v1.endpoints import (
     auth,
     banners,
     categories,
+    comercia_public,
     checkout,
     contracts,
     coupons,
@@ -52,3 +53,4 @@ api_router.include_router(contracts.router, prefix="/contracts", tags=["contract
 api_router.include_router(recurring_orders.router, prefix="/recurring-orders", tags=["recurring-orders"])
 api_router.include_router(logistics.router, prefix="/logistics", tags=["logistics"])
 api_router.include_router(reinpia_admin.router, prefix="/reinpia", tags=["reinpia-admin"])
+api_router.include_router(comercia_public.router, prefix="/comercia", tags=["comercia-public"])

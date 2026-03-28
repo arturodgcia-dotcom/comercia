@@ -547,3 +547,71 @@ class CommissionRule(Base, TimestampMixin):
     high_rate: Mapped[Decimal] = mapped_column(Numeric(6, 4), nullable=False)
     threshold_amount: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+
+
+class SalesCommissionAgent(Base, TimestampMixin):
+    __tablename__ = "sales_commission_agents"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    code: Mapped[str] = mapped_column(String(80), unique=True, nullable=False, index=True)
+    full_name: Mapped[str] = mapped_column(String(180), nullable=False)
+    email: Mapped[str] = mapped_column(String(180), nullable=False, index=True)
+    phone: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    commission_percentage: Mapped[Decimal] = mapped_column(Numeric(6, 2), default=30, nullable=False)
+    valid_from: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    valid_until: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+
+class SalesReferral(Base, TimestampMixin):
+    __tablename__ = "sales_referrals"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    commission_agent_id: Mapped[int | None] = mapped_column(ForeignKey("sales_commission_agents.id"), nullable=True, index=True)
+    tenant_id: Mapped[int | None] = mapped_column(ForeignKey("tenants.id"), nullable=True, index=True)
+    lead_email: Mapped[str | None] = mapped_column(String(180), nullable=True)
+    lead_name: Mapped[str | None] = mapped_column(String(180), nullable=True)
+    lead_phone: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    source_type: Mapped[str] = mapped_column(String(30), nullable=False)
+    referral_code_entered: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    plan_code: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    needs_followup: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    needs_appointment: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    requested_contact: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    status: Mapped[str] = mapped_column(String(20), default="lead", nullable=False)
+
+
+class PlanPurchaseLead(Base, TimestampMixin):
+    __tablename__ = "plan_purchase_leads"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    company_name: Mapped[str] = mapped_column(String(180), nullable=False)
+    legal_type: Mapped[str] = mapped_column(String(40), nullable=False)
+    buyer_name: Mapped[str] = mapped_column(String(180), nullable=False)
+    buyer_email: Mapped[str] = mapped_column(String(180), nullable=False, index=True)
+    buyer_phone: Mapped[str] = mapped_column(String(40), nullable=False)
+    selected_plan_code: Mapped[str] = mapped_column(String(40), nullable=False)
+    commission_agent_id: Mapped[int | None] = mapped_column(ForeignKey("sales_commission_agents.id"), nullable=True, index=True)
+    referral_code: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    is_commissioned_sale: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    needs_followup: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    needs_appointment: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    purchase_status: Mapped[str] = mapped_column(String(30), default="initiated", nullable=False)
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+
+class InternalAlert(Base):
+    __tablename__ = "internal_alerts"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    alert_type: Mapped[str] = mapped_column(String(40), nullable=False)
+    related_entity_type: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    related_entity_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    tenant_id: Mapped[int | None] = mapped_column(ForeignKey("tenants.id"), nullable=True, index=True)
+    commission_agent_id: Mapped[int | None] = mapped_column(ForeignKey("sales_commission_agents.id"), nullable=True, index=True)
+    title: Mapped[str] = mapped_column(String(220), nullable=False)
+    message: Mapped[str] = mapped_column(Text, nullable=False)
+    severity: Mapped[str] = mapped_column(String(20), default="info", nullable=False)
+    is_read: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)

@@ -2,7 +2,18 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 from passlib.context import CryptContext
 
-from app.models.models import Banner, Base, Category, Plan, ServiceOffering, StorefrontConfig, Subscription, Tenant, TenantBranding
+from app.models.models import (
+    Banner,
+    Base,
+    Category,
+    Plan,
+    SalesCommissionAgent,
+    ServiceOffering,
+    StorefrontConfig,
+    Subscription,
+    Tenant,
+    TenantBranding,
+)
 from app.models.models import User
 from app.db.session import engine
 from app.services.storefront_initializer import initialize_storefront
@@ -15,6 +26,7 @@ def init_db() -> None:
     with Session(engine) as db:
         _seed_plans(db)
         _seed_reinpia_tenant(db)
+        _seed_commission_agents(db)
         _assign_default_plan_for_tenants(db)
         _seed_default_user(db)
 
@@ -231,3 +243,36 @@ def _seed_banner(
             is_active=True,
         )
     )
+
+
+def _seed_commission_agents(db: Session) -> None:
+    defaults = [
+        {
+            "code": "COD-REINPIA-1001",
+            "full_name": "Laura Mendoza",
+            "email": "laura.comercial@reinpia.com",
+            "phone": "+52 555 111 0001",
+            "commission_percentage": 30,
+            "notes": "Comisionista senior PyME.",
+        },
+        {
+            "code": "COD-REINPIA-1002",
+            "full_name": "Carlos Ibarra",
+            "email": "carlos.afiliado@reinpia.com",
+            "phone": "+52 555 111 0002",
+            "commission_percentage": 30,
+            "notes": "Comisionista canal distribuidores.",
+        },
+    ]
+    for row in defaults:
+        existing = db.scalar(select(SalesCommissionAgent).where(SalesCommissionAgent.code == row["code"]))
+        if not existing:
+            db.add(SalesCommissionAgent(**row, is_active=True))
+        else:
+            existing.full_name = row["full_name"]
+            existing.email = row["email"]
+            existing.phone = row["phone"]
+            existing.commission_percentage = row["commission_percentage"]
+            existing.notes = row["notes"]
+            existing.is_active = True
+    db.commit()
