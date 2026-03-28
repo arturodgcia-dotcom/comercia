@@ -1,7 +1,9 @@
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.core.security import get_password_hash
 from app.models.models import Base, Plan
+from app.models.models import User
 from app.db.session import engine
 
 
@@ -9,6 +11,7 @@ def init_db() -> None:
     Base.metadata.create_all(bind=engine)
     with Session(engine) as db:
         _seed_plans(db)
+        _seed_default_user(db)
 
 
 def _seed_plans(db: Session) -> None:
@@ -42,4 +45,22 @@ def _seed_plans(db: Session) -> None:
     for plan in defaults:
         if plan.code not in existing_codes:
             db.add(plan)
+    db.commit()
+
+
+def _seed_default_user(db: Session) -> None:
+    admin = db.scalar(select(User).where(User.email == "admin@reinpia.com"))
+    if admin:
+        return
+
+    db.add(
+        User(
+            email="admin@reinpia.com",
+            full_name="REINPIA Admin",
+            hashed_password=get_password_hash("admin123"),
+            role="reinpia_admin",
+            is_active=True,
+            tenant_id=None,
+        )
+    )
     db.commit()

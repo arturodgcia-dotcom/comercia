@@ -31,6 +31,19 @@ class Tenant(Base, TimestampMixin):
 
     branding: Mapped["TenantBranding"] = relationship(back_populates="tenant", uselist=False)
     stripe_config: Mapped["StripeConfig"] = relationship(back_populates="tenant", uselist=False)
+    storefront_config: Mapped["StorefrontConfig"] = relationship(back_populates="tenant", uselist=False)
+
+
+class User(Base, TimestampMixin):
+    __tablename__ = "users"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    email: Mapped[str] = mapped_column(String(180), unique=True, nullable=False, index=True)
+    full_name: Mapped[str] = mapped_column(String(180), nullable=False)
+    hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
+    role: Mapped[str] = mapped_column(String(30), nullable=False)  # reinpia_admin|tenant_admin|tenant_staff|distributor_user
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    tenant_id: Mapped[int | None] = mapped_column(ForeignKey("tenants.id"), nullable=True, index=True)
 
 
 class TenantBranding(Base, TimestampMixin):
@@ -41,9 +54,46 @@ class TenantBranding(Base, TimestampMixin):
     primary_color: Mapped[str | None] = mapped_column(String(30), nullable=True)
     secondary_color: Mapped[str | None] = mapped_column(String(30), nullable=True)
     logo_url: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    hero_title: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    hero_subtitle: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    contact_whatsapp: Mapped[str | None] = mapped_column(String(30), nullable=True)
+    contact_email: Mapped[str | None] = mapped_column(String(180), nullable=True)
     font_family: Mapped[str | None] = mapped_column(String(120), nullable=True)
 
     tenant: Mapped["Tenant"] = relationship(back_populates="branding")
+
+
+class StorefrontConfig(Base, TimestampMixin):
+    __tablename__ = "storefront_configs"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id"), unique=True, nullable=False, index=True)
+    is_initialized: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    hero_banner_url: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    promotion_text: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    ecommerce_enabled: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    landing_enabled: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    config_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    tenant: Mapped["Tenant"] = relationship(back_populates="storefront_config")
+    banners: Mapped[list["Banner"]] = relationship(back_populates="storefront_config")
+
+
+class Banner(Base, TimestampMixin):
+    __tablename__ = "banners"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id"), nullable=False, index=True)
+    storefront_config_id: Mapped[int] = mapped_column(
+        ForeignKey("storefront_configs.id"), nullable=False, index=True
+    )
+    title: Mapped[str] = mapped_column(String(180), nullable=False)
+    subtitle: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    image_url: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    position: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+
+    storefront_config: Mapped["StorefrontConfig"] = relationship(back_populates="banners")
 
 
 class Plan(Base, TimestampMixin):
