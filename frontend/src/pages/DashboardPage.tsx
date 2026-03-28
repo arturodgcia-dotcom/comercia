@@ -16,7 +16,7 @@ export function DashboardPage() {
     <section>
       <PageHeader
         title="Dashboard Central"
-        subtitle="Vista inicial para operacion multitenant de COMERCIA by REINPIA."
+        subtitle="Vista inicial para operacion multitenant de ComerCia by REINPIA."
       />
       <div className="card-grid">
         {modules.map((module) => (

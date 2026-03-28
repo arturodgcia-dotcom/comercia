@@ -1,4 +1,4 @@
-# Modulos COMERCIA - Estado
+# Modulos ComerCia - Estado
 
 | Modulo | Estado | Notas |
 |---|---|---|
@@ -18,7 +18,7 @@
 | Contratos digitales | Inicial funcional | templates + firma textual |
 | Ordenes recurrentes | Base funcional | schedule + items |
 | Logistica | Base funcional | ordenes + eventos + schedule/reschedule/delivered |
-| Landing corporativa COMERCIA | Inicial funcional | ruta `/comercia`, enfoque conversion, paquetes y lead form |
+| Landing corporativa ComerCia | Inicial funcional | ruta `/comercia`, enfoque conversion, paquetes y lead form |
 | Landing tenant REINPIA | Inicial funcional | ruta `/store/reinpia`, enfoque servicios y canal distribuidor |
 | Seed tenant demo REINPIA | Inicial funcional | tenant + branding + banners + 6 servicios de demo |
 | Panel global REINPIA | Inicial funcional | dashboard multi-tenant con KPIs, filtros y detalle por tenant |
@@ -28,7 +28,7 @@
 | Comisionistas comerciales | Inicial funcional | CRUD de agentes, codigo unico, resumen y KPIs |
 | Referidos y leads de plan | Inicial funcional | `SalesReferral` + `PlanPurchaseLead` con trazabilidad por codigo |
 | Alertas internas | Inicial funcional | alertas para seguimiento comercial y aviso contable |
-| Landing COMERCIA lead capture | Inicial funcional | formulario real + soporte `?ref=` + registro backend |
+| Landing ComerCia lead capture | Inicial funcional | formulario real + soporte `?ref=` + registro backend |
 | Modo DEMO de datos | Inicial funcional | seed multi-tenant idempotente para pruebas comerciales y demos |
 | Modo APP limpio | Inicial funcional | base minima sin data demo comercial |
 | Reset de demo | Inicial funcional | limpieza controlada de tenants/usuarios/datos demo |

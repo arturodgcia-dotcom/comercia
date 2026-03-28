@@ -50,7 +50,7 @@ export function ReinpiaDashboardPage() {
 
   return (
     <section>
-      <PageHeader title="REINPIA Global Dashboard" subtitle="Vista consolidada multi-tenant de COMERCIA." />
+      <PageHeader title="REINPIA Global Dashboard" subtitle="Vista consolidada multi-tenant de ComerCia." />
       <FilterBar tenantId={filters.tenantId} dateFrom={filters.dateFrom} dateTo={filters.dateTo} status={filters.status} onChange={setFilters} />
 
       <div className="card-grid">

@@ -10,7 +10,10 @@ export function ProtectedRoute() {
   }
 
   if (!token) {
-    return <Navigate to="/comercia" replace state={{ from: location.pathname }} />;
+    if (location.pathname === "/") {
+      return <Navigate to="/comercia" replace />;
+    }
+    return <Navigate to="/login" replace state={{ from: location.pathname }} />;
   }
 
   return <Outlet />;

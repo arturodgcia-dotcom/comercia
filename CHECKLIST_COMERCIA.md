@@ -162,3 +162,11 @@
 - [x] `start_all.bat` soporta `--bootstrap` sin romper flujo actual
 - [x] Frontend evita rebote en raiz para no autenticados (`/` -> `/comercia`)
 - [x] README actualizado con uso bootstrap
+
+## Entregables ejecucion 14 (Branding + rutas + storefront)
+- [x] Branding visible actualizado a `ComerCia` en landing principal y textos UI clave
+- [x] Guard de auth corregido: rutas protegidas redirigen a `/login` (excepto `/` sin sesion -> `/comercia`)
+- [x] `/reinpia/dashboard` mantiene acceso protegido para `reinpia_admin` sin redireccion erronea a landing publica
+- [x] CORS backend ampliado para puertos locales de Vite (`5173/5174`) y evita `Failed to fetch` por origen
+- [x] `/store/:tenantSlug` ahora muestra fallback elegante con boton reintentar y log claro de endpoint fallido
+- [x] README actualizado con notas de branding y comportamiento de rutas

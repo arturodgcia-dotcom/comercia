@@ -38,7 +38,7 @@ export function ReinpiaStorefrontLanding({ data }: { data: StorefrontHomePayload
       <section id="soluciones">
         <h2>Soluciones destacadas</h2>
         <div className="card-grid">
-          <SolutionCard title="COMERCIA" description="Plataforma SaaS para ventas, ecommerce y crecimiento comercial." tag="SaaS Comercial" />
+          <SolutionCard title="ComerCia" description="Plataforma SaaS para ventas, ecommerce y crecimiento comercial." tag="SaaS Comercial" />
           <SolutionCard title="NERVIA" description="Operacion inteligente para procesos internos y control ejecutivo." tag="Operacion" />
           <SolutionCard title="SprintPilot" description="Ejecucion, planeacion y seguimiento para equipos de alto rendimiento." tag="Productividad" />
           <SolutionCard title="Soluciones a la medida" description="Proyectos especiales para necesidades especificas de tu empresa." tag="Custom" />

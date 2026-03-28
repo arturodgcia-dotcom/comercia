@@ -1,4 +1,4 @@
-# COMERCIA by REINPIA
+# ComerCia by REINPIA
 
 Plataforma SaaS multitenant para landing, ecommerce, growth comercial y operacion comercial.
 
@@ -78,7 +78,7 @@ npm run dev
 ```
 
 - Admin: `http://localhost:5173`
-- Landing COMERCIA: `http://localhost:5173/comercia`
+- Landing ComerCia: `http://localhost:5173/comercia`
 - Storefront: `http://localhost:5173/store/{tenantSlug}`
 - Panel global REINPIA (solo reinpia_admin):
   - `http://localhost:5173/reinpia/dashboard`
@@ -274,7 +274,7 @@ npm run dev
   - `/api/v1/reinpia/referrals*`
   - `/api/v1/reinpia/plan-purchase-leads*`
   - `/api/v1/reinpia/alerts*`
-- endpoint publico para landing COMERCIA:
+- endpoint publico para landing ComerCia:
   - `POST /api/v1/comercia/plan-purchase-leads`
   - `GET /api/v1/comercia/referral/{code}`
 
@@ -321,13 +321,17 @@ npm run dev
   - enfocado a monitoreo operativo, scoring base y respuesta inicial interna
 
 ### Landings comerciales (actual)
-- Landing corporativa COMERCIA:
+- Landing corporativa ComerCia:
   - ruta: `/comercia`
-  - enfoque: captacion de leads, paquetes IMPULSA / ESCALA, widget placeholder "Lia de COMERCIA"
+  - enfoque: captacion de leads, paquetes IMPULSA / ESCALA, widget placeholder "Lia de ComerCia"
   - formulario de lead comercial con:
     - `company_name`, `legal_type`, `buyer_name`, `buyer_email`, `buyer_phone`
     - `selected_plan_code`, `referral_code`, `needs_followup`, `needs_appointment`, `notes`
   - autollenado de clave de comisionista por query param `?ref=`
+- comportamiento de rutas clave:
+  - `/` (sin sesion) redirige a `/comercia`
+  - rutas protegidas como `/reinpia/*` redirigen a `/login` cuando no hay sesion
+  - `/store/:tenantSlug` muestra fallback elegante si falla el fetch
 - Landing tenant REINPIA:
   - ruta: `/store/reinpia`
   - enfoque: venta de servicios, canal agencias/distribuidores, widget placeholder "SofIA by REINPIA"

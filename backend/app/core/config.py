@@ -10,7 +10,10 @@ class Settings(BaseSettings):
     environment: str = Field(default="development", alias="ENVIRONMENT")
     api_v1_prefix: str = Field(default="/api/v1", alias="API_V1_PREFIX")
     database_url: str = Field(default="sqlite:///./comercia.db", alias="DATABASE_URL")
-    cors_origins: List[str] = Field(default=["http://localhost:5173"], alias="CORS_ORIGINS")
+    cors_origins: List[str] = Field(
+        default=["http://localhost:5173", "http://localhost:5174", "http://127.0.0.1:5173", "http://127.0.0.1:5174"],
+        alias="CORS_ORIGINS",
+    )
     jwt_secret_key: str = Field(default="change-this-in-production", alias="JWT_SECRET_KEY")
     jwt_algorithm: str = Field(default="HS256", alias="JWT_ALGORITHM")
     jwt_expire_minutes: int = Field(default=120, alias="JWT_EXPIRE_MINUTES")

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { LanguageSelector } from "../components/LanguageSelector";
 import { ReinpiaStorefrontLanding } from "./ReinpiaStorefrontLanding";
-import { api } from "../services/api";
+import { ApiError, api } from "../services/api";
 import { CurrencySettings, ExchangeRate, Product, StorefrontHomePayload, WishlistItem } from "../types/domain";
 
 type CartMap = Record<number, number>;
@@ -12,6 +12,8 @@ export function StorefrontPage() {
   const { tenantSlug } = useParams();
   const [data, setData] = useState<StorefrontHomePayload | null>(null);
   const [error, setError] = useState("");
+  const [errorDetail, setErrorDetail] = useState("");
+  const [retryTick, setRetryTick] = useState(0);
   const [loadingCheckout, setLoadingCheckout] = useState(false);
   const [loadingUpsell, setLoadingUpsell] = useState(false);
   const [cart, setCart] = useState<CartMap>({});
@@ -26,6 +28,8 @@ export function StorefrontPage() {
 
   useEffect(() => {
     if (!tenantSlug) return;
+    setError("");
+    setErrorDetail("");
     api
       .getStorefrontHomeData(tenantSlug)
       .then(async (homeData) => {
@@ -43,8 +47,23 @@ export function StorefrontPage() {
           setWishlist([]);
         }
       })
-      .catch((err) => setError(err instanceof Error ? err.message : "No fue posible cargar storefront"));
-  }, [tenantSlug]);
+      .catch((err: unknown) => {
+        const endpoint = `/api/v1/storefront/${tenantSlug}/home-data`;
+        console.error(`[Storefront] Error loading endpoint ${endpoint}`, err);
+        if (err instanceof ApiError && err.status === 404) {
+          setError("No encontramos esta tienda o no esta activa.");
+          setErrorDetail("Verifica el slug del tenant o confirma que el tenant este activo en backend.");
+          return;
+        }
+        if (err instanceof TypeError) {
+          setError("No se pudo cargar la tienda en este momento.");
+          setErrorDetail("Revisa que el backend este corriendo y que CORS permita el puerto actual del frontend.");
+          return;
+        }
+        setError("No se pudo cargar la tienda en este momento.");
+        setErrorDetail(err instanceof Error ? err.message : "Fallo inesperado al consultar storefront.");
+      });
+  }, [tenantSlug, retryTick]);
 
   const allProducts = useMemo(() => {
     if (!data) return [];
@@ -120,7 +139,20 @@ export function StorefrontPage() {
     }
   };
 
-  if (error) return <p className="error">{error}</p>;
+  if (error) {
+    return (
+      <main className="storefront">
+        <section className="store-banner">
+          <h2>No se pudo cargar la tienda en este momento</h2>
+          <p>{error}</p>
+          {errorDetail ? <p className="error">{errorDetail}</p> : null}
+          <button className="button" type="button" onClick={() => setRetryTick((value) => value + 1)}>
+            Reintentar
+          </button>
+        </section>
+      </main>
+    );
+  }
   if (!data) return <p>Cargando storefront...</p>;
   if (data.tenant.slug.toLowerCase() === "reinpia") return <ReinpiaStorefrontLanding data={data} />;
 
@@ -138,7 +170,7 @@ export function StorefrontPage() {
           ) : null}
         </div>
         <h1>{data.branding?.hero_title ?? data.tenant.name}</h1>
-        <p>{data.branding?.hero_subtitle ?? "Landing base multitenant de COMERCIA"}</p>
+        <p>{data.branding?.hero_subtitle ?? "Landing base multitenant de ComerCia"}</p>
         <div className="store-actions">
           <Link to={`/store/${data.tenant.slug}/distribuidores`} className="button">
             Distribuidores

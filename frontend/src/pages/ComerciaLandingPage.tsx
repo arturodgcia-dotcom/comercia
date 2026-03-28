@@ -58,8 +58,8 @@ export function ComerciaLandingPage() {
         <LanguageSelector />
       </div>
       <HeroSection
-        eyebrow="COMERCIA by REINPIA"
-        title="Convierte tu negocio en una maquina de ventas con COMERCIA"
+        eyebrow="ComerCia by REINPIA"
+        title="Convierte tu negocio en una maquina de ventas con ComerCia"
         subtitle="Landing, ecommerce, marketing, automatizacion y fidelizacion en una sola plataforma para negocios que quieren crecer de verdad."
         primaryLabel="Quiero mi diagnostico"
         primaryTo="#diagnostico"
@@ -68,9 +68,9 @@ export function ComerciaLandingPage() {
       />
 
       <section>
-        <h2>Para quien es COMERCIA</h2>
+        <h2>Para quien es ComerCia</h2>
         <p>
-          COMERCIA esta pensada para negocios formalmente establecidos o con actividad empresarial, para poder integrar pagos,
+          ComerCia esta pensada para negocios formalmente establecidos o con actividad empresarial, para poder integrar pagos,
           operacion y crecimiento de forma ordenada.
         </p>
         <div className="card-grid">
@@ -103,10 +103,10 @@ export function ComerciaLandingPage() {
       </section>
 
       <section id="paquetes">
-        <h2>Paquetes COMERCIA</h2>
+        <h2>Paquetes ComerCia</h2>
         <div className="card-grid">
           <PackageCard
-            name="COMERCIA IMPULSA"
+            name="ComerCia IMPULSA"
             subtitle="Para iniciar, ordenar y acelerar tu negocio"
             focus="Ideal para micro, pequenas y medianas empresas que necesitan traccion rapida con base comercial."
             includes={["Landing y ecommerce base", "Marketing de arranque", "Operacion inicial ordenada"]}
@@ -114,7 +114,7 @@ export function ComerciaLandingPage() {
             secondaryTo="#diagnostico"
           />
           <PackageCard
-            name="COMERCIA ESCALA"
+            name="ComerCia ESCALA"
             subtitle="Para crecer, automatizar y expandir tu marca con mas fuerza"
             focus="Pensado para medianas PyMEs y empresas que requieren crecimiento fuerte y operacion robusta."
             includes={["Automatizacion comercial avanzada", "Canal distribuidor con mayor control", "Escalamiento por etapas"]}
@@ -125,7 +125,7 @@ export function ComerciaLandingPage() {
       </section>
 
       <AgentWidgetPlaceholder
-        name="Lia de COMERCIA"
+        name="Lia de ComerCia"
         description="Agente comercial que te orienta para elegir paquete segun etapa del negocio, formalidad y objetivo comercial."
         bullets={["Evalua etapa comercial", "Sugiere paquete recomendado", "Deja ruta de implementacion inicial"]}
         accent="#1c5fd4"
@@ -153,8 +153,8 @@ export function ComerciaLandingPage() {
           <input required placeholder="Email comprador" value={leadForm.buyer_email} onChange={(e) => setLeadForm((p) => ({ ...p, buyer_email: e.target.value }))} />
           <input required placeholder="Telefono comprador" value={leadForm.buyer_phone} onChange={(e) => setLeadForm((p) => ({ ...p, buyer_phone: e.target.value }))} />
           <select value={leadForm.selected_plan_code} onChange={(e) => setLeadForm((p) => ({ ...p, selected_plan_code: e.target.value }))}>
-            <option value="COMERCIA_IMPULSA">COMERCIA IMPULSA</option>
-            <option value="COMERCIA_ESCALA">COMERCIA ESCALA</option>
+            <option value="COMERCIA_IMPULSA">ComerCia IMPULSA</option>
+            <option value="COMERCIA_ESCALA">ComerCia ESCALA</option>
           </select>
           <input
             placeholder="Clave de comisionista (opcional)"
@@ -181,10 +181,10 @@ export function ComerciaLandingPage() {
 
       <CTASection
         title="Tu marca puede vender mejor, crecer mas rapido y operar con mas inteligencia."
-        subtitle="Activa una estructura comercial real con COMERCIA."
+        subtitle="Activa una estructura comercial real con ComerCia."
         primaryLabel="Solicitar diagnostico"
         primaryTo="#diagnostico"
-        secondaryLabel="Iniciar con COMERCIA"
+        secondaryLabel="Iniciar con ComerCia"
         secondaryTo="/login"
       />
     </main>

@@ -6,15 +6,15 @@ const savedLanguage = localStorage.getItem("comercia_lang") ?? "es";
 const resources = {
   es: {
     translation: {
-      app: { title: "COMERCIA", subtitle: "by REINPIA" },
+      app: { title: "ComerCia", subtitle: "by REINPIA" },
       auth: {
-        loginTitle: "COMERCIA Admin",
+        loginTitle: "ComerCia Admin",
         loginSubtitle: "Acceso al panel multitenant by REINPIA",
         email: "Email",
         password: "Contrasena",
         login: "Iniciar sesion",
         loading: "Ingresando...",
-        goLanding: "Ver landing COMERCIA"
+        goLanding: "Ver landing ComerCia"
       },
       nav: {
         dashboard: "Dashboard",
@@ -57,15 +57,15 @@ const resources = {
   },
   en: {
     translation: {
-      app: { title: "COMERCIA", subtitle: "by REINPIA" },
+      app: { title: "ComerCia", subtitle: "by REINPIA" },
       auth: {
-        loginTitle: "COMERCIA Admin",
+        loginTitle: "ComerCia Admin",
         loginSubtitle: "Multi-tenant admin access by REINPIA",
         email: "Email",
         password: "Password",
         login: "Sign in",
         loading: "Signing in...",
-        goLanding: "View COMERCIA landing"
+        goLanding: "View ComerCia landing"
       },
       nav: {
         dashboard: "Dashboard",
