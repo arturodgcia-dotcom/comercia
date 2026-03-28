@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import { ProtectedRoute } from "../components/ProtectedRoute";
+import { RoleRoute } from "../components/RoleRoute";
 import { AdminLayout } from "../layouts/AdminLayout";
 import { AppointmentsAdminPage } from "../pages/AppointmentsAdminPage";
 import { BrandingEditorPage } from "../pages/BrandingEditorPage";
@@ -22,6 +23,12 @@ import { PlansPage } from "../pages/PlansPage";
 import { ProductDetailPage } from "../pages/ProductDetailPage";
 import { ProductsPage } from "../pages/ProductsPage";
 import { RecurringOrdersAdminPage } from "../pages/RecurringOrdersAdminPage";
+import { ReinpiaDashboardPage } from "../pages/ReinpiaDashboardPage";
+import { ReinpiaOperationsPage } from "../pages/ReinpiaOperationsPage";
+import { ReinpiaPaymentsPage } from "../pages/ReinpiaPaymentsPage";
+import { ReinpiaReportsPage } from "../pages/ReinpiaReportsPage";
+import { ReinpiaTenantDetailPage } from "../pages/ReinpiaTenantDetailPage";
+import { ReinpiaTenantsPage } from "../pages/ReinpiaTenantsPage";
 import { ReviewsAdminPage } from "../pages/ReviewsAdminPage";
 import { ServiceDetailPage } from "../pages/ServiceDetailPage";
 import { ServicesAdminPage } from "../pages/ServicesAdminPage";
@@ -64,6 +71,14 @@ export function AppRouter() {
           <Route path="admin/contracts" element={<ContractsAdminPage />} />
           <Route path="admin/recurring-orders" element={<RecurringOrdersAdminPage />} />
           <Route path="admin/logistics" element={<LogisticsAdminPage />} />
+          <Route element={<RoleRoute allowedRoles={["reinpia_admin"]} />}>
+            <Route path="reinpia/dashboard" element={<ReinpiaDashboardPage />} />
+            <Route path="reinpia/tenants" element={<ReinpiaTenantsPage />} />
+            <Route path="reinpia/tenants/:tenantId" element={<ReinpiaTenantDetailPage />} />
+            <Route path="reinpia/payments" element={<ReinpiaPaymentsPage />} />
+            <Route path="reinpia/operations" element={<ReinpiaOperationsPage />} />
+            <Route path="reinpia/reports" element={<ReinpiaReportsPage />} />
+          </Route>
           <Route path="categories" element={<CategoriesPage />} />
           <Route path="products" element={<ProductsPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />

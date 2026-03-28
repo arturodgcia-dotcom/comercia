@@ -14,10 +14,18 @@ import {
   LoginResponse,
   LoyaltyProgram,
   MembershipPlan,
+  Order,
   PaymentsDashboard,
   Plan,
   Product,
   ProductReview,
+  ReinpiaDistributorsSummary,
+  ReinpiaKpisResponse,
+  ReinpiaSubscription,
+  ReinpiaSummaryByStatus,
+  ReinpiaTenantKpis,
+  ReinpiaTenantSummaryRow,
+  ReinpiaTimeseriesPoint,
   RecurringOrderSchedule,
   ServiceOffering,
   SignedContract,
@@ -219,7 +227,54 @@ export const api = {
   markLogisticsDelivered: (token: string, id: number) =>
     request<LogisticsOrder>(`/api/v1/logistics/${id}/mark-delivered`, { method: "PUT" }, token),
   getLogisticsEvents: (token: string, id: number) =>
-    request<LogisticsEvent[]>(`/api/v1/logistics/${id}/events`, {}, token)
+    request<LogisticsEvent[]>(`/api/v1/logistics/${id}/events`, {}, token),
+
+  getReinpiaDashboardKpis: (token: string, query = "") =>
+    request<ReinpiaKpisResponse>(`/api/v1/reinpia/dashboard/kpis${query ? `?${query}` : ""}`, {}, token),
+  getReinpiaOrdersTimeseries: (token: string, query = "") =>
+    request<ReinpiaTimeseriesPoint[]>(`/api/v1/reinpia/dashboard/orders-timeseries${query ? `?${query}` : ""}`, {}, token),
+  getReinpiaTopTenants: (token: string, query = "") =>
+    request<Array<{ tenant_id: number; tenant_name: string; revenue: number; commissions: number; net_amount: number }>>(
+      `/api/v1/reinpia/dashboard/top-tenants${query ? `?${query}` : ""}`,
+      {},
+      token
+    ),
+  getReinpiaTenantsSummary: (token: string, query = "") =>
+    request<ReinpiaTenantSummaryRow[]>(`/api/v1/reinpia/tenants/summary${query ? `?${query}` : ""}`, {}, token),
+  getReinpiaTenantKpis: (token: string, tenantId: number, query = "") =>
+    request<ReinpiaTenantKpis>(`/api/v1/reinpia/tenants/${tenantId}/kpis${query ? `?${query}` : ""}`, {}, token),
+  getReinpiaTenantOrders: (token: string, tenantId: number, query = "") =>
+    request<Order[]>(`/api/v1/reinpia/tenants/${tenantId}/orders${query ? `?${query}` : ""}`, {}, token),
+  getReinpiaTenantSubscriptions: (token: string, tenantId: number, query = "") =>
+    request<ReinpiaSubscription[]>(`/api/v1/reinpia/tenants/${tenantId}/subscriptions${query ? `?${query}` : ""}`, {}, token),
+  getReinpiaSalesSummary: (token: string, query = "") =>
+    request<{ total_orders: number; subtotal_amount: number; discount_amount: number; total_revenue: number }>(
+      `/api/v1/reinpia/payments/sales-summary${query ? `?${query}` : ""}`,
+      {},
+      token
+    ),
+  getReinpiaCommissionsSummary: (token: string, query = "") =>
+    request<{ total_commissions: number; total_net_amount: number }>(
+      `/api/v1/reinpia/payments/commissions-summary${query ? `?${query}` : ""}`,
+      {},
+      token
+    ),
+  getReinpiaPaymentsOrders: (token: string, query = "") =>
+    request<Order[]>(`/api/v1/reinpia/payments/orders${query ? `?${query}` : ""}`, {}, token),
+  getReinpiaAppointmentsSummary: (token: string, query = "") =>
+    request<ReinpiaSummaryByStatus>(`/api/v1/reinpia/appointments/summary${query ? `?${query}` : ""}`, {}, token),
+  getReinpiaLogisticsSummary: (token: string, query = "") =>
+    request<{ total: number; delivered: number; by_status: Array<{ status: string; count: number }> }>(
+      `/api/v1/reinpia/logistics/summary${query ? `?${query}` : ""}`,
+      {},
+      token
+    ),
+  getReinpiaDistributorsSummary: (token: string, query = "") =>
+    request<ReinpiaDistributorsSummary>(`/api/v1/reinpia/distributors/summary${query ? `?${query}` : ""}`, {}, token),
+  getReinpiaExportUrl: (token: string, type: "sales" | "commissions" | "tenants" | "orders", query = "") => {
+    const url = `${BASE_URL}/api/v1/reinpia/exports/${type}.csv${query ? `?${query}` : ""}`;
+    return { url, token };
+  }
 };
 
 export { ApiError };

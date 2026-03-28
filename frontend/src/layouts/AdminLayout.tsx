@@ -22,6 +22,14 @@ const navItems = [
   { label: "Products", to: "/products" }
 ];
 
+const reinpiaItems = [
+  { label: "RG Dashboard", to: "/reinpia/dashboard" },
+  { label: "RG Tenants", to: "/reinpia/tenants" },
+  { label: "RG Payments", to: "/reinpia/payments" },
+  { label: "RG Operations", to: "/reinpia/operations" },
+  { label: "RG Reports", to: "/reinpia/reports" }
+];
+
 export function AdminLayout() {
   const { logout, user } = useAuth();
 
@@ -43,6 +51,17 @@ export function AdminLayout() {
               {item.label}
             </NavLink>
           ))}
+          {user?.role === "reinpia_admin"
+            ? reinpiaItems.map((item) => (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  className={({ isActive }) => (isActive ? "nav-link active" : "nav-link")}
+                >
+                  {item.label}
+                </NavLink>
+              ))
+            : null}
         </nav>
         <button className="button button-outline" onClick={logout} type="button">
           Cerrar sesion

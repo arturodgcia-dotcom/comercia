@@ -2,7 +2,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 from passlib.context import CryptContext
 
-from app.models.models import Banner, Base, Category, Plan, ServiceOffering, StorefrontConfig, Tenant, TenantBranding
+from app.models.models import Banner, Base, Category, Plan, ServiceOffering, StorefrontConfig, Subscription, Tenant, TenantBranding
 from app.models.models import User
 from app.db.session import engine
 from app.services.storefront_initializer import initialize_storefront
@@ -187,6 +187,10 @@ def _seed_reinpia_tenant(db: Session) -> None:
             target_type="url",
             target_value="/store/reinpia/distribuidores/registro",
         )
+
+    subscription = db.scalar(select(Subscription).where(Subscription.tenant_id == tenant.id, Subscription.status == "active"))
+    if not subscription and tenant.plan_id:
+        db.add(Subscription(tenant_id=tenant.id, plan_id=tenant.plan_id, status="active"))
 
     db.commit()
 

@@ -408,3 +408,84 @@ export interface StorefrontDistributorsPayload {
   }>;
   banners?: Banner[];
 }
+
+export interface ReinpiaGlobalKpis {
+  total_tenants: number;
+  tenants_active: number;
+  tenants_inactive: number;
+  total_revenue: number;
+  total_commissions: number;
+  total_net_amount: number;
+  total_paid_orders: number;
+  total_failed_orders: number;
+  average_order_value: number;
+  total_distributor_applications: number;
+  total_approved_distributors: number;
+  total_active_subscriptions: number;
+  total_appointments: number;
+  total_logistics_orders: number;
+  delivered_logistics_orders: number;
+}
+
+export interface ReinpiaKpisResponse {
+  kpis: ReinpiaGlobalKpis;
+  active_vs_inactive: { active: number; inactive: number };
+  plan_distribution: Array<{ plan_code: string; plan_name: string; count: number }>;
+  business_type_distribution: Array<{ business_type: string; count: number }>;
+}
+
+export interface ReinpiaTimeseriesPoint {
+  day: string;
+  revenue: number;
+  commissions: number;
+  orders: number;
+  paid_orders: number;
+  failed_orders: number;
+}
+
+export interface ReinpiaTenantSummaryRow {
+  tenant_id: number;
+  tenant_name: string;
+  slug: string;
+  is_active: boolean;
+  plan_id?: number | null;
+  business_type: string;
+  revenue: number;
+  commissions: number;
+  net_amount: number;
+  paid_orders: number;
+}
+
+export interface ReinpiaTenantKpis {
+  tenant_id: number;
+  revenue: number;
+  commissions: number;
+  net_amount: number;
+  paid_orders: number;
+  failed_orders: number;
+  active_subscription_status: boolean;
+  distributors_approved: number;
+  appointments_count: number;
+  logistics_delivered_count: number;
+}
+
+export interface ReinpiaSubscription {
+  id: number;
+  tenant_id: number;
+  plan_id: number;
+  status: string;
+  started_at: string;
+  ends_at?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ReinpiaSummaryByStatus {
+  total: number;
+  by_status: Array<{ status: string; count: number }>;
+}
+
+export interface ReinpiaDistributorsSummary {
+  total_applications: number;
+  approved_profiles: number;
+}

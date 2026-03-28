@@ -26,3 +26,9 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
     if not user or not user.is_active:
         raise credentials_error
     return user
+
+
+def get_reinpia_admin(current_user: User = Depends(get_current_user)) -> User:
+    if current_user.role != "reinpia_admin":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="requiere rol reinpia_admin")
+    return current_user
