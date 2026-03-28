@@ -1,3 +1,4 @@
+﻿import json
 from decimal import Decimal, ROUND_HALF_UP
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -6,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
 from app.db.session import get_db
-from app.models.models import CommissionDetail, Order, OrderItem, Plan, Product, StripeConfig, Tenant
+from app.models.models import CommissionDetail, Order, OrderItem, Plan, Product, ServiceOffering, StripeConfig, Tenant
 from app.schemas.checkout import CheckoutSessionRequest, CheckoutSessionResponse
 from app.services.commission_service import compute_order_commission
 from app.services.coupon_service import apply_coupon
@@ -28,19 +29,42 @@ def create_checkout_session(payload: CheckoutSessionRequest, db: Session = Depen
         raise HTTPException(status_code=404, detail="stripe config no encontrado para tenant")
 
     plan = _resolve_tenant_plan(db, tenant)
-    products = _resolve_products(db, tenant.id, payload.items)
 
     line_items: list[dict] = []
     order_items_data: list[dict] = []
+    commission_rows: list[dict] = []
+    service_items: list[dict] = []
     subtotal_amount = Decimal("0")
+
     for item in payload.items:
-        product = products[item.product_id]
-        unit_price = Decimal(product.price_public).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+        if item.product_id:
+            product = db.scalar(select(Product).where(Product.id == item.product_id, Product.tenant_id == tenant.id))
+            if not product:
+                raise HTTPException(status_code=400, detail=f"producto invalido para tenant: {item.product_id}")
+            unit_price = Decimal(product.price_public).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+            name = product.name
+            product_id = product.id
+            service_offering_id = None
+        elif item.service_offering_id:
+            service = db.scalar(
+                select(ServiceOffering).where(ServiceOffering.id == item.service_offering_id, ServiceOffering.tenant_id == tenant.id)
+            )
+            if not service:
+                raise HTTPException(status_code=400, detail=f"servicio invalido para tenant: {item.service_offering_id}")
+            unit_price = Decimal(service.price).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+            name = service.name
+            product_id = None
+            service_offering_id = service.id
+            service_items.append({"service_offering_id": service.id, "name": service.name})
+        else:
+            raise HTTPException(status_code=400, detail="cada item requiere product_id o service_offering_id")
+
         line_total = (unit_price * Decimal(item.quantity)).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
         subtotal_amount += line_total
         order_items_data.append(
             {
-                "product_id": product.id,
+                "product_id": product_id,
+                "service_offering_id": service_offering_id,
                 "quantity": item.quantity,
                 "unit_price": unit_price,
                 "total_price": line_total,
@@ -50,7 +74,7 @@ def create_checkout_session(payload: CheckoutSessionRequest, db: Session = Depen
             {
                 "price_data": {
                     "currency": settings.default_currency,
-                    "product_data": {"name": product.name},
+                    "product_data": {"name": name},
                     "unit_amount": int((unit_price * 100).to_integral_value(rounding=ROUND_HALF_UP)),
                 },
                 "quantity": item.quantity,
@@ -90,16 +114,17 @@ def create_checkout_session(payload: CheckoutSessionRequest, db: Session = Depen
     total_amount = (subtotal_amount - discount_amount).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
     if total_amount < Decimal("0"):
         total_amount = Decimal("0.00")
+
     payment_mode = "plan2" if plan.code == "PLAN_2" and plan.commission_enabled else "plan1"
-
     commission_amount = Decimal("0")
-    commission_detail_rows: list[dict] = []
     if payment_mode == "plan2":
-        result = compute_order_commission(order_items_data)
-        commission_amount = Decimal(result["total_commission"]).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
-        commission_detail_rows = result["details"]
-
+        product_rows = [row for row in order_items_data if row["product_id"] is not None]
+        if product_rows:
+            result = compute_order_commission(product_rows)
+            commission_amount = Decimal(result["total_commission"]).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+            commission_rows = result["details"]
     net_amount = (total_amount - commission_amount).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+
     order = Order(
         tenant_id=tenant.id,
         customer_id=payload.customer_id,
@@ -113,13 +138,24 @@ def create_checkout_session(payload: CheckoutSessionRequest, db: Session = Depen
         payment_mode=payment_mode,
         coupon_code=coupon_code,
         loyalty_points_used=loyalty_points_used,
+        has_service_items=len(service_items) > 0,
+        service_payload_json=json.dumps(service_items) if service_items else None,
+        is_gift=payload.is_gift,
+        gift_sender_name=payload.gift_sender_name,
+        gift_sender_email=payload.gift_sender_email,
+        gift_is_anonymous=payload.gift_is_anonymous,
+        gift_message=payload.gift_message,
+        gift_recipient_name=payload.gift_recipient_name,
+        gift_recipient_email=payload.gift_recipient_email,
+        gift_recipient_phone=payload.gift_recipient_phone,
+        appointment_scheduled_for=payload.appointment_scheduled_for,
     )
     db.add(order)
     db.flush()
 
     for row in order_items_data:
         db.add(OrderItem(order_id=order.id, **row))
-    for detail in commission_detail_rows:
+    for detail in commission_rows:
         db.add(
             CommissionDetail(
                 order_id=order.id,
@@ -182,13 +218,3 @@ def _resolve_tenant_plan(db: Session, tenant: Tenant) -> Plan:
     if not fallback:
         raise HTTPException(status_code=404, detail="no se encontro PLAN_1")
     return fallback
-
-
-def _resolve_products(db: Session, tenant_id: int, items: list) -> dict[int, Product]:
-    product_ids = list({item.product_id for item in items})
-    products = db.scalars(select(Product).where(Product.id.in_(product_ids), Product.tenant_id == tenant_id)).all()
-    mapping = {product.id: product for product in products}
-    missing = [product_id for product_id in product_ids if product_id not in mapping]
-    if missing:
-        raise HTTPException(status_code=400, detail=f"productos invalidos para tenant: {missing}")
-    return mapping

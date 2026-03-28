@@ -52,9 +52,10 @@ def upgrade() -> None:
     )
     op.create_index("ix_loyalty_programs_id", "loyalty_programs", ["id"])
     op.create_index("ix_loyalty_programs_tenant_id", "loyalty_programs", ["tenant_id"])
-    op.create_foreign_key(
-        "fk_loyalty_rules_loyalty_program_id", "loyalty_rules", "loyalty_programs", ["loyalty_program_id"], ["id"]
-    )
+    with op.batch_alter_table("loyalty_rules") as batch_op:
+        batch_op.create_foreign_key(
+            "fk_loyalty_rules_loyalty_program_id", "loyalty_programs", ["loyalty_program_id"], ["id"]
+        )
 
     op.create_table(
         "membership_plans",
@@ -194,7 +195,8 @@ def downgrade() -> None:
     op.drop_index("ix_membership_plans_id", table_name="membership_plans")
     op.drop_table("membership_plans")
 
-    op.drop_constraint("fk_loyalty_rules_loyalty_program_id", "loyalty_rules", type_="foreignkey")
+    with op.batch_alter_table("loyalty_rules") as batch_op:
+        batch_op.drop_constraint("fk_loyalty_rules_loyalty_program_id", type_="foreignkey")
     op.drop_index("ix_loyalty_programs_tenant_id", table_name="loyalty_programs")
     op.drop_index("ix_loyalty_programs_id", table_name="loyalty_programs")
     op.drop_table("loyalty_programs")

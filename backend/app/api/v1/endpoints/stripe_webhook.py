@@ -1,3 +1,5 @@
+import json
+from datetime import datetime, timedelta
 from decimal import Decimal
 
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -5,10 +7,11 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
-from app.models.models import Coupon, Order, StripeConfig
+from app.models.models import Appointment, Coupon, Order, ServiceOffering, StripeConfig
 from app.services.coupon_service import increment_coupon_usage
 from app.services.email_service import send_purchase_receipt
 from app.services.loyalty_service import apply_points_for_order, consume_points
+from app.services.notifications_service import send_email_notification, send_whatsapp_placeholder
 from app.services.stripe_service import construct_webhook_event
 
 router = APIRouter()
@@ -110,3 +113,43 @@ def _run_post_payment_actions(db: Session, order: Order) -> None:
         coupon = db.scalar(select(Coupon).where(Coupon.tenant_id == order.tenant_id, Coupon.code == order.coupon_code))
         if coupon:
             increment_coupon_usage(db, coupon.id)
+    if order.has_service_items and order.service_payload_json:
+        _create_appointments_from_order(db, order)
+
+
+def _create_appointments_from_order(db: Session, order: Order) -> None:
+    try:
+        service_rows = json.loads(order.service_payload_json)
+    except Exception:
+        service_rows = []
+    for row in service_rows:
+        service = db.get(ServiceOffering, int(row.get("service_offering_id")))
+        if not service:
+            continue
+        scheduled_for = order.appointment_scheduled_for or (datetime.utcnow() + timedelta(days=1))
+        appointment = Appointment(
+            tenant_id=order.tenant_id,
+            customer_id=order.customer_id,
+            service_offering_id=service.id,
+            scheduled_for=scheduled_for,
+            service_name=service.name,
+            starts_at=scheduled_for,
+            ends_at=scheduled_for + timedelta(minutes=service.duration_minutes),
+            status="pending",
+            is_gift=order.is_gift,
+            gift_sender_name=order.gift_sender_name,
+            gift_sender_email=order.gift_sender_email,
+            gift_is_anonymous=order.gift_is_anonymous,
+            gift_message=order.gift_message,
+            gift_recipient_name=order.gift_recipient_name,
+            gift_recipient_email=order.gift_recipient_email,
+            gift_recipient_phone=order.gift_recipient_phone,
+            notes=f"Creada desde orden {order.id}",
+            instructions_sent_at=datetime.utcnow(),
+        )
+        db.add(appointment)
+        recipient_email = order.gift_recipient_email or order.gift_sender_email
+        if recipient_email:
+            send_email_notification(recipient_email, "Instrucciones de servicio", f"Tu cita para {service.name} fue agendada.")
+        send_whatsapp_placeholder(order.gift_recipient_phone, f"Servicio {service.name} registrado")
+    db.commit()

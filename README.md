@@ -1,12 +1,12 @@
-﻿# COMERCIA by REINPIA
+# COMERCIA by REINPIA
 
-Plataforma SaaS multitenant para landing, ecommerce, fidelizacion, distribuidores, servicios y pagos Stripe.
+Plataforma SaaS multitenant para landing, ecommerce, growth comercial y operacion comercial.
 
 ## Stack
-- `backend/`: FastAPI + SQLAlchemy + Alembic + JWT + Stripe.
-- `frontend/`: React + Vite + TypeScript.
-- `docs/`: arquitectura y estado modular.
-- `infra/`: Docker base local.
+- `backend/`: FastAPI + SQLAlchemy + Alembic + JWT + Stripe
+- `frontend/`: React + Vite + TypeScript
+- `docs/`: arquitectura y modulos
+- `infra/`: base Docker local
 
 ## Arranque local
 
@@ -20,7 +20,8 @@ alembic upgrade head
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-Swagger: `http://localhost:8000/docs`
+- Swagger: `http://localhost:8000/docs`
+- Health: `http://localhost:8000/health`
 
 Credenciales seed:
 - `admin@reinpia.com`
@@ -36,100 +37,59 @@ npm run dev
 - Admin: `http://localhost:5173`
 - Storefront: `http://localhost:5173/store/{tenantSlug}`
 
-## Bloque comercial implementado
+## Bloques funcionales implementados
 
-### Fidelizacion
-- `LoyaltyProgram`
-- `LoyaltyRule` extendido
-- `CustomerLoyaltyAccount`
-- endpoints:
-  - `GET/POST/PUT /api/v1/loyalty/program/{tenant_id}`
-  - `GET /api/v1/loyalty/account/{tenant_id}/{customer_id}`
-  - `POST /api/v1/loyalty/account/{tenant_id}/{customer_id}/apply-points`
+### Core comercial
+- auth JWT (`/api/v1/auth/login`, `/api/v1/auth/me`)
+- tenants + branding + storefront config
+- catalogo multitenant (categorias/productos)
 
-### Membresias
-- `MembershipPlan`
-- endpoints:
-  - `GET /api/v1/memberships/by-tenant/{tenant_id}`
-  - `POST /api/v1/memberships`
-  - `PUT /api/v1/memberships/{id}`
+### Pagos Stripe
+- checkout Plan 1 y Plan 2
+- comision dinamica por item (2.5% / 3%)
+- webhook para estados y post-procesos
 
-### Cupones
-- `Coupon`
-- endpoints:
-  - `GET /api/v1/coupons/by-tenant/{tenant_id}`
-  - `POST /api/v1/coupons`
-  - `PUT /api/v1/coupons/{id}`
-  - `POST /api/v1/coupons/validate`
+### Growth comercial
+- fidelizacion, cupones, memberships
+- banners dinamicos
+- wishlist y reviews con moderacion
+- upsell/cross-sell base
 
-### Banners dinamicos
-- `Banner` extendido con target/position/priority/vigencia
-- endpoints:
-  - `GET /api/v1/banners/by-tenant/{tenant_id}`
-  - `POST /api/v1/banners`
-  - `PUT /api/v1/banners/{id}`
+### Operacion comercial (actual)
+- servicios y agenda:
+  - `/api/v1/services/*`
+  - `/api/v1/appointments/*`
+- compra de servicios para si o como regalo (checkout extendido)
+- distribuidores por marca:
+  - `/api/v1/distributors/*`
+- contratos digitales base:
+  - `/api/v1/contracts/*`
+- pedidos recurrentes:
+  - `/api/v1/recurring-orders/*`
+- logistica base:
+  - `/api/v1/logistics/*`
 
-### Wishlist
-- `WishlistItem`
-- endpoints:
-  - `GET /api/v1/wishlist/{tenant_id}/{customer_id}`
-  - `POST /api/v1/wishlist`
-  - `DELETE /api/v1/wishlist/{id}`
-
-### Reseñas y moderacion
-- `ProductReview`
-- nuevas reseñas en `is_approved=false`
-- storefront solo muestra aprobadas
-- endpoints:
-  - `GET /api/v1/reviews/product/{product_id}`
-  - `POST /api/v1/reviews`
-  - `PUT /api/v1/reviews/{id}/approve`
-
-### Recomendaciones / storefront helpers
-- `GET /api/v1/storefront/{tenant_slug}/home-data`
-- `GET /api/v1/storefront/{tenant_slug}/checkout-upsell`
-
-### Checkout extendido
-`POST /api/v1/checkout/create-session` ahora soporta:
-- `coupon_code` opcional
-- `use_loyalty_points` opcional
-- `customer_id` opcional
-
-Persistencia en `Order`:
-- `subtotal_amount`
-- `discount_amount`
-- `commission_amount`
-- `total_amount`
-- `net_amount`
-
-Post pago webhook:
-- suma puntos
-- consume puntos usados
-- incrementa uso de cupon
-
-## Frontend agregado
+## Frontend agregado (actual)
 
 ### Admin
-- `/admin/loyalty`
-- `/admin/memberships`
-- `/admin/coupons`
-- `/admin/banners`
-- `/admin/reviews`
-- `/admin/payments`
+- `/admin/services`
+- `/admin/appointments`
+- `/admin/distributor-applications`
+- `/admin/distributors`
+- `/admin/contracts`
+- `/admin/recurring-orders`
+- `/admin/logistics`
 
 ### Storefront
-- Home con:
-  - banners
-  - destacados
-  - nuevos
-  - promociones
-  - mas vendidos (placeholder inteligente)
-- Wishlist por producto
-- Upsell antes de checkout
-- Campo de cupón + opción de puntos
-- Product detail:
-  - `/store/:tenantSlug/product/:productId`
-  - reseñas aprobadas + formulario de reseña
+- `/store/:tenantSlug/services`
+- `/store/:tenantSlug/service/:serviceId`
+- `/store/:tenantSlug/distribuidores/registro`
+- `/store/:tenantSlug/distribuidores/login-placeholder`
+
+## Validacion ejecutada
+- backend: `python -m compileall app`
+- migraciones: `alembic upgrade head`
+- frontend: `npm run build`
 
 ## Documentacion
 - [docs/architecture.md](docs/architecture.md)

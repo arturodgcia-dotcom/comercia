@@ -1,35 +1,30 @@
-﻿# Modulos COMERCIA - Estado Actual
+# Modulos COMERCIA - Estado
 
-| Modulo | Estado | Implementacion actual |
+| Modulo | Estado | Notas |
 |---|---|---|
-| Autenticacion y usuarios | Inicial funcional | JWT login/me, roles base |
-| Tenants / Marcas | Inicial funcional | CRUD + plan + storefront init |
-| Branding por tenant | Inicial funcional | Config visual/contacto |
-| Ecommerce multitenant | Inicial funcional | CRUD categorias/productos + aislamiento tenant |
-| Pagos Stripe | Inicial funcional | Checkout Plan1/Plan2 + webhook + dashboard |
-| Fidelizacion | Inicial funcional | LoyaltyProgram + account + apply points |
-| Membresias | Inicial funcional | MembershipPlan CRUD por tenant |
-| Cupones | Inicial funcional | Coupon CRUD + validate + consumo |
-| Banners dinamicos | Inicial funcional | Target, position, priority, vigencia |
-| Wishlist | Inicial funcional | Alta/lista/borrado por cliente |
-| Reviews + moderacion | Inicial funcional | Submit pending + approve admin |
-| Upsell / recomendaciones | Inicial funcional | helpers home-data y checkout-upsell |
-| Dashboard central REINPIA | Inicial funcional | admin shell + payments + growth modules |
-| Logistica | Base arquitectura | pendiente funcional |
-| Bots / Agentes | Base arquitectura | pendiente funcional |
+| Auth y usuarios | Inicial funcional | JWT login/me + roles |
+| Tenants y branding | Inicial funcional | CRUD tenant + branding por tenant |
+| Storefront multitenant | Inicial funcional | home-data, distributors, services por slug |
+| Catalogo ecommerce | Inicial funcional | categorias/productos CRUD por tenant |
+| Pagos Stripe | Inicial funcional | Plan1/Plan2 + comision + webhook |
+| Fidelizacion | Inicial funcional | programa, cuenta, puntos |
+| Cupones | Inicial funcional | CRUD + validate + uso |
+| Memberships | Inicial funcional | CRUD por tenant |
+| Banners dinamicos | Inicial funcional | posicion/target/prioridad/vigencia |
+| Wishlist | Inicial funcional | add/list/delete |
+| Reviews + moderacion | Inicial funcional | submit pending + approve |
+| Servicios y agenda | Inicial funcional | servicios CRUD + citas self/gift |
+| Distribuidores | Inicial funcional | applications + profiles + employees |
+| Contratos digitales | Inicial funcional | templates + firma textual |
+| Ordenes recurrentes | Base funcional | schedule + items |
+| Logistica | Base funcional | ordenes + eventos + schedule/reschedule/delivered |
+| Bots / agentes | Base arquitectura | pendiente implementacion |
 
-## Endpoints growth clave
-- `/api/v1/loyalty/*`
-- `/api/v1/memberships/*`
-- `/api/v1/coupons/*`
-- `/api/v1/banners/*`
-- `/api/v1/wishlist/*`
-- `/api/v1/reviews/*`
-- `/api/v1/storefront/{slug}/home-data`
-- `/api/v1/storefront/{slug}/checkout-upsell`
-
-## Estado de calidad
-- backend compila
-- frontend build estable
-- swagger actualizado con rutas growth
-- migraciones alembic hasta `20260328_04`
+## Endpoints operacion comercial (nuevos)
+- `/api/v1/services/*`
+- `/api/v1/appointments/*`
+- `/api/v1/distributors/*`
+- `/api/v1/contracts/*`
+- `/api/v1/recurring-orders/*`
+- `/api/v1/logistics/*`
+- `/api/v1/storefront/{tenant_slug}/services`

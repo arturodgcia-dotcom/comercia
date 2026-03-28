@@ -6,7 +6,8 @@ from pydantic import BaseModel, Field
 from app.schemas.common import ORMBase
 
 class CheckoutItemInput(BaseModel):
-    product_id: int
+    product_id: int | None = None
+    service_offering_id: int | None = None
     quantity: int = Field(default=1, ge=1)
 
 
@@ -19,6 +20,15 @@ class CheckoutSessionRequest(BaseModel):
     use_loyalty_points: bool = False
     customer_id: int | None = None
     applies_to: str = "public"
+    is_gift: bool = False
+    gift_sender_name: str | None = None
+    gift_sender_email: str | None = None
+    gift_is_anonymous: bool = False
+    gift_message: str | None = None
+    gift_recipient_name: str | None = None
+    gift_recipient_email: str | None = None
+    gift_recipient_phone: str | None = None
+    appointment_scheduled_for: datetime | None = None
 
 
 class CheckoutSessionResponse(BaseModel):

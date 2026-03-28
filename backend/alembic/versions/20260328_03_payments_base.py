@@ -20,7 +20,8 @@ def upgrade() -> None:
     op.add_column("plans", sa.Column("commission_enabled", sa.Boolean(), nullable=False, server_default=sa.text("0")))
     op.add_column("tenants", sa.Column("plan_id", sa.Integer(), nullable=True))
     op.create_index("ix_tenants_plan_id", "tenants", ["plan_id"])
-    op.create_foreign_key("fk_tenants_plan_id", "tenants", "plans", ["plan_id"], ["id"])
+    with op.batch_alter_table("tenants") as batch_op:
+        batch_op.create_foreign_key("fk_tenants_plan_id", "plans", ["plan_id"], ["id"])
 
     op.create_table(
         "orders",
@@ -93,7 +94,8 @@ def downgrade() -> None:
     op.drop_index("ix_orders_id", table_name="orders")
     op.drop_table("orders")
 
-    op.drop_constraint("fk_tenants_plan_id", "tenants", type_="foreignkey")
+    with op.batch_alter_table("tenants") as batch_op:
+        batch_op.drop_constraint("fk_tenants_plan_id", type_="foreignkey")
     op.drop_index("ix_tenants_plan_id", table_name="tenants")
     op.drop_column("tenants", "plan_id")
     op.drop_column("plans", "commission_enabled")

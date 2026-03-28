@@ -48,3 +48,16 @@
 - [x] Storefront extendido (home-data, product detail, checkout UI)
 - [x] Documentacion y arquitectura actualizadas
 - [x] Validacion backend/frontend completada
+
+## Entregables ejecucion 5 (Operacion comercial real)
+- [x] Modelos: services, appointments gift, distributors, contracts, recurring, logistics
+- [x] Servicios backend: appointment/distributor/contract/recurring/logistics/notifications base
+- [x] Endpoints API v1 de servicios, citas, distribuidores, contratos, recurrencia y logistica
+- [x] Checkout extendido para compra de servicios y regalo
+- [x] Webhook post-pago crea appointment para servicios y envia notificaciones base
+- [x] Frontend admin: services, appointments, distributor applications, distributors, contracts, recurring, logistics
+- [x] Frontend storefront: services list/detail, gift form, distributor register/login-placeholder
+- [x] Contratos digitales MVP con firma textual
+- [x] Migraciones Alembic actualizadas hasta `20260328_05`
+- [x] README y docs actualizados con flujo operativo
+- [x] Validacion: backend compile, alembic upgrade head, frontend build

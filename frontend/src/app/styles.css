@@ -161,10 +161,15 @@ body {
 }
 
 input,
-select {
+select,
+textarea {
   border: 1px solid var(--line);
   border-radius: 8px;
   padding: 9px 10px;
+}
+
+textarea {
+  min-height: 90px;
 }
 
 .checkbox {

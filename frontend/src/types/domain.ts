@@ -82,6 +82,20 @@ export interface Product {
   is_active: boolean;
 }
 
+export interface ServiceOffering {
+  id: number;
+  tenant_id: number;
+  category_id?: number | null;
+  name: string;
+  slug: string;
+  description?: string;
+  duration_minutes: number;
+  price: number;
+  is_active: boolean;
+  is_featured: boolean;
+  requires_schedule: boolean;
+}
+
 export interface StorefrontConfig {
   id: number;
   tenant_id: number;
@@ -137,6 +151,144 @@ export interface MembershipPlan {
   is_active: boolean;
 }
 
+export interface Appointment {
+  id: number;
+  tenant_id: number;
+  customer_id?: number | null;
+  service_offering_id?: number | null;
+  scheduled_for?: string | null;
+  status: string;
+  is_gift: boolean;
+  gift_sender_name?: string | null;
+  gift_sender_email?: string | null;
+  gift_is_anonymous: boolean;
+  gift_message?: string | null;
+  gift_recipient_name?: string | null;
+  gift_recipient_email?: string | null;
+  gift_recipient_phone?: string | null;
+  instructions_sent_at?: string | null;
+  confirmation_received_at?: string | null;
+  notes?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DistributorApplication {
+  id: number;
+  tenant_id: number;
+  company_name: string;
+  contact_name: string;
+  email: string;
+  phone: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  status: string;
+  requested_by_user_id?: number | null;
+  notes?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DistributorProfile {
+  id: number;
+  tenant_id: number;
+  customer_id?: number | null;
+  distributor_application_id?: number | null;
+  business_name: string;
+  contact_name: string;
+  email: string;
+  phone: string;
+  is_authorized: boolean;
+  authorization_date?: string | null;
+  can_purchase_wholesale: boolean;
+  can_sell_as_franchise: boolean;
+  warehouse_address?: string | null;
+  delivery_notes?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DistributorEmployee {
+  id: number;
+  tenant_id: number;
+  distributor_profile_id: number;
+  full_name: string;
+  email: string;
+  phone?: string;
+  role_name?: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ContractTemplate {
+  id: number;
+  tenant_id?: number | null;
+  contract_type: string;
+  name: string;
+  content_markdown: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SignedContract {
+  id: number;
+  tenant_id: number;
+  contract_template_id: number;
+  distributor_profile_id?: number | null;
+  signed_by_name: string;
+  signed_by_email: string;
+  signed_at: string;
+  signature_text: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface RecurringOrderSchedule {
+  id: number;
+  tenant_id: number;
+  customer_id?: number | null;
+  distributor_profile_id?: number | null;
+  frequency: "weekly" | "biweekly" | "monthly" | string;
+  next_run_at: string;
+  is_active: boolean;
+  notes?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface LogisticsOrder {
+  id: number;
+  tenant_id: number;
+  order_id?: number | null;
+  recurring_order_schedule_id?: number | null;
+  customer_id?: number | null;
+  distributor_profile_id?: number | null;
+  delivery_type: "public" | "distributor" | "internal_pickup" | "franchise" | string;
+  status: "pending" | "scheduled" | "in_transit" | "delivered" | "failed" | "rescheduled" | string;
+  warehouse_address?: string | null;
+  delivery_address: string;
+  scheduled_delivery_at?: string | null;
+  delivered_at?: string | null;
+  tracking_reference?: string | null;
+  courier_name?: string | null;
+  delivery_notes?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface LogisticsEvent {
+  id: number;
+  logistics_order_id: number;
+  event_type: string;
+  event_at: string;
+  notes?: string | null;
+  created_at: string;
+}
+
 export interface LoyaltyProgram {
   id: number;
   tenant_id: number;
@@ -184,17 +336,27 @@ export interface StorefrontHomePayload extends StorefrontPayload {
   promo_products: Product[];
   best_sellers: Product[];
   membership_plans: MembershipPlan[];
+  services: ServiceOffering[];
 }
 
 export interface CheckoutSessionRequest {
   tenant_id: number;
-  items: Array<{ product_id: number; quantity: number }>;
+  items: Array<{ product_id?: number; service_offering_id?: number; quantity: number }>;
   success_url: string;
   cancel_url: string;
   coupon_code?: string;
   use_loyalty_points?: boolean;
   customer_id?: number;
   applies_to?: string;
+  is_gift?: boolean;
+  gift_sender_name?: string;
+  gift_sender_email?: string;
+  gift_is_anonymous?: boolean;
+  gift_message?: string;
+  gift_recipient_name?: string;
+  gift_recipient_email?: string;
+  gift_recipient_phone?: string;
+  appointment_scheduled_for?: string;
 }
 
 export interface CheckoutSessionResponse {

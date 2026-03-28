@@ -24,9 +24,17 @@ export function StorefrontDistributorsPage() {
       <section className="store-hero">
         <h1>Distribuidores de {data.tenant.name}</h1>
         <p>Directorio publico base para canal de distribuidores.</p>
-        <Link className="button" to={`/store/${data.tenant.slug}`}>
-          Volver a tienda
-        </Link>
+        <div className="store-actions">
+          <Link className="button" to={`/store/${data.tenant.slug}`}>
+            Volver a tienda
+          </Link>
+          <Link className="button button-outline" to={`/store/${data.tenant.slug}/distribuidores/registro`}>
+            Solicitar registro
+          </Link>
+          <Link className="button button-outline" to={`/store/${data.tenant.slug}/distribuidores/login-placeholder`}>
+            Login placeholder
+          </Link>
+        </div>
       </section>
 
       <section>

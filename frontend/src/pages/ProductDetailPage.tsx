@@ -38,7 +38,7 @@ export function ProductDetailPage() {
       comment: reviewForm.comment
     });
     setReviewForm({ rating: 5, title: "", comment: "" });
-    setError("Reseña enviada. Quedará pendiente de aprobación.");
+    setError("Resena enviada. Quedara pendiente de aprobacion.");
   };
 
   if (error) return <p className="error">{error}</p>;
@@ -52,19 +52,26 @@ export function ProductDetailPage() {
         <h1>{product.name}</h1>
         <p>{product.description}</p>
         <p>Precio: ${Number(product.price_public).toLocaleString("es-MX")}</p>
-        <p>Rating promedio: {avgRating ? avgRating.toFixed(1) : "Sin reseñas"}</p>
-        <Link className="button" to={`/store/${home.tenant.slug}`}>
-          Volver a la tienda
-        </Link>
+        <p>Rating promedio: {avgRating ? avgRating.toFixed(1) : "Sin resenas"}</p>
+        <div className="store-actions">
+          <Link className="button" to={`/store/${home.tenant.slug}`}>
+            Volver a la tienda
+          </Link>
+          {(home.tenant.business_type === "services" || home.tenant.business_type === "mixed") && (
+            <Link className="button button-outline" to={`/store/${home.tenant.slug}/services`}>
+              Ver servicios
+            </Link>
+          )}
+        </div>
       </section>
 
       <section className="store-banner">
         <h2>Imagenes</h2>
-        <p>Placeholder de galeria (base para integrar galeria real en siguiente iteracion).</p>
+        <p>Placeholder de galeria para siguiente iteracion.</p>
       </section>
 
       <section>
-        <h2>Reseñas aprobadas</h2>
+        <h2>Resenas aprobadas</h2>
         <div className="card-grid">
           {reviews.map((review) => (
             <article key={review.id} className="card">
@@ -77,7 +84,7 @@ export function ProductDetailPage() {
       </section>
 
       <section className="store-banner">
-        <h2>Escribir reseña</h2>
+        <h2>Escribir resena</h2>
         <form className="detail-form" onSubmit={submitReview}>
           <label>
             Rating
@@ -98,10 +105,11 @@ export function ProductDetailPage() {
             <input value={reviewForm.comment} onChange={(e) => setReviewForm((prev) => ({ ...prev, comment: e.target.value }))} />
           </label>
           <button className="button" type="submit">
-            Enviar reseña
+            Enviar resena
           </button>
         </form>
       </section>
     </main>
   );
 }
+

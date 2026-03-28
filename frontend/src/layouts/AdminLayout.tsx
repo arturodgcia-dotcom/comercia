@@ -11,6 +11,13 @@ const navItems = [
   { label: "Coupons", to: "/admin/coupons" },
   { label: "Banners", to: "/admin/banners" },
   { label: "Reviews", to: "/admin/reviews" },
+  { label: "Services", to: "/admin/services" },
+  { label: "Appointments", to: "/admin/appointments" },
+  { label: "Dist. Apps", to: "/admin/distributor-applications" },
+  { label: "Distributors", to: "/admin/distributors" },
+  { label: "Contracts", to: "/admin/contracts" },
+  { label: "Recurring", to: "/admin/recurring-orders" },
+  { label: "Logistics", to: "/admin/logistics" },
   { label: "Categories", to: "/categories" },
   { label: "Products", to: "/products" }
 ];

@@ -16,6 +16,7 @@ export function StorefrontPage() {
   const [wishlist, setWishlist] = useState<WishlistItem[]>([]);
   const [couponCode, setCouponCode] = useState("");
   const [usePoints, setUsePoints] = useState(false);
+  const [wantsRecurring, setWantsRecurring] = useState(false);
   const [upsell, setUpsell] = useState<Product[]>([]);
 
   useEffect(() => {
@@ -111,6 +112,14 @@ export function StorefrontPage() {
           <Link to={`/store/${data.tenant.slug}/distribuidores`} className="button">
             Distribuidores
           </Link>
+          <Link to={`/store/${data.tenant.slug}/distribuidores/registro`} className="button button-outline">
+            Quiero ser distribuidor
+          </Link>
+          {(data.tenant.business_type === "services" || data.tenant.business_type === "mixed") && (
+            <Link to={`/store/${data.tenant.slug}/services`} className="button button-outline">
+              Ver servicios
+            </Link>
+          )}
         </div>
       </section>
 
@@ -168,6 +177,11 @@ export function StorefrontPage() {
           <input type="checkbox" checked={usePoints} onChange={(e) => setUsePoints(e.target.checked)} />
           Aplicar puntos de fidelizacion
         </label>
+        <label className="checkbox">
+          <input type="checkbox" checked={wantsRecurring} onChange={(e) => setWantsRecurring(e.target.checked)} />
+          Programar compra recurrente (base)
+        </label>
+        {wantsRecurring ? <p>La recurrencia queda marcada para activarse desde panel admin en este MVP.</p> : null}
         <h3>Upsell antes del pago</h3>
         {loadingUpsell ? <p>Cargando upsell...</p> : null}
         <div className="card-grid">

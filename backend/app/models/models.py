@@ -167,6 +167,22 @@ class Product(Base, TimestampMixin):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
 
+class ServiceOffering(Base, TimestampMixin):
+    __tablename__ = "service_offerings"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id"), nullable=False, index=True)
+    category_id: Mapped[int | None] = mapped_column(ForeignKey("categories.id"), nullable=True, index=True)
+    name: Mapped[str] = mapped_column(String(200), nullable=False)
+    slug: Mapped[str] = mapped_column(String(200), nullable=False)
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    duration_minutes: Mapped[int] = mapped_column(Integer, nullable=False, default=60)
+    price: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    is_featured: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    requires_schedule: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+
+
 class Order(Base):
     __tablename__ = "orders"
 
@@ -183,6 +199,17 @@ class Order(Base):
     payment_mode: Mapped[str] = mapped_column(String(20), nullable=False)
     coupon_code: Mapped[str | None] = mapped_column(String(80), nullable=True)
     loyalty_points_used: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    has_service_items: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    service_payload_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+    is_gift: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    gift_sender_name: Mapped[str | None] = mapped_column(String(180), nullable=True)
+    gift_sender_email: Mapped[str | None] = mapped_column(String(180), nullable=True)
+    gift_is_anonymous: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    gift_message: Mapped[str | None] = mapped_column(Text, nullable=True)
+    gift_recipient_name: Mapped[str | None] = mapped_column(String(180), nullable=True)
+    gift_recipient_email: Mapped[str | None] = mapped_column(String(180), nullable=True)
+    gift_recipient_phone: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    appointment_scheduled_for: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     stripe_session_id: Mapped[str | None] = mapped_column(String(255), nullable=True, index=True)
     stripe_payment_intent_id: Mapped[str | None] = mapped_column(String(255), nullable=True, index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
@@ -197,7 +224,10 @@ class OrderItem(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     order_id: Mapped[int] = mapped_column(ForeignKey("orders.id"), nullable=False, index=True)
-    product_id: Mapped[int] = mapped_column(ForeignKey("products.id"), nullable=False, index=True)
+    product_id: Mapped[int | None] = mapped_column(ForeignKey("products.id"), nullable=True, index=True)
+    service_offering_id: Mapped[int | None] = mapped_column(
+        ForeignKey("service_offerings.id"), nullable=True, index=True
+    )
     quantity: Mapped[int] = mapped_column(Integer, nullable=False)
     unit_price: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
     total_price: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
@@ -342,10 +372,158 @@ class Appointment(Base, TimestampMixin):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id"), nullable=False, index=True)
     customer_id: Mapped[int | None] = mapped_column(ForeignKey("customers.id"), nullable=True)
+    service_offering_id: Mapped[int | None] = mapped_column(ForeignKey("service_offerings.id"), nullable=True, index=True)
+    scheduled_for: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     service_name: Mapped[str] = mapped_column(String(180), nullable=False)
     starts_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     ends_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     status: Mapped[str] = mapped_column(String(30), default="scheduled", nullable=False)
+    is_gift: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    gift_sender_name: Mapped[str | None] = mapped_column(String(180), nullable=True)
+    gift_sender_email: Mapped[str | None] = mapped_column(String(180), nullable=True)
+    gift_is_anonymous: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    gift_message: Mapped[str | None] = mapped_column(Text, nullable=True)
+    gift_recipient_name: Mapped[str | None] = mapped_column(String(180), nullable=True)
+    gift_recipient_email: Mapped[str | None] = mapped_column(String(180), nullable=True)
+    gift_recipient_phone: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    instructions_sent_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    confirmation_received_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+
+class DistributorApplication(Base, TimestampMixin):
+    __tablename__ = "distributor_applications"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id"), nullable=False, index=True)
+    company_name: Mapped[str] = mapped_column(String(200), nullable=False)
+    contact_name: Mapped[str] = mapped_column(String(180), nullable=False)
+    email: Mapped[str] = mapped_column(String(180), nullable=False)
+    phone: Mapped[str] = mapped_column(String(40), nullable=False)
+    city: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    state: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    country: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    status: Mapped[str] = mapped_column(String(20), default="pending", nullable=False)
+    requested_by_user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True, index=True)
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+
+class DistributorProfile(Base, TimestampMixin):
+    __tablename__ = "distributor_profiles"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id"), nullable=False, index=True)
+    customer_id: Mapped[int | None] = mapped_column(ForeignKey("customers.id"), nullable=True, index=True)
+    distributor_application_id: Mapped[int | None] = mapped_column(
+        ForeignKey("distributor_applications.id"), nullable=True, index=True
+    )
+    business_name: Mapped[str] = mapped_column(String(200), nullable=False)
+    contact_name: Mapped[str] = mapped_column(String(180), nullable=False)
+    email: Mapped[str] = mapped_column(String(180), nullable=False)
+    phone: Mapped[str] = mapped_column(String(40), nullable=False)
+    is_authorized: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    authorization_date: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    can_purchase_wholesale: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    can_sell_as_franchise: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    warehouse_address: Mapped[str | None] = mapped_column(Text, nullable=True)
+    delivery_notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+
+class DistributorEmployee(Base, TimestampMixin):
+    __tablename__ = "distributor_employees"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id"), nullable=False, index=True)
+    distributor_profile_id: Mapped[int] = mapped_column(ForeignKey("distributor_profiles.id"), nullable=False, index=True)
+    full_name: Mapped[str] = mapped_column(String(180), nullable=False)
+    email: Mapped[str] = mapped_column(String(180), nullable=False)
+    phone: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    role_name: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+
+
+class ContractTemplate(Base, TimestampMixin):
+    __tablename__ = "contract_templates"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    tenant_id: Mapped[int | None] = mapped_column(ForeignKey("tenants.id"), nullable=True, index=True)
+    contract_type: Mapped[str] = mapped_column(String(30), nullable=False)
+    name: Mapped[str] = mapped_column(String(180), nullable=False)
+    content_markdown: Mapped[str] = mapped_column(Text, nullable=False)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+
+
+class SignedContract(Base, TimestampMixin):
+    __tablename__ = "signed_contracts"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id"), nullable=False, index=True)
+    contract_template_id: Mapped[int] = mapped_column(ForeignKey("contract_templates.id"), nullable=False, index=True)
+    distributor_profile_id: Mapped[int | None] = mapped_column(ForeignKey("distributor_profiles.id"), nullable=True, index=True)
+    signed_by_name: Mapped[str] = mapped_column(String(180), nullable=False)
+    signed_by_email: Mapped[str] = mapped_column(String(180), nullable=False)
+    signed_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    signature_text: Mapped[str] = mapped_column(Text, nullable=False)
+    status: Mapped[str] = mapped_column(String(20), default="signed", nullable=False)
+
+
+class RecurringOrderSchedule(Base, TimestampMixin):
+    __tablename__ = "recurring_order_schedules"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id"), nullable=False, index=True)
+    customer_id: Mapped[int | None] = mapped_column(ForeignKey("customers.id"), nullable=True, index=True)
+    distributor_profile_id: Mapped[int | None] = mapped_column(ForeignKey("distributor_profiles.id"), nullable=True, index=True)
+    frequency: Mapped[str] = mapped_column(String(20), nullable=False)
+    next_run_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+
+class RecurringOrderItem(Base):
+    __tablename__ = "recurring_order_items"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    recurring_order_schedule_id: Mapped[int] = mapped_column(
+        ForeignKey("recurring_order_schedules.id"), nullable=False, index=True
+    )
+    product_id: Mapped[int] = mapped_column(ForeignKey("products.id"), nullable=False, index=True)
+    quantity: Mapped[int] = mapped_column(Integer, nullable=False)
+    unit_price_snapshot: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+
+
+class LogisticsOrder(Base, TimestampMixin):
+    __tablename__ = "logistics_orders"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id"), nullable=False, index=True)
+    order_id: Mapped[int | None] = mapped_column(ForeignKey("orders.id"), nullable=True, index=True)
+    recurring_order_schedule_id: Mapped[int | None] = mapped_column(
+        ForeignKey("recurring_order_schedules.id"), nullable=True, index=True
+    )
+    customer_id: Mapped[int | None] = mapped_column(ForeignKey("customers.id"), nullable=True, index=True)
+    distributor_profile_id: Mapped[int | None] = mapped_column(ForeignKey("distributor_profiles.id"), nullable=True, index=True)
+    delivery_type: Mapped[str] = mapped_column(String(30), nullable=False)
+    status: Mapped[str] = mapped_column(String(20), default="pending", nullable=False)
+    warehouse_address: Mapped[str | None] = mapped_column(Text, nullable=True)
+    delivery_address: Mapped[str] = mapped_column(Text, nullable=False)
+    scheduled_delivery_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    delivered_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    tracking_reference: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    courier_name: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    delivery_notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+
+class LogisticsEvent(Base):
+    __tablename__ = "logistics_events"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    logistics_order_id: Mapped[int] = mapped_column(ForeignKey("logistics_orders.id"), nullable=False, index=True)
+    event_type: Mapped[str] = mapped_column(String(30), nullable=False)
+    event_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
 
 
 class Notification(Base, TimestampMixin):

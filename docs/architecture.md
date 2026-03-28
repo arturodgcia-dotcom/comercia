@@ -1,95 +1,63 @@
-﻿# Arquitectura COMERCIA by REINPIA
+# Arquitectura COMERCIA by REINPIA
 
-## 1) Alcance actual
-COMERCIA opera como SaaS multitenant con:
-- autenticacion JWT
-- ecommerce por tenant
-- pagos Stripe (Plan 1 / Plan 2)
-- crecimiento comercial (fidelizacion, cupones, membresias, banners dinamicos, wishlist, reseñas)
+## 1) Estado actual
+Plataforma SaaS multitenant con:
+- autenticacion JWT y roles
+- ecommerce y catalogo por tenant
+- pagos Stripe Plan 1 / Plan 2
+- growth comercial (fidelizacion, cupones, memberships, wishlist, reviews)
+- operacion comercial (servicios, agendas, distribuidores, recurrencia, logistica, contratos digitales base)
 
-## 2) Flujo comercial de crecimiento
+## 2) Flujo de dinero (Stripe)
+1. Storefront crea checkout session.
+2. Se calcula subtotal, descuentos (cupon/puntos) y total.
+3. Si plan tenant = `PLAN_2`, se aplica comision por item:
+- <= 2000: 2.5%
+- > 2000: 3%
+4. Webhook Stripe actualiza `Order` y ejecuta post-procesos (puntos, cupon, citas de servicios).
 
-1. El storefront consume `/storefront/{slug}/home-data` para renderizar:
-- banners por posicion
-- destacados, nuevos, promociones
-- best sellers placeholder (featured + recent)
-- membresias publicables
+## 3) Flujo de servicios y agenda
+1. Se define `ServiceOffering` por tenant.
+2. Cliente compra servicio para si o como regalo desde storefront.
+3. Checkout guarda payload de servicio/regalo en `Order`.
+4. En pago exitoso se crea `Appointment`, se envia email y placeholder WhatsApp.
 
-2. En checkout:
-- calcula subtotal
-- aplica cupón opcional
-- aplica puntos opcionales
-- calcula total
-- si tenant es PLAN_2 aplica comision por item (2.5% / 3%)
+## 4) Flujo de regalo (MVP)
+Campos de regalo soportados:
+- remitente
+- anonimo
+- mensaje
+- receptor (nombre, email, telefono)
 
-3. Al pago exitoso (webhook):
-- order -> `paid`
-- incrementa uso de cupón
-- consume puntos usados
-- acredita puntos del pedido
+Se persisten en `Order` y `Appointment`.
 
-## 3) Dominio growth agregado
-- `LoyaltyProgram`
-- `LoyaltyRule` (extendido)
-- `MembershipPlan`
-- `Coupon`
-- `CustomerLoyaltyAccount`
-- `Banner` (extendido)
-- `WishlistItem`
-- `ProductReview`
+## 5) Flujo de distribuidores
+1. Solicitud publica: `DistributorApplication`.
+2. Admin aprueba/rechaza.
+3. Aprobado crea `DistributorProfile` autorizado.
+4. Se gestionan empleados con `DistributorEmployee`.
 
-## 4) Servicios
-- `loyalty_service.py`
-  - cuenta de fidelidad
-  - descuento por puntos
-  - enrolamiento de membresia
-- `coupon_service.py`
-  - validacion/aplicacion de cupon
-  - incremento de uso
-- `recommendation_service.py`
-  - destacados / recientes / promo / best sellers placeholder / upsell
+## 6) Contratos digitales base
+- `ContractTemplate` (tenant/global)
+- `SignedContract` con firma textual MVP:
+  - signed_by_name
+  - signed_by_email
+  - signature_text
+  - signed_at
 
-## 5) Moderacion de reseñas
-- Toda reseña nueva queda con `is_approved=false`.
-- Storefront publica solo aprobadas.
-- Admin aprueba desde `/admin/reviews`.
+No hay firma biometrica en esta fase.
 
-## 6) API growth
-- Loyalty:
-  - `GET/POST/PUT /api/v1/loyalty/program/{tenant_id}`
-  - `GET /api/v1/loyalty/account/{tenant_id}/{customer_id}`
-  - `POST /api/v1/loyalty/account/{tenant_id}/{customer_id}/apply-points`
-- Memberships:
-  - `GET /api/v1/memberships/by-tenant/{tenant_id}`
-  - `POST /api/v1/memberships`
-  - `PUT /api/v1/memberships/{id}`
-- Coupons:
-  - `GET /api/v1/coupons/by-tenant/{tenant_id}`
-  - `POST /api/v1/coupons`
-  - `PUT /api/v1/coupons/{id}`
-  - `POST /api/v1/coupons/validate`
-- Banners:
-  - `GET /api/v1/banners/by-tenant/{tenant_id}`
-  - `POST /api/v1/banners`
-  - `PUT /api/v1/banners/{id}`
-- Wishlist:
-  - `GET /api/v1/wishlist/{tenant_id}/{customer_id}`
-  - `POST /api/v1/wishlist`
-  - `DELETE /api/v1/wishlist/{id}`
-- Reviews:
-  - `GET /api/v1/reviews/product/{product_id}`
-  - `POST /api/v1/reviews`
-  - `PUT /api/v1/reviews/{id}/approve`
-- Storefront helpers:
-  - `GET /api/v1/storefront/{tenant_slug}/home-data`
-  - `GET /api/v1/storefront/{tenant_slug}/checkout-upsell`
+## 7) Programacion recurrente
+- `RecurringOrderSchedule` + `RecurringOrderItem`
+- frecuencia semanal/quincenal/mensual
+- base para ejecucion automatica posterior
 
-## 7) Migraciones
-- `20260327_01`: esquema base
-- `20260327_02`: auth/storefront
-- `20260328_03`: pagos
-- `20260328_04`: growth comercial
+## 8) Logistica base
+- `LogisticsOrder` con estado operativo
+- `LogisticsEvent` para trazabilidad
+- acciones: programar, reprogramar, marcar entregado
 
-## 8) Validacion ejecutada
-- backend compile: `python -m compileall app`
-- frontend build: `npm run build`
+## 9) Validacion local ejecutada
+- `python -m compileall app` (backend)
+- `alembic upgrade head` (SQLite local)
+- `npm run build` (frontend)

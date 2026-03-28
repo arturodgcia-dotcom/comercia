@@ -1,9 +1,16 @@
 import {
+  Appointment,
   Banner,
   Category,
   CheckoutSessionRequest,
   CheckoutSessionResponse,
+  ContractTemplate,
   Coupon,
+  DistributorApplication,
+  DistributorEmployee,
+  DistributorProfile,
+  LogisticsEvent,
+  LogisticsOrder,
   LoginResponse,
   LoyaltyProgram,
   MembershipPlan,
@@ -11,6 +18,9 @@ import {
   Plan,
   Product,
   ProductReview,
+  RecurringOrderSchedule,
+  ServiceOffering,
+  SignedContract,
   StorefrontDistributorsPayload,
   StorefrontHomePayload,
   StorefrontPayload,
@@ -79,6 +89,12 @@ export const api = {
     request<Product>("/api/v1/products", { method: "POST", body: JSON.stringify(payload) }, token),
   updateProduct: (token: string, productId: number, payload: Partial<Product>) =>
     request<Product>(`/api/v1/products/${productId}`, { method: "PUT", body: JSON.stringify(payload) }, token),
+  getServicesByTenant: (token: string, tenantId: number) =>
+    request<ServiceOffering[]>(`/api/v1/services/by-tenant/${tenantId}`, {}, token),
+  createService: (token: string, payload: Record<string, unknown>) =>
+    request<ServiceOffering>("/api/v1/services", { method: "POST", body: JSON.stringify(payload) }, token),
+  updateService: (token: string, serviceId: number, payload: Record<string, unknown>) =>
+    request<ServiceOffering>(`/api/v1/services/${serviceId}`, { method: "PUT", body: JSON.stringify(payload) }, token),
 
   getLoyaltyProgram: (token: string, tenantId: number) => request<LoyaltyProgram>(`/api/v1/loyalty/program/${tenantId}`, {}, token),
   upsertLoyaltyProgram: (token: string, tenantId: number, payload: Partial<LoyaltyProgram>) =>
@@ -121,6 +137,8 @@ export const api = {
 
   getStorefront: (tenantSlug: string) => request<StorefrontPayload>(`/api/v1/storefront/${tenantSlug}`),
   getStorefrontHomeData: (tenantSlug: string) => request<StorefrontHomePayload>(`/api/v1/storefront/${tenantSlug}/home-data`),
+  getStorefrontServices: (tenantSlug: string) =>
+    request<{ tenant: Tenant; services: ServiceOffering[] }>(`/api/v1/storefront/${tenantSlug}/services`),
   getStorefrontDistributors: (tenantSlug: string) =>
     request<StorefrontDistributorsPayload>(`/api/v1/storefront/${tenantSlug}/distribuidores`),
   getCheckoutUpsell: (tenantSlug: string, cartProductIds: number[]) =>
@@ -134,7 +152,74 @@ export const api = {
       body: JSON.stringify(payload)
     }),
   getPaymentsDashboard: (token: string, tenantId?: number) =>
-    request<PaymentsDashboard>(`/api/v1/payments/dashboard${tenantId ? `?tenant_id=${tenantId}` : ""}`, {}, token)
+    request<PaymentsDashboard>(`/api/v1/payments/dashboard${tenantId ? `?tenant_id=${tenantId}` : ""}`, {}, token),
+
+  createAppointmentSelf: (token: string, payload: Record<string, unknown>) =>
+    request<Appointment>("/api/v1/appointments/self", { method: "POST", body: JSON.stringify(payload) }, token),
+  createAppointmentGift: (token: string, payload: Record<string, unknown>) =>
+    request<Appointment>("/api/v1/appointments/gift", { method: "POST", body: JSON.stringify(payload) }, token),
+  getAppointmentsByTenant: (token: string, tenantId: number) =>
+    request<Appointment[]>(`/api/v1/appointments/by-tenant/${tenantId}`, {}, token),
+  confirmAppointmentReceived: (token: string, appointmentId: number) =>
+    request<Appointment>(`/api/v1/appointments/${appointmentId}/confirm-received`, { method: "PUT" }, token),
+  updateAppointmentStatus: (token: string, appointmentId: number, payload: { status: string }) =>
+    request<Appointment>(`/api/v1/appointments/${appointmentId}/status`, { method: "PUT", body: JSON.stringify(payload) }, token),
+
+  createDistributorApplication: (payload: Record<string, unknown>) =>
+    request<DistributorApplication>("/api/v1/distributors/applications", { method: "POST", body: JSON.stringify(payload) }),
+  getDistributorApplicationsByTenant: (token: string, tenantId: number) =>
+    request<DistributorApplication[]>(`/api/v1/distributors/applications/by-tenant/${tenantId}`, {}, token),
+  approveDistributorApplication: (token: string, id: number, notes?: string) =>
+    request<DistributorProfile>(`/api/v1/distributors/applications/${id}/approve`, { method: "PUT", body: JSON.stringify({ notes }) }, token),
+  rejectDistributorApplication: (token: string, id: number, notes?: string) =>
+    request<DistributorApplication>(
+      `/api/v1/distributors/applications/${id}/reject`,
+      { method: "PUT", body: JSON.stringify({ notes }) },
+      token
+    ),
+  getDistributorsByTenant: (token: string, tenantId: number) =>
+    request<DistributorProfile[]>(`/api/v1/distributors/by-tenant/${tenantId}`, {}, token),
+  createDistributorEmployee: (token: string, payload: Record<string, unknown>) =>
+    request<DistributorEmployee>("/api/v1/distributors/employees", { method: "POST", body: JSON.stringify(payload) }, token),
+  getDistributorEmployees: (token: string, distributorProfileId: number) =>
+    request<DistributorEmployee[]>(`/api/v1/distributors/employees/${distributorProfileId}`, {}, token),
+
+  getContractTemplates: (token: string, tenantId: number) =>
+    request<ContractTemplate[]>(`/api/v1/contracts/templates/${tenantId}`, {}, token),
+  createContractTemplate: (token: string, payload: Record<string, unknown>) =>
+    request<ContractTemplate>("/api/v1/contracts/templates", { method: "POST", body: JSON.stringify(payload) }, token),
+  updateContractTemplate: (token: string, id: number, payload: Record<string, unknown>) =>
+    request<ContractTemplate>(`/api/v1/contracts/templates/${id}`, { method: "PUT", body: JSON.stringify(payload) }, token),
+  signContract: (payload: Record<string, unknown>) =>
+    request<SignedContract>("/api/v1/contracts/sign", { method: "POST", body: JSON.stringify(payload) }),
+  getSignedContractsByTenant: (token: string, tenantId: number) =>
+    request<SignedContract[]>(`/api/v1/contracts/signed/by-tenant/${tenantId}`, {}, token),
+
+  getRecurringOrdersByTenant: (token: string, tenantId: number) =>
+    request<RecurringOrderSchedule[]>(`/api/v1/recurring-orders/by-tenant/${tenantId}`, {}, token),
+  createRecurringOrder: (token: string, payload: Record<string, unknown>) =>
+    request<RecurringOrderSchedule>("/api/v1/recurring-orders", { method: "POST", body: JSON.stringify(payload) }, token),
+  addRecurringOrderItems: (token: string, scheduleId: number, payload: Array<Record<string, unknown>>) =>
+    request<{ schedule_id: number; items_added: number }>(
+      `/api/v1/recurring-orders/${scheduleId}/items`,
+      { method: "POST", body: JSON.stringify(payload) },
+      token
+    ),
+  updateRecurringOrder: (token: string, scheduleId: number, payload: Record<string, unknown>) =>
+    request<RecurringOrderSchedule>(`/api/v1/recurring-orders/${scheduleId}`, { method: "PUT", body: JSON.stringify(payload) }, token),
+
+  getLogisticsByTenant: (token: string, tenantId: number) =>
+    request<LogisticsOrder[]>(`/api/v1/logistics/by-tenant/${tenantId}`, {}, token),
+  createLogisticsOrder: (token: string, payload: Record<string, unknown>) =>
+    request<LogisticsOrder>("/api/v1/logistics", { method: "POST", body: JSON.stringify(payload) }, token),
+  scheduleLogistics: (token: string, id: number, payload: Record<string, unknown>) =>
+    request<LogisticsOrder>(`/api/v1/logistics/${id}/schedule`, { method: "PUT", body: JSON.stringify(payload) }, token),
+  rescheduleLogistics: (token: string, id: number, payload: Record<string, unknown>) =>
+    request<LogisticsOrder>(`/api/v1/logistics/${id}/reschedule`, { method: "PUT", body: JSON.stringify(payload) }, token),
+  markLogisticsDelivered: (token: string, id: number) =>
+    request<LogisticsOrder>(`/api/v1/logistics/${id}/mark-delivered`, { method: "PUT" }, token),
+  getLogisticsEvents: (token: string, id: number) =>
+    request<LogisticsEvent[]>(`/api/v1/logistics/${id}/events`, {}, token)
 };
 
 export { ApiError };

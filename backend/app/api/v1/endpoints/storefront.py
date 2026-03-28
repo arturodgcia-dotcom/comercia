@@ -5,7 +5,19 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
-from app.models.models import Banner, Category, Coupon, Distributor, MembershipPlan, Product, ProductReview, StorefrontConfig, Tenant, TenantBranding
+from app.models.models import (
+    Banner,
+    Category,
+    Coupon,
+    Distributor,
+    MembershipPlan,
+    Product,
+    ProductReview,
+    ServiceOffering,
+    StorefrontConfig,
+    Tenant,
+    TenantBranding,
+)
 from app.services.recommendation_service import (
     get_best_sellers_placeholder,
     get_checkout_upsell_products,
@@ -29,10 +41,22 @@ def get_storefront_home_data(tenant_slug: str, db: Session = Depends(get_db)) ->
     base = _base_storefront_payload(db, tenant)
     base["promo_products"] = get_promo_products(db, tenant.id, limit=8)
     base["best_sellers"] = get_best_sellers_placeholder(db, tenant.id, limit=8)
+    base["services"] = db.scalars(
+        select(ServiceOffering).where(ServiceOffering.tenant_id == tenant.id, ServiceOffering.is_active.is_(True)).order_by(ServiceOffering.id.desc())
+    ).all()
     base["membership_plans"] = db.scalars(
         select(MembershipPlan).where(MembershipPlan.tenant_id == tenant.id, MembershipPlan.is_active.is_(True))
     ).all()
     return base
+
+
+@router.get("/{tenant_slug}/services")
+def get_storefront_services(tenant_slug: str, db: Session = Depends(get_db)) -> dict:
+    tenant = _tenant_or_404(db, tenant_slug)
+    services = db.scalars(
+        select(ServiceOffering).where(ServiceOffering.tenant_id == tenant.id, ServiceOffering.is_active.is_(True)).order_by(ServiceOffering.id.desc())
+    ).all()
+    return {"tenant": tenant, "services": services}
 
 
 @router.get("/{tenant_slug}/checkout-upsell")

@@ -1,17 +1,23 @@
 from fastapi import APIRouter
 
 from app.api.v1.endpoints import (
+    appointments,
     auth,
     banners,
     categories,
     checkout,
+    contracts,
     coupons,
+    distributors_ops,
+    logistics,
     loyalty,
     memberships,
     payments,
     plans,
     products,
+    recurring_orders,
     reviews,
+    services,
     storefront,
     stripe_config,
     stripe_webhook,
@@ -38,3 +44,9 @@ api_router.include_router(coupons.router, prefix="/coupons", tags=["coupons"])
 api_router.include_router(banners.router, prefix="/banners", tags=["banners"])
 api_router.include_router(wishlist.router, prefix="/wishlist", tags=["wishlist"])
 api_router.include_router(reviews.router, prefix="/reviews", tags=["reviews"])
+api_router.include_router(services.router, prefix="/services", tags=["services"])
+api_router.include_router(appointments.router, prefix="/appointments", tags=["appointments"])
+api_router.include_router(distributors_ops.router, prefix="/distributors", tags=["distributors"])
+api_router.include_router(contracts.router, prefix="/contracts", tags=["contracts"])
+api_router.include_router(recurring_orders.router, prefix="/recurring-orders", tags=["recurring-orders"])
+api_router.include_router(logistics.router, prefix="/logistics", tags=["logistics"])
