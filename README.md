@@ -1,13 +1,13 @@
 ﻿# COMERCIA by REINPIA
 
-Plataforma SaaS multitenant para landing, ecommerce, fidelizacion, distribuidores, servicios, pagos con Stripe y evolucion a WebApp POS.
+Plataforma SaaS multitenant para landing, ecommerce, fidelizacion, distribuidores, servicios y pagos con Stripe, preparada para evolucionar a WebApp POS.
 
 ## Monorepo
 
-- `backend/`: FastAPI + SQLAlchemy + Alembic.
-- `frontend/`: React + Vite + TypeScript.
+- `backend/`: FastAPI + SQLAlchemy + Alembic + JWT auth.
+- `frontend/`: React + Vite + TypeScript (admin shell + storefront).
 - `docs/`: arquitectura y estado de modulos.
-- `infra/`: Docker base para entorno local.
+- `infra/`: Docker base local.
 
 ## Requisitos
 
@@ -22,8 +22,6 @@ Plataforma SaaS multitenant para landing, ecommerce, fidelizacion, distribuidore
 2. Frontend:
    - Copiar `frontend/.env.example` a `frontend/.env`
 
-Opcionalmente puedes usar `.env.example` en la raiz como referencia global.
-
 ## Arranque local - Backend
 
 ```bash
@@ -35,16 +33,12 @@ alembic upgrade head
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-Endpoints clave:
-- `GET /health`
-- `GET|POST /api/v1/tenants`
-- `GET /api/v1/plans`
-- `GET|POST /api/v1/stripe-config`
-- `GET|POST /api/v1/categories`
-- `GET|POST /api/v1/products`
-
 Swagger:
 - `http://localhost:8000/docs`
+
+Credenciales iniciales seed:
+- email: `admin@reinpia.com`
+- password: `admin123`
 
 ## Arranque local - Frontend
 
@@ -54,8 +48,8 @@ npm install
 npm run dev
 ```
 
-Panel:
-- `http://localhost:5173`
+- Admin: `http://localhost:5173`
+- Storefront por tenant: `http://localhost:5173/store/{tenantSlug}`
 
 ## Docker local
 
@@ -68,11 +62,47 @@ Servicios:
 - Backend: `http://localhost:8000`
 - Frontend: `http://localhost:5173`
 
-## Base multitenant y dominio inicial
+## Endpoints backend principales
 
-Modelos iniciales incluidos:
+Salud:
+- `GET /health`
+
+Auth:
+- `POST /api/v1/auth/login`
+- `GET /api/v1/auth/me`
+
+Tenants:
+- `GET /api/v1/tenants`
+- `POST /api/v1/tenants`
+- `GET /api/v1/tenants/{tenant_id}`
+- `PUT /api/v1/tenants/{tenant_id}`
+- `POST /api/v1/tenants/{tenant_id}/initialize-storefront`
+- `GET /api/v1/tenants/{tenant_id}/storefront-config`
+
+Branding:
+- `GET /api/v1/tenant-branding/{tenant_id}`
+- `POST /api/v1/tenant-branding/{tenant_id}`
+- `PUT /api/v1/tenant-branding/{tenant_id}`
+
+Catalogo:
+- `GET /api/v1/categories/by-tenant/{tenant_id}`
+- `POST /api/v1/categories`
+- `PUT /api/v1/categories/{id}`
+- `GET /api/v1/products/by-tenant/{tenant_id}`
+- `POST /api/v1/products`
+- `PUT /api/v1/products/{id}`
+
+Storefront publico:
+- `GET /api/v1/storefront/{tenant_slug}`
+- `GET /api/v1/storefront/{tenant_slug}/distribuidores`
+
+## Modelos base actuales
+
 - Tenant
+- User
 - TenantBranding
+- StorefrontConfig
+- Banner
 - Plan
 - Subscription
 - StripeConfig
@@ -86,15 +116,6 @@ Modelos iniciales incluidos:
 - CommissionRule
 
 Todos los modelos de negocio relevantes incluyen `tenant_id`.
-
-## Planes comerciales preconfigurados
-
-- `PLAN_1`:
-  - Mes 1 y 2: 25000 + IVA
-  - Mes 3 en adelante: 45000 + IVA
-- `PLAN_2`:
-  - 2.5% sobre venta entre 0 y 2000
-  - 3.0% sobre venta mayor a 2000
 
 ## Documentacion
 
