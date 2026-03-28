@@ -703,3 +703,66 @@ export interface AutomationEventLog {
   payload_json?: string | null;
   created_at: string;
 }
+
+export interface SecurityEvent {
+  id: number;
+  tenant_id?: number | null;
+  user_id?: number | null;
+  event_type: string;
+  source_ip?: string | null;
+  user_agent?: string | null;
+  severity: "low" | "medium" | "high" | "critical" | string;
+  status: "new" | "reviewed" | "blocked" | "ignored" | string;
+  event_payload_json?: string | null;
+  created_at: string;
+}
+
+export interface SecurityAlert {
+  id: number;
+  tenant_id?: number | null;
+  security_event_id?: number | null;
+  alert_type: string;
+  title: string;
+  message: string;
+  severity: "low" | "medium" | "high" | "critical" | string;
+  is_read: boolean;
+  assigned_to?: string | null;
+  created_at: string;
+}
+
+export interface SecurityRule {
+  id: number;
+  code: string;
+  name: string;
+  description?: string | null;
+  rule_type: string;
+  threshold_count?: number | null;
+  threshold_window_minutes?: number | null;
+  action_type: string;
+  is_active: boolean;
+  severity: "low" | "medium" | "high" | "critical" | string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BlockedEntity {
+  id: number;
+  entity_type: string;
+  entity_key: string;
+  reason: string;
+  blocked_until?: string | null;
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface SecurityKpis {
+  total_events: number;
+  critical_events: number;
+  high_events: number;
+  medium_events: number;
+  low_events: number;
+  new_alerts: number;
+  unread_alerts: number;
+  blocked_entities: number;
+  top_event_types: Array<{ event_type: string; count: number }>;
+}

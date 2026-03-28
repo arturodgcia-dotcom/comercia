@@ -42,6 +42,11 @@ import {
   ReinpiaTenantSummaryRow,
   ReinpiaTimeseriesPoint,
   RecurringOrderSchedule,
+  SecurityAlert,
+  SecurityEvent,
+  SecurityKpis,
+  SecurityRule,
+  BlockedEntity,
   ServiceOffering,
   SignedContract,
   StorefrontDistributorsPayload,
@@ -378,7 +383,27 @@ export const api = {
   getAutomationTemplates: (token: string, query = "") =>
     request<BotMessageTemplate[]>(`/api/v1/automation/templates${query ? `?${query}` : ""}`, {}, token),
   upsertAutomationTemplate: (token: string, payload: Record<string, unknown>) =>
-    request<BotMessageTemplate>("/api/v1/automation/templates", { method: "POST", body: JSON.stringify(payload) }, token)
+    request<BotMessageTemplate>("/api/v1/automation/templates", { method: "POST", body: JSON.stringify(payload) }, token),
+
+  getSecurityKpis: (token: string, query = "") =>
+    request<SecurityKpis>(`/api/v1/security/kpis${query ? `?${query}` : ""}`, {}, token),
+  getSecurityEvents: (token: string, query = "") =>
+    request<SecurityEvent[]>(`/api/v1/security/events${query ? `?${query}` : ""}`, {}, token),
+  getSecurityAlerts: (token: string, query = "") =>
+    request<SecurityAlert[]>(`/api/v1/security/alerts${query ? `?${query}` : ""}`, {}, token),
+  markSecurityAlertRead: (token: string, id: number) =>
+    request<SecurityAlert>(`/api/v1/security/alerts/${id}/read`, { method: "PUT" }, token),
+  getSecurityRules: (token: string) => request<SecurityRule[]>("/api/v1/security/rules", {}, token),
+  updateSecurityRule: (token: string, ruleId: number, payload: Record<string, unknown>) =>
+    request<SecurityRule>(`/api/v1/security/rules/${ruleId}`, { method: "PUT", body: JSON.stringify(payload) }, token),
+  toggleSecurityRule: (token: string, ruleId: number) =>
+    request<{ id: number; is_active: boolean }>(`/api/v1/security/rules/${ruleId}/toggle`, { method: "POST" }, token),
+  getBlockedEntities: (token: string, query = "") =>
+    request<BlockedEntity[]>(`/api/v1/security/blocked-entities${query ? `?${query}` : ""}`, {}, token),
+  createBlockedEntity: (token: string, payload: Record<string, unknown>) =>
+    request<BlockedEntity>("/api/v1/security/blocked-entities", { method: "POST", body: JSON.stringify(payload) }, token),
+  unblockEntity: (token: string, blockedId: number) =>
+    request<BlockedEntity>(`/api/v1/security/blocked-entities/${blockedId}/unblock`, { method: "PUT" }, token)
 };
 
 export { ApiError };

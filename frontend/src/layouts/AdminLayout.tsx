@@ -36,7 +36,11 @@ const reinpiaItems = [
   { label: "RG Operations", to: "/reinpia/operations" },
   { label: "RG Reports", to: "/reinpia/reports" },
   { label: "RG Agents", to: "/reinpia/commission-agents" },
-  { label: "RG Alerts", to: "/reinpia/alerts" }
+  { label: "RG Alerts", to: "/reinpia/alerts" },
+  { label: "RG Security", to: "/reinpia/security" },
+  { label: "RG Sec Alerts", to: "/reinpia/security/alerts" },
+  { label: "RG Sec Rules", to: "/reinpia/security/rules" },
+  { label: "RG Blocked", to: "/reinpia/security/blocked" }
 ];
 
 export function AdminLayout() {

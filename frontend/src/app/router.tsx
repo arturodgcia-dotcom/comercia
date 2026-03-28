@@ -35,8 +35,12 @@ import { ReinpiaCommissionAgentsPage } from "../pages/ReinpiaCommissionAgentsPag
 import { ReinpiaOperationsPage } from "../pages/ReinpiaOperationsPage";
 import { ReinpiaPaymentsPage } from "../pages/ReinpiaPaymentsPage";
 import { ReinpiaReportsPage } from "../pages/ReinpiaReportsPage";
+import { ReinpiaSecurityAlertsPage } from "../pages/ReinpiaSecurityAlertsPage";
+import { ReinpiaSecurityDashboardPage } from "../pages/ReinpiaSecurityDashboardPage";
+import { ReinpiaSecurityRulesPage } from "../pages/ReinpiaSecurityRulesPage";
 import { ReinpiaTenantDetailPage } from "../pages/ReinpiaTenantDetailPage";
 import { ReinpiaTenantsPage } from "../pages/ReinpiaTenantsPage";
+import { ReinpiaBlockedEntitiesPage } from "../pages/ReinpiaBlockedEntitiesPage";
 import { ReinpiaAlertsPage } from "../pages/ReinpiaAlertsPage";
 import { ReviewsAdminPage } from "../pages/ReviewsAdminPage";
 import { OnboardingSalesPage } from "../pages/OnboardingSalesPage";
@@ -100,6 +104,10 @@ export function AppRouter() {
             <Route path="reinpia/reports" element={<ReinpiaReportsPage />} />
             <Route path="reinpia/commission-agents" element={<ReinpiaCommissionAgentsPage />} />
             <Route path="reinpia/alerts" element={<ReinpiaAlertsPage />} />
+            <Route path="reinpia/security" element={<ReinpiaSecurityDashboardPage />} />
+            <Route path="reinpia/security/alerts" element={<ReinpiaSecurityAlertsPage />} />
+            <Route path="reinpia/security/rules" element={<ReinpiaSecurityRulesPage />} />
+            <Route path="reinpia/security/blocked" element={<ReinpiaBlockedEntitiesPage />} />
           </Route>
           <Route path="categories" element={<CategoriesPage />} />
           <Route path="products" element={<ProductsPage />} />
