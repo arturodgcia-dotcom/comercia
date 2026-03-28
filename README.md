@@ -20,6 +20,20 @@ o
 powershell -ExecutionPolicy Bypass -File .\start_all.ps1
 ```
 
+Si falta `backend/.venv`, puedes habilitar bootstrap opcional:
+```bash
+start_all.bat --bootstrap
+```
+o
+```bash
+powershell -ExecutionPolicy Bypass -File .\start_all.ps1 -Bootstrap
+```
+o por variable:
+```bash
+set COMERCIA_BOOTSTRAP=1
+start_all.bat
+```
+
 Alternativa Node (raiz):
 ```bash
 npm install

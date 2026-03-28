@@ -155,3 +155,10 @@
 - [x] Permisos: tenant report routes restringidas a `tenant_admin|tenant_staff|reinpia_admin`; global REINPIA a `reinpia_admin`
 - [x] Seed demo ajustado para fechas distribuidas y marketing insights idempotentes
 - [x] Validacion ejecutada: backend compile, alembic upgrade head, seed_demo, frontend build
+
+## Entregables ejecucion 13 (Arranque y root frontend)
+- [x] `start_all.ps1` valida `backend/.venv` y muestra instrucciones exactas si falta
+- [x] `start_all.ps1` soporta modo bootstrap opcional (`-Bootstrap` o `COMERCIA_BOOTSTRAP=1`)
+- [x] `start_all.bat` soporta `--bootstrap` sin romper flujo actual
+- [x] Frontend evita rebote en raiz para no autenticados (`/` -> `/comercia`)
+- [x] README actualizado con uso bootstrap
