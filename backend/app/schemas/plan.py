@@ -13,5 +13,6 @@ class PlanRead(TimestampSchema):
     commission_low_rate: Decimal
     commission_high_rate: Decimal
     commission_threshold: Decimal
+    commission_enabled: bool
     notes: str | None
     is_active: bool
