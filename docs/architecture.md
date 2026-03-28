@@ -143,3 +143,32 @@ Ademas de los CSV base de reporting, se exportan:
 - `plan-purchase-leads.csv`
 
 Esto habilita seguimiento de rendimiento por comisionista y control de pipeline de ventas de planes COMERCIA.
+
+## 18) Estrategia de datos DEMO / APP limpia
+Se implemento un esquema dual por ambiente con `DATA_MODE`:
+- `demo`: ejecuta seed demo multi-tenant completo.
+- `app`: limpia data demo y deja base minima lista para operacion real.
+- `none`: no aplica seed automatico en startup.
+
+Scripts operativos:
+- `python -m app.db.seed_demo`
+- `python -m app.db.seed_app_base`
+- `python -m app.db.reset_demo`
+
+Objetivo:
+- soporte comercial para demos y ventas de plataforma
+- paso controlado a operacion real sin datos ficticios
+- idempotencia para evitar duplicados en ejecuciones repetidas
+
+## 19) Demo dataset multi-tenant
+Cobertura funcional de la demo:
+- REINPIA (`reinpia`) para servicios y canal distribuidor.
+- NATURA VIDA (`natura-vida`) para ecommerce de productos con plan 2 y comision.
+- CAFE MONTE ALTO (`cafe-monte-alto`) para segundo tenant de productos con branding distinto.
+- tenant demo inactivo para KPIs activos vs inactivos.
+
+Incluye data para:
+- storefront, catalogo, fidelizacion, cupones, memberships
+- ordenes paid/failed, logistics y recurrencia
+- comisionistas, leads de planes y alertas internas
+- panel global REINPIA con metricas visibles desde primer arranque

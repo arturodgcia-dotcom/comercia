@@ -27,6 +27,11 @@ Credenciales seed:
 - `admin@reinpia.com`
 - `admin123`
 
+Modo de datos (env `DATA_MODE`):
+- `demo`: carga dataset demo multi-tenant completo
+- `app`: limpia demo y deja base minima tecnica
+- `none`: no ejecuta seed automatico en startup
+
 ### Frontend
 ```bash
 cd frontend
@@ -156,18 +161,38 @@ npm run dev
 - `/store/reinpia` con layout comercial orientado a servicios
 
 ## Seed demo REINPIA
-En `init_db` se deja seed idempotente para:
-- tenant `REINPIA` (`slug=reinpia`)
-- branding inicial REINPIA
-- banners comerciales base
-- categoria de servicios
-- servicios demo:
-  - Implementacion COMERCIA
-  - Renta de plataforma COMERCIA
-  - Automatizacion comercial con IA
-  - Implementacion NERVIA
-  - Implementacion SprintPilot
-  - Desarrollo a la medida
+## Modos de datos DEMO / APP limpia
+
+Comandos backend:
+```bash
+cd backend
+python -m app.db.seed_demo
+python -m app.db.seed_app_base
+python -m app.db.reset_demo
+```
+
+Scripts disponibles:
+- `app.db.seed_demo`: genera data demo multi-tenant (idempotente)
+- `app.db.seed_app_base`: deja base limpia minima para operacion real
+- `app.db.reset_demo`: limpia data demo comercial de forma controlada
+
+### Usuarios DEMO
+- `admin@reinpia.demo` / `Admin12345!` (`reinpia_admin`)
+- `admin@reinpia-tenant.demo` / `Admin12345!` (`tenant_admin`)
+- `admin@natura.demo` / `Admin12345!` (`tenant_admin`)
+- `admin@cafe.demo` / `Admin12345!` (`tenant_admin`)
+- `distributor1@natura.demo` / `Admin12345!` (`distributor_user`)
+- `distributor2@cafe.demo` / `Admin12345!` (`distributor_user`)
+
+### Datos DEMO generados
+- tenants: `reinpia`, `natura-vida`, `cafe-monte-alto` + tenant inactivo demo
+- branding/storefront/banners por tenant
+- servicios REINPIA + catalogos de productos para NATURA/CAFE
+- loyalty, memberships, cupones, reviews, wishlist
+- distribuidores, solicitudes, citas, recurrentes y logistica
+- ordenes paid/failed con comisiones (incluye casos PLAN_2)
+- comisionistas demo + plan purchase leads con y sin comisionista
+- alertas internas para seguimiento comercial/contable
 
 ## Validacion ejecutada
 - backend: `python -m compileall app`

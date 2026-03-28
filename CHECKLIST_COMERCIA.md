@@ -103,3 +103,15 @@
 - [x] Seeds idempotentes de comisionistas demo
 - [x] Documentacion actualizada (README + architecture + modules + checklist)
 - [x] Validacion: backend compile, alembic upgrade head, frontend build
+
+## Entregables ejecucion 9 (Modos DEMO / APP limpia)
+- [x] Estructura dual de datos por ambiente (`DATA_MODE=demo|app|none`)
+- [x] Script `seed_demo` con dataset multi-tenant completo e idempotente
+- [x] Script `seed_app_base` con base minima tecnica sin demo comercial
+- [x] Script `reset_demo` para limpieza controlada de datos demo
+- [x] Tenants demo: REINPIA, NATURA VIDA, CAFE MONTE ALTO + tenant inactivo
+- [x] Datos demo suficientes para storefront, admin, panel global, pagos y operaciones
+- [x] Usuarios demo funcionales (`*.demo`) para login por rol
+- [x] Data de comisionistas/leads/alertas incluida en demo para flujo comercial-contable
+- [x] Documentacion actualizada con comandos DEMO/APP y limpieza
+- [x] Validacion ejecutada: compile backend + build frontend + seed/reset/seed

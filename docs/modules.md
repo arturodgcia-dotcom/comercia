@@ -28,6 +28,9 @@
 | Referidos y leads de plan | Inicial funcional | `SalesReferral` + `PlanPurchaseLead` con trazabilidad por codigo |
 | Alertas internas | Inicial funcional | alertas para seguimiento comercial y aviso contable |
 | Landing COMERCIA lead capture | Inicial funcional | formulario real + soporte `?ref=` + registro backend |
+| Modo DEMO de datos | Inicial funcional | seed multi-tenant idempotente para pruebas comerciales y demos |
+| Modo APP limpio | Inicial funcional | base minima sin data demo comercial |
+| Reset de demo | Inicial funcional | limpieza controlada de tenants/usuarios/datos demo |
 | Bots / agentes | Base arquitectura | pendiente implementacion |
 
 ## Endpoints operacion comercial (nuevos)
