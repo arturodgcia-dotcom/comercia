@@ -3,7 +3,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
-from app.models.models import Banner, StorefrontConfig, Tenant, TenantBranding
+from app.models.models import Banner, Plan, StorefrontConfig, Tenant, TenantBranding
 from app.schemas.storefront import StorefrontSnapshot
 from app.schemas.tenant import TenantCreate, TenantRead, TenantUpdate
 from app.services.storefront_initializer import initialize_storefront
@@ -19,7 +19,11 @@ def list_tenants(db: Session = Depends(get_db)) -> list[Tenant]:
 @router.post("", response_model=TenantRead, status_code=status.HTTP_201_CREATED)
 def create_tenant(payload: TenantCreate, db: Session = Depends(get_db)) -> Tenant:
     _validate_slug_and_subdomain_uniqueness(db, payload.slug, payload.subdomain)
-    tenant = Tenant(**payload.model_dump())
+    values = payload.model_dump()
+    if values.get("plan_id") is None:
+        default_plan = db.scalar(select(Plan).where(Plan.code == "PLAN_1"))
+        values["plan_id"] = default_plan.id if default_plan else None
+    tenant = Tenant(**values)
     db.add(tenant)
     db.flush()
     initialize_storefront(db, tenant)

@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     jwt_secret_key: str = Field(default="change-this-in-production", alias="JWT_SECRET_KEY")
     jwt_algorithm: str = Field(default="HS256", alias="JWT_ALGORITHM")
     jwt_expire_minutes: int = Field(default=120, alias="JWT_EXPIRE_MINUTES")
+    default_currency: str = Field(default="mxn", alias="DEFAULT_CURRENCY")
 
     model_config = SettingsConfigDict(
         env_file=".env",

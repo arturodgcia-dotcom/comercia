@@ -9,6 +9,7 @@ class TenantCreate(BaseModel):
     subdomain: str
     business_type: str
     is_active: bool = True
+    plan_id: int | None = None
 
 
 class TenantUpdate(BaseModel):
@@ -17,6 +18,7 @@ class TenantUpdate(BaseModel):
     subdomain: str | None = None
     business_type: str | None = None
     is_active: bool | None = None
+    plan_id: int | None = None
 
 
 class TenantRead(TimestampSchema):
@@ -26,3 +28,4 @@ class TenantRead(TimestampSchema):
     subdomain: str
     business_type: str
     is_active: bool
+    plan_id: int | None

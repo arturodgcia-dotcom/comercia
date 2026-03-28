@@ -28,10 +28,12 @@ class Tenant(Base, TimestampMixin):
     subdomain: Mapped[str] = mapped_column(String(120), unique=True, nullable=False)
     business_type: Mapped[str] = mapped_column(String(20), nullable=False)  # products, services, mixed
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    plan_id: Mapped[int | None] = mapped_column(ForeignKey("plans.id"), nullable=True, index=True)
 
     branding: Mapped["TenantBranding"] = relationship(back_populates="tenant", uselist=False)
     stripe_config: Mapped["StripeConfig"] = relationship(back_populates="tenant", uselist=False)
     storefront_config: Mapped["StorefrontConfig"] = relationship(back_populates="tenant", uselist=False)
+    orders: Mapped[list["Order"]] = relationship(back_populates="tenant")
 
 
 class User(Base, TimestampMixin):
@@ -108,6 +110,7 @@ class Plan(Base, TimestampMixin):
     commission_low_rate: Mapped[Decimal] = mapped_column(Numeric(6, 4), default=0, nullable=False)
     commission_high_rate: Mapped[Decimal] = mapped_column(Numeric(6, 4), default=0, nullable=False)
     commission_threshold: Mapped[Decimal] = mapped_column(Numeric(12, 2), default=0, nullable=False)
+    commission_enabled: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
@@ -132,6 +135,7 @@ class StripeConfig(Base, TimestampMixin):
     secret_key: Mapped[str] = mapped_column(String(255), nullable=False)
     webhook_secret: Mapped[str | None] = mapped_column(String(255), nullable=True)
     is_reinpia_managed: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    stripe_account_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
 
     tenant: Mapped["Tenant"] = relationship(back_populates="stripe_config")
 
@@ -161,6 +165,52 @@ class Product(Base, TimestampMixin):
     price_retail: Mapped[Decimal | None] = mapped_column(Numeric(12, 2), nullable=True)
     is_featured: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+
+
+class Order(Base):
+    __tablename__ = "orders"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id"), nullable=False, index=True)
+    customer_id: Mapped[int | None] = mapped_column(ForeignKey("customers.id"), nullable=True, index=True)
+    total_amount: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
+    commission_amount: Mapped[Decimal] = mapped_column(Numeric(12, 2), default=0, nullable=False)
+    net_amount: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
+    currency: Mapped[str] = mapped_column(String(10), default="mxn", nullable=False)
+    status: Mapped[str] = mapped_column(String(20), default="pending", nullable=False)  # pending|paid|failed
+    payment_mode: Mapped[str] = mapped_column(String(20), nullable=False)  # plan1|plan2
+    stripe_session_id: Mapped[str | None] = mapped_column(String(255), nullable=True, index=True)
+    stripe_payment_intent_id: Mapped[str | None] = mapped_column(String(255), nullable=True, index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+
+    tenant: Mapped["Tenant"] = relationship(back_populates="orders")
+    items: Mapped[list["OrderItem"]] = relationship(back_populates="order")
+    commission_details: Mapped[list["CommissionDetail"]] = relationship(back_populates="order")
+
+
+class OrderItem(Base):
+    __tablename__ = "order_items"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    order_id: Mapped[int] = mapped_column(ForeignKey("orders.id"), nullable=False, index=True)
+    product_id: Mapped[int] = mapped_column(ForeignKey("products.id"), nullable=False, index=True)
+    quantity: Mapped[int] = mapped_column(Integer, nullable=False)
+    unit_price: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
+    total_price: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
+
+    order: Mapped["Order"] = relationship(back_populates="items")
+
+
+class CommissionDetail(Base):
+    __tablename__ = "commission_details"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    order_id: Mapped[int] = mapped_column(ForeignKey("orders.id"), nullable=False, index=True)
+    rule_applied: Mapped[str] = mapped_column(String(20), nullable=False)  # LOW_2_5|HIGH_3
+    percentage: Mapped[Decimal] = mapped_column(Numeric(6, 4), nullable=False)
+    amount: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
+
+    order: Mapped["Order"] = relationship(back_populates="commission_details")
 
 
 class Customer(Base, TimestampMixin):

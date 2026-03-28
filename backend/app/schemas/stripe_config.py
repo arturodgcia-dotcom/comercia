@@ -9,6 +9,7 @@ class StripeConfigCreate(BaseModel):
     secret_key: str
     webhook_secret: str | None = None
     is_reinpia_managed: bool = True
+    stripe_account_id: str | None = None
 
 
 class StripeConfigRead(TimestampSchema):
@@ -18,3 +19,4 @@ class StripeConfigRead(TimestampSchema):
     secret_key: str
     webhook_secret: str | None
     is_reinpia_managed: bool
+    stripe_account_id: str | None
