@@ -7,3 +7,4 @@ python-dotenv==1.0.1
 PyJWT==2.10.1
 passlib[bcrypt]==1.7.4
 stripe==12.1.0
+python-multipart==0.0.20
