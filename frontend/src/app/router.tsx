@@ -22,6 +22,7 @@ import { LoginPage } from "../pages/LoginPage";
 import { LogisticsAdminPage } from "../pages/LogisticsAdminPage";
 import { LoyaltyProgramAdminPage } from "../pages/LoyaltyProgramAdminPage";
 import { MembershipPlansAdminPage } from "../pages/MembershipPlansAdminPage";
+import { MercadoPagoSettingsPage } from "../pages/MercadoPagoSettingsPage";
 import { PaymentsAdminPage } from "../pages/PaymentsAdminPage";
 import { PlansPage } from "../pages/PlansPage";
 import { PosCustomersPage } from "../pages/PosCustomersPage";
@@ -60,6 +61,7 @@ import { ServicesAdminPage } from "../pages/ServicesAdminPage";
 import { StorefrontDistributorsPage } from "../pages/StorefrontDistributorsPage";
 import { StorefrontPage } from "../pages/StorefrontPage";
 import { StoreServicesPage } from "../pages/StoreServicesPage";
+import { StripeSettingsPage } from "../pages/StripeSettingsPage";
 import { TenantDetailPage } from "../pages/TenantDetailPage";
 import { TenantReportsOverviewPage } from "../pages/TenantReportsOverviewPage";
 import { TenantSalesReportPage } from "../pages/TenantSalesReportPage";
@@ -109,6 +111,8 @@ export function AppRouter() {
           <Route path="admin/recurring-orders" element={<RecurringOrdersAdminPage />} />
           <Route path="admin/logistics" element={<LogisticsAdminPage />} />
           <Route path="admin/currency" element={<CurrencyAdminPage />} />
+          <Route path="admin/settings/payments/stripe" element={<StripeSettingsPage />} />
+          <Route path="admin/settings/payments/mercadopago" element={<MercadoPagoSettingsPage />} />
           <Route element={<RoleRoute allowedRoles={["tenant_admin", "reinpia_admin", "tenant_staff"]} />}>
             <Route path="admin/reports" element={<TenantReportsOverviewPage />} />
             <Route path="admin/reports/sales" element={<TenantSalesReportPage />} />

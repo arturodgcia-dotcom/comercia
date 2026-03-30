@@ -111,6 +111,37 @@ export function ComerciaLandingPage() {
         </div>
       </section>
 
+      <section>
+        <h2>Servicios adicionales activables</h2>
+        <div className="card-grid">
+          <SolutionCard
+            title="Logistica personalizada"
+            description="Configuracion de recoleccion, envio y operacion por marca, con consulta del servicio."
+            tag="Operacion"
+          />
+          <SolutionCard
+            title="Membresias y credenciales inteligentes"
+            description="Credenciales digitales/fisicas con QR y NFC opcional para publico, distribuidores y empleados."
+            tag="Identificacion"
+          />
+          <SolutionCard
+            title="Cobros digitales desde el celular"
+            description="Links de pago y QR de cobro para POS/WebApp con arquitectura lista para Mercado Pago."
+            tag="Pagos POS"
+          />
+        </div>
+        <div className="card-grid">
+          <article className="card">
+            <h3>Activacion NFC opcional</h3>
+            <p>Activacion inicial: 500 MXN</p>
+          </article>
+          <article className="card">
+            <h3>Activacion cobros digitales POS</h3>
+            <p>Activacion inicial: 500 MXN</p>
+          </article>
+        </div>
+      </section>
+
       <section id="paquetes">
         <h2>Paquetes ComerCia</h2>
         <div className="card-grid">

@@ -3,7 +3,7 @@ from decimal import Decimal
 
 from pydantic import BaseModel
 
-from app.schemas.common import TimestampSchema
+from app.schemas.common import ORMBase, TimestampSchema
 
 
 class PosLocationCreate(BaseModel):
@@ -86,7 +86,7 @@ class PosSaleCreate(BaseModel):
     items: list[PosSaleItemPayload]
 
 
-class PosSaleRead(BaseModel):
+class PosSaleRead(ORMBase):
     id: int
     tenant_id: int
     pos_location_id: int
@@ -101,7 +101,45 @@ class PosSaleRead(BaseModel):
     created_at: datetime
 
 
-class PosMembershipRegistrationRead(BaseModel):
+class PosPaymentCreateRequest(BaseModel):
+    tenant_id: int
+    pos_location_id: int | None = None
+    customer_id: int | None = None
+    employee_id: int | None = None
+    amount: Decimal
+    currency: str = "MXN"
+    sale_payload: dict | None = None
+    notes: str | None = None
+
+
+class PosPaymentConfirmRequest(BaseModel):
+    external_reference: str
+    paid: bool = True
+    provider_payload: dict | None = None
+    notes: str | None = None
+
+
+class PosPaymentTransactionRead(ORMBase):
+    id: int
+    tenant_id: int
+    pos_sale_id: int | None
+    pos_location_id: int | None
+    customer_id: int | None
+    employee_id: int | None
+    payment_provider: str
+    payment_method: str
+    status: str
+    external_reference: str
+    amount: Decimal
+    currency: str
+    payment_url: str | None
+    qr_payload: str | None
+    notes: str | None
+    created_at: datetime
+    updated_at: datetime
+
+
+class PosMembershipRegistrationRead(ORMBase):
     id: int
     tenant_id: int
     customer_id: int
@@ -117,7 +155,7 @@ class PosCustomerCreate(BaseModel):
     phone: str | None = None
 
 
-class PosCustomerRead(BaseModel):
+class PosCustomerRead(ORMBase):
     id: int
     tenant_id: int
     full_name: str

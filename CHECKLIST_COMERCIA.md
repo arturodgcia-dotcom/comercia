@@ -185,3 +185,12 @@
 - [x] Configuración por marca para NFC / Mercado Pago / MFA TOTP (base funcional)
 - [x] Módulos visibles: carga masiva, inventario operativo base y retroalimentación moderable
 - [x] Build frontend + compile backend + alembic upgrade head validados
+
+## Entregables ejecucion 17 (Split de pagos Stripe/Mercado Pago)
+- [x] Regla de negocio aplicada: Stripe solo para ecommerce/suscripciones y Mercado Pago para POS/WebApp
+- [x] Configuracion separada por marca: `stripe-config` y `mercadopago-settings`
+- [x] POS con flujos Mercado Pago (`link`, `qr`, `confirm`) y trazabilidad en `PosPaymentTransaction`
+- [x] Metodos de pago POS alineados (efectivo, transferencia, Mercado Pago, placeholders controlados)
+- [x] Reportes ajustados para distinguir Stripe ecommerce vs POS por metodo
+- [x] Landing ComerCia actualizada con servicios adicionales y activaciones (NFC/cobros digitales)
+- [x] Validacion: backend compile + alembic upgrade head + frontend build

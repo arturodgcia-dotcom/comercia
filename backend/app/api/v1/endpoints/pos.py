@@ -14,8 +14,18 @@ from app.schemas.pos import (
     PosLocationCreate,
     PosLocationRead,
     PosLocationUpdate,
+    PosPaymentConfirmRequest,
+    PosPaymentCreateRequest,
+    PosPaymentTransactionRead,
     PosSaleCreate,
     PosSaleRead,
+)
+from app.services.pos_payment_service import (
+    confirm_mercadopago_payment,
+    create_mercadopago_payment_link,
+    create_mercadopago_qr_charge_placeholder,
+    list_pos_payments_by_tenant,
+    register_pos_sale_payment,
 )
 from app.services.pos_service import create_pos_sale
 from app.services.security_watch_service import create_security_alert, log_security_event
@@ -118,6 +128,67 @@ def create_sale(payload: PosSaleCreate, db: Session = Depends(get_db), _: User =
         )
         db.commit()
     return sale
+
+
+@router.post("/payments/mercadopago/link", response_model=PosPaymentTransactionRead)
+def create_mercadopago_link(
+    payload: PosPaymentCreateRequest, db: Session = Depends(get_db), _: User = Depends(get_current_user)
+):
+    try:
+        return create_mercadopago_payment_link(
+            db,
+            tenant_id=payload.tenant_id,
+            amount=payload.amount,
+            currency=payload.currency,
+            pos_location_id=payload.pos_location_id,
+            customer_id=payload.customer_id,
+            employee_id=payload.employee_id,
+            sale_payload=payload.sale_payload,
+            notes=payload.notes,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@router.post("/payments/mercadopago/qr", response_model=PosPaymentTransactionRead)
+def create_mercadopago_qr(
+    payload: PosPaymentCreateRequest, db: Session = Depends(get_db), _: User = Depends(get_current_user)
+):
+    try:
+        return create_mercadopago_qr_charge_placeholder(
+            db,
+            tenant_id=payload.tenant_id,
+            amount=payload.amount,
+            currency=payload.currency,
+            pos_location_id=payload.pos_location_id,
+            customer_id=payload.customer_id,
+            employee_id=payload.employee_id,
+            sale_payload=payload.sale_payload,
+            notes=payload.notes,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@router.post("/payments/mercadopago/confirm", response_model=PosPaymentTransactionRead)
+def confirm_mercadopago(
+    payload: PosPaymentConfirmRequest, db: Session = Depends(get_db), _: User = Depends(get_current_user)
+):
+    row = confirm_mercadopago_payment(
+        db,
+        external_reference=payload.external_reference,
+        paid=payload.paid,
+        provider_payload=payload.provider_payload,
+        notes=payload.notes,
+    )
+    if not row:
+        raise HTTPException(status_code=404, detail="transaccion POS no encontrada")
+    return register_pos_sale_payment(db, transaction=row)
+
+
+@router.get("/payments/by-tenant/{tenant_id}", response_model=list[PosPaymentTransactionRead])
+def list_pos_payments(tenant_id: int, db: Session = Depends(get_db), _: User = Depends(get_current_user)):
+    return list_pos_payments_by_tenant(db, tenant_id=tenant_id)
 
 
 @router.get("/sales/by-tenant/{tenant_id}", response_model=list[PosSaleRead])

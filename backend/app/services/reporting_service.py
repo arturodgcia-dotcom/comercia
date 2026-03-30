@@ -19,6 +19,7 @@ from app.models.models import (
     Order,
     OrderItem,
     Product,
+    PosSale,
     RecurringOrderSchedule,
     ServiceOffering,
     User,
@@ -63,6 +64,7 @@ def get_sales_summary(
     avg_ticket = (Decimal(total_sales) / Decimal(paid_orders) if paid_orders else Decimal("0")).quantize(Decimal("0.01"))
     recurring_sales = db.scalar(select(func.count(Order.id)).where(*filters, Order.status == "paid", Order.payment_mode == "plan2")) or 0
     series = get_revenue_timeseries(db, tenant_id=tenant_id, date_from=date_from, date_to=date_to, group_by=group_by)
+    payment_channels = get_payment_channel_summary(db, tenant_id=tenant_id, date_from=date_from, date_to=date_to)
     return {
         "total_sales": _to_float(total_sales),
         "paid_orders": paid_orders,
@@ -70,6 +72,7 @@ def get_sales_summary(
         "average_ticket": _to_float(avg_ticket),
         "recurring_sales": recurring_sales,
         "timeseries": series,
+        "payment_channels": payment_channels,
     }
 
 
@@ -292,6 +295,48 @@ def get_revenue_timeseries(
         .order_by("bucket")
     ).all()
     return [{"bucket": str(r.bucket), "revenue": _to_float(r.revenue), "orders": int(r.orders or 0)} for r in rows]
+
+
+def get_payment_channel_summary(
+    db: Session,
+    tenant_id: int | None = None,
+    date_from: datetime | None = None,
+    date_to: datetime | None = None,
+) -> dict:
+    order_filters = _tenant_date_filters(Order.tenant_id, Order.created_at, tenant_id, date_from, date_to)
+    stripe_orders = db.scalar(select(func.count(Order.id)).where(*order_filters, Order.status == "paid")) or 0
+    stripe_total = (
+        db.scalar(select(func.coalesce(func.sum(Order.total_amount), 0)).where(*order_filters, Order.status == "paid")) or 0
+    )
+
+    pos_filters = _tenant_date_filters(PosSale.tenant_id, PosSale.created_at, tenant_id, date_from, date_to)
+    pos_total_sales = db.scalar(select(func.coalesce(func.sum(PosSale.total_amount), 0)).where(*pos_filters)) or 0
+    pos_total_orders = db.scalar(select(func.count(PosSale.id)).where(*pos_filters)) or 0
+    pos_method_rows = db.execute(
+        select(
+            PosSale.payment_method,
+            func.count(PosSale.id).label("sales"),
+            func.coalesce(func.sum(PosSale.total_amount), 0).label("total"),
+        )
+        .where(*pos_filters)
+        .group_by(PosSale.payment_method)
+        .order_by(func.coalesce(func.sum(PosSale.total_amount), 0).desc())
+    ).all()
+
+    return {
+        "stripe_ecommerce": {
+            "orders": int(stripe_orders or 0),
+            "amount": _to_float(stripe_total),
+        },
+        "pos_total": {
+            "sales": int(pos_total_orders or 0),
+            "amount": _to_float(pos_total_sales),
+        },
+        "pos_by_method": [
+            {"payment_method": row.payment_method, "sales": int(row.sales or 0), "amount": _to_float(row.total)}
+            for row in pos_method_rows
+        ],
+    }
 
 
 def _product_sales(db: Session, tenant_id: int | None, date_from: datetime | None, date_to: datetime | None, limit: int, descending: bool) -> list[dict]:

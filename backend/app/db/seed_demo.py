@@ -26,12 +26,14 @@ from app.models.models import (
     LogisticsOrder,
     LoyaltyProgram,
     MembershipPlan,
+    MercadoPagoSettings,
     Order,
     OrderItem,
     Plan,
     PlanPurchaseLead,
     PosEmployee,
     PosLocation,
+    PosPaymentTransaction,
     PosSale,
     PosSaleItem,
     Product,
@@ -79,6 +81,7 @@ def seed_demo_data(db: Session) -> None:
     _seed_subscriptions(db, tenants, plans)
     _seed_users(db, tenants)
     _seed_currency_settings(db, tenants)
+    _seed_payment_settings(db, tenants)
     _seed_pos_data(db, tenants)
     _seed_agents_and_leads(db)
     _seed_security_demo_data(db, tenants)
@@ -452,7 +455,7 @@ def _seed_pos_data(db: Session, tenants: list[Tenant]) -> None:
                 discount_amount=Decimal("40"),
                 total_amount=Decimal("600"),
                 currency="MXN",
-                payment_method="card",
+                payment_method="mercado_pago_qr",
                 notes="demo-pos-sale",
             )
             db.add(sale)
@@ -467,6 +470,46 @@ def _seed_pos_data(db: Session, tenants: list[Tenant]) -> None:
                     total_price=Decimal("640"),
                 )
             )
+        tx = db.scalar(
+            select(PosPaymentTransaction).where(
+                PosPaymentTransaction.tenant_id == tenant.id,
+                PosPaymentTransaction.external_reference == f"MP-DEMO-{tenant.slug.upper()}",
+            )
+        )
+        if not tx:
+            db.add(
+                PosPaymentTransaction(
+                    tenant_id=tenant.id,
+                    pos_sale_id=sale.id,
+                    pos_location_id=location.id,
+                    customer_id=customer.id,
+                    employee_id=employee.id,
+                    payment_provider="mercadopago",
+                    payment_method="mercado_pago_qr",
+                    status="paid",
+                    external_reference=f"MP-DEMO-{tenant.slug.upper()}",
+                    amount=Decimal("600"),
+                    currency="MXN",
+                    qr_payload='{"provider":"mercadopago","mode":"demo"}',
+                    notes="demo-pos-payment",
+                )
+            )
+
+
+def _seed_payment_settings(db: Session, tenants: list[Tenant]) -> None:
+    for tenant in tenants:
+        mp = db.scalar(select(MercadoPagoSettings).where(MercadoPagoSettings.tenant_id == tenant.id))
+        if not mp:
+            mp = MercadoPagoSettings(tenant_id=tenant.id)
+            db.add(mp)
+            db.flush()
+        mp.mercadopago_enabled = tenant.slug != "demo-inactivo"
+        mp.mercadopago_public_key = f"APP_USR-DEMO-{tenant.slug.upper()}"
+        mp.mercadopago_access_token = f"TEST-DEMO-{tenant.slug.upper()}"
+        mp.mercadopago_qr_enabled = True
+        mp.mercadopago_payment_link_enabled = True
+        mp.mercadopago_point_enabled = tenant.slug in {"reinpia", "natura-vida"}
+        mp.mercadopago_active_for_pos_only = True
 
 
 def _seed_security_demo_data(db: Session, tenants: list[Tenant]) -> None:

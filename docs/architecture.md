@@ -4,11 +4,18 @@
 Plataforma SaaS multitenant con:
 - autenticacion JWT y roles
 - ecommerce y catalogo por tenant
-- pagos Stripe Plan 1 / Plan 2
+- pagos Stripe para ecommerce online/suscripciones
+- pagos Mercado Pago para POS/WebApp
 - growth comercial (fidelizacion, cupones, memberships, wishlist, reviews)
 - operacion comercial (servicios, agendas, distribuidores, recurrencia, logistica, contratos digitales base)
 
-## 2) Flujo de dinero (Stripe)
+## 2) Arquitectura de pagos por canal
+Regla operativa actual:
+- Stripe: ecommerce publico, ecommerce distribuidores, checkout online, suscripciones y planes con comision.
+- Mercado Pago: POS/WebApp con cobro por link o QR (base Point preparada).
+- NFC: identificacion/membresias/credenciales (no se usa para cobro bancario).
+
+## 3) Flujo de dinero online (Stripe)
 1. Storefront crea checkout session.
 2. Se calcula subtotal, descuentos (cupon/puntos) y total.
 3. Si plan tenant = `PLAN_2`, se aplica comision por item:
@@ -16,13 +23,19 @@ Plataforma SaaS multitenant con:
 - > 2000: 3%
 4. Webhook Stripe actualiza `Order` y ejecuta post-procesos (puntos, cupon, citas de servicios).
 
-## 3) Flujo de servicios y agenda
+## 4) Flujo de dinero POS/WebApp (Mercado Pago)
+1. POS arma ticket y cliente.
+2. Se genera transaccion Mercado Pago (`link` o `qr`) en `PosPaymentTransaction`.
+3. Al confirmar pago, se registra `PosSale` y `PosSaleItem`.
+4. POS integra fidelizacion (suma/uso de puntos) y deja trazabilidad por vendedor y punto de venta.
+
+## 5) Flujo de servicios y agenda
 1. Se define `ServiceOffering` por tenant.
 2. Cliente compra servicio para si o como regalo desde storefront.
 3. Checkout guarda payload de servicio/regalo en `Order`.
 4. En pago exitoso se crea `Appointment`, se envia email y placeholder WhatsApp.
 
-## 4) Flujo de regalo (MVP)
+## 6) Flujo de regalo (MVP)
 Campos de regalo soportados:
 - remitente
 - anonimo
@@ -31,13 +44,13 @@ Campos de regalo soportados:
 
 Se persisten en `Order` y `Appointment`.
 
-## 5) Flujo de distribuidores
+## 7) Flujo de distribuidores
 1. Solicitud publica: `DistributorApplication`.
 2. Admin aprueba/rechaza.
 3. Aprobado crea `DistributorProfile` autorizado.
 4. Se gestionan empleados con `DistributorEmployee`.
 
-## 6) Contratos digitales base
+## 8) Contratos digitales base
 - `ContractTemplate` (tenant/global)
 - `SignedContract` con firma textual MVP:
   - signed_by_name
@@ -47,12 +60,12 @@ Se persisten en `Order` y `Appointment`.
 
 No hay firma biometrica en esta fase.
 
-## 7) Programacion recurrente
+## 9) Programacion recurrente
 - `RecurringOrderSchedule` + `RecurringOrderItem`
 - frecuencia semanal/quincenal/mensual
 - base para ejecucion automatica posterior
 
-## 8) Logistica base
+## 10) Logistica base
 - `LogisticsOrder` con estado operativo
 - `LogisticsEvent` para trazabilidad
 - acciones: programar, reprogramar, marcar entregado

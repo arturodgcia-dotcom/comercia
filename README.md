@@ -3,7 +3,7 @@
 Plataforma SaaS multitenant para landing, ecommerce, growth comercial y operacion comercial.
 
 ## Stack
-- `backend/`: FastAPI + SQLAlchemy + Alembic + JWT + Stripe
+- `backend/`: FastAPI + SQLAlchemy + Alembic + JWT + Stripe + Mercado Pago (POS base)
 - `frontend/`: React + Vite + TypeScript
 - `docs/`: arquitectura y modulos
 - `infra/`: base Docker local
@@ -102,6 +102,9 @@ npm run dev
   - `http://localhost:5173/onboarding/client`
 - Monedas:
   - `http://localhost:5173/admin/currency`
+- Configuracion de pagos por canal:
+  - `http://localhost:5173/admin/settings/payments/stripe`
+  - `http://localhost:5173/admin/settings/payments/mercadopago`
 - POS:
   - `http://localhost:5173/pos`
   - `http://localhost:5173/pos/locations`
@@ -126,10 +129,19 @@ npm run dev
 - tenants + branding + storefront config
 - catalogo multitenant (categorias/productos)
 
-### Pagos Stripe
-- checkout Plan 1 y Plan 2
-- comision dinamica por item (2.5% / 3%)
-- webhook para estados y post-procesos
+### Arquitectura de pagos por canal
+- Stripe (online):
+  - ecommerce publico y distribuidores
+  - checkout online
+  - suscripciones y planes
+  - plan 2 con comision dinamica por item (2.5% / 3%)
+- Mercado Pago (POS/WebApp):
+  - link de pago
+  - QR de cobro
+  - base para Point (placeholder)
+- NFC:
+  - identificacion y credenciales (opcional)
+  - no se usa para cobrar tarjetas bancarias
 
 ### Growth comercial
 - fidelizacion, cupones, memberships
@@ -254,6 +266,10 @@ npm run dev
   - `/api/v1/pos/employees/*`
   - `/api/v1/pos/sales/*`
   - `/api/v1/pos/customers/*`
+  - `/api/v1/pos/payments/mercadopago/link`
+  - `/api/v1/pos/payments/mercadopago/qr`
+  - `/api/v1/pos/payments/mercadopago/confirm`
+  - `/api/v1/pos/payments/by-tenant/{tenant_id}`
 - frontend:
   - `/pos`, `/pos/locations`, `/pos/sales`, `/pos/customers`
 - fidelizacion en POS:
@@ -346,6 +362,13 @@ npm run dev
     - `company_name`, `legal_type`, `buyer_name`, `buyer_email`, `buyer_phone`
     - `selected_plan_code`, `referral_code`, `needs_followup`, `needs_appointment`, `notes`
   - autollenado de clave de comisionista por query param `?ref=`
+  - servicios adicionales visibles:
+    - logistica personalizada
+    - membresias y credenciales inteligentes (QR + NFC opcional)
+    - cobros digitales desde celular para POS (Mercado Pago)
+  - precios mostrados solo de activacion:
+    - activacion NFC: 500 MXN
+    - activacion cobros digitales POS: 500 MXN
 - comportamiento de rutas clave:
   - `/` (sin sesion) redirige a `/comercia`
   - rutas protegidas como `/reinpia/*` redirigen a `/login` cuando no hay sesion

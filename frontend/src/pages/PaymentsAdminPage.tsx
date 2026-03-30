@@ -19,7 +19,7 @@ export function PaymentsAdminPage() {
 
   return (
     <section>
-      <PageHeader title="Payments" subtitle="Resumen de ordenes y flujo de dinero por checkout Stripe." />
+      <PageHeader title="Pagos online (Stripe)" subtitle="Resumen de ordenes ecommerce y suscripciones procesadas en Stripe." />
       {error ? <p className="error">{error}</p> : null}
       {!data ? (
         <p>Cargando pagos...</p>

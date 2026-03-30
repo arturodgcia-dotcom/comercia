@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { useAuth } from "../app/AuthContext";
 import { PageHeader } from "../components/PageHeader";
 import { api } from "../services/api";
-import { PosCustomer, PosLocation, PosSale, Product } from "../types/domain";
+import { PosCustomer, PosLocation, PosPaymentTransaction, PosSale, Product } from "../types/domain";
 
 interface TicketItem {
   product_id: number;
@@ -19,7 +19,10 @@ export function PosPage() {
   const [customers, setCustomers] = useState<PosCustomer[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [sales, setSales] = useState<PosSale[]>([]);
+  const [payments, setPayments] = useState<PosPaymentTransaction[]>([]);
   const [customerId, setCustomerId] = useState<number>(0);
+  const [paymentMethod, setPaymentMethod] = useState("mercado_pago_qr");
+  const [pendingPayment, setPendingPayment] = useState<PosPaymentTransaction | null>(null);
   const [ticket, setTicket] = useState<TicketItem[]>([]);
   const [error, setError] = useState("");
 
@@ -29,15 +32,17 @@ export function PosPage() {
       api.getPosLocations(token, tenantId),
       api.getPosCustomersByTenant(token, tenantId),
       api.getProductsByTenant(token, tenantId),
-      api.getPosSalesByTenant(token, tenantId)
+      api.getPosSalesByTenant(token, tenantId),
+      api.getPosPaymentsByTenant(token, tenantId)
     ])
-      .then(([locs, customersData, productsData, salesData]) => {
+      .then(([locs, customersData, productsData, salesData, paymentsData]) => {
         setLocations(locs);
         setSelectedLocationId(locs[0]?.id ?? 0);
         setCustomers(customersData);
         setCustomerId(customersData[0]?.id ?? 0);
         setProducts(productsData);
         setSales(salesData);
+        setPayments(paymentsData);
       })
       .catch((err) => setError(err instanceof Error ? err.message : "No fue posible cargar POS"));
   }, [token, tenantId]);
@@ -62,21 +67,69 @@ export function PosPage() {
   const closeSale = async () => {
     if (!token || !selectedLocationId || ticket.length === 0) return;
     try {
+      setError("");
+      if (paymentMethod === "mercado_pago_link" || paymentMethod === "mercado_pago_qr") {
+        const payload = {
+          tenant_id: tenantId,
+          pos_location_id: selectedLocationId,
+          customer_id: customerId || undefined,
+          amount: total,
+          currency: "MXN",
+          sale_payload: {
+            pos_location_id: selectedLocationId,
+            customer_id: customerId || undefined,
+            use_loyalty_points: true,
+            register_membership: false,
+            notes: "POS local demo",
+            items: ticket
+          },
+          notes: "Pago POS con Mercado Pago"
+        };
+        const tx =
+          paymentMethod === "mercado_pago_link"
+            ? await api.createPosMercadoPagoLink(token, payload)
+            : await api.createPosMercadoPagoQr(token, payload);
+        setPendingPayment(tx);
+        setPayments((previous) => [tx, ...previous]);
+        return;
+      }
+
       const sale = await api.createPosSale(token, {
         tenant_id: tenantId,
         pos_location_id: selectedLocationId,
         customer_id: customerId || undefined,
-        payment_method: "card",
+        payment_method: paymentMethod,
         currency: "MXN",
         use_loyalty_points: true,
         register_membership: false,
         notes: "POS local demo",
         items: ticket
       });
-      setSales((prev) => [sale, ...prev]);
+      setSales((previous) => [sale, ...previous]);
       setTicket([]);
     } catch (err) {
       setError(err instanceof Error ? err.message : "No fue posible cerrar venta POS");
+    }
+  };
+
+  const confirmPendingPayment = async () => {
+    if (!token || !pendingPayment) return;
+    try {
+      const tx = await api.confirmPosMercadoPagoPayment(token, {
+        external_reference: pendingPayment.external_reference,
+        paid: true,
+        provider_payload: { source: "pos_ui_demo_confirm" },
+        notes: "Pago confirmado manualmente en POS demo"
+      });
+      setPendingPayment(tx);
+      const salesData = await api.getPosSalesByTenant(token, tenantId);
+      const paymentsData = await api.getPosPaymentsByTenant(token, tenantId);
+      setSales(salesData);
+      setPayments(paymentsData);
+      setTicket([]);
+      setPendingPayment(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "No fue posible confirmar pago Mercado Pago");
     }
   };
 
@@ -108,6 +161,17 @@ export function PosPage() {
               ))}
             </select>
           </label>
+          <label>
+            Metodo de pago
+            <select value={paymentMethod} onChange={(event) => setPaymentMethod(event.target.value)}>
+              <option value="cash">Efectivo</option>
+              <option value="transfer">Transferencia</option>
+              <option value="mercado_pago_link">Mercado Pago Link</option>
+              <option value="mercado_pago_qr">Mercado Pago QR</option>
+              <option value="mercado_pago_point_placeholder">Mercado Pago Point (placeholder)</option>
+              <option value="tarjeta_manual_placeholder">Tarjeta manual (placeholder)</option>
+            </select>
+          </label>
           <ul>
             {ticket.map((item) => (
               <li key={item.product_id}>Producto #{item.product_id} x {item.quantity}</li>
@@ -115,6 +179,24 @@ export function PosPage() {
           </ul>
           <p>Total: ${total.toLocaleString("es-MX")}</p>
           <button className="button" onClick={closeSale} type="button">Cerrar venta POS</button>
+          {pendingPayment ? (
+            <article className="card" style={{ marginTop: "1rem" }}>
+              <h4>Cobro pendiente con Mercado Pago</h4>
+              <p>Referencia: {pendingPayment.external_reference}</p>
+              {pendingPayment.payment_url ? (
+                <p>
+                  Link de pago:{" "}
+                  <a href={pendingPayment.payment_url} target="_blank" rel="noreferrer">
+                    {pendingPayment.payment_url}
+                  </a>
+                </p>
+              ) : null}
+              {pendingPayment.qr_payload ? <p>QR payload generado para cobro: {pendingPayment.qr_payload}</p> : null}
+              <button className="button" type="button" onClick={confirmPendingPayment}>
+                Confirmar pago y registrar venta
+              </button>
+            </article>
+          ) : null}
         </article>
         <article className="card">
           <h3>Catalogo rapido</h3>
@@ -145,6 +227,31 @@ export function PosPage() {
                 <td>{sale.pos_location_id}</td>
                 <td>${Number(sale.total_amount).toLocaleString("es-MX")}</td>
                 <td>{sale.payment_method}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </section>
+      <section className="card">
+        <h3>Pagos POS recientes</h3>
+        <table className="table">
+          <thead>
+            <tr>
+              <th>Referencia</th>
+              <th>Metodo</th>
+              <th>Status</th>
+              <th>Monto</th>
+              <th>Fecha</th>
+            </tr>
+          </thead>
+          <tbody>
+            {payments.slice(0, 10).map((payment) => (
+              <tr key={payment.id}>
+                <td>{payment.external_reference}</td>
+                <td>{payment.payment_method}</td>
+                <td>{payment.status}</td>
+                <td>${Number(payment.amount).toLocaleString("es-MX")}</td>
+                <td>{new Date(payment.created_at).toLocaleString("es-MX")}</td>
               </tr>
             ))}
           </tbody>

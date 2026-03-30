@@ -12,7 +12,14 @@ export function ReinpiaPaymentsPage() {
   const { token } = useAuth();
   const [filters, setFilters] = useState({ tenantId: "", dateFrom: "", dateTo: "", status: "" });
   const [orders, setOrders] = useState<Order[]>([]);
-  const [sales, setSales] = useState<{ total_orders: number; subtotal_amount: number; discount_amount: number; total_revenue: number } | null>(null);
+  const [sales, setSales] = useState<{
+    total_orders: number;
+    subtotal_amount: number;
+    discount_amount: number;
+    total_revenue: number;
+    stripe_ecommerce?: { orders: number; amount: number };
+    pos?: { sales: number; amount: number; by_method: Array<{ payment_method: string; sales: number; amount: number }> };
+  } | null>(null);
   const [commissions, setCommissions] = useState<{ total_commissions: number; total_net_amount: number } | null>(null);
   const [error, setError] = useState("");
 
@@ -69,7 +76,19 @@ export function ReinpiaPaymentsPage() {
           <KpiCard label="Revenue" value={`$${sales.total_revenue.toLocaleString("es-MX")}`} />
           <KpiCard label="Comisiones" value={`$${commissions.total_commissions.toLocaleString("es-MX")}`} />
           <KpiCard label="Neto tenants" value={`$${commissions.total_net_amount.toLocaleString("es-MX")}`} />
+          <KpiCard label="Stripe ecommerce" value={`$${(sales.stripe_ecommerce?.amount ?? 0).toLocaleString("es-MX")}`} />
+          <KpiCard label="POS total" value={`$${(sales.pos?.amount ?? 0).toLocaleString("es-MX")}`} />
         </div>
+      ) : null}
+
+      {sales?.pos?.by_method?.length ? (
+        <section className="card">
+          <h3>POS por metodo de pago</h3>
+          <SummaryTable
+            headers={["Metodo", "Ventas", "Monto"]}
+            rows={sales.pos.by_method.map((row) => [row.payment_method, row.sales, `$${row.amount.toLocaleString("es-MX")}`])}
+          />
+        </section>
       ) : null}
 
       <section className="store-banner">

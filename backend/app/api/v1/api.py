@@ -16,6 +16,7 @@ from app.api.v1.endpoints import (
     logistics,
     loyalty,
     memberships,
+    mercadopago_settings,
     onboarding,
     payments,
     plans,
@@ -50,6 +51,7 @@ api_router.include_router(stripe_webhook.router, prefix="/stripe", tags=["stripe
 api_router.include_router(payments.router, prefix="/payments", tags=["payments"])
 api_router.include_router(loyalty.router, prefix="/loyalty", tags=["loyalty"])
 api_router.include_router(memberships.router, prefix="/memberships", tags=["memberships"])
+api_router.include_router(mercadopago_settings.router, prefix="/mercadopago-settings", tags=["mercadopago-settings"])
 api_router.include_router(coupons.router, prefix="/coupons", tags=["coupons"])
 api_router.include_router(banners.router, prefix="/banners", tags=["banners"])
 api_router.include_router(wishlist.router, prefix="/wishlist", tags=["wishlist"])

@@ -49,6 +49,29 @@ export function TenantReportsOverviewPage() {
         series={data.sales.timeseries.map((row) => ({ label: row.bucket, value: row.revenue }))}
       />
 
+      {data.sales.payment_channels ? (
+        <ReportSection title="Canales de venta">
+          <div className="card-grid">
+            <ReportKpiCard
+              label="Stripe ecommerce"
+              value={`$${data.sales.payment_channels.stripe_ecommerce.amount.toLocaleString("es-MX")}`}
+            />
+            <ReportKpiCard
+              label="POS total"
+              value={`$${data.sales.payment_channels.pos_total.amount.toLocaleString("es-MX")}`}
+            />
+          </div>
+          <RankingTable
+            headers={["Metodo POS", "Ventas", "Monto"]}
+            rows={data.sales.payment_channels.pos_by_method.map((row) => [
+              row.payment_method,
+              row.sales,
+              `$${row.amount.toLocaleString("es-MX")}`
+            ])}
+          />
+        </ReportSection>
+      ) : null}
+
       <ReportSection title="Top productos">
         <RankingTable
           headers={["Producto", "Unidades", "Revenue"]}
@@ -58,4 +81,3 @@ export function TenantReportsOverviewPage() {
     </section>
   );
 }
-

@@ -26,6 +26,8 @@ const navItems: Array<{ labelKey: string; to: string; roles?: string[] }> = [
   { labelKey: "nav.categories", to: "/categories" },
   { labelKey: "nav.products", to: "/products" },
   { labelKey: "nav.currency", to: "/admin/currency" },
+  { labelKey: "nav.paymentsStripe", to: "/admin/settings/payments/stripe" },
+  { labelKey: "nav.paymentsMercadoPago", to: "/admin/settings/payments/mercadopago" },
   { labelKey: "nav.reports", to: "/admin/reports", roles: ["tenant_admin", "tenant_staff", "reinpia_admin"] },
   { labelKey: "nav.reportSales", to: "/admin/reports/sales", roles: ["tenant_admin", "tenant_staff", "reinpia_admin"] },
   { labelKey: "nav.reportProducts", to: "/admin/reports/products", roles: ["tenant_admin", "tenant_staff", "reinpia_admin"] },

@@ -47,6 +47,20 @@ export interface StripeConfig {
   stripe_account_id?: string;
 }
 
+export interface MercadoPagoSettings {
+  id: number;
+  tenant_id: number;
+  mercadopago_enabled: boolean;
+  mercadopago_public_key?: string | null;
+  mercadopago_access_token?: string | null;
+  mercadopago_qr_enabled: boolean;
+  mercadopago_payment_link_enabled: boolean;
+  mercadopago_point_enabled: boolean;
+  mercadopago_active_for_pos_only: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface TenantBranding {
   id: number;
   tenant_id: number;
@@ -148,7 +162,10 @@ export interface BrandChannelSettings {
   mercadopago_enabled: boolean;
   mercadopago_public_key?: string | null;
   mercadopago_access_token?: string | null;
+  mercadopago_qr_enabled: boolean;
+  mercadopago_payment_link_enabled: boolean;
   mercadopago_point_enabled: boolean;
+  mercadopago_active_for_pos_only: boolean;
   mfa_totp_enabled: boolean;
   mfa_required_for_admins: boolean;
   mfa_required_for_staff: boolean;
@@ -711,6 +728,26 @@ export interface PosSale {
   created_at: string;
 }
 
+export interface PosPaymentTransaction {
+  id: number;
+  tenant_id: number;
+  pos_sale_id?: number | null;
+  pos_location_id?: number | null;
+  customer_id?: number | null;
+  employee_id?: number | null;
+  payment_provider: string;
+  payment_method: string;
+  status: string;
+  external_reference: string;
+  amount: number;
+  currency: string;
+  payment_url?: string | null;
+  qr_payload?: string | null;
+  notes?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface PosCustomer {
   id: number;
   tenant_id: number;
@@ -830,6 +867,11 @@ export interface TenantReportSales {
   average_ticket: number;
   recurring_sales: number;
   timeseries: Array<{ bucket: string; revenue: number; orders: number }>;
+  payment_channels?: {
+    stripe_ecommerce: { orders: number; amount: number };
+    pos_total: { sales: number; amount: number };
+    pos_by_method: Array<{ payment_method: string; sales: number; amount: number }>;
+  };
 }
 
 export interface TenantReportOverview {

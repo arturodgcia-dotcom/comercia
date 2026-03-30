@@ -261,6 +261,38 @@ export function ReinpiaBrandSetupPage() {
         <label className="checkbox">
           <input
             type="checkbox"
+            checked={channelSettings.mercadopago_payment_link_enabled}
+            onChange={(event) => setChannelSettings((previous) => previous ? { ...previous, mercadopago_payment_link_enabled: event.target.checked } : previous)}
+          />
+          Habilitar cobro por link
+        </label>
+        <label className="checkbox">
+          <input
+            type="checkbox"
+            checked={channelSettings.mercadopago_qr_enabled}
+            onChange={(event) => setChannelSettings((previous) => previous ? { ...previous, mercadopago_qr_enabled: event.target.checked } : previous)}
+          />
+          Habilitar cobro por QR
+        </label>
+        <label className="checkbox">
+          <input
+            type="checkbox"
+            checked={channelSettings.mercadopago_point_enabled}
+            onChange={(event) => setChannelSettings((previous) => previous ? { ...previous, mercadopago_point_enabled: event.target.checked } : previous)}
+          />
+          Preparar Point (opcional)
+        </label>
+        <label className="checkbox">
+          <input
+            type="checkbox"
+            checked={channelSettings.mercadopago_active_for_pos_only}
+            onChange={(event) => setChannelSettings((previous) => previous ? { ...previous, mercadopago_active_for_pos_only: event.target.checked } : previous)}
+          />
+          Limitar Mercado Pago al POS/WebApp
+        </label>
+        <label className="checkbox">
+          <input
+            type="checkbox"
             checked={channelSettings.mfa_totp_enabled}
             onChange={(event) => setChannelSettings((previous) => previous ? { ...previous, mfa_totp_enabled: event.target.checked } : previous)}
           />

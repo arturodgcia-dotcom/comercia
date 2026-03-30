@@ -32,6 +32,7 @@ class Tenant(Base, TimestampMixin):
 
     branding: Mapped["TenantBranding"] = relationship(back_populates="tenant", uselist=False)
     stripe_config: Mapped["StripeConfig"] = relationship(back_populates="tenant", uselist=False)
+    mercadopago_settings: Mapped["MercadoPagoSettings"] = relationship(back_populates="tenant", uselist=False)
     storefront_config: Mapped["StorefrontConfig"] = relationship(back_populates="tenant", uselist=False)
     orders: Mapped[list["Order"]] = relationship(back_populates="tenant")
 
@@ -139,6 +140,22 @@ class StripeConfig(Base, TimestampMixin):
     stripe_account_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
 
     tenant: Mapped["Tenant"] = relationship(back_populates="stripe_config")
+
+
+class MercadoPagoSettings(Base, TimestampMixin):
+    __tablename__ = "mercadopago_settings"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id"), unique=True, nullable=False, index=True)
+    mercadopago_enabled: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    mercadopago_public_key: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    mercadopago_access_token: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    mercadopago_qr_enabled: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    mercadopago_payment_link_enabled: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    mercadopago_point_enabled: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    mercadopago_active_for_pos_only: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+
+    tenant: Mapped["Tenant"] = relationship(back_populates="mercadopago_settings")
 
 
 class Category(Base, TimestampMixin):
@@ -827,9 +844,31 @@ class PosSale(Base):
     discount_amount: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False, default=0)
     total_amount: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False, default=0)
     currency: Mapped[str] = mapped_column(String(10), default="MXN", nullable=False)
-    payment_method: Mapped[str] = mapped_column(String(20), nullable=False, default="cash")
+    payment_method: Mapped[str] = mapped_column(String(40), nullable=False, default="cash")
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+
+
+class PosPaymentTransaction(Base, TimestampMixin):
+    __tablename__ = "pos_payment_transactions"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id"), nullable=False, index=True)
+    pos_sale_id: Mapped[int | None] = mapped_column(ForeignKey("pos_sales.id"), nullable=True, index=True)
+    pos_location_id: Mapped[int | None] = mapped_column(ForeignKey("pos_locations.id"), nullable=True, index=True)
+    customer_id: Mapped[int | None] = mapped_column(ForeignKey("customers.id"), nullable=True, index=True)
+    employee_id: Mapped[int | None] = mapped_column(ForeignKey("pos_employees.id"), nullable=True, index=True)
+    payment_provider: Mapped[str] = mapped_column(String(30), nullable=False, default="mercadopago")
+    payment_method: Mapped[str] = mapped_column(String(40), nullable=False)
+    status: Mapped[str] = mapped_column(String(20), nullable=False, default="pending")
+    external_reference: Mapped[str] = mapped_column(String(120), nullable=False, unique=True, index=True)
+    amount: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
+    currency: Mapped[str] = mapped_column(String(10), nullable=False, default="MXN")
+    payment_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    qr_payload: Mapped[str | None] = mapped_column(Text, nullable=True)
+    sale_payload_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+    provider_payload_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
 
 
 class PosSaleItem(Base):

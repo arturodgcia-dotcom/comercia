@@ -14,6 +14,7 @@ from app.models.models import (
     Order,
     Plan,
     PlanPurchaseLead,
+    PosSale,
     InternalAlert,
     Subscription,
     Tenant,
@@ -144,11 +145,40 @@ def get_sales_summary(
     total_revenue = db.scalar(select(func.coalesce(func.sum(Order.total_amount), 0)).where(*filters)) or 0
     subtotal = db.scalar(select(func.coalesce(func.sum(Order.subtotal_amount), 0)).where(*filters)) or 0
     discounts = db.scalar(select(func.coalesce(func.sum(Order.discount_amount), 0)).where(*filters)) or 0
+    pos_filters = _generic_filters(PosSale.tenant_id, tenant_id, PosSale.created_at, date_from, date_to)
+    pos_rows = db.execute(
+        select(
+            PosSale.payment_method,
+            func.count(PosSale.id).label("sales"),
+            func.coalesce(func.sum(PosSale.total_amount), 0).label("amount"),
+        )
+        .where(*pos_filters)
+        .group_by(PosSale.payment_method)
+        .order_by(func.coalesce(func.sum(PosSale.total_amount), 0).desc())
+    ).all()
+    pos_total_amount = db.scalar(select(func.coalesce(func.sum(PosSale.total_amount), 0)).where(*pos_filters)) or 0
+    pos_total_sales = db.scalar(select(func.count(PosSale.id)).where(*pos_filters)) or 0
     return {
         "total_orders": total_orders,
         "subtotal_amount": _to_float(subtotal),
         "discount_amount": _to_float(discounts),
         "total_revenue": _to_float(total_revenue),
+        "stripe_ecommerce": {
+            "orders": total_orders,
+            "amount": _to_float(total_revenue),
+        },
+        "pos": {
+            "sales": int(pos_total_sales or 0),
+            "amount": _to_float(pos_total_amount),
+            "by_method": [
+                {
+                    "payment_method": row.payment_method,
+                    "sales": int(row.sales or 0),
+                    "amount": _to_float(row.amount),
+                }
+                for row in pos_rows
+            ],
+        },
     }
 
 

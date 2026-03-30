@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user, get_reinpia_admin
 from app.db.session import get_db
-from app.models.models import StorefrontConfig, Tenant, User
+from app.models.models import MercadoPagoSettings, StorefrontConfig, Tenant, User
 from app.schemas.brand_setup import (
     BrandChannelSettingsRead,
     BrandChannelSettingsUpdate,
@@ -39,7 +39,10 @@ DEFAULT_CHANNEL_SETTINGS = {
     "mercadopago_enabled": False,
     "mercadopago_public_key": None,
     "mercadopago_access_token": None,
+    "mercadopago_qr_enabled": True,
+    "mercadopago_payment_link_enabled": True,
     "mercadopago_point_enabled": False,
+    "mercadopago_active_for_pos_only": True,
     "mfa_totp_enabled": False,
     "mfa_required_for_admins": True,
     "mfa_required_for_staff": False,
@@ -152,6 +155,7 @@ def update_brand_channel_settings(
     settings = {**DEFAULT_CHANNEL_SETTINGS, **payload.get("channel_settings", {})}
     settings.update(updates.model_dump(exclude_unset=True))
     payload["channel_settings"] = settings
+    _sync_mercadopago_settings(db, tenant_id=tenant_id, settings=settings)
     _save_brand_payload(config, payload, db)
     return BrandChannelSettingsRead(tenant_id=tenant_id, **settings)
 
@@ -191,3 +195,18 @@ def _ensure_tenant_access(current_user: User, tenant_id: int) -> None:
     if current_user.role in {"tenant_admin", "tenant_staff"} and current_user.tenant_id == tenant_id:
         return
     raise HTTPException(status_code=403, detail="Sin permisos para esta marca")
+
+
+def _sync_mercadopago_settings(db: Session, *, tenant_id: int, settings: dict) -> None:
+    row = db.scalar(select(MercadoPagoSettings).where(MercadoPagoSettings.tenant_id == tenant_id))
+    if not row:
+        row = MercadoPagoSettings(tenant_id=tenant_id)
+        db.add(row)
+    row.mercadopago_enabled = bool(settings.get("mercadopago_enabled", False))
+    row.mercadopago_public_key = settings.get("mercadopago_public_key")
+    row.mercadopago_access_token = settings.get("mercadopago_access_token")
+    row.mercadopago_qr_enabled = bool(settings.get("mercadopago_qr_enabled", True))
+    row.mercadopago_payment_link_enabled = bool(settings.get("mercadopago_payment_link_enabled", True))
+    row.mercadopago_point_enabled = bool(settings.get("mercadopago_point_enabled", False))
+    row.mercadopago_active_for_pos_only = bool(settings.get("mercadopago_active_for_pos_only", True))
+    db.add(row)

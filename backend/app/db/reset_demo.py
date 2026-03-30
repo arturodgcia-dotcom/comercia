@@ -27,6 +27,7 @@ from app.models.models import (
     LoyaltyProgram,
     LoyaltyRule,
     MembershipPlan,
+    MercadoPagoSettings,
     MarketingInsight,
     Notification,
     Order,
@@ -34,6 +35,7 @@ from app.models.models import (
     PlanPurchaseLead,
     PosEmployee,
     PosLocation,
+    PosPaymentTransaction,
     PosMembershipRegistration,
     PosSale,
     PosSaleItem,
@@ -134,11 +136,14 @@ def reset_demo_data(db: Session) -> None:
         pos_sale_ids = list(db.scalars(select(PosSale.id).where(PosSale.tenant_id.in_(tenant_ids))).all())
         if pos_sale_ids:
             db.execute(delete(PosSaleItem).where(PosSaleItem.pos_sale_id.in_(pos_sale_ids)))
+            db.execute(delete(PosPaymentTransaction).where(PosPaymentTransaction.pos_sale_id.in_(pos_sale_ids)))
         if pos_location_ids:
             db.execute(delete(PosEmployee).where(PosEmployee.pos_location_id.in_(pos_location_ids)))
             db.execute(delete(PosMembershipRegistration).where(PosMembershipRegistration.pos_location_id.in_(pos_location_ids)))
+            db.execute(delete(PosPaymentTransaction).where(PosPaymentTransaction.pos_location_id.in_(pos_location_ids)))
         db.execute(delete(PosSale).where(PosSale.tenant_id.in_(tenant_ids)))
         db.execute(delete(PosLocation).where(PosLocation.tenant_id.in_(tenant_ids)))
+        db.execute(delete(PosPaymentTransaction).where(PosPaymentTransaction.tenant_id.in_(tenant_ids)))
         db.execute(delete(CurrencySettings).where(CurrencySettings.tenant_id.in_(tenant_ids)))
         db.execute(delete(BotChannelConfig).where(BotChannelConfig.tenant_id.in_(tenant_ids)))
         db.execute(delete(BotMessageTemplate).where(BotMessageTemplate.tenant_id.in_(tenant_ids)))
@@ -173,6 +178,7 @@ def reset_demo_data(db: Session) -> None:
         db.execute(delete(Subscription).where(Subscription.tenant_id.in_(tenant_ids)))
         db.execute(delete(Banner).where(Banner.tenant_id.in_(tenant_ids)))
         db.execute(delete(StripeConfig).where(StripeConfig.tenant_id.in_(tenant_ids)))
+        db.execute(delete(MercadoPagoSettings).where(MercadoPagoSettings.tenant_id.in_(tenant_ids)))
         db.execute(delete(TenantBranding).where(TenantBranding.tenant_id.in_(tenant_ids)))
         db.execute(delete(StorefrontConfig).where(StorefrontConfig.tenant_id.in_(tenant_ids)))
         db.execute(delete(ContractTemplate).where(ContractTemplate.tenant_id.in_(tenant_ids)))

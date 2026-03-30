@@ -14,6 +14,15 @@ from app.models.models import (
     Product,
 )
 
+SUPPORTED_POS_PAYMENT_METHODS = {
+    "cash",
+    "transfer",
+    "mercado_pago_link",
+    "mercado_pago_qr",
+    "mercado_pago_point_placeholder",
+    "tarjeta_manual_placeholder",
+}
+
 
 def create_pos_sale(
     db: Session,
@@ -28,6 +37,10 @@ def create_pos_sale(
     use_loyalty_points: bool = False,
     register_membership: bool = False,
 ) -> PosSale:
+    normalized_payment_method = (payment_method or "cash").strip().lower()
+    if normalized_payment_method not in SUPPORTED_POS_PAYMENT_METHODS:
+        normalized_payment_method = "tarjeta_manual_placeholder"
+
     subtotal = Decimal("0")
     for item in items:
         subtotal += Decimal(str(item["unit_price"])) * int(item["quantity"])
@@ -53,7 +66,7 @@ def create_pos_sale(
         discount_amount=discount.quantize(Decimal("0.01")),
         total_amount=(subtotal - discount).quantize(Decimal("0.01")),
         currency=currency.upper(),
-        payment_method=payment_method,
+        payment_method=normalized_payment_method,
         notes=notes,
     )
     db.add(sale)

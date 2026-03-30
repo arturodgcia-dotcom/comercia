@@ -24,12 +24,14 @@ import {
   LoginResponse,
   LoyaltyProgram,
   MembershipPlan,
+  MercadoPagoSettings,
   OnboardingGuide,
   OnboardingProgressResponse,
   PosCustomer,
   PosEmployee,
   PosLocation,
   PosSale,
+  PosPaymentTransaction,
   PlanPurchaseLead,
   Order,
   PaymentsDashboard,
@@ -56,6 +58,7 @@ import {
   StorefrontDistributorsPayload,
   StorefrontHomePayload,
   StorefrontPayload,
+  StripeConfig,
   TenantReportOverview,
   TenantReportSales,
   TenantReportUsers,
@@ -149,6 +152,10 @@ export const api = {
     request<TenantBranding>(`/api/v1/tenant-branding/${tenantId}`, { method: "PUT", body: JSON.stringify(payload) }, token),
 
   getPlans: (token: string) => request<Plan[]>("/api/v1/plans", {}, token),
+  getStripeConfigByTenant: (token: string, tenantId: number) =>
+    request<StripeConfig>(`/api/v1/stripe-config/${tenantId}`, {}, token),
+  upsertStripeConfig: (token: string, payload: Record<string, unknown>) =>
+    request<StripeConfig>("/api/v1/stripe-config", { method: "POST", body: JSON.stringify(payload) }, token),
   getCategoriesByTenant: (token: string, tenantId: number) => request<Category[]>(`/api/v1/categories/by-tenant/${tenantId}`, {}, token),
   createCategory: (
     token: string,
@@ -434,6 +441,10 @@ export const api = {
     request<ExchangeRate>("/api/v1/exchange-rates/manual", { method: "POST", body: JSON.stringify(payload) }, token),
   refreshExchangeRates: (token: string) =>
     request<ExchangeRate[]>("/api/v1/exchange-rates/refresh", { method: "POST" }, token),
+  getMercadoPagoSettings: (token: string, tenantId: number) =>
+    request<MercadoPagoSettings>(`/api/v1/mercadopago-settings/${tenantId}`, {}, token),
+  upsertMercadoPagoSettings: (token: string, tenantId: number, payload: Record<string, unknown>) =>
+    request<MercadoPagoSettings>(`/api/v1/mercadopago-settings/${tenantId}`, { method: "PUT", body: JSON.stringify(payload) }, token),
   previewConversion: (payload: Record<string, unknown>) =>
     request<{ converted_amount: number; rate: number }>("/api/v1/exchange-rates/preview", {
       method: "POST",
@@ -462,6 +473,18 @@ export const api = {
     request<PosCustomer[]>(`/api/v1/pos/customers/by-tenant/${tenantId}`, {}, token),
   createPosCustomer: (token: string, payload: Record<string, unknown>) =>
     request<PosCustomer>("/api/v1/pos/customers", { method: "POST", body: JSON.stringify(payload) }, token),
+  createPosMercadoPagoLink: (token: string, payload: Record<string, unknown>) =>
+    request<PosPaymentTransaction>("/api/v1/pos/payments/mercadopago/link", { method: "POST", body: JSON.stringify(payload) }, token),
+  createPosMercadoPagoQr: (token: string, payload: Record<string, unknown>) =>
+    request<PosPaymentTransaction>("/api/v1/pos/payments/mercadopago/qr", { method: "POST", body: JSON.stringify(payload) }, token),
+  confirmPosMercadoPagoPayment: (token: string, payload: Record<string, unknown>) =>
+    request<PosPaymentTransaction>(
+      "/api/v1/pos/payments/mercadopago/confirm",
+      { method: "POST", body: JSON.stringify(payload) },
+      token
+    ),
+  getPosPaymentsByTenant: (token: string, tenantId: number) =>
+    request<PosPaymentTransaction[]>(`/api/v1/pos/payments/by-tenant/${tenantId}`, {}, token),
 
   getAutomationEvents: (token: string, query = "") =>
     request<AutomationEventLog[]>(`/api/v1/automation/events${query ? `?${query}` : ""}`, {}, token),

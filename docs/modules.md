@@ -6,7 +6,8 @@
 | Tenants y branding | Inicial funcional | CRUD tenant + branding por tenant |
 | Storefront multitenant | Inicial funcional | home-data, distributors, services por slug |
 | Catalogo ecommerce | Inicial funcional | categorias/productos CRUD por tenant |
-| Pagos Stripe | Inicial funcional | Plan1/Plan2 + comision + webhook |
+| Pagos Stripe (online) | Inicial funcional | Ecommerce publico/distribuidores + suscripciones + checkout online + plan 2 con comision |
+| Pagos Mercado Pago (POS/WebApp) | Base funcional | Config por marca + link/QR + confirmacion de pago POS + base Point |
 | Fidelizacion | Inicial funcional | programa, cuenta, puntos |
 | Cupones | Inicial funcional | CRUD + validate + uso |
 | Memberships | Inicial funcional | CRUD por tenant |
@@ -35,13 +36,13 @@
 | Onboarding vendedor/cliente | Inicial funcional | guias, pasos, progreso y vistas `/onboarding/*` |
 | Internacionalizacion (i18n) | Base funcional | ES/EN con selector global y persistencia local |
 | Monedas y tipo de cambio | Inicial funcional | settings por tenant + rates manual/refresh + preview |
-| POS / WebApp base | Inicial funcional | ubicaciones, empleados, clientes y ventas POS |
+| POS / WebApp base | Inicial funcional | ubicaciones, empleados, clientes, ventas POS y pagos Mercado Pago |
 | Fidelizacion en POS | Base funcional | uso/suma de puntos en cierre de venta |
 | Automation bots/WhatsApp base | Inicial funcional | eventos, canales y templates sin proveedor externo |
 | Centinela seguridad/antifraude | Inicial funcional | eventos, reglas, alertas, bloqueos y panel REINPIA security |
 | Workflow guiado de alta de marca | Base funcional | creación de marca + setup por etapas + publicación controlada |
 | Media assets por etapa | Base funcional | carga de archivos locales por etapa de setup |
-| Configuración NFC/Mercado Pago/MFA | Base funcional | settings por marca y activación opcional |
+| Configuración NFC/Mercado Pago/MFA | Base funcional | NFC opcional identificacion, Mercado Pago para POS, MFA por marca |
 | Carga masiva catálogo | Base funcional | descarga de plantilla CSV + validación visual inicial |
 | Inventario operativo | Base funcional | vista de stock base por producto y canal |
 | Retroalimentación moderable visible | Base funcional | cola de reseñas pendientes con aprobación |

@@ -51,7 +51,10 @@ class BrandChannelSettingsRead(BaseModel):
     mercadopago_enabled: bool = False
     mercadopago_public_key: str | None = None
     mercadopago_access_token: str | None = None
+    mercadopago_qr_enabled: bool = True
+    mercadopago_payment_link_enabled: bool = True
     mercadopago_point_enabled: bool = False
+    mercadopago_active_for_pos_only: bool = True
     mfa_totp_enabled: bool = False
     mfa_required_for_admins: bool = True
     mfa_required_for_staff: bool = False
@@ -68,7 +71,10 @@ class BrandChannelSettingsUpdate(BaseModel):
     mercadopago_enabled: bool | None = None
     mercadopago_public_key: str | None = None
     mercadopago_access_token: str | None = None
+    mercadopago_qr_enabled: bool | None = None
+    mercadopago_payment_link_enabled: bool | None = None
     mercadopago_point_enabled: bool | None = None
+    mercadopago_active_for_pos_only: bool | None = None
     mfa_totp_enabled: bool | None = None
     mfa_required_for_admins: bool | None = None
     mfa_required_for_staff: bool | None = None
