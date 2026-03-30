@@ -108,6 +108,54 @@ export interface StorefrontConfig {
   config_json?: string;
 }
 
+export interface BrandSetupStepState {
+  code: string;
+  title: string;
+  status: "pending" | "in_review" | "approved" | "rejected" | string;
+  approved: boolean;
+  review_notes?: string | null;
+  updated_at?: string | null;
+}
+
+export interface BrandSetupAsset {
+  id: string;
+  step_code: string;
+  asset_type: string;
+  file_name: string;
+  file_path: string;
+  uploaded_at: string;
+}
+
+export interface BrandSetupWorkflow {
+  tenant_id: number;
+  tenant_name: string;
+  tenant_slug: string;
+  current_step: string;
+  is_published: boolean;
+  prompt_master?: string | null;
+  selected_template?: string | null;
+  steps: BrandSetupStepState[];
+  assets: BrandSetupAsset[];
+}
+
+export interface BrandChannelSettings {
+  tenant_id: number;
+  nfc_enabled: boolean;
+  nfc_setup_fee: number;
+  nfc_card_price_standard: number;
+  nfc_card_price_bulk: number;
+  nfc_bulk_threshold: number;
+  mercadopago_enabled: boolean;
+  mercadopago_public_key?: string | null;
+  mercadopago_access_token?: string | null;
+  mercadopago_point_enabled: boolean;
+  mfa_totp_enabled: boolean;
+  mfa_required_for_admins: boolean;
+  mfa_required_for_staff: boolean;
+  mfa_required_for_distributors: boolean;
+  mfa_required_for_public: boolean;
+}
+
 export interface Banner {
   id: number;
   tenant_id: number;

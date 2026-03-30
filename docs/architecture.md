@@ -274,3 +274,29 @@ Permisos:
 - `tenant_admin` / `tenant_staff` / `reinpia_admin` acceden a reportes tenant
 - `reinpia_admin` accede a reportes globales REINPIA
 - `distributor_user` queda fuera de vistas admin de reportes
+
+## 23) Ajuste de arquitectura madre/hijos y setup guiado
+Se reforzo el modelo funcional:
+- ComerCia = plataforma madre.
+- Marcas cliente (tenants) = REINPIA, Natura Vida, Cafe Monte Alto, etc.
+
+Nuevos bloques:
+- workflow guiado de alta y publicacion por marca:
+  - `GET/PUT /api/v1/brand-setup/{tenant_id}`
+  - pasos con aprobacion/revision/rehacer/publicar
+- assets por etapa desde archivo local:
+  - `POST /api/v1/brand-setup/{tenant_id}/assets`
+- configuracion opcional por marca:
+  - NFC por lotes (base)
+  - Mercado Pago (base)
+  - MFA TOTP / Google Authenticator (base de habilitacion)
+  - `GET/PUT /api/v1/brand-setup/{tenant_id}/channel-settings`
+
+Se guardan en `StorefrontConfig.config_json` para mantener compatibilidad local sin romper migraciones actuales.
+
+Frontend nuevo:
+- `/reinpia/brands/new`
+- `/reinpia/brands/:tenantId/setup`
+- `/admin/catalog/bulk-upload`
+- `/admin/inventory`
+- `/admin/feedback`

@@ -2,6 +2,10 @@ import {
   Appointment,
   AutomationEventLog,
   Banner,
+  BrandChannelSettings,
+  BrandSetupAsset,
+  BrandSetupStepState,
+  BrandSetupWorkflow,
   BotChannelConfig,
   BotMessageTemplate,
   Category,
@@ -102,6 +106,43 @@ export const api = {
   getTenantById: (token: string, tenantId: number) => request<Tenant>(`/api/v1/tenants/${tenantId}`, {}, token),
   updateTenant: (token: string, tenantId: number, payload: Partial<Tenant>) =>
     request<Tenant>(`/api/v1/tenants/${tenantId}`, { method: "PUT", body: JSON.stringify(payload) }, token),
+  getBrandSetupWorkflow: (token: string, tenantId: number) =>
+    request<BrandSetupWorkflow>(`/api/v1/brand-setup/${tenantId}`, {}, token),
+  updateBrandSetupWorkflow: (
+    token: string,
+    tenantId: number,
+    payload: {
+      current_step?: string;
+      is_published?: boolean;
+      prompt_master?: string;
+      selected_template?: string;
+      steps?: BrandSetupStepState[];
+    }
+  ) => request<BrandSetupWorkflow>(`/api/v1/brand-setup/${tenantId}`, { method: "PUT", body: JSON.stringify(payload) }, token),
+  uploadBrandAsset: async (token: string, tenantId: number, stepCode: string, assetType: string, file: File) => {
+    const formData = new FormData();
+    formData.set("step_code", stepCode);
+    formData.set("asset_type", assetType);
+    formData.set("file", file);
+    const response = await fetch(`${BASE_URL}/api/v1/brand-setup/${tenantId}/assets`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData,
+    });
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new ApiError(errorText || response.statusText, response.status);
+    }
+    return (await response.json()) as BrandSetupAsset;
+  },
+  getBrandChannelSettings: (token: string, tenantId: number) =>
+    request<BrandChannelSettings>(`/api/v1/brand-setup/${tenantId}/channel-settings`, {}, token),
+  updateBrandChannelSettings: (token: string, tenantId: number, payload: Partial<BrandChannelSettings>) =>
+    request<BrandChannelSettings>(
+      `/api/v1/brand-setup/${tenantId}/channel-settings`,
+      { method: "PUT", body: JSON.stringify(payload) },
+      token
+    ),
 
   getTenantBranding: (token: string, tenantId: number) => request<TenantBranding>(`/api/v1/tenant-branding/${tenantId}`, {}, token),
   upsertTenantBranding: (token: string, tenantId: number, payload: Partial<TenantBranding>) =>

@@ -37,11 +37,11 @@ export function ReinpiaTenantsPage() {
 
   return (
     <section>
-      <PageHeader title="REINPIA Tenants" subtitle="Tenants, plan, tipo de negocio y performance acumulado." />
+      <PageHeader title="Marcas clientes" subtitle="ComerCia (plataforma madre) administra estas marcas hijas." />
       <FilterBar tenantId={filters.tenantId} dateFrom={filters.dateFrom} dateTo={filters.dateTo} status={filters.status} onChange={setFilters} />
       {error ? <p className="error">{error}</p> : null}
       <SummaryTable
-        headers={["ID", "Tenant", "Activo", "Plan ID", "Business Type", "Revenue", "Comisiones", "Neto", "Detalle"]}
+        headers={["ID", "Marca", "Activa", "Plan", "Tipo de negocio", "Revenue", "Comisiones", "Neto", "Detalle"]}
         rows={rows.map((row) => [
           row.tenant_id,
           row.tenant_name,
@@ -55,13 +55,20 @@ export function ReinpiaTenantsPage() {
         ])}
       />
       <div className="row-gap">
+        <Link className="button" to="/reinpia/brands/new">
+          Crear nueva marca
+        </Link>
         {rows.map((row) => (
-          <Link key={row.tenant_id} className="button button-outline" to={`/reinpia/tenants/${row.tenant_id}`}>
-            Tenant {row.tenant_name}
-          </Link>
+          <div key={row.tenant_id} className="row-gap">
+            <Link className="button button-outline" to={`/reinpia/tenants/${row.tenant_id}`}>
+              Ver marca: {row.tenant_name}
+            </Link>
+            <Link className="button button-outline" to={`/reinpia/brands/${row.tenant_id}/setup`}>
+              Workflow setup: {row.tenant_name}
+            </Link>
+          </div>
         ))}
       </div>
     </section>
   );
 }
-

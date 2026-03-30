@@ -39,6 +39,12 @@
 | Fidelizacion en POS | Base funcional | uso/suma de puntos en cierre de venta |
 | Automation bots/WhatsApp base | Inicial funcional | eventos, canales y templates sin proveedor externo |
 | Centinela seguridad/antifraude | Inicial funcional | eventos, reglas, alertas, bloqueos y panel REINPIA security |
+| Workflow guiado de alta de marca | Base funcional | creación de marca + setup por etapas + publicación controlada |
+| Media assets por etapa | Base funcional | carga de archivos locales por etapa de setup |
+| Configuración NFC/Mercado Pago/MFA | Base funcional | settings por marca y activación opcional |
+| Carga masiva catálogo | Base funcional | descarga de plantilla CSV + validación visual inicial |
+| Inventario operativo | Base funcional | vista de stock base por producto y canal |
+| Retroalimentación moderable visible | Base funcional | cola de reseñas pendientes con aprobación |
 | Bots / agentes | Base arquitectura | pendiente implementacion |
 
 ## Endpoints operacion comercial (nuevos)

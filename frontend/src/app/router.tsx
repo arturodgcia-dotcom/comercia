@@ -5,6 +5,7 @@ import { AdminLayout } from "../layouts/AdminLayout";
 import { AppointmentsAdminPage } from "../pages/AppointmentsAdminPage";
 import { BrandingEditorPage } from "../pages/BrandingEditorPage";
 import { BannersAdminPage } from "../pages/BannersAdminPage";
+import { CatalogBulkUploadPage } from "../pages/CatalogBulkUploadPage";
 import { CategoriesPage } from "../pages/CategoriesPage";
 import { ComerciaLandingPage } from "../pages/ComerciaLandingPage";
 import { CurrencyAdminPage } from "../pages/CurrencyAdminPage";
@@ -15,6 +16,8 @@ import { DistributorApplicationsAdminPage } from "../pages/DistributorApplicatio
 import { DistributorLoginPlaceholderPage } from "../pages/DistributorLoginPlaceholderPage";
 import { DistributorRegistrationPage } from "../pages/DistributorRegistrationPage";
 import { DistributorsAdminPage } from "../pages/DistributorsAdminPage";
+import { FeedbackModerationPage } from "../pages/FeedbackModerationPage";
+import { InventoryPage } from "../pages/InventoryPage";
 import { LoginPage } from "../pages/LoginPage";
 import { LogisticsAdminPage } from "../pages/LogisticsAdminPage";
 import { LoyaltyProgramAdminPage } from "../pages/LoyaltyProgramAdminPage";
@@ -31,6 +34,8 @@ import { ProductsPage } from "../pages/ProductsPage";
 import { RecurringOrdersAdminPage } from "../pages/RecurringOrdersAdminPage";
 import { AutomationAdminPage } from "../pages/AutomationAdminPage";
 import { ReinpiaDashboardPage } from "../pages/ReinpiaDashboardPage";
+import { ReinpiaBrandsNewPage } from "../pages/ReinpiaBrandsNewPage";
+import { ReinpiaBrandSetupPage } from "../pages/ReinpiaBrandSetupPage";
 import { ReinpiaCommissionAgentsPage } from "../pages/ReinpiaCommissionAgentsPage";
 import { ReinpiaOperationsPage } from "../pages/ReinpiaOperationsPage";
 import { ReinpiaPaymentsPage } from "../pages/ReinpiaPaymentsPage";
@@ -94,6 +99,9 @@ export function AppRouter() {
           <Route path="admin/banners" element={<BannersAdminPage />} />
           <Route path="admin/reviews" element={<ReviewsAdminPage />} />
           <Route path="admin/services" element={<ServicesAdminPage />} />
+          <Route path="admin/catalog/bulk-upload" element={<CatalogBulkUploadPage />} />
+          <Route path="admin/inventory" element={<InventoryPage />} />
+          <Route path="admin/feedback" element={<FeedbackModerationPage />} />
           <Route path="admin/appointments" element={<AppointmentsAdminPage />} />
           <Route path="admin/distributor-applications" element={<DistributorApplicationsAdminPage />} />
           <Route path="admin/distributors" element={<DistributorsAdminPage />} />
@@ -120,6 +128,8 @@ export function AppRouter() {
           <Route path="admin/automation" element={<AutomationAdminPage />} />
           <Route element={<RoleRoute allowedRoles={["reinpia_admin"]} />}>
             <Route path="reinpia/dashboard" element={<ReinpiaDashboardPage />} />
+            <Route path="reinpia/brands/new" element={<ReinpiaBrandsNewPage />} />
+            <Route path="reinpia/brands/:tenantId/setup" element={<ReinpiaBrandSetupPage />} />
             <Route path="reinpia/tenants" element={<ReinpiaTenantsPage />} />
             <Route path="reinpia/tenants/:tenantId" element={<ReinpiaTenantDetailPage />} />
             <Route path="reinpia/payments" element={<ReinpiaPaymentsPage />} />

@@ -87,7 +87,7 @@ export function ReinpiaTenantDetailPage() {
 
   return (
     <section>
-      <PageHeader title={`Tenant Detail #${tenant.id}`} subtitle={`${tenant.name} | ${tenant.business_type} | plan ${tenant.plan_id ?? "-"}`} />
+      <PageHeader title={`Detalle de marca #${tenant.id}`} subtitle={`${tenant.name} | ${tenant.business_type} | plan ${tenant.plan_id ?? "-"}`} />
       <div className="row-gap">
         <Link className="button button-outline" to="/reinpia/tenants">
           Volver a tenants
@@ -95,14 +95,17 @@ export function ReinpiaTenantDetailPage() {
         <Link className="button button-outline" to={`/tenants/${tenant.id}/branding`}>
           Editar branding tenant
         </Link>
+        <Link className="button button-outline" to={`/reinpia/brands/${tenant.id}/setup`}>
+          Abrir workflow de setup
+        </Link>
       </div>
 
       <div className="card-grid">
-        <KpiCard label="Revenue" value={`$${kpis.revenue.toLocaleString("es-MX")}`} />
+        <KpiCard label="Ingresos" value={`$${kpis.revenue.toLocaleString("es-MX")}`} />
         <KpiCard label="Comisiones" value={`$${kpis.commissions.toLocaleString("es-MX")}`} />
         <KpiCard label="Neto" value={`$${kpis.net_amount.toLocaleString("es-MX")}`} />
-        <KpiCard label="Paid orders" value={kpis.paid_orders} />
-        <KpiCard label="Failed orders" value={kpis.failed_orders} />
+        <KpiCard label="Órdenes pagadas" value={kpis.paid_orders} />
+        <KpiCard label="Órdenes fallidas" value={kpis.failed_orders} />
         <KpiCard label="Subscription activa" value={kpis.active_subscription_status ? "Si" : "No"} />
         <KpiCard label="Distribuidores aprobados" value={kpis.distributors_approved} />
         <KpiCard label="Citas" value={kpis.appointments_count} />
@@ -117,7 +120,7 @@ export function ReinpiaTenantDetailPage() {
       </section>
 
       <section>
-        <h3>Orders recientes</h3>
+        <h3>Órdenes recientes</h3>
         <SummaryTable
           headers={["Order", "Status", "Total", "Comision", "Neto", "Fecha"]}
           rows={orders.map((order) => [
@@ -132,7 +135,7 @@ export function ReinpiaTenantDetailPage() {
       </section>
 
       <section>
-        <h3>Subscriptions tenant</h3>
+        <h3>Suscripciones de la marca</h3>
         <SummaryTable
           headers={["ID", "Plan", "Status", "Started", "Ends"]}
           rows={subscriptions.map((sub) => [sub.id, sub.plan_id, sub.status, sub.started_at, sub.ends_at ?? "-"])}

@@ -13,7 +13,10 @@ const navItems: Array<{ labelKey: string; to: string; roles?: string[] }> = [
   { labelKey: "nav.coupons", to: "/admin/coupons" },
   { labelKey: "nav.banners", to: "/admin/banners" },
   { labelKey: "nav.reviews", to: "/admin/reviews" },
+  { labelKey: "nav.feedback", to: "/admin/feedback" },
   { labelKey: "nav.services", to: "/admin/services" },
+  { labelKey: "nav.bulkUpload", to: "/admin/catalog/bulk-upload" },
+  { labelKey: "nav.inventory", to: "/admin/inventory" },
   { labelKey: "nav.appointments", to: "/admin/appointments" },
   { labelKey: "nav.distApps", to: "/admin/distributor-applications" },
   { labelKey: "nav.distributors", to: "/admin/distributors" },
@@ -37,34 +40,38 @@ const navItems: Array<{ labelKey: string; to: string; roles?: string[] }> = [
   { labelKey: "nav.automation", to: "/admin/automation" }
 ];
 
-const reinpiaItems = [
-  { label: "RG Dashboard", to: "/reinpia/dashboard" },
-  { label: "RG Tenants", to: "/reinpia/tenants" },
-  { label: "RG Payments", to: "/reinpia/payments" },
-  { label: "RG Operations", to: "/reinpia/operations" },
-  { label: "RG Reports", to: "/reinpia/reports" },
-  { label: "RG Rep Overview", to: "/reinpia/reports/overview" },
-  { label: "RG Rep Growth", to: "/reinpia/reports/growth" },
-  { label: "RG Rep Commissions", to: "/reinpia/reports/commissions" },
-  { label: "RG Rep Leads", to: "/reinpia/reports/leads" },
-  { label: "RG Rep Marketing", to: "/reinpia/reports/marketing-opportunities" },
-  { label: "RG Agents", to: "/reinpia/commission-agents" },
-  { label: "RG Alerts", to: "/reinpia/alerts" },
-  { label: "RG Security", to: "/reinpia/security" },
-  { label: "RG Sec Alerts", to: "/reinpia/security/alerts" },
-  { label: "RG Sec Rules", to: "/reinpia/security/rules" },
-  { label: "RG Blocked", to: "/reinpia/security/blocked" }
+const reinpiaItems: Array<{ labelKey: string; to: string }> = [
+  { labelKey: "nav.globalDashboard", to: "/reinpia/dashboard" },
+  { labelKey: "nav.newBrand", to: "/reinpia/brands/new" },
+  { labelKey: "nav.globalBrands", to: "/reinpia/tenants" },
+  { labelKey: "nav.globalPayments", to: "/reinpia/payments" },
+  { labelKey: "nav.globalOperations", to: "/reinpia/operations" },
+  { labelKey: "nav.globalReports", to: "/reinpia/reports" },
+  { labelKey: "nav.globalGrowth", to: "/reinpia/reports/growth" },
+  { labelKey: "nav.globalCommissions", to: "/reinpia/reports/commissions" },
+  { labelKey: "nav.globalLeads", to: "/reinpia/reports/leads" },
+  { labelKey: "nav.globalMarketing", to: "/reinpia/reports/marketing-opportunities" },
+  { labelKey: "nav.globalAgents", to: "/reinpia/commission-agents" },
+  { labelKey: "nav.globalAlerts", to: "/reinpia/alerts" },
+  { labelKey: "nav.globalSecurity", to: "/reinpia/security" },
+  { labelKey: "nav.globalSecurityAlerts", to: "/reinpia/security/alerts" },
+  { labelKey: "nav.globalSecurityRules", to: "/reinpia/security/rules" },
+  { labelKey: "nav.globalBlocked", to: "/reinpia/security/blocked" }
 ];
 
 export function AdminLayout() {
   const { logout, user } = useAuth();
   const { t } = useTranslation();
+  const platformSubtitle =
+    user?.role === "reinpia_admin"
+      ? "Plataforma madre: gestión global de marcas"
+      : "Panel de marca cliente";
 
   return (
     <div className="app-shell">
       <aside className="sidebar">
         <h1>{t("app.title")}</h1>
-        <p className="brand-subtitle">{t("app.subtitle")}</p>
+        <p className="brand-subtitle">{platformSubtitle}</p>
         <p className="sidebar-user">{user?.full_name}</p>
         <p className="sidebar-role">{user?.role}</p>
         <LanguageSelector />
@@ -88,7 +95,7 @@ export function AdminLayout() {
                   to={item.to}
                   className={({ isActive }) => (isActive ? "nav-link active" : "nav-link")}
                 >
-                  {item.label}
+                  {t(item.labelKey)}
                 </NavLink>
               ))
             : null}

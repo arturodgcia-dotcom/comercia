@@ -176,3 +176,12 @@
 - [x] Endpoint backend verificado y funcional para `reinpia`
 - [x] Seed demo verificado: tenant `reinpia` + branding + storefront config + datos minimos visibles
 - [x] Script reusable de verificacion agregado (`python -m app.db.verify_reinpia_storefront`)
+
+## Entregables ejecucion 16 (Arquitectura madre/hijos + workflow de marca)
+- [x] Ajuste de copy y navegación: ComerCia plataforma madre, marcas como tenants hijos
+- [x] Workflow guiado base para setup por marca (`/reinpia/brands/new`, `/reinpia/brands/:tenantId/setup`)
+- [x] Estados por etapa con revisión/aprobación/rehacer antes de publicar
+- [x] Carga de assets locales por etapa en backend (`/api/v1/brand-setup/{tenant_id}/assets`)
+- [x] Configuración por marca para NFC / Mercado Pago / MFA TOTP (base funcional)
+- [x] Módulos visibles: carga masiva, inventario operativo base y retroalimentación moderable
+- [x] Build frontend + compile backend + alembic upgrade head validados

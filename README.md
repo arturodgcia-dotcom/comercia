@@ -207,6 +207,24 @@ npm run dev
   - onboarding cliente (`/onboarding/client`)
 - progreso por usuario en `UserOnboardingProgress`
 
+### Workflow guiado de marca (nuevo)
+- rutas globales ComerCia:
+  - `/reinpia/brands/new`
+  - `/reinpia/brands/{id}/setup`
+- backend:
+  - `GET/PUT /api/v1/brand-setup/{tenant_id}`
+  - `POST /api/v1/brand-setup/{tenant_id}/assets`
+  - `GET/PUT /api/v1/brand-setup/{tenant_id}/channel-settings`
+- usa `StorefrontConfig.config_json` para guardar:
+  - estado por etapa (aprobado, en revisión, rehacer)
+  - assets cargados desde archivo local
+  - configuración NFC / Mercado Pago / MFA TOTP por marca
+
+### Operación de catálogo y feedback (nuevo)
+- Carga masiva visible: `/admin/catalog/bulk-upload`
+- Inventario operativo base: `/admin/inventory`
+- Retroalimentación moderable: `/admin/feedback`
+
 ### i18n (actual)
 - base bilingue ES/EN con `i18next + react-i18next`
 - selector de idioma visible en:

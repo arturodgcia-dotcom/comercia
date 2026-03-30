@@ -102,6 +102,32 @@ body {
   border: 1px solid var(--line);
 }
 
+.table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
+.table-wrapper table {
+  width: 100%;
+  min-width: 680px;
+  border-collapse: collapse;
+}
+
+.table-wrapper th,
+.table-wrapper td {
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  padding: 10px;
+  font-size: 14px;
+}
+
+.table-wrapper th {
+  background: var(--brand-soft);
+}
+
 .table th,
 .table td {
   border-bottom: 1px solid var(--line);

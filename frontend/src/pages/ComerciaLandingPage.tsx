@@ -68,6 +68,15 @@ export function ComerciaLandingPage() {
       />
 
       <section>
+        <h2>Modelo plataforma madre + marcas hijas</h2>
+        <div className="card-grid">
+          <SolutionCard title="ComerCia (plataforma madre)" description="Administra marcas, workflows, reportes globales, seguridad y crecimiento comercial." />
+          <SolutionCard title="Marcas cliente (tenants)" description="Cada marca opera de forma independiente con landing, ecommerce y POS propios." />
+          <SolutionCard title="REINPIA como primer cliente" description="REINPIA funciona como marca cliente inicial dentro de ComerCia, no como plataforma madre." />
+        </div>
+      </section>
+
+      <section>
         <h2>Para quien es ComerCia</h2>
         <p>
           ComerCia esta pensada para negocios formalmente establecidos o con actividad empresarial, para poder integrar pagos,
