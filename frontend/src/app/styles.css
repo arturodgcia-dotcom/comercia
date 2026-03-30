@@ -365,18 +365,19 @@ textarea {
 .marketing-shell {
   max-width: 1120px;
   margin: 0 auto;
-  padding: 24px;
+  padding: 30px 24px 60px;
   display: grid;
-  gap: 18px;
+  gap: 24px;
 }
 
 .marketing-hero {
-  background: linear-gradient(130deg, #0b2450, #1748a0 55%, #2d74f0);
+  background: radial-gradient(circle at 15% 20%, rgba(255, 255, 255, 0.16), transparent 35%),
+    linear-gradient(130deg, #071b3e, #123a86 55%, #2d74f0);
   color: #f5f8ff;
-  border-radius: 16px;
-  padding: 28px;
+  border-radius: 18px;
+  padding: 34px;
   border: 1px solid #215cc4;
-  box-shadow: 0 14px 40px rgba(8, 33, 87, 0.28);
+  box-shadow: 0 18px 44px rgba(8, 33, 87, 0.28);
 }
 
 .marketing-hero h1 {
@@ -400,6 +401,8 @@ textarea {
 
 .marketing-card {
   border-radius: 14px;
+  border: 1px solid #dbe7fa;
+  box-shadow: 0 10px 26px rgba(20, 44, 88, 0.08);
 }
 
 .marketing-tag {
@@ -434,10 +437,10 @@ textarea {
   display: grid;
   grid-template-columns: 70px 1fr;
   gap: 16px;
-  background: #fff;
-  border: 1px dashed #87a9df;
+  background: linear-gradient(120deg, #fafdff, #f2f7ff);
+  border: 1px solid #87a9df;
   border-radius: 14px;
-  padding: 18px;
+  padding: 20px;
 }
 
 .agent-avatar {
@@ -449,6 +452,41 @@ textarea {
   place-items: center;
   color: #fff;
   font-weight: 700;
+}
+
+.agent-chat {
+  margin-top: 12px;
+  border: 1px solid #cfe0ff;
+  border-radius: 12px;
+  background: #fff;
+  padding: 14px;
+}
+
+.agent-chat-label {
+  margin: 0 0 8px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #1a4da8;
+  font-weight: 700;
+}
+
+.agent-chat-answer {
+  margin: 0 0 8px;
+  color: #22324a;
+}
+
+.agent-chat-plan {
+  margin: 0 0 10px;
+  font-weight: 700;
+  color: #0f3f91;
+}
+
+.agent-chat-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
 }
 
 .audience-split {

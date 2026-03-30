@@ -25,7 +25,7 @@ export function ComerciaLandingPage() {
     referral_code: refQuery,
     needs_followup: true,
     needs_appointment: false,
-    notes: ""
+    notes: "",
   });
 
   useEffect(() => {
@@ -44,7 +44,7 @@ export function ComerciaLandingPage() {
         ...leadForm,
         purchase_status: "initiated",
         source_type: refQuery ? "query_param" : leadForm.referral_code ? "manual_code" : "direct",
-        referral_code: leadForm.referral_code || undefined
+        referral_code: leadForm.referral_code || undefined,
       });
       setSubmitted(true);
     } catch (err) {
@@ -57,88 +57,57 @@ export function ComerciaLandingPage() {
       <div className="row-gap" style={{ justifyContent: "flex-end" }}>
         <LanguageSelector />
       </div>
+
       <HeroSection
         eyebrow="ComerCia by REINPIA"
         title="Convierte tu negocio en una maquina de ventas con ComerCia"
-        subtitle="Landing, ecommerce, marketing, automatizacion y fidelizacion en una sola plataforma para negocios que quieren crecer de verdad."
+        subtitle="Landing premium, ecommerce por canal, automatizacion comercial y operacion integrada para marcas que quieren crecer con orden y resultados medibles."
         primaryLabel="Quiero mi diagnostico"
         primaryTo="#diagnostico"
         secondaryLabel="Ver paquetes"
         secondaryTo="#paquetes"
       />
 
-      <section>
-        <h2>Modelo plataforma madre + marcas hijas</h2>
-        <div className="card-grid">
-          <SolutionCard title="ComerCia (plataforma madre)" description="Administra marcas, workflows, reportes globales, seguridad y crecimiento comercial." />
-          <SolutionCard title="Marcas cliente (tenants)" description="Cada marca opera de forma independiente con landing, ecommerce y POS propios." />
-          <SolutionCard title="REINPIA como primer cliente" description="REINPIA funciona como marca cliente inicial dentro de ComerCia, no como plataforma madre." />
-        </div>
+      <section className="card-grid">
+        <SolutionCard
+          title="Mas conversion desde el primer mes"
+          description="Landing y ecommerce pensados para vender, no para verse bonitos sin resultados."
+          tag="Impacto comercial"
+        />
+        <SolutionCard
+          title="Canales de venta separados"
+          description="Publico y distribuidores con experiencias distintas, precios y reglas por canal."
+          tag="Control"
+        />
+        <SolutionCard
+          title="Operacion con visibilidad real"
+          description="Logistica, fidelizacion, seguimiento comercial y reportes accionables en un solo lugar."
+          tag="Operacion"
+        />
       </section>
 
       <section>
-        <h2>Para quien es ComerCia</h2>
+        <h2>Para que tipo de marca fue creado ComerCia</h2>
         <p>
-          ComerCia esta pensada para negocios formalmente establecidos o con actividad empresarial, para poder integrar pagos,
-          operacion y crecimiento de forma ordenada.
+          ComerCia esta pensada para empresas constituidas o personas con actividad empresarial que necesitan vender,
+          operar y crecer con una estructura comercial clara.
         </p>
         <div className="card-grid">
-          <SolutionCard title="Empresas constituidas" description="Negocios que necesitan ventas y operacion digital con estructura." />
-          <SolutionCard title="Personas fisicas con actividad empresarial" description="Profesionales y comercios listos para cobrar y escalar formalmente." />
-          <SolutionCard title="Marcas con productos o servicios" description="Modelos orientados a ecommerce, servicios o esquemas mixtos." />
-          <SolutionCard title="Comercios que buscan crecer formalmente" description="Procesos claros para vender mejor, repetir compra y medir resultados." />
+          <SolutionCard title="Marcas de productos" description="Ecommerce retail con promociones, recompra y control por canal." />
+          <SolutionCard title="Marcas de servicios" description="Venta de servicios, agenda, seguimiento y conversion consultiva." />
+          <SolutionCard title="Modelos mixtos" description="Productos, servicios y canal distribuidor en una misma operacion." />
         </div>
       </section>
 
       <section>
-        <h2>Que incluye</h2>
+        <h2>Que incluye ComerCia</h2>
         <div className="card-grid">
-          <SolutionCard title="Landing profesional por marca" description="Mensajes y conversion orientados a performance comercial." tag="Branding" />
-          <SolutionCard title="Ecommerce para publico y distribuidores" description="Venta directa y canal comercial en una sola operacion." tag="Ventas" />
-          <SolutionCard title="Marketing de arranque" description="Activacion inicial para captar demanda con campanas ordenadas." tag="Arranque" />
-          <SolutionCard title="Automatizacion comercial" description="Flujos para responder, vender y dar seguimiento con menos friccion." tag="IA" />
-          <SolutionCard title="Fidelizacion y recompra" description="Puntos, cupones y membresias para elevar ticket y recurrencia." tag="Growth" />
-          <SolutionCard title="Escalamiento por etapas" description="Base robusta para crecer sin rehacer toda la operacion." tag="Escala" />
-        </div>
-      </section>
-
-      <section>
-        <h2>Como trabajamos</h2>
-        <div className="card-grid">
-          <SolutionCard title="Impulsamos tu marca" description="Definimos propuesta comercial y configuramos tu presencia digital." />
-          <SolutionCard title="Activamos tus ventas" description="Lanzamos flujo comercial y optimizamos conversion desde el inicio." />
-          <SolutionCard title="Escalamos tu crecimiento" description="Automatizamos operacion para vender mas con mejor control." />
-        </div>
-      </section>
-
-      <section>
-        <h2>Servicios adicionales activables</h2>
-        <div className="card-grid">
-          <SolutionCard
-            title="Logistica personalizada"
-            description="Configuracion de recoleccion, envio y operacion por marca, con consulta del servicio."
-            tag="Operacion"
-          />
-          <SolutionCard
-            title="Membresias y credenciales inteligentes"
-            description="Credenciales digitales/fisicas con QR y NFC opcional para publico, distribuidores y empleados."
-            tag="Identificacion"
-          />
-          <SolutionCard
-            title="Cobros digitales desde el celular"
-            description="Links de pago y QR de cobro para POS/WebApp con arquitectura lista para Mercado Pago."
-            tag="Pagos POS"
-          />
-        </div>
-        <div className="card-grid">
-          <article className="card">
-            <h3>Activacion NFC opcional</h3>
-            <p>Activacion inicial: 500 MXN</p>
-          </article>
-          <article className="card">
-            <h3>Activacion cobros digitales POS</h3>
-            <p>Activacion inicial: 500 MXN</p>
-          </article>
+          <SolutionCard title="Landing premium por marca" description="Mensaje comercial fuerte, bloques configurables y CTA orientados a cierre." tag="Landing" />
+          <SolutionCard title="Ecommerce publico premium" description="Sensacion retail real con categorias, destacados, promos y checkout." tag="Retail" />
+          <SolutionCard title="Ecommerce distribuidores" description="Canal B2B con reglas de volumen, precios diferenciados y compra recurrente." tag="B2B" />
+          <SolutionCard title="Automatizacion comercial" description="Flujos para seguimiento, atencion y activacion de oportunidades." tag="Automatizacion" />
+          <SolutionCard title="Fidelizacion y recompra" description="Puntos, cupones y membresias para elevar ticket promedio." tag="Growth" />
+          <SolutionCard title="Reportes y control" description="KPIs de ventas, operacion y marketing para tomar decisiones." tag="Inteligencia" />
         </div>
       </section>
 
@@ -149,34 +118,88 @@ export function ComerciaLandingPage() {
             name="ComerCia IMPULSA"
             subtitle="Para iniciar, ordenar y acelerar tu negocio"
             focus="Ideal para micro, pequenas y medianas empresas que necesitan traccion rapida con base comercial."
-            includes={["Landing y ecommerce base", "Marketing de arranque", "Operacion inicial ordenada"]}
+            includes={[
+              "Landing premium + ecommerce base",
+              "Marketing de arranque",
+              "Flujo comercial con diagnostico guiado",
+            ]}
             primaryTo="#diagnostico"
-            secondaryTo="#diagnostico"
+            secondaryTo="#lia-comercial"
           />
           <PackageCard
             name="ComerCia ESCALA"
             subtitle="Para crecer, automatizar y expandir tu marca con mas fuerza"
-            focus="Pensado para medianas PyMEs y empresas que requieren crecimiento fuerte y operacion robusta."
-            includes={["Automatizacion comercial avanzada", "Canal distribuidor con mayor control", "Escalamiento por etapas"]}
+            focus="Pensado para empresas con operacion en crecimiento que necesitan estructura robusta para vender mas."
+            includes={[
+              "Automatizacion comercial avanzada",
+              "Canal distribuidor con control por reglas",
+              "Panel de operacion y reportes ejecutivos",
+            ]}
             primaryTo="#diagnostico"
-            secondaryTo="#diagnostico"
+            secondaryTo="#lia-comercial"
           />
         </div>
       </section>
 
+      <section>
+        <h2>Servicios adicionales activables</h2>
+        <div className="card-grid">
+          <SolutionCard
+            title="Logistica adicional para tu marca"
+            description="Si no cuentas con logistica propia, podemos brindarte recoleccion, entrega y resguardo en almacen con seguimiento dentro de la plataforma."
+            tag="Servicio adicional"
+          />
+          <SolutionCard
+            title="Membresias y credenciales inteligentes"
+            description="Credenciales digitales/fisicas con QR y NFC opcional para publico, distribuidores y empleados."
+            tag="Identificacion"
+          />
+          <SolutionCard
+            title="Cobros digitales desde celular"
+            description="Links de pago y QR de cobro para POS/WebApp con arquitectura lista para Mercado Pago."
+            tag="Pagos POS"
+          />
+        </div>
+        <div className="card-grid">
+          <article className="card marketing-card">
+            <h3>Activacion NFC opcional</h3>
+            <p>Activacion inicial: 500 MXN</p>
+          </article>
+          <article className="card marketing-card">
+            <h3>Activacion cobros digitales POS</h3>
+            <p>Activacion inicial: 500 MXN</p>
+          </article>
+        </div>
+      </section>
+
       <AgentWidgetPlaceholder
+        id="lia-comercial"
         name="Lia de ComerCia"
-        description="Agente comercial que te orienta para elegir paquete segun etapa del negocio, formalidad y objetivo comercial."
-        bullets={["Evalua etapa comercial", "Sugiere paquete recomendado", "Deja ruta de implementacion inicial"]}
+        description="Asesora comercial virtual para ayudarte a elegir plan, resolver dudas y llevarte a una conversacion de cierre con contexto real."
+        bullets={[
+          "Detecta etapa de tu negocio",
+          "Recomienda IMPULSA o ESCALA",
+          "Conecta contigo para diagnostico y cierre",
+        ]}
         accent="#1c5fd4"
+        advisorTarget="#diagnostico"
+        onRecommendPlan={(planCode) => setLeadForm((prev) => ({ ...prev, selected_plan_code: planCode }))}
       />
 
       <AudienceSplitSection
-        title="Ruta de activacion comercial"
+        title="Ruta de atencion comercial"
         leftTitle="Quiero diagnostico rapido"
-        leftBullets={["Diagnostico comercial inicial", "Recomendacion de paquete", "Plan de arranque en etapas"]}
-        rightTitle="Quiero hablar con asesor"
-        rightBullets={["Sesion de enfoque comercial", "Definicion de alcance y tiempos", "Ruta operativa para implementacion"]}
+        leftBullets={[
+          "Diagnostico comercial inicial",
+          "Recomendacion de paquete",
+          "Plan de arranque por etapas",
+        ]}
+        rightTitle="Hablar con un asesor"
+        rightBullets={[
+          "Sesion de enfoque comercial",
+          "Definicion de alcance y tiempos",
+          "Ruta operativa para implementacion",
+        ]}
       />
 
       <section id="diagnostico" className="store-banner">
@@ -210,22 +233,20 @@ export function ComerciaLandingPage() {
             Solicito cita de diagnostico
           </label>
           <input placeholder="Notas" value={leadForm.notes} onChange={(e) => setLeadForm((p) => ({ ...p, notes: e.target.value }))} />
-          <button className="button" type="submit">
-            Registrar lead de plan
-          </button>
+          <button className="button" type="submit">Registrar solicitud</button>
         </form>
         {refQuery ? <p>Referencia detectada: {refQuery} ({refStatus === "valid" ? "valida" : refStatus === "invalid" ? "invalida" : "verificando"})</p> : null}
         {error ? <p className="error">{error}</p> : null}
-        {submitted ? <p>Lead registrado. El equipo comercial y contable ya fue notificado internamente.</p> : null}
+        {submitted ? <p>Solicitud registrada. Un asesor se comunicara contigo para continuar el diagnostico.</p> : null}
       </section>
 
       <CTASection
         title="Tu marca puede vender mejor, crecer mas rapido y operar con mas inteligencia."
-        subtitle="Activa una estructura comercial real con ComerCia."
+        subtitle="Activa una estructura comercial real con ComerCia y crece con control."
         primaryLabel="Solicitar diagnostico"
         primaryTo="#diagnostico"
-        secondaryLabel="Iniciar con ComerCia"
-        secondaryTo="/login"
+        secondaryLabel="Hablar con un asesor"
+        secondaryTo="#lia-comercial"
       />
     </main>
   );

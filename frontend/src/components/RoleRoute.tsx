@@ -5,7 +5,6 @@ export function RoleRoute({ allowedRoles }: { allowedRoles: string[] }) {
   const { user, loading } = useAuth();
   if (loading) return <p>Cargando sesion...</p>;
   if (!user) return <Navigate to="/login" replace />;
-  if (!allowedRoles.includes(user.role)) return <Navigate to="/" replace />;
+  if (!allowedRoles.includes(user.role)) return <Navigate to="/comercia" replace />;
   return <Outlet />;
 }
-
