@@ -170,3 +170,9 @@
 - [x] CORS backend ampliado para puertos locales de Vite (`5173/5174`) y evita `Failed to fetch` por origen
 - [x] `/store/:tenantSlug` ahora muestra fallback elegante con boton reintentar y log claro de endpoint fallido
 - [x] README actualizado con notas de branding y comportamiento de rutas
+
+## Entregables ejecucion 15 (Auditoria flujo /store/reinpia)
+- [x] Endpoint frontend verificado: `/api/v1/storefront/{tenantSlug}/home-data`
+- [x] Endpoint backend verificado y funcional para `reinpia`
+- [x] Seed demo verificado: tenant `reinpia` + branding + storefront config + datos minimos visibles
+- [x] Script reusable de verificacion agregado (`python -m app.db.verify_reinpia_storefront`)

@@ -400,6 +400,11 @@ Scripts disponibles:
 - migraciones: `alembic upgrade head`
 - frontend: `npm run build`
 
+Verificacion puntual storefront REINPIA:
+- `cd backend`
+- `python -m app.db.verify_reinpia_storefront`
+- valida seed + payload de `/api/v1/storefront/reinpia/home-data` sin levantar servidor largo.
+
 ## Documentacion
 - [docs/architecture.md](docs/architecture.md)
 - [docs/modules.md](docs/modules.md)
