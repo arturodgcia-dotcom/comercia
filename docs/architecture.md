@@ -410,3 +410,20 @@ Superficie:
   - `tenant_admin`
   - `tenant_staff`
 - `distributor_user` y `public_customer` ya no acceden a paneles admin de marca o global.
+
+## 32) Arranque local tipo SprintPilot
+Se reforzo el arranque local con scripts confiables:
+- `start_all.ps1` / `start_all.bat`:
+  - valida `backend/.venv`
+  - detecta puertos ocupados y usa siguiente disponible
+  - muestra URLs utiles (docs, health, landing, store reinpia, login)
+- `start_backend_only.ps1`:
+  - valida `python-multipart` para endpoints con Form/File
+  - soporta modo bootstrap para instalar faltantes
+- `start_frontend_only.ps1`:
+  - valida `frontend/node_modules`
+  - detecta puerto ocupado
+- `bootstrap_local.ps1`:
+  - crea venv backend si falta
+  - instala requirements backend
+  - instala dependencias frontend si faltan

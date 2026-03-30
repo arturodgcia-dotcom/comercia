@@ -5,64 +5,106 @@ param(
 $ErrorActionPreference = "Stop"
 Set-Location $PSScriptRoot
 
-$backendScript = Join-Path $PSScriptRoot "start_backend_only.ps1"
-$frontendScript = Join-Path $PSScriptRoot "start_frontend_only.ps1"
-$backendVenv = Join-Path $PSScriptRoot "backend\.venv"
-$backendPython = Join-Path $backendVenv "Scripts\python.exe"
-$requirements = Join-Path $PSScriptRoot "backend\requirements.txt"
+function Test-PortInUse {
+  param([int]$Port)
+  $listener = Get-NetTCPConnection -State Listen -LocalPort $Port -ErrorAction SilentlyContinue
+  return $null -ne $listener
+}
 
-if (!(Test-Path $backendScript) -or !(Test-Path $frontendScript)) {
-  Write-Host "No se encontraron scripts de arranque requeridos." -ForegroundColor Red
-  exit 1
+function Get-FreePort {
+  param([int]$StartPort)
+  $port = $StartPort
+  while (Test-PortInUse -Port $port) {
+    $port++
+  }
+  return $port
+}
+
+function Show-BackendSetupInstructions {
+  Write-Host "" 
+  Write-Host "Prepara backend con estos comandos:" -ForegroundColor Yellow
+  Write-Host "cd backend"
+  Write-Host "python -m venv .venv"
+  Write-Host ".\.venv\Scripts\activate"
+  Write-Host "pip install -r requirements.txt"
+  Write-Host "alembic upgrade head"
+  Write-Host ""
+  Write-Host "O ejecuta bootstrap automatico:" -ForegroundColor Yellow
+  Write-Host "powershell -ExecutionPolicy Bypass -File .\bootstrap_local.ps1"
 }
 
 $bootstrapEnabled = $Bootstrap -or ($env:COMERCIA_BOOTSTRAP -in @("1", "true", "TRUE", "yes", "YES"))
 
+$backendVenv = Join-Path $PSScriptRoot "backend\.venv"
+$backendPython = Join-Path $backendVenv "Scripts\python.exe"
+$backendRequirements = Join-Path $PSScriptRoot "backend\requirements.txt"
+$frontendNodeModules = Join-Path $PSScriptRoot "frontend\node_modules"
+
 if (!(Test-Path $backendPython)) {
   if ($bootstrapEnabled) {
-    Write-Host "Modo bootstrap activo: creando backend/.venv e instalando requirements..." -ForegroundColor Cyan
-    if (!(Test-Path $backendVenv)) {
-      python -m venv $backendVenv
-    }
-    & $backendPython -m pip install --upgrade pip
-    & $backendPython -m pip install -r $requirements
+    Write-Host "backend/.venv no existe. Ejecutando bootstrap local..." -ForegroundColor Cyan
+    powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "bootstrap_local.ps1")
   } else {
-    Write-Host "Falta backend/.venv (backend\.venv\Scripts\python.exe)." -ForegroundColor Red
-    Write-Host ""
-    Write-Host "Prepara backend exactamente con estos comandos:" -ForegroundColor Yellow
-    Write-Host "cd backend"
-    Write-Host "python -m venv .venv"
-    Write-Host ".\.venv\Scripts\activate"
-    Write-Host "pip install -r requirements.txt"
-    Write-Host "alembic upgrade head"
-    Write-Host ""
-    Write-Host "Opcional para auto-bootstrap en start_all:" -ForegroundColor Yellow
-    Write-Host "powershell -ExecutionPolicy Bypass -File .\start_all.ps1 -Bootstrap"
-    Write-Host "o"
-    Write-Host "set COMERCIA_BOOTSTRAP=1"
-    Write-Host "powershell -ExecutionPolicy Bypass -File .\start_all.ps1"
+    Write-Host "Falta backend/.venv. No se puede iniciar backend." -ForegroundColor Red
+    Show-BackendSetupInstructions
     exit 1
   }
 }
 
-Write-Host "Lanzando backend y frontend en terminales separadas..." -ForegroundColor Cyan
-Start-Process powershell -ArgumentList "-NoExit", "-ExecutionPolicy", "Bypass", "-File", $backendScript | Out-Null
+if (!(Test-Path $frontendNodeModules)) {
+  if ($bootstrapEnabled) {
+    Write-Host "Faltan dependencias frontend. Ejecutando npm install en frontend..." -ForegroundColor Cyan
+    Set-Location (Join-Path $PSScriptRoot "frontend")
+    npm install
+    Set-Location $PSScriptRoot
+  } else {
+    Write-Host "Falta frontend/node_modules. Ejecuta npm install en frontend o usa -Bootstrap." -ForegroundColor Red
+    exit 1
+  }
+}
+
+if (!(Test-Path $backendRequirements)) {
+  Write-Host "No se encontro backend/requirements.txt" -ForegroundColor Red
+  exit 1
+}
+
+$backendPort = 8000
+$frontendPort = 5173
+
+if (Test-PortInUse -Port $backendPort) {
+  $newBackendPort = Get-FreePort -StartPort ($backendPort + 1)
+  Write-Host "Puerto backend $backendPort ocupado. Se usara $newBackendPort." -ForegroundColor Yellow
+  $backendPort = $newBackendPort
+}
+
+if (Test-PortInUse -Port $frontendPort) {
+  $newFrontendPort = Get-FreePort -StartPort ($frontendPort + 1)
+  Write-Host "Puerto frontend $frontendPort ocupado. Se usara $newFrontendPort." -ForegroundColor Yellow
+  $frontendPort = $newFrontendPort
+}
+
+$backendScript = Join-Path $PSScriptRoot "start_backend_only.ps1"
+$frontendScript = Join-Path $PSScriptRoot "start_frontend_only.ps1"
+
+Write-Host "Iniciando backend y frontend en nuevas ventanas..." -ForegroundColor Cyan
+Start-Process powershell -ArgumentList "-NoExit", "-ExecutionPolicy", "Bypass", "-File", $backendScript, "-Port", $backendPort, $(if ($bootstrapEnabled) {"-Bootstrap"} else {""}) | Out-Null
 Start-Sleep -Seconds 1
-Start-Process powershell -ArgumentList "-NoExit", "-ExecutionPolicy", "Bypass", "-File", $frontendScript | Out-Null
+Start-Process powershell -ArgumentList "-NoExit", "-ExecutionPolicy", "Bypass", "-File", $frontendScript, "-Port", $frontendPort | Out-Null
 
 Write-Host ""
 Write-Host "URLs utiles:" -ForegroundColor Yellow
-Write-Host "- API docs: http://localhost:8000/docs"
-Write-Host "- Health:   http://localhost:8000/health"
-Write-Host "- Landing:  http://localhost:5173/comercia"
-Write-Host "- REINPIA:  http://localhost:5173/store/reinpia"
-Write-Host "- Panel RG: http://localhost:5173/reinpia/dashboard"
+Write-Host "- API docs:             http://localhost:$backendPort/docs"
+Write-Host "- Health:               http://localhost:$backendPort/health"
+Write-Host "- Landing ComerCia:     http://localhost:$frontendPort/comercia"
+Write-Host "- Store REINPIA:        http://localhost:$frontendPort/store/reinpia"
+Write-Host "- Login admin:          http://localhost:$frontendPort/login"
+Write-Host "- Panel REINPIA global: http://localhost:$frontendPort/reinpia/dashboard"
 Write-Host ""
 
 Start-Sleep -Seconds 2
 try {
-  $health = Invoke-RestMethod -Uri "http://localhost:8000/health" -Method Get -TimeoutSec 3
+  $health = Invoke-RestMethod -Uri "http://localhost:$backendPort/health" -Method Get -TimeoutSec 4
   Write-Host "Healthcheck backend OK: $($health.status)" -ForegroundColor Green
 } catch {
-  Write-Host "Healthcheck backend aun no responde. Espera unos segundos y reintenta /health." -ForegroundColor Yellow
+  Write-Host "Healthcheck backend aun no responde. Espera unos segundos y reintenta." -ForegroundColor Yellow
 }

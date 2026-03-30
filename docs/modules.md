@@ -51,6 +51,7 @@
 | Storefront publico premium | Inicial funcional | home retail con hero, banners, carruseles y tarjetas mejoradas |
 | Storefront distribuidores separado | Inicial funcional | home comercial B2B con beneficios, volumen y compra recurrente |
 | Dashboard de marca reorganizado | Inicial funcional | modulos agrupados + topbar con volver y breadcrumbs |
+| Arranque local unificado | Inicial funcional | scripts robustos con bootstrap, deteccion de puertos y URLs utiles |
 | Bots / agentes | Base arquitectura | pendiente implementacion |
 | Lia agente comercial | Base funcional | widget conversacional con recomendacion de plan y envio a diagnostico |
 | Visibilidad por rol en admin | Inicial funcional | distributor/public fuera de modulos admin de marca/global |

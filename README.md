@@ -39,6 +39,20 @@ Alternativa Node (raiz):
 npm install
 npm run dev:all
 ```
+Modo bootstrap automatico:
+```bash
+npm run dev:all:bootstrap
+```
+
+Bootstrap local de entorno (tipo SprintPilot):
+```bash
+powershell -ExecutionPolicy Bypass -File .\bootstrap_local.ps1
+```
+Hace:
+- crea `backend/.venv` si falta
+- instala requirements backend (incluye `python-multipart`)
+- instala dependencias frontend si faltan
+- deja el entorno listo para `start_all`
 
 Scripts por servicio:
 - `start_backend_only.bat` / `start_backend_only.ps1`
@@ -47,6 +61,13 @@ Scripts por servicio:
 Prerequisito backend:
 - debe existir `backend/.venv` con dependencias instaladas.
 - los scripts no recrean la venv automaticamente.
+- excepcion: si usas `-Bootstrap` o `COMERCIA_BOOTSTRAP=1`, se intenta bootstrap automatico.
+
+Mensajes de arranque y troubleshooting:
+- si falta `backend/.venv`, los scripts muestran comandos exactos para prepararlo.
+- si falta `python-multipart`, backend lo reporta con instruccion clara (o lo instala en modo bootstrap).
+- si un puerto esta ocupado, los scripts detectan el conflicto y levantan en el siguiente puerto disponible.
+- `start_all` imprime URLs utiles reales para backend/frontend.
 
 ### Backend
 ```bash

@@ -3,9 +3,11 @@
   "private": true,
   "version": "0.1.0",
   "scripts": {
-    "dev:backend": "powershell -NoProfile -ExecutionPolicy Bypass -Command \"if (Test-Path '.\\\\backend\\\\.venv\\\\Scripts\\\\python.exe') { Set-Location backend; .\\\\.venv\\\\Scripts\\\\python.exe -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000 } else { Write-Error 'Missing backend/.venv. Create it and install backend requirements first.'; exit 1 }\"",
-    "dev:frontend": "powershell -NoProfile -ExecutionPolicy Bypass -Command \"Set-Location frontend; npm run dev\"",
-    "dev:all": "concurrently -n backend,frontend -c blue,green \"npm run dev:backend\" \"npm run dev:frontend\""
+    "bootstrap:local": "powershell -NoProfile -ExecutionPolicy Bypass -File ./bootstrap_local.ps1",
+    "dev:backend": "powershell -NoProfile -ExecutionPolicy Bypass -File ./start_backend_only.ps1",
+    "dev:frontend": "powershell -NoProfile -ExecutionPolicy Bypass -File ./start_frontend_only.ps1",
+    "dev:all": "powershell -NoProfile -ExecutionPolicy Bypass -File ./start_all.ps1",
+    "dev:all:bootstrap": "powershell -NoProfile -ExecutionPolicy Bypass -File ./start_all.ps1 -Bootstrap"
   },
   "devDependencies": {
     "concurrently": "^9.2.1"

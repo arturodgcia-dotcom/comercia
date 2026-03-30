@@ -225,3 +225,12 @@
 - [x] Usuarios demo ampliados por perfil (global, marca, distribuidor, publico)
 - [x] Visibilidad de modulos reforzada por rol (distribuidor/publico fuera de admin)
 - [x] Validacion: backend compile + alembic upgrade head + frontend build
+
+## Entregables ejecucion 21 (Arranque local robusto)
+- [x] Dependencia backend `python-multipart` agregada a requirements
+- [x] JSX de `ReinpiaLogisticsServicesPage` validado/corregido para build estable
+- [x] Scripts robustos: `start_all.ps1`, `start_all.bat`, `start_backend_only.ps1`, `start_frontend_only.ps1`
+- [x] Nuevo `bootstrap_local.ps1` para preparar entorno local completo
+- [x] `package.json` raiz actualizado con `dev:all` y `dev:all:bootstrap`
+- [x] Mensajes de error mejorados (venv faltante, dependencia faltante, puerto ocupado)
+- [x] Validacion: backend compile + frontend build
