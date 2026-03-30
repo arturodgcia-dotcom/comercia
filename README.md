@@ -122,6 +122,23 @@ npm run dev
 - Automation base:
   - `http://localhost:5173/admin/automation`
 
+### WebApp instalable (PWA) orientada a POS
+- La app incluye `manifest.webmanifest` + `service worker` para instalación en celular.
+- `start_url` configurada: `/pos`.
+- Flujo:
+  - si hay sesión activa, abre POS directo.
+  - si no hay sesión, `ProtectedRoute` redirige a `/login` y luego vuelve a POS.
+- Componentes de ayuda/instalación:
+  - botón “Instalar WebApp” en login y POS.
+  - ayuda para Android/iOS sobre “Agregar a pantalla de inicio”.
+- Íconos base incluidos en `frontend/public/icons`:
+  - `icon-192.png`
+  - `icon-512.png`
+  - `apple-touch-icon.png`
+- Caché offline básico:
+  - shell estático, manifest e íconos.
+  - no reemplaza operación online de negocio (API/checkout requieren conexión).
+
 ## Bloques funcionales implementados
 
 ### Core comercial

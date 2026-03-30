@@ -313,3 +313,19 @@ Frontend nuevo:
 - `/admin/catalog/bulk-upload`
 - `/admin/inventory`
 - `/admin/feedback`
+
+## 24) WebApp instalable (PWA) priorizada para POS
+Se agrego base PWA para experiencia tipo app en celular:
+- `manifest.webmanifest` con `display=standalone`, splash y branding ComerCia.
+- `start_url` orientada a POS: `/pos`.
+- `service worker` para cache basico de shell estatico, manifest e iconos.
+- componentes UX:
+  - `InstallAppPrompt` (boton “Instalar WebApp”)
+  - `AppInstallHelp` (guia Android/iOS)
+- rutas:
+  - usuario con sesion: entra directo a POS
+  - usuario sin sesion: guard redirige a login y vuelve a POS
+
+Notas:
+- NFC sigue siendo solo identificacion/credenciales.
+- modo offline es basico (no cubre flujo completo de negocio/API/pagos).

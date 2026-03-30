@@ -194,3 +194,13 @@
 - [x] Reportes ajustados para distinguir Stripe ecommerce vs POS por metodo
 - [x] Landing ComerCia actualizada con servicios adicionales y activaciones (NFC/cobros digitales)
 - [x] Validacion: backend compile + alembic upgrade head + frontend build
+
+## Entregables ejecucion 18 (PWA instalable priorizada para POS)
+- [x] Frontend convertido en PWA instalable (manifest + service worker)
+- [x] `start_url` orientada a POS (`/pos`)
+- [x] Prompt de instalacion y ayuda Android/iOS en login y POS
+- [x] Iconos base instalables (`192`, `512`, `apple-touch-icon`)
+- [x] Shortcuts preparados para POS/Admin/Landing
+- [x] Cache offline basico para shell estatico
+- [x] Documentacion y modulos actualizados
+- [x] Validacion: frontend build OK

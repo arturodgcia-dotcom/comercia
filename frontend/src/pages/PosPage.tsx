@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../app/AuthContext";
+import { AppInstallHelp } from "../components/AppInstallHelp";
+import { InstallAppPrompt } from "../components/InstallAppPrompt";
 import { PageHeader } from "../components/PageHeader";
 import { api } from "../services/api";
 import { PosCustomer, PosLocation, PosPaymentTransaction, PosSale, Product } from "../types/domain";
@@ -136,6 +138,8 @@ export function PosPage() {
   return (
     <section>
       <PageHeader title="POS WebApp" subtitle="Venta en punto de venta con fidelizacion y control por ubicacion." />
+      <InstallAppPrompt />
+      <AppInstallHelp context="POS" />
       <div className="row-gap">
         <Link to="/pos/locations" className="button button-outline">Ubicaciones</Link>
         <Link to="/pos/customers" className="button button-outline">Clientes POS</Link>

@@ -15,3 +15,11 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     </AuthProvider>
   </React.StrictMode>
 );
+
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/sw.js").catch((error) => {
+      console.error("No fue posible registrar service worker", error);
+    });
+  });
+}

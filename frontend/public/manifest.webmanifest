@@ -1,0 +1,49 @@
+{
+  "name": "ComerCia POS y operacion",
+  "short_name": "ComerCia POS",
+  "description": "WebApp instalable de ComerCia orientada a POS y operacion comercial.",
+  "start_url": "/pos",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f6f7fb",
+  "theme_color": "#0447a6",
+  "shortcuts": [
+    {
+      "name": "POS",
+      "short_name": "POS",
+      "url": "/pos",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Admin marca",
+      "short_name": "Admin",
+      "url": "/",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Landing ComerCia",
+      "short_name": "Landing",
+      "url": "/comercia",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    }
+  ],
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

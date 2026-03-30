@@ -222,6 +222,36 @@ textarea {
   flex-wrap: wrap;
 }
 
+.install-card {
+  margin: 10px 0 16px;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid #b8cced;
+  background: #eef4ff;
+}
+
+.install-card.compact {
+  margin: 4px 0 10px;
+}
+
+.install-note {
+  margin: 8px 0;
+  color: #1e4e95;
+  font-size: 13px;
+}
+
+.install-help {
+  margin: 8px 0 14px;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: #fff;
+}
+
+.muted {
+  color: var(--muted);
+}
+
 .auth-shell {
   min-height: 100vh;
   display: grid;

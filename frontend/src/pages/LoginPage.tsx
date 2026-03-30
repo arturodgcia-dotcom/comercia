@@ -1,6 +1,8 @@
 import { FormEvent, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../app/AuthContext";
+import { AppInstallHelp } from "../components/AppInstallHelp";
+import { InstallAppPrompt } from "../components/InstallAppPrompt";
 import { LanguageSelector } from "../components/LanguageSelector";
 import { useTranslation } from "react-i18next";
 
@@ -9,7 +11,8 @@ export function LoginPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
-  const redirectTo = (location.state as { from?: string } | undefined)?.from ?? "/";
+  const nextFromQuery = new URLSearchParams(location.search).get("next");
+  const redirectTo = nextFromQuery || (location.state as { from?: string } | undefined)?.from || "/";
 
   const [email, setEmail] = useState("admin@reinpia.com");
   const [password, setPassword] = useState("admin123");
@@ -50,6 +53,8 @@ export function LoginPage() {
         <button className="button" type="submit" disabled={loading}>
           {loading ? t("auth.loading") : t("auth.login")}
         </button>
+        <InstallAppPrompt compact />
+        <AppInstallHelp context="POS y operacion" />
         <Link className="button button-outline" to="/comercia">
           {t("auth.goLanding")}
         </Link>

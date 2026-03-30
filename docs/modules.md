@@ -35,6 +35,7 @@
 | Reset de demo | Inicial funcional | limpieza controlada de tenants/usuarios/datos demo |
 | Onboarding vendedor/cliente | Inicial funcional | guias, pasos, progreso y vistas `/onboarding/*` |
 | Internacionalizacion (i18n) | Base funcional | ES/EN con selector global y persistencia local |
+| PWA instalable (POS prioridad) | Inicial funcional | manifest + service worker + prompt instalacion + ayuda Android/iOS |
 | Monedas y tipo de cambio | Inicial funcional | settings por tenant + rates manual/refresh + preview |
 | POS / WebApp base | Inicial funcional | ubicaciones, empleados, clientes, ventas POS y pagos Mercado Pago |
 | Fidelizacion en POS | Base funcional | uso/suma de puntos en cierre de venta |
