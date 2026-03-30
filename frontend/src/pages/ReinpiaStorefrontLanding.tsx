@@ -9,6 +9,8 @@ import { ServiceOffering, StorefrontHomePayload } from "../types/domain";
 
 export function ReinpiaStorefrontLanding({ data }: { data: StorefrontHomePayload }) {
   const services = data.services ?? [];
+  const banners = data.banners ?? [];
+  const highlightedProducts = data.featured_products.slice(0, 4);
   return (
     <main className="marketing-shell">
       <div className="row-gap" style={{ justifyContent: "flex-end" }}>
@@ -76,6 +78,39 @@ export function ReinpiaStorefrontLanding({ data }: { data: StorefrontHomePayload
           ))}
         </div>
       </section>
+
+      {highlightedProducts.length ? (
+        <section>
+          <h2>Soluciones destacadas para arranque rápido</h2>
+          <div className="card-grid">
+            {highlightedProducts.map((product) => (
+              <article key={product.id} className="card marketing-card">
+                <h3>{product.name}</h3>
+                <p>{product.description}</p>
+                <p>Desde ${Number(product.price_public).toLocaleString("es-MX")}</p>
+                <Link className="button button-outline" to={`/store/${data.tenant.slug}/product/${product.id}`}>
+                  Ver solución
+                </Link>
+              </article>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {banners.length ? (
+        <section>
+          <h2>Banners comerciales activos</h2>
+          <div className="card-grid">
+            {banners.map((banner) => (
+              <article key={banner.id} className="card marketing-card">
+                <h3>{banner.title}</h3>
+                {banner.subtitle ? <p>{banner.subtitle}</p> : null}
+                {banner.image_url ? <img src={banner.image_url} alt={banner.title} className="store-banner-image" /> : null}
+              </article>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       <CTASection
         title="Tu empresa no necesita mas improvisacion. Necesita tecnologia bien construida."

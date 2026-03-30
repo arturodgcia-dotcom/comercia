@@ -24,8 +24,8 @@ export function StoreServicesPage() {
   if (!tenant) return <p>Cargando servicios...</p>;
 
   return (
-    <main className="storefront">
-      <section className="store-hero">
+    <main className="storefront premium-store">
+      <section className="store-hero premium-hero">
         <h1>{tenant.slug === "reinpia" ? "Ecommerce de servicios REINPIA" : `Servicios de ${tenant.name}`}</h1>
         <p>
           {tenant.slug === "reinpia"
@@ -39,11 +39,11 @@ export function StoreServicesPage() {
       <section>
         <div className="card-grid">
           {services.map((service) => (
-            <article key={service.id} className="card">
+            <article key={service.id} className="card product-card-premium">
               <h3>{service.name}</h3>
               <p>{service.description}</p>
-              <p>{service.duration_minutes} min</p>
-              <p>${Number(service.price).toLocaleString("es-MX")}</p>
+              <p>Duración: {service.duration_minutes} min</p>
+              <p className="product-price">${Number(service.price).toLocaleString("es-MX")}</p>
               <Link className="button" to={`/store/${tenant.slug}/service/${service.id}`}>
                 Reservar
               </Link>

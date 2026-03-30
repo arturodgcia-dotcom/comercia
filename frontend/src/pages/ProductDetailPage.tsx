@@ -38,7 +38,7 @@ export function ProductDetailPage() {
       comment: reviewForm.comment
     });
     setReviewForm({ rating: 5, title: "", comment: "" });
-    setError("Resena enviada. Quedara pendiente de aprobacion.");
+    setError("Reseña enviada. Quedará pendiente de aprobación.");
   };
 
   if (error) return <p className="error">{error}</p>;
@@ -47,12 +47,12 @@ export function ProductDetailPage() {
   const avgRating = reviews.length ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length : null;
 
   return (
-    <main className="storefront">
-      <section className="store-hero">
+    <main className="storefront premium-store">
+      <section className="store-hero premium-hero">
         <h1>{product.name}</h1>
         <p>{product.description}</p>
-        <p>Precio: ${Number(product.price_public).toLocaleString("es-MX")}</p>
-        <p>Rating promedio: {avgRating ? avgRating.toFixed(1) : "Sin resenas"}</p>
+        <p className="product-price">Precio: ${Number(product.price_public).toLocaleString("es-MX")}</p>
+        <p>Rating promedio: {avgRating ? avgRating.toFixed(1) : "Sin reseñas"}</p>
         <div className="store-actions">
           <Link className="button" to={`/store/${home.tenant.slug}`}>
             Volver a la tienda
@@ -66,12 +66,22 @@ export function ProductDetailPage() {
       </section>
 
       <section className="store-banner">
-        <h2>Imagenes</h2>
-        <p>Placeholder de galeria para siguiente iteracion.</p>
+        <h2>Galería del producto</h2>
+        <div className="card-grid">
+          <article className="card">
+            <p className="muted">Imagen principal (placeholder)</p>
+          </article>
+          <article className="card">
+            <p className="muted">Detalle de uso (placeholder)</p>
+          </article>
+          <article className="card">
+            <p className="muted">Presentación comercial (placeholder)</p>
+          </article>
+        </div>
       </section>
 
       <section>
-        <h2>Resenas aprobadas</h2>
+        <h2>Reseñas aprobadas</h2>
         <div className="card-grid">
           {reviews.map((review) => (
             <article key={review.id} className="card">
@@ -84,7 +94,7 @@ export function ProductDetailPage() {
       </section>
 
       <section className="store-banner">
-        <h2>Escribir resena</h2>
+        <h2>Escribir reseña</h2>
         <form className="detail-form" onSubmit={submitReview}>
           <label>
             Rating
@@ -97,7 +107,7 @@ export function ProductDetailPage() {
             />
           </label>
           <label>
-            Titulo
+            Título
             <input value={reviewForm.title} onChange={(e) => setReviewForm((prev) => ({ ...prev, title: e.target.value }))} />
           </label>
           <label>
@@ -105,11 +115,10 @@ export function ProductDetailPage() {
             <input value={reviewForm.comment} onChange={(e) => setReviewForm((prev) => ({ ...prev, comment: e.target.value }))} />
           </label>
           <button className="button" type="submit">
-            Enviar resena
+            Enviar reseña
           </button>
         </form>
       </section>
     </main>
   );
 }
-

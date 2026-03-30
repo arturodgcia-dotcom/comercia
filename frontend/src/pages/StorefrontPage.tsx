@@ -94,11 +94,6 @@ export function StorefrontPage() {
       .finally(() => setLoadingUpsell(false));
   }, [data, cartItems.length]);
 
-  const subtotal = useMemo(
-    () => cartItems.reduce((acc, item) => acc + getDisplayPrice(item.product.price_public, selectedCurrency) * item.quantity, 0),
-    [cartItems, selectedCurrency, rates, currencySettings]
-  );
-
   const getDisplayPrice = (amount: number, currency: string) => {
     const settings = currencySettings;
     if (!settings || currency === settings.base_currency) return Number(amount);
@@ -106,6 +101,11 @@ export function StorefrontPage() {
     if (!rate) return Number(amount);
     return Number(amount) * Number(rate.rate);
   };
+
+  const subtotal = useMemo(
+    () => cartItems.reduce((acc, item) => acc + getDisplayPrice(Number(item.product.price_public), selectedCurrency) * item.quantity, 0),
+    [cartItems, selectedCurrency, rates, currencySettings]
+  );
 
   const addToWishlist = async (productId: number) => {
     if (!data) return;
@@ -156,9 +156,12 @@ export function StorefrontPage() {
   if (!data) return <p>Cargando storefront...</p>;
   if (data.tenant.slug.toLowerCase() === "reinpia") return <ReinpiaStorefrontLanding data={data} />;
 
+  const primary = data.branding?.primary_color ?? "#0d3e86";
+  const secondary = data.branding?.secondary_color ?? "#8dc4ff";
+
   return (
-    <main className="storefront">
-      <section className="store-hero">
+    <main className="storefront premium-store">
+      <section className="store-hero premium-hero" style={{ background: `linear-gradient(130deg, ${primary}, ${secondary})` }}>
         <div className="row-gap" style={{ justifyContent: "space-between" }}>
           <LanguageSelector />
           {currencySettings ? (
@@ -169,11 +172,12 @@ export function StorefrontPage() {
             </select>
           ) : null}
         </div>
+        <p className="marketing-eyebrow">Marca cliente en ComerCia</p>
         <h1>{data.branding?.hero_title ?? data.tenant.name}</h1>
-        <p>{data.branding?.hero_subtitle ?? "Landing base multitenant de ComerCia"}</p>
+        <p>{data.branding?.hero_subtitle ?? "Experiencia comercial premium con ecommerce y canal distribuidor separados."}</p>
         <div className="store-actions">
           <Link to={`/store/${data.tenant.slug}/distribuidores`} className="button">
-            Distribuidores
+            Canal distribuidores
           </Link>
           <Link to={`/store/${data.tenant.slug}/distribuidores/registro`} className="button button-outline">
             Quiero ser distribuidor
@@ -186,91 +190,151 @@ export function StorefrontPage() {
         </div>
       </section>
 
+      <section className="card-grid">
+        <article className="card">
+          <h3>Venta directa</h3>
+          <p>Catálogo público con promociones, favoritos y checkout online.</p>
+        </article>
+        <article className="card">
+          <h3>Canal comercial</h3>
+          <p>Ruta separada para distribuidores con reglas de negocio por volumen.</p>
+        </article>
+        <article className="card">
+          <h3>Operación inteligente</h3>
+          <p>Preparado para fidelización, recurrencia, logística y reportes de crecimiento.</p>
+        </article>
+      </section>
+
       <section className="store-banner">
-        <h2>Banners dinamicos</h2>
+        <h2>Categorías</h2>
+        <div className="chip-row">
+          {data.categories.map((category) => (
+            <span key={category.id} className="chip">{category.name}</span>
+          ))}
+        </div>
+      </section>
+
+      <section className="store-banner">
+        <h2>Banners</h2>
         <div className="card-grid">
           {(data.banners ?? []).map((banner) => (
             <article key={banner.id} className="card">
               <h3>{banner.title}</h3>
-              <p>{banner.position}</p>
+              {banner.subtitle ? <p>{banner.subtitle}</p> : null}
+              {banner.image_url ? <img src={banner.image_url} alt={banner.title} className="store-banner-image" /> : null}
+              <p className="muted">Posición: {banner.position}</p>
             </article>
           ))}
         </div>
       </section>
 
-      <section>
-        <h2>Destacados</h2>
-        <ProductGrid products={data.featured_products} tenantSlug={data.tenant.slug} cart={cart} onAdd={updateCart} onWishlist={addToWishlist} wishlist={wishlist} selectedCurrency={selectedCurrency} getDisplayPrice={getDisplayPrice} />
-      </section>
+      <ProductRail
+        title="Destacados"
+        products={data.featured_products}
+        tenantSlug={data.tenant.slug}
+        cart={cart}
+        onAdd={updateCart}
+        onWishlist={addToWishlist}
+        wishlist={wishlist}
+        selectedCurrency={selectedCurrency}
+        getDisplayPrice={getDisplayPrice}
+      />
+      <ProductRail
+        title="Promociones"
+        products={data.promo_products}
+        tenantSlug={data.tenant.slug}
+        cart={cart}
+        onAdd={updateCart}
+        onWishlist={addToWishlist}
+        wishlist={wishlist}
+        selectedCurrency={selectedCurrency}
+        getDisplayPrice={getDisplayPrice}
+      />
+      <ProductRail
+        title="Nuevos ingresos"
+        products={data.recent_products}
+        tenantSlug={data.tenant.slug}
+        cart={cart}
+        onAdd={updateCart}
+        onWishlist={addToWishlist}
+        wishlist={wishlist}
+        selectedCurrency={selectedCurrency}
+        getDisplayPrice={getDisplayPrice}
+      />
+      <ProductRail
+        title="Más vendidos"
+        products={data.best_sellers}
+        tenantSlug={data.tenant.slug}
+        cart={cart}
+        onAdd={updateCart}
+        onWishlist={addToWishlist}
+        wishlist={wishlist}
+        selectedCurrency={selectedCurrency}
+        getDisplayPrice={getDisplayPrice}
+      />
 
-      <section>
-        <h2>Nuevos</h2>
-        <ProductGrid products={data.recent_products} tenantSlug={data.tenant.slug} cart={cart} onAdd={updateCart} onWishlist={addToWishlist} wishlist={wishlist} selectedCurrency={selectedCurrency} getDisplayPrice={getDisplayPrice} />
-      </section>
+      <section className="store-layout">
+        <article className="store-banner">
+          <h2>Membresías y recompra</h2>
+          <div className="card-grid">
+            {data.membership_plans.map((plan) => (
+              <article key={plan.id} className="card">
+                <h3>{plan.name}</h3>
+                <p>{plan.description}</p>
+                <p>Duración: {plan.duration_days} días</p>
+                <p>Precio: ${Number(plan.price).toLocaleString("es-MX")}</p>
+              </article>
+            ))}
+          </div>
+        </article>
 
-      <section>
-        <h2>Promociones</h2>
-        <ProductGrid products={data.promo_products} tenantSlug={data.tenant.slug} cart={cart} onAdd={updateCart} onWishlist={addToWishlist} wishlist={wishlist} selectedCurrency={selectedCurrency} getDisplayPrice={getDisplayPrice} />
-      </section>
-
-      <section>
-        <h2>Mas vendidos (placeholder inteligente)</h2>
-        <ProductGrid products={data.best_sellers} tenantSlug={data.tenant.slug} cart={cart} onAdd={updateCart} onWishlist={addToWishlist} wishlist={wishlist} selectedCurrency={selectedCurrency} getDisplayPrice={getDisplayPrice} />
+        <aside className="store-banner">
+          <h2>Carrito y checkout</h2>
+          <p>Subtotal: {selectedCurrency} {subtotal.toLocaleString("es-MX")}</p>
+          {currencySettings?.display_mode === "localized_checkout" ? (
+            <p>El checkout intentará cobrar en moneda local cuando el flujo lo soporte. Fallback: moneda base.</p>
+          ) : (
+            <p>El checkout cobra en moneda base. La moneda elegida solo se usa para visualización.</p>
+          )}
+          <input placeholder="Código de cupón" value={couponCode} onChange={(e) => setCouponCode(e.target.value)} />
+          <label className="checkbox">
+            <input type="checkbox" checked={usePoints} onChange={(e) => setUsePoints(e.target.checked)} />
+            Aplicar puntos de fidelización
+          </label>
+          <label className="checkbox">
+            <input type="checkbox" checked={wantsRecurring} onChange={(e) => setWantsRecurring(e.target.checked)} />
+            Programar compra recurrente
+          </label>
+          {wantsRecurring ? <p className="muted">La recurrencia queda marcada para activarse desde panel admin en este MVP.</p> : null}
+          <h3>Upsell previo al pago</h3>
+          {loadingUpsell ? <p>Cargando upsell...</p> : null}
+          <div className="card-grid">
+            {upsell.map((product) => (
+              <article key={product.id} className="card">
+                <h4>{product.name}</h4>
+                <button className="button button-outline" type="button" onClick={() => updateCart(product.id, (cart[product.id] ?? 0) + 1)}>
+                  Agregar
+                </button>
+              </article>
+            ))}
+          </div>
+          <button className="button" type="button" onClick={handleCheckout} disabled={loadingCheckout || cartItems.length === 0}>
+            {loadingCheckout ? "Redirigiendo..." : "Comprar ahora"}
+          </button>
+        </aside>
       </section>
 
       <section className="store-banner">
-        <h2>Membresias</h2>
-        <div className="card-grid">
-          {data.membership_plans.map((plan) => (
-            <article key={plan.id} className="card">
-              <h3>{plan.name}</h3>
-              <p>{plan.description}</p>
-              <p>Duracion: {plan.duration_days} dias</p>
-              <p>Precio: ${Number(plan.price).toLocaleString("es-MX")}</p>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section className="store-banner">
-        <h2>Checkout</h2>
-        <p>Subtotal: {selectedCurrency} {subtotal.toLocaleString("es-MX")}</p>
-        {currencySettings?.display_mode === "localized_checkout" ? (
-          <p>Checkout intentara cobrar en moneda local si el flujo de pago lo soporta. Fallback: moneda base.</p>
-        ) : (
-          <p>Checkout opera en moneda base. La moneda seleccionada se usa para visualizacion.</p>
-        )}
-        <input placeholder="Coupon code" value={couponCode} onChange={(e) => setCouponCode(e.target.value)} />
-        <label className="checkbox">
-          <input type="checkbox" checked={usePoints} onChange={(e) => setUsePoints(e.target.checked)} />
-          Aplicar puntos de fidelizacion
-        </label>
-        <label className="checkbox">
-          <input type="checkbox" checked={wantsRecurring} onChange={(e) => setWantsRecurring(e.target.checked)} />
-          Programar compra recurrente (base)
-        </label>
-        {wantsRecurring ? <p>La recurrencia queda marcada para activarse desde panel admin en este MVP.</p> : null}
-        <h3>Upsell antes del pago</h3>
-        {loadingUpsell ? <p>Cargando upsell...</p> : null}
-        <div className="card-grid">
-          {upsell.map((product) => (
-            <article key={product.id} className="card">
-              <h4>{product.name}</h4>
-              <button className="button button-outline" type="button" onClick={() => updateCart(product.id, (cart[product.id] ?? 0) + 1)}>
-                Agregar upsell
-              </button>
-            </article>
-          ))}
-        </div>
-        <button className="button" type="button" onClick={handleCheckout} disabled={loadingCheckout || cartItems.length === 0}>
-          {loadingCheckout ? "Redirigiendo..." : "Comprar"}
-        </button>
+        <h2>Contacto</h2>
+        <p>Email: {data.branding?.contact_email ?? "contacto@marca.com"}</p>
+        <p>WhatsApp: {data.branding?.contact_whatsapp ?? "Disponible bajo solicitud"}</p>
       </section>
     </main>
   );
 }
 
-function ProductGrid({
+function ProductRail({
+  title,
   products,
   tenantSlug,
   cart,
@@ -280,6 +344,7 @@ function ProductGrid({
   selectedCurrency,
   getDisplayPrice
 }: {
+  title: string;
   products: Product[];
   tenantSlug: string;
   cart: CartMap;
@@ -290,25 +355,32 @@ function ProductGrid({
   getDisplayPrice: (amount: number, currency: string) => number;
 }) {
   return (
-    <div className="card-grid">
-      {products.map((product) => (
-        <article key={product.id} className="card">
-          <h3>{product.name}</h3>
-          <p>{product.description}</p>
-          <p>{selectedCurrency} {Number(getDisplayPrice(Number(product.price_public), selectedCurrency)).toLocaleString("es-MX")}</p>
-          <div className="row-gap">
-            <button className="button button-outline" type="button" onClick={() => onAdd(product.id, (cart[product.id] ?? 0) + 1)}>
-              Agregar
-            </button>
-            <button className="button button-outline" type="button" onClick={() => onWishlist(product.id)}>
-              {wishlist.some((item) => item.product_id === product.id) ? "En wishlist" : "Wishlist"}
-            </button>
-            <Link className="button button-outline" to={`/store/${tenantSlug}/product/${product.id}`}>
-              Ver detalle
-            </Link>
-          </div>
-        </article>
-      ))}
-    </div>
+    <section>
+      <h2>{title}</h2>
+      <div className="card-grid">
+        {products.map((product) => (
+          <article key={product.id} className="card product-card-premium">
+            <div className="product-badge-row">
+              {product.is_featured ? <span className="chip">Destacado</span> : null}
+              {product.is_active ? <span className="chip">Disponible</span> : <span className="chip">Inactivo</span>}
+            </div>
+            <h3>{product.name}</h3>
+            <p>{product.description}</p>
+            <p className="product-price">{selectedCurrency} {Number(getDisplayPrice(Number(product.price_public), selectedCurrency)).toLocaleString("es-MX")}</p>
+            <div className="row-gap">
+              <button className="button button-outline" type="button" onClick={() => onAdd(product.id, (cart[product.id] ?? 0) + 1)}>
+                Agregar
+              </button>
+              <button className="button button-outline" type="button" onClick={() => onWishlist(product.id)}>
+                {wishlist.some((item) => item.product_id === product.id) ? "En wishlist" : "Wishlist"}
+              </button>
+              <Link className="button button-outline" to={`/store/${tenantSlug}/product/${product.id}`}>
+                Ver detalle
+              </Link>
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
   );
 }
