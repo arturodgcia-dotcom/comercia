@@ -369,6 +369,7 @@ class ProductReview(Base):
     rating: Mapped[int] = mapped_column(Integer, nullable=False)
     title: Mapped[str | None] = mapped_column(String(180), nullable=True)
     comment: Mapped[str | None] = mapped_column(Text, nullable=True)
+    moderation_status: Mapped[str] = mapped_column(String(20), default="pending", nullable=False, index=True)
     is_approved: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
 

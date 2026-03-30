@@ -20,5 +20,6 @@ class ProductReviewRead(BaseModel):
     rating: int
     title: str | None
     comment: str | None
+    moderation_status: str
     is_approved: bool
     created_at: datetime

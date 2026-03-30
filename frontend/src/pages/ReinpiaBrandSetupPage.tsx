@@ -16,11 +16,11 @@ const STEP_ORDER = [
 
 const STEP_LABELS: Record<string, string> = {
   brand_identity: "Identidad de marca",
-  landing_setup: "Landing de marca",
-  public_storefront: "Ecommerce público",
+  landing_setup: "Landing premium",
+  public_storefront: "Ecommerce publico",
   distributor_storefront: "Ecommerce distribuidores/comercios",
   pos_setup: "POS / WebApp",
-  final_review: "Revisión final y publicación",
+  final_review: "Revision final y publicacion",
 };
 
 export function ReinpiaBrandSetupPage() {
@@ -83,9 +83,28 @@ export function ReinpiaBrandSetupPage() {
       if (mode === "review") {
         return { ...step, status: "in_review", approved: false, review_notes: notes ?? step.review_notes };
       }
-      return { ...step, status: "pending", approved: false, review_notes: notes ?? "Rehacer solicitado" };
+      return {
+        ...step,
+        status: "pending",
+        approved: false,
+        review_notes: notes ?? "Rehacer solicitado",
+      };
     });
     await updateSteps(nextSteps, { current_step: code });
+  };
+
+  const previewLinkByStep = (stepCode: string) => {
+    if (!workflow) return "";
+    if (stepCode === "landing_setup" || stepCode === "public_storefront") {
+      return `/store/${workflow.tenant_slug}`;
+    }
+    if (stepCode === "distributor_storefront") {
+      return `/store/${workflow.tenant_slug}/distribuidores`;
+    }
+    if (stepCode === "pos_setup") {
+      return "/pos";
+    }
+    return "";
   };
 
   const handleUpload = async (event: ChangeEvent<HTMLInputElement>, stepCode: string, assetType: string) => {
@@ -115,9 +134,9 @@ export function ReinpiaBrandSetupPage() {
       setError("");
       const updated = await api.updateBrandChannelSettings(token, workflow.tenant_id, channelSettings);
       setChannelSettings(updated);
-      setMessage("Configuración NFC / Mercado Pago / MFA actualizada.");
+      setMessage("Configuracion NFC / Mercado Pago / MFA actualizada.");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "No fue posible guardar la configuración.");
+      setError(err instanceof Error ? err.message : "No fue posible guardar la configuracion.");
     } finally {
       setSaving(false);
     }
@@ -141,7 +160,7 @@ export function ReinpiaBrandSetupPage() {
     <section>
       <PageHeader
         title={`Setup guiado: ${workflow.tenant_name}`}
-        subtitle="Revisa, aprueba, regenera o rehace cada módulo antes de publicar."
+        subtitle="Revisa, aprueba, regenera o rehace cada modulo antes de publicar."
       />
       <div className="row-gap">
         <Link className="button button-outline" to="/reinpia/tenants">
@@ -180,13 +199,14 @@ export function ReinpiaBrandSetupPage() {
             review_notes: "",
           };
           const assets = workflow.assets.filter((asset) => asset.step_code === stepCode);
+          const previewLink = previewLinkByStep(stepCode);
           return (
             <article key={step.code} className="card">
               <h3>{step.title}</h3>
               <p>Estado: {step.status}</p>
-              <p>Aprobado: {step.approved ? "Sí" : "No"}</p>
+              <p>Aprobado: {step.approved ? "Si" : "No"}</p>
               <label>
-                Nota de revisión
+                Nota de revision
                 <textarea
                   value={step.review_notes ?? ""}
                   onChange={(event) => {
@@ -203,13 +223,39 @@ export function ReinpiaBrandSetupPage() {
               </label>
               <p>Assets cargados: {assets.length}</p>
               <div className="row-gap">
-                <button className="button button-outline" type="button" onClick={() => updateStep(step.code, "review", step.review_notes ?? undefined)}>
-                  Marcar en revisión
+                {previewLink ? (
+                  <Link className="button button-outline" to={previewLink}>
+                    Ver preview del paso
+                  </Link>
+                ) : null}
+                <button
+                  className="button button-outline"
+                  type="button"
+                  onClick={() => updateStep(step.code, "review", step.review_notes ?? undefined)}
+                >
+                  Marcar en revision
                 </button>
-                <button className="button button-outline" type="button" onClick={() => updateStep(step.code, "redo", step.review_notes ?? undefined)}>
+                <button
+                  className="button button-outline"
+                  type="button"
+                  onClick={() => updateStep(step.code, "redo", step.review_notes ?? undefined)}
+                >
                   Rehacer
                 </button>
-                <button className="button" type="button" onClick={() => updateStep(step.code, "approve", step.review_notes ?? undefined)}>
+                <button
+                  className="button button-outline"
+                  type="button"
+                  onClick={() =>
+                    updateStep(step.code, "redo", `${step.review_notes ?? ""}\nRegenerado manualmente`)
+                  }
+                >
+                  Regenerar
+                </button>
+                <button
+                  className="button"
+                  type="button"
+                  onClick={() => updateStep(step.code, "approve", step.review_notes ?? undefined)}
+                >
                   Aprobar
                 </button>
               </div>
@@ -224,23 +270,35 @@ export function ReinpiaBrandSetupPage() {
           <input
             type="checkbox"
             checked={channelSettings.nfc_enabled}
-            onChange={(event) => setChannelSettings((previous) => previous ? { ...previous, nfc_enabled: event.target.checked } : previous)}
+            onChange={(event) =>
+              setChannelSettings((previous) =>
+                previous ? { ...previous, nfc_enabled: event.target.checked } : previous
+              )
+            }
           />
           Activar NFC (servicio opcional)
         </label>
         <label>
-          Costo de activación NFC
+          Costo de activacion NFC
           <input
             type="number"
             value={channelSettings.nfc_setup_fee}
-            onChange={(event) => setChannelSettings((previous) => previous ? { ...previous, nfc_setup_fee: Number(event.target.value) } : previous)}
+            onChange={(event) =>
+              setChannelSettings((previous) =>
+                previous ? { ...previous, nfc_setup_fee: Number(event.target.value) } : previous
+              )
+            }
           />
         </label>
         <label className="checkbox">
           <input
             type="checkbox"
             checked={channelSettings.mercadopago_enabled}
-            onChange={(event) => setChannelSettings((previous) => previous ? { ...previous, mercadopago_enabled: event.target.checked } : previous)}
+            onChange={(event) =>
+              setChannelSettings((previous) =>
+                previous ? { ...previous, mercadopago_enabled: event.target.checked } : previous
+              )
+            }
           />
           Activar cobros digitales con Mercado Pago
         </label>
@@ -248,21 +306,33 @@ export function ReinpiaBrandSetupPage() {
           Mercado Pago public key
           <input
             value={channelSettings.mercadopago_public_key ?? ""}
-            onChange={(event) => setChannelSettings((previous) => previous ? { ...previous, mercadopago_public_key: event.target.value } : previous)}
+            onChange={(event) =>
+              setChannelSettings((previous) =>
+                previous ? { ...previous, mercadopago_public_key: event.target.value } : previous
+              )
+            }
           />
         </label>
         <label>
           Mercado Pago access token
           <input
             value={channelSettings.mercadopago_access_token ?? ""}
-            onChange={(event) => setChannelSettings((previous) => previous ? { ...previous, mercadopago_access_token: event.target.value } : previous)}
+            onChange={(event) =>
+              setChannelSettings((previous) =>
+                previous ? { ...previous, mercadopago_access_token: event.target.value } : previous
+              )
+            }
           />
         </label>
         <label className="checkbox">
           <input
             type="checkbox"
             checked={channelSettings.mercadopago_payment_link_enabled}
-            onChange={(event) => setChannelSettings((previous) => previous ? { ...previous, mercadopago_payment_link_enabled: event.target.checked } : previous)}
+            onChange={(event) =>
+              setChannelSettings((previous) =>
+                previous ? { ...previous, mercadopago_payment_link_enabled: event.target.checked } : previous
+              )
+            }
           />
           Habilitar cobro por link
         </label>
@@ -270,7 +340,11 @@ export function ReinpiaBrandSetupPage() {
           <input
             type="checkbox"
             checked={channelSettings.mercadopago_qr_enabled}
-            onChange={(event) => setChannelSettings((previous) => previous ? { ...previous, mercadopago_qr_enabled: event.target.checked } : previous)}
+            onChange={(event) =>
+              setChannelSettings((previous) =>
+                previous ? { ...previous, mercadopago_qr_enabled: event.target.checked } : previous
+              )
+            }
           />
           Habilitar cobro por QR
         </label>
@@ -278,7 +352,11 @@ export function ReinpiaBrandSetupPage() {
           <input
             type="checkbox"
             checked={channelSettings.mercadopago_point_enabled}
-            onChange={(event) => setChannelSettings((previous) => previous ? { ...previous, mercadopago_point_enabled: event.target.checked } : previous)}
+            onChange={(event) =>
+              setChannelSettings((previous) =>
+                previous ? { ...previous, mercadopago_point_enabled: event.target.checked } : previous
+              )
+            }
           />
           Preparar Point (opcional)
         </label>
@@ -286,7 +364,11 @@ export function ReinpiaBrandSetupPage() {
           <input
             type="checkbox"
             checked={channelSettings.mercadopago_active_for_pos_only}
-            onChange={(event) => setChannelSettings((previous) => previous ? { ...previous, mercadopago_active_for_pos_only: event.target.checked } : previous)}
+            onChange={(event) =>
+              setChannelSettings((previous) =>
+                previous ? { ...previous, mercadopago_active_for_pos_only: event.target.checked } : previous
+              )
+            }
           />
           Limitar Mercado Pago al POS/WebApp
         </label>
@@ -294,7 +376,11 @@ export function ReinpiaBrandSetupPage() {
           <input
             type="checkbox"
             checked={channelSettings.mfa_totp_enabled}
-            onChange={(event) => setChannelSettings((previous) => previous ? { ...previous, mfa_totp_enabled: event.target.checked } : previous)}
+            onChange={(event) =>
+              setChannelSettings((previous) =>
+                previous ? { ...previous, mfa_totp_enabled: event.target.checked } : previous
+              )
+            }
           />
           Habilitar MFA TOTP (Google Authenticator)
         </label>

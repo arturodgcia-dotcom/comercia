@@ -374,6 +374,7 @@ export interface ProductReview {
   rating: number;
   title?: string;
   comment?: string;
+  moderation_status: "pending" | "approved" | "rejected" | string;
   is_approved: boolean;
   created_at: string;
 }

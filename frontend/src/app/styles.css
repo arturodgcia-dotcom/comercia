@@ -66,8 +66,47 @@ body {
   color: #fff;
 }
 
+.nav-sections {
+  max-height: calc(100vh - 240px);
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.nav-section-title {
+  margin: 14px 0 8px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #8fb0de;
+}
+
 .content {
   padding: 24px;
+}
+
+.content-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.breadcrumbs {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  font-size: 13px;
+}
+
+.crumb-link {
+  color: #466080;
+  text-decoration: none;
+}
+
+.crumb-link:hover {
+  text-decoration: underline;
 }
 
 .page-header h2 {

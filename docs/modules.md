@@ -13,7 +13,7 @@
 | Memberships | Inicial funcional | CRUD por tenant |
 | Banners dinamicos | Inicial funcional | posicion/target/prioridad/vigencia |
 | Wishlist | Inicial funcional | add/list/delete |
-| Reviews + moderacion | Inicial funcional | submit pending + approve |
+| Reviews + moderacion | Inicial funcional | submit pending + approve + reject + filtro por estatus |
 | Servicios y agenda | Inicial funcional | servicios CRUD + citas self/gift |
 | Distribuidores | Inicial funcional | applications + profiles + employees |
 | Contratos digitales | Inicial funcional | templates + firma textual |
@@ -24,7 +24,7 @@
 | Seed tenant demo REINPIA | Inicial funcional | tenant + branding + banners + 6 servicios de demo |
 | Panel global REINPIA | Inicial funcional | dashboard multi-tenant con KPIs, filtros y detalle por tenant |
 | Reporting / export CSV | Inicial funcional | exportes de ventas, comisiones, tenants, ordenes, comisionistas y plan purchase leads |
-| Reportes tenant e insights marketing | Inicial funcional | reportes por modulo (ventas, productos, loyalty, distribuidores, logistica, servicios) + recomendaciones |
+| Reportes tenant e insights marketing | Inicial funcional | reportes por modulo + recomendaciones accionables |
 | Seguridad por rol global | Inicial funcional | acceso `/reinpia/*` restringido a `reinpia_admin` |
 | Comisionistas comerciales | Inicial funcional | CRUD de agentes, codigo unico, resumen y KPIs |
 | Referidos y leads de plan | Inicial funcional | `SalesReferral` + `PlanPurchaseLead` con trazabilidad por codigo |
@@ -41,12 +41,15 @@
 | Fidelizacion en POS | Base funcional | uso/suma de puntos en cierre de venta |
 | Automation bots/WhatsApp base | Inicial funcional | eventos, canales y templates sin proveedor externo |
 | Centinela seguridad/antifraude | Inicial funcional | eventos, reglas, alertas, bloqueos y panel REINPIA security |
-| Workflow guiado de alta de marca | Base funcional | creación de marca + setup por etapas + publicación controlada |
+| Workflow guiado de alta de marca | Inicial funcional | creacion de marca + setup por etapas + preview + regenerar/rehacer + publicacion controlada |
 | Media assets por etapa | Base funcional | carga de archivos locales por etapa de setup |
-| Configuración NFC/Mercado Pago/MFA | Base funcional | NFC opcional identificacion, Mercado Pago para POS, MFA por marca |
-| Carga masiva catálogo | Base funcional | descarga de plantilla CSV + validación visual inicial |
-| Inventario operativo | Base funcional | vista de stock base por producto y canal |
-| Retroalimentación moderable visible | Base funcional | cola de reseñas pendientes con aprobación |
+| Configuracion NFC/Mercado Pago/MFA | Base funcional | NFC opcional identificacion, Mercado Pago para POS, MFA por marca |
+| Carga masiva catalogo | Inicial funcional | descarga plantilla + validacion de columnas/filas + resumen de errores e importacion |
+| Inventario operativo | Inicial funcional | stock por canal + resumen KPI + movimientos rapidos |
+| Retroalimentacion moderable visible | Inicial funcional | filtros por estado/canal + aprobar/rechazar + cola de moderacion |
+| Storefront publico premium | Inicial funcional | home retail con hero, banners, carruseles y tarjetas mejoradas |
+| Storefront distribuidores separado | Inicial funcional | home comercial B2B con beneficios, volumen y compra recurrente |
+| Dashboard de marca reorganizado | Inicial funcional | modulos agrupados + topbar con volver y breadcrumbs |
 | Bots / agentes | Base arquitectura | pendiente implementacion |
 
 ## Endpoints operacion comercial (nuevos)

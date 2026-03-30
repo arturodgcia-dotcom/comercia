@@ -204,3 +204,14 @@
 - [x] Cache offline basico para shell estatico
 - [x] Documentacion y modulos actualizados
 - [x] Validacion: frontend build OK
+
+## Entregables ejecucion 19 (Experiencia premium por marca y operacion visual)
+- [x] Landing por marca elevada con bloques premium reutilizables en storefront
+- [x] Ecommerce publico mejorado con secciones comerciales, carruseles y tarjetas reforzadas
+- [x] Ecommerce distribuidores separado visual y funcionalmente con enfoque B2B
+- [x] Dashboard de marca reorganizado por modulos con breadcrumbs y boton volver
+- [x] Retroalimentacion visible y moderable con filtros por estado/canal
+- [x] Carga masiva mejorada con plantilla, validaciones y resumen de errores/importacion
+- [x] Inventario visible por canal con movimientos rapidos y lectura por almacen
+- [x] Workflow de marca reforzado con preview por etapa y accion de regenerar/rehacer
+- [x] Validacion: backend compile + alembic upgrade head + frontend build

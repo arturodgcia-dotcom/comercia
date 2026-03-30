@@ -202,12 +202,18 @@ export const api = {
   updateBanner: (token: string, id: number, payload: Record<string, unknown>) =>
     request<Banner>(`/api/v1/banners/${id}`, { method: "PUT", body: JSON.stringify(payload) }, token),
 
-  getProductReviews: (productId: number, includeUnapproved = false) =>
-    request<ProductReview[]>(`/api/v1/reviews/product/${productId}?include_unapproved=${includeUnapproved ? "true" : "false"}`),
+  getProductReviews: (productId: number, includeUnapproved = false, moderationStatus?: string) =>
+    request<ProductReview[]>(
+      `/api/v1/reviews/product/${productId}?include_unapproved=${includeUnapproved ? "true" : "false"}${
+        moderationStatus ? `&moderation_status=${encodeURIComponent(moderationStatus)}` : ""
+      }`
+    ),
   createProductReview: (payload: Record<string, unknown>) =>
     request<ProductReview>("/api/v1/reviews", { method: "POST", body: JSON.stringify(payload) }),
   approveProductReview: (token: string, id: number) =>
     request<ProductReview>(`/api/v1/reviews/${id}/approve`, { method: "PUT" }, token),
+  rejectProductReview: (token: string, id: number) =>
+    request<ProductReview>(`/api/v1/reviews/${id}/reject`, { method: "PUT" }, token),
 
   getWishlist: (tenantId: number, customerId: number) => request<WishlistItem[]>(`/api/v1/wishlist/${tenantId}/${customerId}`),
   addWishlistItem: (payload: Record<string, unknown>) =>

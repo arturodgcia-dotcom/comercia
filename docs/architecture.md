@@ -329,3 +329,44 @@ Se agrego base PWA para experiencia tipo app en celular:
 Notas:
 - NFC sigue siendo solo identificacion/credenciales.
 - modo offline es basico (no cubre flujo completo de negocio/API/pagos).
+
+## 25) Experiencia premium por marca (landing + ecommerce por canal)
+Se elevo la capa visual y funcional por tenant con separacion real de canales:
+
+- Storefront publico premium:
+  - hero comercial, beneficios y bloques configurables
+  - categorias, destacados, promociones, nuevos y mas vendidos
+  - tarjetas de producto y detalle mejorados
+- Storefront distribuidores separado:
+  - home comercial distinta al canal publico
+  - copy B2B, beneficios y reglas de volumen
+  - enfoque en compra recurrente y catalogo mayorista
+
+Esta separacion evita mezclar narrativa y experiencia de cliente final con la operacion comercial de distribuidores.
+
+## 26) Dashboard de marca reorganizado
+El admin tenant se reorganizo por modulos para reducir saturacion:
+- Inicio
+- Comercial
+- Catalogo
+- Clientes
+- Operacion
+- POS
+- Reportes
+- Configuracion
+
+La navegacion incluye topbar con boton volver y breadcrumbs para ubicar al usuario en flujos largos.
+
+## 27) Operacion visible: feedback, carga masiva e inventario
+- Feedback moderable:
+  - filtro por estado (pending/approved/rejected)
+  - filtro por canal (publico/distribuidor)
+  - acciones aprobar/rechazar
+- Carga masiva:
+  - descarga de plantilla CSV
+  - validacion de columnas y filas
+  - resumen de errores e importacion
+- Inventario operativo:
+  - stock por canal (publico/distribuidor/POS)
+  - vista por producto con movimientos rapidos
+  - base de stock por almacen en contexto local

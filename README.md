@@ -248,11 +248,26 @@ npm run dev
   - estado por etapa (aprobado, en revisión, rehacer)
   - assets cargados desde archivo local
   - configuración NFC / Mercado Pago / MFA TOTP por marca
+  - preview por etapa (landing, ecommerce público, ecommerce distribuidores, POS)
+  - acciones de regeneración y rehacer antes de publicar
 
 ### Operación de catálogo y feedback (nuevo)
 - Carga masiva visible: `/admin/catalog/bulk-upload`
 - Inventario operativo base: `/admin/inventory`
 - Retroalimentación moderable: `/admin/feedback`
+- Mejoras actuales:
+  - carga masiva con validación de columnas, errores por fila y resumen de importación
+  - inventario con vista por canal (público, distribuidor, POS) y movimientos rápidos
+  - feedback con filtros por estado/canal y acciones aprobar/rechazar
+
+### Experiencia premium de marca (nuevo)
+- Storefront público renovado con bloques comerciales:
+  - hero, beneficios, categorías, destacados, promociones, nuevos y más vendidos
+- Canal distribuidores separado y orientado a negocio:
+  - beneficios comerciales, reglas de volumen y catálogo mayorista
+- Dashboard de marca reorganizado por módulos con navegación más clara:
+  - Inicio, Comercial, Catálogo, Clientes, Operación, POS, Reportes, Configuración
+  - incluye botón volver + breadcrumbs en la barra superior
 
 ### i18n (actual)
 - base bilingue ES/EN con `i18next + react-i18next`
