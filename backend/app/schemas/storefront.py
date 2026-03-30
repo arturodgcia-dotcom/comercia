@@ -1,8 +1,13 @@
 from datetime import datetime
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
+from app.schemas.category import CategoryRead
 from app.schemas.common import TimestampSchema
+from app.schemas.coupon import CouponRead
+from app.schemas.membership import MembershipPlanRead
+from app.schemas.product import ProductRead
+from app.schemas.service_offering import ServiceOfferingRead
 from app.schemas.tenant_branding import TenantBrandingRead
 
 
@@ -39,3 +44,33 @@ class StorefrontSnapshot(BaseModel):
     branding: TenantBrandingRead | None
     config: StorefrontConfigRead | None
     banners: list[BannerRead]
+
+
+class StorefrontTenantRead(BaseModel):
+    id: int
+    name: str
+    slug: str
+    subdomain: str
+    business_type: str
+    is_active: bool
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class StorefrontPayloadRead(BaseModel):
+    tenant: StorefrontTenantRead
+    branding: TenantBrandingRead | None
+    storefront_config: StorefrontConfigRead | None
+    categories: list[CategoryRead]
+    featured_products: list[ProductRead]
+    recent_products: list[ProductRead]
+    banners: list[BannerRead]
+    coupons: list[CouponRead]
+    average_rating: float | None = None
+
+
+class StorefrontHomeDataRead(StorefrontPayloadRead):
+    promo_products: list[ProductRead]
+    best_sellers: list[ProductRead]
+    services: list[ServiceOfferingRead]
+    membership_plans: list[MembershipPlanRead]

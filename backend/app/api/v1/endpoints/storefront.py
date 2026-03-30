@@ -18,6 +18,7 @@ from app.models.models import (
     Tenant,
     TenantBranding,
 )
+from app.schemas.storefront import StorefrontHomeDataRead, StorefrontPayloadRead
 from app.services.recommendation_service import (
     get_best_sellers_placeholder,
     get_checkout_upsell_products,
@@ -29,13 +30,13 @@ from app.services.recommendation_service import (
 router = APIRouter()
 
 
-@router.get("/{tenant_slug}")
+@router.get("/{tenant_slug}", response_model=StorefrontPayloadRead)
 def get_storefront_by_slug(tenant_slug: str, db: Session = Depends(get_db)) -> dict:
     tenant = _tenant_or_404(db, tenant_slug)
     return _base_storefront_payload(db, tenant)
 
 
-@router.get("/{tenant_slug}/home-data")
+@router.get("/{tenant_slug}/home-data", response_model=StorefrontHomeDataRead)
 def get_storefront_home_data(tenant_slug: str, db: Session = Depends(get_db)) -> dict:
     tenant = _tenant_or_404(db, tenant_slug)
     base = _base_storefront_payload(db, tenant)
