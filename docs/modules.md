@@ -19,6 +19,7 @@
 | Contratos digitales | Inicial funcional | templates + firma textual |
 | Ordenes recurrentes | Base funcional | schedule + items |
 | Logistica | Base funcional | ordenes + eventos + schedule/reschedule/delivered |
+| Servicios logisticos adicionales globales | Inicial funcional | registro por marca para control operativo y facturacion |
 | Landing corporativa ComerCia | Inicial funcional | ruta `/comercia`, enfoque conversion, paquetes y lead form |
 | Landing tenant REINPIA | Inicial funcional | ruta `/store/reinpia`, enfoque servicios y canal distribuidor |
 | Seed tenant demo REINPIA | Inicial funcional | tenant + branding + banners + 6 servicios de demo |
@@ -51,6 +52,8 @@
 | Storefront distribuidores separado | Inicial funcional | home comercial B2B con beneficios, volumen y compra recurrente |
 | Dashboard de marca reorganizado | Inicial funcional | modulos agrupados + topbar con volver y breadcrumbs |
 | Bots / agentes | Base arquitectura | pendiente implementacion |
+| Lia agente comercial | Base funcional | widget conversacional con recomendacion de plan y envio a diagnostico |
+| Visibilidad por rol en admin | Inicial funcional | distributor/public fuera de modulos admin de marca/global |
 
 ## Endpoints operacion comercial (nuevos)
 - `/api/v1/services/*`
@@ -79,6 +82,9 @@
 - `/api/v1/reinpia/reports/leads`
 - `/api/v1/reinpia/reports/marketing-opportunities`
 - `/api/v1/reinpia/reports/commercial-summary`
+- `/api/v1/reinpia/logistics-services`
+- `/api/v1/reinpia/logistics-services/{id}`
+- `/api/v1/reinpia/logistics-services-summary`
 - `/api/v1/comercia/plan-purchase-leads`
 - `/api/v1/comercia/referral/{code}`
 

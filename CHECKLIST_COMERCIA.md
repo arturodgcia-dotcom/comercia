@@ -215,3 +215,13 @@
 - [x] Inventario visible por canal con movimientos rapidos y lectura por almacen
 - [x] Workflow de marca reforzado con preview por etapa y accion de regenerar/rehacer
 - [x] Validacion: backend compile + alembic upgrade head + frontend build
+
+## Entregables ejecucion 20 (Mejora comercial landing + logistica global + roles)
+- [x] Copy tecnico retirado de landing comercial de ComerCia
+- [x] Landing de ComerCia mejorada visualmente (hero, narrativa, beneficios, paquetes, CTA)
+- [x] Lia convertida en agente comercial conversacional con recomendacion de plan
+- [x] Flujo \"Hablar con un asesor\" corregido y conectado a diagnostico
+- [x] Modulo global de servicios logisticos adicionales por marca (backend + frontend)
+- [x] Usuarios demo ampliados por perfil (global, marca, distribuidor, publico)
+- [x] Visibilidad de modulos reforzada por rol (distribuidor/publico fuera de admin)
+- [x] Validacion: backend compile + alembic upgrade head + frontend build

@@ -370,3 +370,43 @@ La navegacion incluye topbar con boton volver y breadcrumbs para ubicar al usuar
   - stock por canal (publico/distribuidor/POS)
   - vista por producto con movimientos rapidos
   - base de stock por almacen en contexto local
+
+## 28) Landing comercial de ComerCia (ajuste de mensaje)
+- Se elimino copy tecnico visible en landing comercial (sin explicaciones internas de arquitectura).
+- Mensaje actual orientado a:
+  - valor comercial
+  - canales de venta
+  - servicios adicionales
+  - cierre por diagnostico
+- Boton "Hablar con un asesor" ahora conduce a flujo claro con Lia + formulario de diagnostico.
+
+## 29) Lia como agente comercial conversacional
+- Lia paso de bloque estatico a widget conversacional inicial:
+  - pregunta objetivo del prospecto
+  - recomienda IMPULSA o ESCALA
+  - orienta dudas de logistica y activacion
+  - lleva a diagnostico comercial para cierre
+- Queda preparada la integracion posterior con IA externa sin romper la UX actual.
+
+## 30) Servicios logisticos adicionales globales
+Se agrego modulo global para registrar servicios logisticos que ComerCia brinda a marcas:
+- tipo: recoleccion, entrega, ambos, resguardo
+- origen/destino, kilometros, costo unitario
+- subtotal, IVA, total, estatus y fecha de servicio
+- resumen de facturacion por marca
+
+Objetivo:
+- control interno operativo
+- trazabilidad comercial
+- base para facturacion a la marca
+
+Superficie:
+- backend: `/api/v1/reinpia/logistics-services*`
+- frontend: `/reinpia/logistics-services`
+
+## 31) Visibilidad por rol (ajuste)
+- Los modulos administrativos se restringen a:
+  - `reinpia_admin`
+  - `tenant_admin`
+  - `tenant_staff`
+- `distributor_user` y `public_customer` ya no acceden a paneles admin de marca o global.

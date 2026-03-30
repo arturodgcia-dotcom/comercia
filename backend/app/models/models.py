@@ -545,6 +545,26 @@ class LogisticsEvent(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
 
 
+class LogisticsAdditionalService(Base, TimestampMixin):
+    __tablename__ = "logistics_additional_services"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id"), nullable=False, index=True)
+    service_type: Mapped[str] = mapped_column(String(30), nullable=False, index=True)  # recoleccion|entrega|ambos|resguardo
+    origin: Mapped[str] = mapped_column(String(255), nullable=False)
+    destination: Mapped[str] = mapped_column(String(255), nullable=False)
+    kilometers: Mapped[Decimal] = mapped_column(Numeric(10, 2), default=0, nullable=False)
+    unit_cost: Mapped[Decimal] = mapped_column(Numeric(12, 2), default=0, nullable=False)
+    subtotal: Mapped[Decimal] = mapped_column(Numeric(12, 2), default=0, nullable=False)
+    iva: Mapped[Decimal] = mapped_column(Numeric(12, 2), default=0, nullable=False)
+    total: Mapped[Decimal] = mapped_column(Numeric(12, 2), default=0, nullable=False)
+    currency: Mapped[str] = mapped_column(String(10), default="MXN", nullable=False)
+    observations: Mapped[str | None] = mapped_column(Text, nullable=True)
+    status: Mapped[str] = mapped_column(String(30), default="pendiente", nullable=False, index=True)
+    service_date: Mapped[datetime] = mapped_column(DateTime, nullable=False, index=True)
+    billing_summary: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+
 class Notification(Base, TimestampMixin):
     __tablename__ = "notifications"
 

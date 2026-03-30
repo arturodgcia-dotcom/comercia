@@ -1,4 +1,5 @@
 from datetime import datetime
+from decimal import Decimal
 
 from fastapi import APIRouter, Depends
 from fastapi.responses import Response
@@ -8,6 +9,7 @@ from sqlalchemy.orm import Session
 from app.api.deps import get_reinpia_admin
 from app.db.session import get_db
 from app.models.models import User
+from app.models.models import LogisticsAdditionalService
 from app.schemas.checkout import OrderRead
 from app.schemas.commission_agents import (
     InternalAlertRead,
@@ -20,6 +22,12 @@ from app.schemas.commission_agents import (
     SalesReferralRead,
 )
 from app.schemas.reinpia import SubscriptionRead
+from app.schemas.logistics_additional import (
+    LogisticsAdditionalServiceCreate,
+    LogisticsAdditionalServiceRead,
+    LogisticsAdditionalServiceSummary,
+    LogisticsAdditionalServiceUpdate,
+)
 from app.services.analytics_service import (
     get_active_vs_inactive_tenants,
     get_appointments_summary,
@@ -66,6 +74,17 @@ from app.services.reporting_service import (
 from app.models.models import PlanPurchaseLead, SalesCommissionAgent, SalesReferral, Tenant
 
 router = APIRouter(dependencies=[Depends(get_reinpia_admin)])
+
+
+def _compute_logistics_totals(payload: LogisticsAdditionalServiceCreate | LogisticsAdditionalServiceUpdate) -> tuple[Decimal | None, Decimal | None]:
+    kilometers = Decimal(str(payload.kilometers)) if payload.kilometers is not None else None
+    unit_cost = Decimal(str(payload.unit_cost)) if payload.unit_cost is not None else None
+    if kilometers is None or unit_cost is None:
+        return None, None
+    subtotal = (kilometers * unit_cost).quantize(Decimal("0.01"))
+    iva = Decimal(str(payload.iva)) if payload.iva is not None else Decimal("0")
+    total = (subtotal + iva).quantize(Decimal("0.01"))
+    return subtotal, total
 
 
 @router.get("/dashboard/kpis")
@@ -206,6 +225,108 @@ def logistics_summary(
     db: Session = Depends(get_db),
 ):
     return get_logistics_summary(db, date_from=date_from, date_to=date_to, tenant_id=tenant_id, status=status)
+
+
+@router.get("/logistics-services", response_model=list[LogisticsAdditionalServiceRead])
+def list_logistics_services(
+    tenant_id: int | None = None,
+    status: str | None = None,
+    date_from: datetime | None = None,
+    date_to: datetime | None = None,
+    db: Session = Depends(get_db),
+):
+    filters = []
+    if tenant_id is not None:
+        filters.append(LogisticsAdditionalService.tenant_id == tenant_id)
+    if status:
+        filters.append(LogisticsAdditionalService.status == status)
+    if date_from:
+        filters.append(LogisticsAdditionalService.service_date >= date_from)
+    if date_to:
+        filters.append(LogisticsAdditionalService.service_date <= date_to)
+    return db.scalars(
+        select(LogisticsAdditionalService).where(*filters).order_by(LogisticsAdditionalService.service_date.desc())
+    ).all()
+
+
+@router.post("/logistics-services", response_model=LogisticsAdditionalServiceRead)
+def create_logistics_service(payload: LogisticsAdditionalServiceCreate, db: Session = Depends(get_db)):
+    subtotal, total = _compute_logistics_totals(payload)
+    row = LogisticsAdditionalService(**payload.model_dump())
+    if subtotal is not None:
+        row.subtotal = subtotal
+    if total is not None:
+        row.total = total
+    db.add(row)
+    db.commit()
+    db.refresh(row)
+    return row
+
+
+@router.get("/logistics-services/{service_id}", response_model=LogisticsAdditionalServiceRead)
+def get_logistics_service(service_id: int, db: Session = Depends(get_db)):
+    row = db.get(LogisticsAdditionalService, service_id)
+    if not row:
+        from fastapi import HTTPException
+
+        raise HTTPException(status_code=404, detail="servicio logistico no encontrado")
+    return row
+
+
+@router.put("/logistics-services/{service_id}", response_model=LogisticsAdditionalServiceRead)
+def update_logistics_service(service_id: int, payload: LogisticsAdditionalServiceUpdate, db: Session = Depends(get_db)):
+    row = db.get(LogisticsAdditionalService, service_id)
+    if not row:
+        from fastapi import HTTPException
+
+        raise HTTPException(status_code=404, detail="servicio logistico no encontrado")
+    for key, value in payload.model_dump(exclude_unset=True).items():
+        setattr(row, key, value)
+    subtotal, total = _compute_logistics_totals(payload)
+    if subtotal is not None:
+        row.subtotal = subtotal
+    if total is not None:
+        row.total = total
+    db.add(row)
+    db.commit()
+    db.refresh(row)
+    return row
+
+
+@router.get("/logistics-services-summary", response_model=LogisticsAdditionalServiceSummary)
+def logistics_services_summary(
+    tenant_id: int | None = None,
+    status: str | None = None,
+    date_from: datetime | None = None,
+    date_to: datetime | None = None,
+    db: Session = Depends(get_db),
+):
+    filters = []
+    if tenant_id is not None:
+        filters.append(LogisticsAdditionalService.tenant_id == tenant_id)
+    if status:
+        filters.append(LogisticsAdditionalService.status == status)
+    if date_from:
+        filters.append(LogisticsAdditionalService.service_date >= date_from)
+    if date_to:
+        filters.append(LogisticsAdditionalService.service_date <= date_to)
+
+    total_services = db.scalar(select(func.count(LogisticsAdditionalService.id)).where(*filters)) or 0
+    subtotal = db.scalar(select(func.sum(LogisticsAdditionalService.subtotal)).where(*filters)) or 0
+    iva = db.scalar(select(func.sum(LogisticsAdditionalService.iva)).where(*filters)) or 0
+    total = db.scalar(select(func.sum(LogisticsAdditionalService.total)).where(*filters)) or 0
+    by_status = db.execute(
+        select(LogisticsAdditionalService.status, func.count(LogisticsAdditionalService.id))
+        .where(*filters)
+        .group_by(LogisticsAdditionalService.status)
+    ).all()
+    return LogisticsAdditionalServiceSummary(
+        total_services=int(total_services),
+        subtotal=subtotal,
+        iva=iva,
+        total=total,
+        by_status=[{"status": item[0], "count": int(item[1] or 0)} for item in by_status],
+    )
 
 
 @router.get("/distributors/summary")

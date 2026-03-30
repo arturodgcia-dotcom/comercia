@@ -19,6 +19,7 @@ import {
   DistributorProfile,
   ExchangeRate,
   InternalAlert,
+  LogisticsAdditionalService,
   LogisticsEvent,
   LogisticsOrder,
   LoginResponse,
@@ -343,6 +344,18 @@ export const api = {
   getReinpiaLogisticsSummary: (token: string, query = "") =>
     request<{ total: number; delivered: number; by_status: Array<{ status: string; count: number }> }>(
       `/api/v1/reinpia/logistics/summary${query ? `?${query}` : ""}`,
+      {},
+      token
+    ),
+  getReinpiaLogisticsServices: (token: string, query = "") =>
+    request<LogisticsAdditionalService[]>(`/api/v1/reinpia/logistics-services${query ? `?${query}` : ""}`, {}, token),
+  createReinpiaLogisticsService: (token: string, payload: Record<string, unknown>) =>
+    request<LogisticsAdditionalService>("/api/v1/reinpia/logistics-services", { method: "POST", body: JSON.stringify(payload) }, token),
+  updateReinpiaLogisticsService: (token: string, id: number, payload: Record<string, unknown>) =>
+    request<LogisticsAdditionalService>(`/api/v1/reinpia/logistics-services/${id}`, { method: "PUT", body: JSON.stringify(payload) }, token),
+  getReinpiaLogisticsServiceSummary: (token: string, query = "") =>
+    request<{ total_services: number; subtotal: number; iva: number; total: number; by_status: Array<{ status: string; count: number }> }>(
+      `/api/v1/reinpia/logistics-services-summary${query ? `?${query}` : ""}`,
       {},
       token
     ),

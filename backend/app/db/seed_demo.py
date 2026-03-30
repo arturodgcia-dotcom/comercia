@@ -23,6 +23,7 @@ from app.models.models import (
     DistributorProfile,
     ExchangeRate,
     LogisticsEvent,
+    LogisticsAdditionalService,
     LogisticsOrder,
     LoyaltyProgram,
     MembershipPlan,
@@ -85,6 +86,7 @@ def seed_demo_data(db: Session) -> None:
     _seed_pos_data(db, tenants)
     _seed_agents_and_leads(db)
     _seed_security_demo_data(db, tenants)
+    _seed_additional_logistics_services(db, tenants)
     _spread_demo_timestamps(db, tenants)
     for tenant in tenants:
         if tenant.is_active:
@@ -219,11 +221,22 @@ def _seed_users(db: Session, tenants: list[Tenant]) -> None:
     tenant_map = {t.slug: t.id for t in tenants}
     users = [
         ("admin@reinpia.demo", "REINPIA Global Admin", "reinpia_admin", None),
+        ("superadmin@comercia.demo", "ComerCia Super Admin", "reinpia_admin", None),
+        ("comercial.global@comercia.demo", "ComerCia Operador Comercial", "reinpia_admin", None),
+        ("logistica.global@comercia.demo", "ComerCia Operador Logistica", "reinpia_admin", None),
+        ("marketing.global@comercia.demo", "ComerCia Operador Marketing", "reinpia_admin", None),
         ("admin@reinpia-tenant.demo", "REINPIA Tenant Admin", "tenant_admin", tenant_map["reinpia"]),
+        ("admin.marca@reinpia.demo", "REINPIA Admin Marca", "tenant_admin", tenant_map["reinpia"]),
+        ("catalogo.marca@reinpia.demo", "REINPIA Operador Catalogo", "tenant_staff", tenant_map["reinpia"]),
+        ("logistica.marca@reinpia.demo", "REINPIA Operador Logistica", "tenant_staff", tenant_map["reinpia"]),
+        ("pos.marca@reinpia.demo", "REINPIA Operador POS", "tenant_staff", tenant_map["reinpia"]),
         ("admin@natura.demo", "NATURA VIDA Admin", "tenant_admin", tenant_map["natura-vida"]),
         ("admin@cafe.demo", "CAFE MONTE ALTO Admin", "tenant_admin", tenant_map["cafe-monte-alto"]),
         ("distributor1@natura.demo", "Distribuidor NATURA", "distributor_user", tenant_map["natura-vida"]),
         ("distributor2@cafe.demo", "Distribuidor CAFE", "distributor_user", tenant_map["cafe-monte-alto"]),
+        ("admin@distribuidor.demo", "Admin Distribuidor Demo", "distributor_user", tenant_map["natura-vida"]),
+        ("vendedor@distribuidor.demo", "Vendedor Distribuidor Demo", "distributor_user", tenant_map["natura-vida"]),
+        ("cliente.final@publico.demo", "Cliente Final Demo", "public_customer", tenant_map["reinpia"]),
     ]
     for email, name, role, tenant_id in users:
         u = db.scalar(select(User).where(User.email == email))
@@ -232,6 +245,72 @@ def _seed_users(db: Session, tenants: list[Tenant]) -> None:
         else:
             u.full_name, u.role, u.tenant_id, u.is_active = name, role, tenant_id, True
             u.preferred_language = "es"
+
+
+def _seed_additional_logistics_services(db: Session, tenants: list[Tenant]) -> None:
+    reinpia = next((item for item in tenants if item.slug == "reinpia"), None)
+    natura = next((item for item in tenants if item.slug == "natura-vida"), None)
+    if not reinpia or not natura:
+        return
+    rows = [
+        {
+            "tenant_id": reinpia.id,
+            "service_type": "ambos",
+            "origin": "CDMX Centro",
+            "destination": "Naucalpan",
+            "kilometers": Decimal("24"),
+            "unit_cost": Decimal("28"),
+            "subtotal": Decimal("672"),
+            "iva": Decimal("107.52"),
+            "total": Decimal("779.52"),
+            "status": "facturable",
+            "service_date": datetime.utcnow() - timedelta(days=3),
+            "billing_summary": "Ruta de entrega semanal para marca REINPIA",
+        },
+        {
+            "tenant_id": natura.id,
+            "service_type": "resguardo",
+            "origin": "Bodega norte",
+            "destination": "Bodega norte",
+            "kilometers": Decimal("0"),
+            "unit_cost": Decimal("1450"),
+            "subtotal": Decimal("1450"),
+            "iva": Decimal("232"),
+            "total": Decimal("1682"),
+            "status": "pendiente_pago",
+            "service_date": datetime.utcnow() - timedelta(days=1),
+            "billing_summary": "Resguardo de inventario promocional por 1 semana",
+        },
+    ]
+    for row in rows:
+        exists = db.scalar(
+            select(LogisticsAdditionalService).where(
+                LogisticsAdditionalService.tenant_id == row["tenant_id"],
+                LogisticsAdditionalService.service_type == row["service_type"],
+                LogisticsAdditionalService.origin == row["origin"],
+                LogisticsAdditionalService.destination == row["destination"],
+            )
+        )
+        if exists:
+            continue
+        db.add(
+            LogisticsAdditionalService(
+                tenant_id=row["tenant_id"],
+                service_type=row["service_type"],
+                origin=row["origin"],
+                destination=row["destination"],
+                kilometers=row["kilometers"],
+                unit_cost=row["unit_cost"],
+                subtotal=row["subtotal"],
+                iva=row["iva"],
+                total=row["total"],
+                currency="MXN",
+                observations="Servicio logistico adicional demo",
+                status=row["status"],
+                service_date=row["service_date"],
+                billing_summary=row["billing_summary"],
+            )
+        )
 
 
 def _seed_agents_and_leads(db: Session) -> None:

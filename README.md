@@ -85,6 +85,7 @@ npm run dev
   - `http://localhost:5173/reinpia/tenants`
   - `http://localhost:5173/reinpia/payments`
   - `http://localhost:5173/reinpia/operations`
+  - `http://localhost:5173/reinpia/logistics-services`
   - `http://localhost:5173/reinpia/reports`
   - `http://localhost:5173/reinpia/reports/overview`
   - `http://localhost:5173/reinpia/reports/growth`
@@ -389,7 +390,8 @@ npm run dev
 ### Landings comerciales (actual)
 - Landing corporativa ComerCia:
   - ruta: `/comercia`
-  - enfoque: captacion de leads, paquetes IMPULSA / ESCALA, widget placeholder "Lia de ComerCia"
+  - enfoque: captacion de leads, paquetes IMPULSA / ESCALA y narrativa 100% comercial (sin copy tecnico interno)
+  - Lia funciona como agente comercial conversacional para recomendar plan y llevar al diagnostico
   - formulario de lead comercial con:
     - `company_name`, `legal_type`, `buyer_name`, `buyer_email`, `buyer_phone`
     - `selected_plan_code`, `referral_code`, `needs_followup`, `needs_appointment`, `notes`
@@ -415,6 +417,18 @@ npm run dev
   - `CTASection`
   - `AgentWidgetPlaceholder`
   - `AudienceSplitSection`
+
+### Servicios logisticos adicionales globales (nuevo)
+- Modulo global para registrar servicios logisticos brindados por ComerCia a marcas:
+  - tipo de servicio (recoleccion, entrega, ambos, resguardo)
+  - costo, IVA, total, estatus y fecha de servicio
+  - resumen para control operativo y facturacion a la marca
+- Endpoints:
+  - `GET /api/v1/reinpia/logistics-services`
+  - `POST /api/v1/reinpia/logistics-services`
+  - `GET /api/v1/reinpia/logistics-services/{id}`
+  - `PUT /api/v1/reinpia/logistics-services/{id}`
+  - `GET /api/v1/reinpia/logistics-services-summary`
 
 ## Frontend agregado (actual)
 
@@ -452,11 +466,22 @@ Scripts disponibles:
 
 ### Usuarios DEMO
 - `admin@reinpia.demo` / `Admin12345!` (`reinpia_admin`)
+- `superadmin@comercia.demo` / `Admin12345!` (`reinpia_admin`)
+- `comercial.global@comercia.demo` / `Admin12345!` (`reinpia_admin`)
+- `logistica.global@comercia.demo` / `Admin12345!` (`reinpia_admin`)
+- `marketing.global@comercia.demo` / `Admin12345!` (`reinpia_admin`)
 - `admin@reinpia-tenant.demo` / `Admin12345!` (`tenant_admin`)
+- `admin.marca@reinpia.demo` / `Admin12345!` (`tenant_admin`)
+- `catalogo.marca@reinpia.demo` / `Admin12345!` (`tenant_staff`)
+- `logistica.marca@reinpia.demo` / `Admin12345!` (`tenant_staff`)
+- `pos.marca@reinpia.demo` / `Admin12345!` (`tenant_staff`)
 - `admin@natura.demo` / `Admin12345!` (`tenant_admin`)
 - `admin@cafe.demo` / `Admin12345!` (`tenant_admin`)
 - `distributor1@natura.demo` / `Admin12345!` (`distributor_user`)
 - `distributor2@cafe.demo` / `Admin12345!` (`distributor_user`)
+- `admin@distribuidor.demo` / `Admin12345!` (`distributor_user`)
+- `vendedor@distribuidor.demo` / `Admin12345!` (`distributor_user`)
+- `cliente.final@publico.demo` / `Admin12345!` (`public_customer`)
 
 ### Datos DEMO generados
 - tenants: `reinpia`, `natura-vida`, `cafe-monte-alto` + tenant inactivo demo

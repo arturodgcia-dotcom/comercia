@@ -12,7 +12,7 @@ export interface User {
   id: number;
   email: string;
   full_name: string;
-  role: "reinpia_admin" | "tenant_admin" | "tenant_staff" | "distributor_user" | string;
+  role: "reinpia_admin" | "tenant_admin" | "tenant_staff" | "distributor_user" | "public_customer" | string;
   is_active: boolean;
   tenant_id: number | null;
   preferred_language?: string;
@@ -353,6 +353,26 @@ export interface LogisticsEvent {
   event_at: string;
   notes?: string | null;
   created_at: string;
+}
+
+export interface LogisticsAdditionalService {
+  id: number;
+  tenant_id: number;
+  service_type: "recoleccion" | "entrega" | "ambos" | "resguardo" | string;
+  origin: string;
+  destination: string;
+  kilometers: number;
+  unit_cost: number;
+  subtotal: number;
+  iva: number;
+  total: number;
+  currency: string;
+  observations?: string | null;
+  status: string;
+  service_date: string;
+  billing_summary?: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface LoyaltyProgram {
