@@ -446,3 +446,14 @@ Se reforzo el arranque local con scripts confiables:
   - crea venv backend si falta
   - instala requirements backend
   - instala dependencias frontend si faltan
+
+## Actualizacion arquitectura: trazabilidad de atencion comercial
+Se incorpora un flujo paralelo al lead de compra de plan para soporte y atencion:
+- Nuevo agregado de dominio: `CustomerContactLead`.
+- Captura desde landing publica con `POST /api/v1/comercia/customer-contact-leads`.
+- Consulta operativa para REINPIA con `GET /api/v1/reinpia/customer-contact-leads`.
+- Al registrar contacto, se crea alerta interna de seguimiento comercial (`followup_required`).
+
+Esto separa claramente:
+- Diagnostico/compra de plan (`PlanPurchaseLead`).
+- Atencion al cliente general (`CustomerContactLead`).

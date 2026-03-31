@@ -15,6 +15,7 @@ type LiaAnswers = {
 type Question = {
   key: keyof LiaAnswers;
   question: string;
+  helper: string;
   options: Array<{ label: string; value: LiaAnswers[keyof LiaAnswers] }>;
 };
 
@@ -33,7 +34,8 @@ type Message = {
 const QUESTIONS: Question[] = [
   {
     key: "business_type",
-    question: "Para empezar, que tipo de negocio tienes?",
+    question: "Para orientarte bien, que tipo de negocio tienes?",
+    helper: "Esto me ayuda a definir si priorizamos servicios, catalogo o mezcla de ambos.",
     options: [
       { label: "Productos", value: "productos" },
       { label: "Servicios", value: "servicios" },
@@ -42,7 +44,8 @@ const QUESTIONS: Question[] = [
   },
   {
     key: "stage",
-    question: "En que etapa esta tu negocio hoy?",
+    question: "En que etapa estas hoy?",
+    helper: "No es lo mismo activar un negocio nuevo que escalar uno con traccion.",
     options: [
       { label: "Iniciando", value: "inicio" },
       { label: "Creciendo", value: "crecimiento" },
@@ -52,6 +55,7 @@ const QUESTIONS: Question[] = [
   {
     key: "sells_online",
     question: "Ya vendes en linea actualmente?",
+    helper: "Si no vendes online, podemos priorizar una salida rapida para conversion.",
     options: [
       { label: "Si", value: "si" },
       { label: "No", value: "no" },
@@ -60,6 +64,7 @@ const QUESTIONS: Question[] = [
   {
     key: "needs_logistics",
     question: "Necesitas apoyo logistico (recoleccion, entrega o resguardo)?",
+    helper: "Podemos integrar operacion fisica cuando no tienes logistica propia.",
     options: [
       { label: "Si", value: "si" },
       { label: "No", value: "no" },
@@ -67,7 +72,8 @@ const QUESTIONS: Question[] = [
   },
   {
     key: "needs_distributors",
-    question: "Quieres activar canal de distribuidores o agencias?",
+    question: "Quieres activar canal de distribuidores o aliados comerciales?",
+    helper: "Esto cambia la arquitectura de precios, volumen y seguimiento comercial.",
     options: [
       { label: "Si", value: "si" },
       { label: "No", value: "no" },
@@ -75,7 +81,8 @@ const QUESTIONS: Question[] = [
   },
   {
     key: "has_landing",
-    question: "Tu marca ya tiene landing comercial funcionando?",
+    question: "Tu marca ya cuenta con landing comercial?",
+    helper: "Si no la tienes, la incluimos como prioridad para captar demanda.",
     options: [
       { label: "Si", value: "si" },
       { label: "No", value: "no" },
@@ -83,7 +90,8 @@ const QUESTIONS: Question[] = [
   },
   {
     key: "needs_pos",
-    question: "Necesitas punto de venta (POS / WebApp) para ventas presenciales?",
+    question: "Necesitas POS / WebApp para ventas presenciales?",
+    helper: "Nos ayuda a definir si trabajamos canal online, fisico o ambos.",
     options: [
       { label: "Si", value: "si" },
       { label: "No", value: "no" },
@@ -92,6 +100,7 @@ const QUESTIONS: Question[] = [
   {
     key: "goal",
     question: "Cual es tu objetivo principal en los proximos 90 dias?",
+    helper: "Con esto cierro una recomendacion accionable para tu caso.",
     options: [
       { label: "Vender mas", value: "vender_mas" },
       { label: "Ordenar operacion", value: "ordenar_operacion" },
@@ -107,33 +116,36 @@ function getRecommendation(answers: LiaAnswers) {
 
   if (answers.stage === "expansion") {
     score += 2;
-    reasons.push("Tu negocio ya esta en fase de expansion.");
+    reasons.push("Tu negocio ya esta en fase de expansion y necesita mayor control operativo.");
   }
   if (answers.needs_distributors === "si") {
     score += 2;
-    reasons.push("Necesitas canal distribuidor con reglas comerciales.");
+    reasons.push("Necesitas un canal distribuidor con reglas y seguimiento comercial.");
   }
   if (answers.needs_pos === "si") {
     score += 1;
-    reasons.push("Requieres operacion omnicanal con POS.");
+    reasons.push("Requieres operacion omnicanal con punto de venta y trazabilidad.");
   }
   if (answers.goal === "automatizar") {
     score += 1;
-    reasons.push("Buscas automatizar seguimiento comercial.");
+    reasons.push("Tu prioridad es automatizar procesos y seguimiento.");
   }
   if (answers.sells_online === "no") {
-    reasons.push("Aun no vendes en linea y necesitas activacion rapida.");
+    reasons.push("Aun no vendes online y conviene activar salida comercial de forma rapida.");
   }
   if (answers.has_landing === "no") {
-    reasons.push("Necesitas una landing comercial para captar demanda.");
+    reasons.push("Necesitas una landing comercial para captar demanda y convertir.");
+  }
+  if (answers.needs_logistics === "si") {
+    reasons.push("Necesitas logistica integrada para operar sin friccion.");
   }
 
   const planCode = score >= 4 ? "COMERCIA_ESCALA" : "COMERCIA_IMPULSA";
   const planLabel = planCode === "COMERCIA_ESCALA" ? "ComerCia ESCALA" : "ComerCia IMPULSA";
   const rationale =
     planCode === "COMERCIA_ESCALA"
-      ? "Te conviene una estructura robusta para crecimiento, automatizacion y expansion de canal."
-      : "Te conviene activar rapido una base comercial ordenada y medible para acelerar resultados.";
+      ? "Te conviene una estructura robusta para crecer con automatizacion, canal distribuidor y control operativo."
+      : "Te conviene activar una base comercial ordenada, medible y lista para escalar sin complejidad inicial.";
 
   return { planCode, planLabel, rationale, reasons };
 }
@@ -143,7 +155,11 @@ export function LiaSalesAssistant({ referralCode }: { referralCode: string }) {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "lia",
-      text: "Hola, soy Lia. Te voy a hacer un diagnostico rapido para recomendarte el plan ideal.",
+      text: "Hola, soy Lia. En 2 minutos te ayudo a elegir la ruta comercial ideal para tu marca.",
+    },
+    {
+      role: "lia",
+      text: QUESTIONS[0].question,
     },
   ]);
   const [stepIndex, setStepIndex] = useState(0);
@@ -158,24 +174,26 @@ export function LiaSalesAssistant({ referralCode }: { referralCode: string }) {
 
   const done = stepIndex >= QUESTIONS.length;
   const recommendation = useMemo(() => (done ? getRecommendation(answers) : null), [answers, done]);
-
   const currentQuestion = QUESTIONS[stepIndex];
 
   const chooseOption = (label: string, value: LiaAnswers[keyof LiaAnswers]) => {
     if (!currentQuestion) return;
     const nextAnswers: LiaAnswers = { ...answers, [currentQuestion.key]: value as never };
     setAnswers(nextAnswers);
-    const nextMessages: Message[] = [
-      ...messages,
-      { role: "user", text: label },
-    ];
-
+    const nextMessages: Message[] = [...messages, { role: "user", text: label }];
     const nextIndex = stepIndex + 1;
+
     if (nextIndex < QUESTIONS.length) {
-      nextMessages.push({ role: "lia", text: QUESTIONS[nextIndex].question });
+      nextMessages.push({
+        role: "lia",
+        text: `${QUESTIONS[nextIndex].question} ${QUESTIONS[nextIndex].helper}`,
+      });
     } else {
       const result = getRecommendation(nextAnswers);
-      nextMessages.push({ role: "lia", text: `Listo. Mi recomendacion para tu negocio es ${result.planLabel}.` });
+      nextMessages.push({
+        role: "lia",
+        text: `Listo. Para tu caso te recomiendo ${result.planLabel}. Te explico por que y como aprovecharlo para cerrar mas ventas.`,
+      });
     }
 
     setMessages(nextMessages);
@@ -187,7 +205,7 @@ export function LiaSalesAssistant({ referralCode }: { referralCode: string }) {
     if (!recommendation) return;
     try {
       setError("");
-      await api.createComerciaPlanPurchaseLead({
+      const payload = {
         company_name: leadForm.company_name,
         legal_type: "constituted_company",
         buyer_name: leadForm.buyer_name,
@@ -199,7 +217,19 @@ export function LiaSalesAssistant({ referralCode }: { referralCode: string }) {
         needs_followup: true,
         needs_appointment: true,
         purchase_status: "pending_contact",
-        notes: `Lead desde Lia | respuestas=${JSON.stringify(answers)}`,
+        notes: `channel=lia_assistant | respuestas=${JSON.stringify(answers)} | recomendacion=${recommendation.planCode}`,
+      };
+      await api.createComerciaPlanPurchaseLead(payload);
+      await api.createComerciaCustomerContactLead({
+        name: leadForm.buyer_name,
+        email: leadForm.buyer_email,
+        phone: leadForm.buyer_phone,
+        company: leadForm.company_name,
+        contact_reason: "planes",
+        message: `Solicitud comercial desde Lia. ${recommendation.rationale}`,
+        channel: "lia_assistant",
+        recommended_plan: recommendation.planCode,
+        status: "new",
       });
       setSubmitted(true);
     } catch (err) {
@@ -214,7 +244,9 @@ export function LiaSalesAssistant({ referralCode }: { referralCode: string }) {
         <div>
           <p className="lia-kicker">Asistente comercial IA</p>
           <h3>Lia by ComerCia</h3>
-          <p>Diagnostico guiado para recomendar plan y acelerar tu cierre comercial.</p>
+          <p>
+            Diagnostico conversacional para recomendar plan, resolver dudas y ayudarte a tomar decision con claridad.
+          </p>
         </div>
       </div>
 
@@ -228,7 +260,7 @@ export function LiaSalesAssistant({ referralCode }: { referralCode: string }) {
 
       {!done && currentQuestion ? (
         <div className="lia-options">
-          <p>{currentQuestion.question}</p>
+          <p>{currentQuestion.helper}</p>
           <div className="lia-chip-list">
             {currentQuestion.options.map((option) => (
               <button key={String(option.value)} type="button" className="lia-chip" onClick={() => chooseOption(option.label, option.value)}>
@@ -248,6 +280,11 @@ export function LiaSalesAssistant({ referralCode }: { referralCode: string }) {
               <li key={reason}>{reason}</li>
             ))}
           </ul>
+          <div className="row-gap lia-cta-row">
+            <a className="button" href="#diagnostico">Continuar diagnostico completo</a>
+            <a className="button button-outline" href="#atencion-cliente">Solicitar asesoria directa</a>
+            <a className="button button-outline" href="#paquetes">Revisar paquetes</a>
+          </div>
 
           <form className="inline-form" onSubmit={submitLead}>
             <input
@@ -274,11 +311,10 @@ export function LiaSalesAssistant({ referralCode }: { referralCode: string }) {
               value={leadForm.buyer_phone}
               onChange={(event) => setLeadForm((prev) => ({ ...prev, buyer_phone: event.target.value }))}
             />
-            <button className="button" type="submit">Quiero este diagnostico</button>
-            <a className="button button-outline" href="#diagnostico">Continuar diagnostico completo</a>
+            <button className="button" type="submit">Solicitar propuesta con Lia</button>
           </form>
 
-          {submitted ? <p>Listo. Tu solicitud fue registrada y un asesor te contactara con esta recomendacion.</p> : null}
+          {submitted ? <p>Listo. Ya registre tu solicitud y el equipo comercial te contactara con un siguiente paso concreto.</p> : null}
           {error ? <p className="error">{error}</p> : null}
         </div>
       ) : null}

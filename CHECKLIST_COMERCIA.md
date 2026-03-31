@@ -297,3 +297,17 @@
 - [x] Lía transformada a asistente conversacional guiado con chips y recomendacion dinamica
 - [x] Captura de lead desde Lía con plan recomendado y contexto para seguimiento
 - [x] Validacion: frontend build + backend compile
+
+## Entregables ejecucion 28 (Trust + conversion landing ComerCia)
+- [x] Banner de cookies con rechazo/aceptacion/preferencias y persistencia local
+- [x] Modal de preferencias de cookies (analitica/marketing) sin bloqueo global persistente
+- [x] Paginas legales publicas: privacidad, cookies y proteccion de datos
+- [x] Rutas legales nuevas: `/legal/privacidad`, `/legal/cookies`, `/legal/proteccion-datos`
+- [x] Seccion video YouTube en landing con `VITE_COMERCIA_YOUTUBE_URL` y placeholder elegante
+- [x] Formulario de atencion al cliente separado del diagnostico comercial
+- [x] Trazabilidad backend de atencion con `CustomerContactLead`
+- [x] Endpoint publico `POST /api/v1/comercia/customer-contact-leads`
+- [x] Endpoint admin `GET /api/v1/reinpia/customer-contact-leads`
+- [x] Lía evolucionada a asistente comercial conversacional y persuasivo con captura de lead
+- [x] Footer landing reforzado con enlaces legales/contacto/atencion
+- [x] Validacion: backend compile + frontend build

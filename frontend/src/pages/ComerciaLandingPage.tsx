@@ -1,6 +1,7 @@
-import { FormEvent, useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+ï»¿import { FormEvent, useEffect, useMemo, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { LanguageSelector } from "../components/LanguageSelector";
+import { CookieConsentBanner } from "../components/marketing/CookieConsentBanner";
 import { LiaSalesAssistant } from "../components/marketing/LiaSalesAssistant";
 import { CTASection } from "../components/marketing/CTASection";
 import { HeroSection } from "../components/marketing/HeroSection";
@@ -8,10 +9,43 @@ import { PackageCard } from "../components/marketing/PackageCard";
 import { SolutionCard } from "../components/marketing/SolutionCard";
 import { api } from "../services/api";
 
+const YOUTUBE_URL = import.meta.env.VITE_COMERCIA_YOUTUBE_URL as string | undefined;
+
+type CustomerServiceForm = {
+  name: string;
+  email: string;
+  phone_whatsapp: string;
+  company: string;
+  contact_reason: string;
+  message: string;
+};
+
+function getYoutubeEmbedUrl(rawUrl?: string): string | null {
+  if (!rawUrl) return null;
+  const trimmed = rawUrl.trim();
+  if (!trimmed) return null;
+  try {
+    const parsed = new URL(trimmed);
+    if (parsed.hostname.includes("youtube.com")) {
+      const id = parsed.searchParams.get("v");
+      if (id) return `https://www.youtube.com/embed/${id}`;
+      if (parsed.pathname.startsWith("/embed/")) return trimmed;
+    }
+    if (parsed.hostname.includes("youtu.be")) {
+      const id = parsed.pathname.replace("/", "");
+      if (id) return `https://www.youtube.com/embed/${id}`;
+    }
+  } catch {
+    return null;
+  }
+  return null;
+}
+
 export function ComerciaLandingPage() {
   const [searchParams] = useSearchParams();
   const refQuery = searchParams.get("ref") ?? "";
   const [refStatus, setRefStatus] = useState<"unknown" | "valid" | "invalid">("unknown");
+
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
   const [leadForm, setLeadForm] = useState({
@@ -26,6 +60,19 @@ export function ComerciaLandingPage() {
     needs_appointment: true,
     notes: "",
   });
+
+  const [serviceForm, setServiceForm] = useState<CustomerServiceForm>({
+    name: "",
+    email: "",
+    phone_whatsapp: "",
+    company: "",
+    contact_reason: "planes",
+    message: "",
+  });
+  const [serviceSubmitted, setServiceSubmitted] = useState(false);
+  const [serviceError, setServiceError] = useState("");
+
+  const youtubeEmbed = useMemo(() => getYoutubeEmbedUrl(YOUTUBE_URL), []);
 
   useEffect(() => {
     if (!refQuery) return;
@@ -60,8 +107,29 @@ export function ComerciaLandingPage() {
     }
   };
 
+  const handleCustomerServiceSubmit = async (event: FormEvent) => {
+    event.preventDefault();
+    try {
+      setServiceError("");
+      await api.createComerciaCustomerContactLead({
+        name: serviceForm.name,
+        email: serviceForm.email,
+        phone: serviceForm.phone_whatsapp,
+        company: serviceForm.company,
+        contact_reason: serviceForm.contact_reason,
+        message: serviceForm.message,
+        channel: "customer_service_form",
+        status: "new",
+      });
+      setServiceSubmitted(true);
+    } catch (err) {
+      setServiceError(err instanceof Error ? err.message : "No fue posible registrar tu solicitud de atencion.");
+    }
+  };
+
   return (
     <main className="marketing-shell">
+      <CookieConsentBanner />
       <div className="row-gap" style={{ justifyContent: "space-between" }}>
         <p className="marketing-eyebrow" style={{ margin: 0 }}>ComerCia by REINPIA</p>
         <LanguageSelector />
@@ -104,7 +172,7 @@ export function ComerciaLandingPage() {
         <h2>ComerCia resuelve tu operacion comercial de punta a punta</h2>
         <div className="card-grid">
           <SolutionCard title="Landing premium" description="Capta prospectos con narrativa comercial clara y CTA de cierre." tag="Captacion" />
-          <SolutionCard title="Ecommerce publico" description="Tienda retail profesional con promociones, reseñas y recompra." tag="Ventas" />
+          <SolutionCard title="Ecommerce publico" description="Tienda retail profesional con promociones, resenas y recompra." tag="Ventas" />
           <SolutionCard title="Ecommerce distribuidores" description="Canal B2B separado con reglas de volumen y beneficios comerciales." tag="Canal" />
           <SolutionCard title="POS / WebApp" description="Vende en punto fisico, registra cliente y conecta fidelizacion." tag="Operacion" />
           <SolutionCard title="Logistica" description="Control de entregas y servicio logistico adicional cuando lo necesites." tag="Fulfillment" />
@@ -112,6 +180,29 @@ export function ComerciaLandingPage() {
           <SolutionCard title="Fidelizacion" description="Puntos, cupones y membresias para elevar ticket y recompra." tag="Crecimiento" />
           <SolutionCard title="Reportes" description="KPIs claros para decidir con datos y escalar con confianza." tag="Inteligencia" />
         </div>
+      </section>
+
+      <section className="marketing-section" id="video-demo">
+        <h2>Video demo de ComerCia</h2>
+        <p>Conoce en minutos como se ve y opera el ecosistema comercial completo en una marca real.</p>
+        {youtubeEmbed ? (
+          <div className="video-embed-wrap">
+            <iframe
+              className="video-embed"
+              src={youtubeEmbed}
+              title="Video demo de ComerCia"
+              loading="lazy"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          </div>
+        ) : (
+          <article className="card marketing-card video-placeholder">
+            <h3>Demo en video disponible para este bloque</h3>
+            <p>Pega la URL de YouTube en la variable `VITE_COMERCIA_YOUTUBE_URL` para mostrar el embed automatico.</p>
+            <a className="button" href="#diagnostico">Solicitar demo guiada</a>
+          </article>
+        )}
       </section>
 
       <section className="marketing-section" id="como-funciona">
@@ -182,6 +273,57 @@ export function ComerciaLandingPage() {
 
       <LiaSalesAssistant referralCode={refQuery} />
 
+      <section id="atencion-cliente" className="store-banner marketing-section">
+        <h2>Atencion al cliente</h2>
+        <p>Si tienes dudas puntuales sobre planes, operacion o soporte, te respondemos con seguimiento directo.</p>
+        <form className="inline-form" onSubmit={handleCustomerServiceSubmit}>
+          <input
+            required
+            placeholder="Nombre"
+            value={serviceForm.name}
+            onChange={(event) => setServiceForm((prev) => ({ ...prev, name: event.target.value }))}
+          />
+          <input
+            required
+            placeholder="Correo"
+            value={serviceForm.email}
+            onChange={(event) => setServiceForm((prev) => ({ ...prev, email: event.target.value }))}
+          />
+          <input
+            required
+            placeholder="Telefono o WhatsApp"
+            value={serviceForm.phone_whatsapp}
+            onChange={(event) => setServiceForm((prev) => ({ ...prev, phone_whatsapp: event.target.value }))}
+          />
+          <input
+            placeholder="Empresa"
+            value={serviceForm.company}
+            onChange={(event) => setServiceForm((prev) => ({ ...prev, company: event.target.value }))}
+          />
+          <select
+            value={serviceForm.contact_reason}
+            onChange={(event) => setServiceForm((prev) => ({ ...prev, contact_reason: event.target.value }))}
+          >
+            <option value="planes">Informacion de planes</option>
+            <option value="soporte">Soporte / dudas</option>
+            <option value="ecommerce">Ecommerce</option>
+            <option value="logistica">Logistica</option>
+            <option value="distribuidores">Distribuidores</option>
+            <option value="pos_pagos">POS / pagos</option>
+            <option value="otro">Otro</option>
+          </select>
+          <textarea
+            required
+            placeholder="Mensaje"
+            value={serviceForm.message}
+            onChange={(event) => setServiceForm((prev) => ({ ...prev, message: event.target.value }))}
+          />
+          <button className="button" type="submit">Enviar solicitud de atencion</button>
+        </form>
+        {serviceError ? <p className="error">{serviceError}</p> : null}
+        {serviceSubmitted ? <p>Tu solicitud fue registrada. Te contactaremos con seguimiento personalizado.</p> : null}
+      </section>
+
       <section id="diagnostico" className="store-banner marketing-section">
         <h2>Cierre comercial: solicita diagnostico personalizado</h2>
         <p>Dejanos tus datos y te regresamos una ruta clara para activar ventas con rapidez y control.</p>
@@ -228,6 +370,33 @@ export function ComerciaLandingPage() {
         secondaryLabel="Hablar con Lia"
         secondaryTo="#lia-comercial"
       />
+
+      <footer className="marketing-footer">
+        <div className="marketing-footer-grid">
+          <div>
+            <h4>ComerCia by REINPIA</h4>
+            <p>Plataforma comercial para marcas que necesitan vender mejor con control operativo.</p>
+          </div>
+          <div>
+            <h5>Legal</h5>
+            <Link to="/legal/privacidad">Politica de privacidad</Link>
+            <Link to="/legal/cookies">Politica de cookies</Link>
+            <Link to="/legal/proteccion-datos">Proteccion de datos</Link>
+          </div>
+          <div>
+            <h5>Atencion</h5>
+            <a href="#atencion-cliente">Atencion al cliente</a>
+            <a href="#diagnostico">Diagnostico comercial</a>
+            <a href="#lia-comercial">Asistente Lia</a>
+          </div>
+          <div>
+            <h5>Redes</h5>
+            <a href="#" onClick={(event) => event.preventDefault()}>LinkedIn (proximamente)</a>
+            <a href="#" onClick={(event) => event.preventDefault()}>YouTube (proximamente)</a>
+            <a href="#" onClick={(event) => event.preventDefault()}>WhatsApp Business (proximamente)</a>
+          </div>
+        </div>
+      </footer>
     </main>
   );
 }

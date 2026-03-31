@@ -559,3 +559,25 @@ Verificacion puntual storefront REINPIA:
 - Operacion: mejoras visuales y de flujo en distribuidores, feedback moderable, citas/servicios y logistica adicional.
 - POS/monedas: etiquetas visibles en espanol para ubicaciones/metodos y preconfiguracion regional base en modulo de monedas.
 
+
+## Landing ComerCia: confianza y conversion
+Se agregaron bloques de confianza/compliance y conversion en `/comercia`:
+- Banner de cookies con opciones: `Rechazar`, `Ver preferencias`, `Aceptar`.
+- Persistencia local:
+  - `comercia_cookie_consent_status`
+  - `comercia_cookie_preferences`
+- Paginas legales publicas:
+  - `/legal/privacidad`
+  - `/legal/cookies`
+  - `/legal/proteccion-datos`
+- Seccion de video demo con embed configurable por `VITE_COMERCIA_YOUTUBE_URL`.
+- Formulario de atencion al cliente separado del diagnostico comercial.
+- Lía reforzada como asistente comercial conversacional con recomendacion de plan y captura de lead.
+- Footer comercial reforzado con enlaces legales, atencion y placeholders de redes.
+
+### Nuevos endpoints de trazabilidad comercial
+- `POST /api/v1/comercia/customer-contact-leads`
+- `GET /api/v1/reinpia/customer-contact-leads`
+
+El endpoint de planes existente se mantiene:
+- `POST /api/v1/comercia/plan-purchase-leads`

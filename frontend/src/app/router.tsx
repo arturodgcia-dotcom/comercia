@@ -10,7 +10,9 @@ import { CategoriesPage } from "../pages/CategoriesPage";
 import { ComerciaLandingPage } from "../pages/ComerciaLandingPage";
 import { CurrencyAdminPage } from "../pages/CurrencyAdminPage";
 import { ContractsAdminPage } from "../pages/ContractsAdminPage";
+import { CookiesPolicyPage } from "../pages/CookiesPolicyPage";
 import { CouponsAdminPage } from "../pages/CouponsAdminPage";
+import { DataProtectionPolicyPage } from "../pages/DataProtectionPolicyPage";
 import { DashboardPage } from "../pages/DashboardPage";
 import { DistributorApplicationsAdminPage } from "../pages/DistributorApplicationsAdminPage";
 import { DistributorLoginPlaceholderPage } from "../pages/DistributorLoginPlaceholderPage";
@@ -30,6 +32,7 @@ import { PosLocationsPage } from "../pages/PosLocationsPage";
 import { PosLoginPlaceholderPage } from "../pages/PosLoginPlaceholderPage";
 import { PosPage } from "../pages/PosPage";
 import { PosSalesPage } from "../pages/PosSalesPage";
+import { PrivacyPolicyPage } from "../pages/PrivacyPolicyPage";
 import { ProductDetailPage } from "../pages/ProductDetailPage";
 import { ProductsPage } from "../pages/ProductsPage";
 import { RecurringOrdersAdminPage } from "../pages/RecurringOrdersAdminPage";
@@ -78,6 +81,9 @@ export function AppRouter() {
   return (
     <Routes>
       <Route path="/comercia" element={<ComerciaLandingPage />} />
+      <Route path="/legal/privacidad" element={<PrivacyPolicyPage />} />
+      <Route path="/legal/cookies" element={<CookiesPolicyPage />} />
+      <Route path="/legal/proteccion-datos" element={<DataProtectionPolicyPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/store/:tenantSlug" element={<StorefrontPage />} />
       <Route path="/store/:tenantSlug/product/:productId" element={<ProductDetailPage />} />

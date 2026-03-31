@@ -828,6 +828,144 @@ textarea {
   margin: 0;
 }
 
+.lia-cta-row {
+  margin-bottom: 8px;
+}
+
+.video-embed-wrap {
+  width: 100%;
+  border: 1px solid #cfe0fb;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 12px 32px rgba(12, 45, 107, 0.14);
+  background: #fff;
+}
+
+.video-embed {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border: none;
+  display: block;
+}
+
+.video-placeholder {
+  display: grid;
+  gap: 10px;
+}
+
+.marketing-footer {
+  border-top: 1px solid #d6e3f8;
+  padding-top: 16px;
+  margin-top: 6px;
+}
+
+.marketing-footer-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+.marketing-footer h4,
+.marketing-footer h5 {
+  margin: 0 0 10px;
+}
+
+.marketing-footer p {
+  margin: 0;
+  color: #445c82;
+}
+
+.marketing-footer a {
+  display: block;
+  text-decoration: none;
+  color: #1a4da8;
+  margin-bottom: 7px;
+}
+
+.marketing-footer a:hover {
+  text-decoration: underline;
+}
+
+.cookie-banner {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  width: min(460px, calc(100vw - 28px));
+  display: grid;
+  gap: 10px;
+  z-index: 20;
+  border-radius: 14px;
+  border: 1px solid #b7cbee;
+  background: #fff;
+  padding: 14px;
+  box-shadow: 0 14px 38px rgba(8, 34, 79, 0.2);
+}
+
+.cookie-banner h4 {
+  margin: 0 0 8px;
+}
+
+.cookie-banner p {
+  margin: 0;
+  color: #445c82;
+}
+
+.cookie-links {
+  display: flex;
+  gap: 8px 14px;
+  flex-wrap: wrap;
+  margin-top: 8px !important;
+}
+
+.cookie-links a {
+  color: #1a4da8;
+}
+
+.cookie-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(8, 18, 36, 0.5);
+  display: grid;
+  place-items: center;
+  z-index: 25;
+  padding: 16px;
+}
+
+.cookie-modal {
+  width: min(520px, 100%);
+  display: grid;
+  gap: 10px;
+  border-radius: 14px;
+  border: 1px solid #c4d6f3;
+  background: #fff;
+  padding: 16px;
+  box-shadow: 0 16px 40px rgba(9, 37, 84, 0.26);
+}
+
+.cookie-modal h3,
+.cookie-modal p {
+  margin: 0;
+}
+
+.legal-shell {
+  padding-top: 40px;
+}
+
+.legal-card {
+  border: 1px solid #d2e1f9;
+  border-radius: 16px;
+  background: #fff;
+  padding: 20px;
+}
+
+.legal-card h1 {
+  margin: 0;
+}
+
+.legal-card h3 {
+  margin: 4px 0 0;
+}
+
 @media (max-width: 900px) {
   .app-shell {
     grid-template-columns: 1fr;
