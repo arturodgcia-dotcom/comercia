@@ -285,3 +285,15 @@
 - [x] REINPIA demo mantenido con workflow, servicios y datos de evaluacion visual/comercial
 - [x] UX general pulida con estados vacios mas utiles y textos clave en espanol
 - [x] Validacion: backend compile + frontend build
+
+## Entregables ejecucion 27 (Landing comercial premium + Lia conversacional IA)
+- [x] Landing de ComerCia rediseñada con narrativa comercial mas fuerte (dolor -> solucion -> proceso -> cierre)
+- [x] Hero y composicion visual premium mejorados con bloques de alto impacto
+- [x] Seccion de problema real del cliente agregada para enfoque de conversion
+- [x] Seccion de solucion ComerCia ampliada por modulos comerciales clave
+- [x] Seccion \"Como funciona\" incorporada con flujo claro en 5 pasos
+- [x] Seccion de paquetes IMPULSA/ESCALA reforzada visualmente
+- [x] Servicios adicionales presentados con enfoque comercial de activacion
+- [x] Lía transformada a asistente conversacional guiado con chips y recomendacion dinamica
+- [x] Captura de lead desde Lía con plan recomendado y contexto para seguimiento
+- [x] Validacion: frontend build + backend compile
