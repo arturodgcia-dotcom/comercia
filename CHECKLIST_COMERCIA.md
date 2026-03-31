@@ -252,3 +252,15 @@
 - [x] Persistencia de progreso real (`current_step`, estados y payload por etapa en `StorefrontConfig.config_json`)
 - [x] Seed demo de marca `Instituto Zaro Latino` con identidad + contenido + landing aprobada
 - [x] Validacion: backend compile + frontend build
+
+## Entregables ejecucion 24 (Revision funcional reportes/operacion demo)
+- [x] Reportes tenant ajustados para `reinpia_admin` sin dependencia de tenant asociado (selector de marca)
+- [x] Dashboards/reportes globales con filtro por marca util (`FilterBar` con opciones de tenants)
+- [x] Productos extendidos con campos Stripe (`stripe_product_id` y `stripe_price_id_*`) + migracion `20260330_13`
+- [x] Carga masiva de catalogo ampliada con columnas Stripe y guia comercial de sincronizacion
+- [x] Vistas distribuidores y solicitudes clarificadas con foco operativo (contacto, autorizacion, empleados)
+- [x] Retroalimentacion moderable mejorada (autor, canal, producto, estado y acciones)
+- [x] Logistica adicional mejorada con detalle de costos y generacion de link de cobro (Stripe/MP base)
+- [x] Citas/servicios rediseñadas con acciones operativas (notificar, confirmar recibido, asistencia, cerrar)
+- [x] POS y modulos relacionados con etiquetas visibles en español (tipos de punto y metodos de pago)
+- [x] Monedas robustecidas (fallback de error y preconfiguracion regional base)

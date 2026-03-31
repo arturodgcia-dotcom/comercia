@@ -19,6 +19,10 @@ export function ProductsPage() {
     price_public: "0",
     price_wholesale: "",
     price_retail: "",
+    stripe_product_id: "",
+    stripe_price_id_public: "",
+    stripe_price_id_retail: "",
+    stripe_price_id_wholesale: "",
     is_featured: false
   });
 
@@ -62,6 +66,10 @@ export function ProductsPage() {
         price_public: Number(form.price_public),
         price_wholesale: form.price_wholesale ? Number(form.price_wholesale) : undefined,
         price_retail: form.price_retail ? Number(form.price_retail) : undefined,
+        stripe_product_id: form.stripe_product_id || undefined,
+        stripe_price_id_public: form.stripe_price_id_public || undefined,
+        stripe_price_id_retail: form.stripe_price_id_retail || undefined,
+        stripe_price_id_wholesale: form.stripe_price_id_wholesale || undefined,
         is_featured: form.is_featured,
         is_active: true
       });
@@ -73,6 +81,10 @@ export function ProductsPage() {
         price_public: "0",
         price_wholesale: "",
         price_retail: "",
+        stripe_product_id: "",
+        stripe_price_id_public: "",
+        stripe_price_id_retail: "",
+        stripe_price_id_wholesale: "",
         is_featured: false
       });
       await loadTenantData(tenantId);
@@ -91,9 +103,21 @@ export function ProductsPage() {
     }
   };
 
+  const syncStripeDemoIds = async (product: Product) => {
+    if (!token || !tenantId) return;
+    const key = `${tenantId}-${product.slug}`.replace(/[^a-zA-Z0-9-]/g, "-");
+    await api.updateProduct(token, product.id, {
+      stripe_product_id: product.stripe_product_id || `prod_local_${key}`,
+      stripe_price_id_public: product.stripe_price_id_public || `price_public_${key}`,
+      stripe_price_id_retail: product.stripe_price_id_retail || `price_retail_${key}`,
+      stripe_price_id_wholesale: product.stripe_price_id_wholesale || `price_wholesale_${key}`,
+    });
+    await loadTenantData(tenantId);
+  };
+
   return (
     <section>
-      <PageHeader title="Products" subtitle="CRUD base de productos por tenant." />
+      <PageHeader title="Productos" subtitle="Catalogo base por marca con sincronizacion Stripe." />
       {error ? <p className="error">{error}</p> : null}
 
       <div className="row-gap">
@@ -107,18 +131,22 @@ export function ProductsPage() {
       </div>
 
       <form className="inline-form" onSubmit={handleCreate}>
-        <input required placeholder="Name" value={form.name} onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))} />
+        <input required placeholder="Nombre" value={form.name} onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))} />
         <input required placeholder="Slug" value={form.slug} onChange={(e) => setForm((p) => ({ ...p, slug: e.target.value }))} />
-        <input placeholder="Description" value={form.description} onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))} />
+        <input placeholder="Descripcion" value={form.description} onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))} />
         <input
           required
           type="number"
-          placeholder="Public"
+          placeholder="Precio publico"
           value={form.price_public}
           onChange={(e) => setForm((p) => ({ ...p, price_public: e.target.value }))}
         />
-        <input placeholder="Wholesale" type="number" value={form.price_wholesale} onChange={(e) => setForm((p) => ({ ...p, price_wholesale: e.target.value }))} />
-        <input placeholder="Retail" type="number" value={form.price_retail} onChange={(e) => setForm((p) => ({ ...p, price_retail: e.target.value }))} />
+        <input placeholder="Precio mayoreo" type="number" value={form.price_wholesale} onChange={(e) => setForm((p) => ({ ...p, price_wholesale: e.target.value }))} />
+        <input placeholder="Precio menudeo" type="number" value={form.price_retail} onChange={(e) => setForm((p) => ({ ...p, price_retail: e.target.value }))} />
+        <input placeholder="Stripe product ID" value={form.stripe_product_id} onChange={(e) => setForm((p) => ({ ...p, stripe_product_id: e.target.value }))} />
+        <input placeholder="Stripe price ID publico" value={form.stripe_price_id_public} onChange={(e) => setForm((p) => ({ ...p, stripe_price_id_public: e.target.value }))} />
+        <input placeholder="Stripe price ID menudeo" value={form.stripe_price_id_retail} onChange={(e) => setForm((p) => ({ ...p, stripe_price_id_retail: e.target.value }))} />
+        <input placeholder="Stripe price ID mayoreo" value={form.stripe_price_id_wholesale} onChange={(e) => setForm((p) => ({ ...p, stripe_price_id_wholesale: e.target.value }))} />
         <select value={form.category_id} onChange={(e) => setForm((p) => ({ ...p, category_id: e.target.value }))}>
           <option value="">Sin categoria</option>
           {categories.map((category) => (
@@ -144,9 +172,10 @@ export function ProductsPage() {
         <thead>
           <tr>
             <th>ID</th>
-            <th>Name</th>
-            <th>Public</th>
-            <th>Featured</th>
+            <th>Producto</th>
+            <th>Precio publico</th>
+            <th>Stripe</th>
+            <th>Acciones</th>
           </tr>
         </thead>
         <tbody>
@@ -156,8 +185,14 @@ export function ProductsPage() {
               <td>{product.name}</td>
               <td>{Number(product.price_public).toLocaleString("es-MX")}</td>
               <td>
+                {product.stripe_product_id ? "Sincronizado" : "Pendiente"}
+              </td>
+              <td className="row-gap">
                 <button className="button button-outline" type="button" onClick={() => toggleFeatured(product)}>
                   {product.is_featured ? "Quitar" : "Marcar"}
+                </button>
+                <button className="button button-outline" type="button" onClick={() => syncStripeDemoIds(product)}>
+                  Sincronizar Stripe
                 </button>
               </td>
             </tr>

@@ -4,6 +4,12 @@ import { PageHeader } from "../components/PageHeader";
 import { api } from "../services/api";
 import { PosLocation } from "../types/domain";
 
+const LOCATION_LABELS: Record<string, string> = {
+  brand_store: "Punto de marca",
+  franchise: "Franquicia",
+  distributor_point: "Punto distribuidor",
+};
+
 export function PosLocationsPage() {
   const { token, user } = useAuth();
   const tenantId = user?.tenant_id ?? 1;
@@ -28,16 +34,16 @@ export function PosLocationsPage() {
         <input placeholder="Nombre" value={form.name} onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))} />
         <input placeholder="Codigo" value={form.code} onChange={(e) => setForm((p) => ({ ...p, code: e.target.value.toUpperCase() }))} />
         <select value={form.location_type} onChange={(e) => setForm((p) => ({ ...p, location_type: e.target.value }))}>
-          <option value="brand_store">brand_store</option>
-          <option value="franchise">franchise</option>
-          <option value="distributor_point">distributor_point</option>
+          <option value="brand_store">Punto de marca</option>
+          <option value="franchise">Franquicia</option>
+          <option value="distributor_point">Punto distribuidor</option>
         </select>
         <input placeholder="Direccion" value={form.address} onChange={(e) => setForm((p) => ({ ...p, address: e.target.value }))} />
         <button className="button" type="submit">Crear ubicacion</button>
       </form>
       <table className="table">
         <thead>
-          <tr><th>ID</th><th>Nombre</th><th>Codigo</th><th>Tipo</th><th>Activo</th></tr>
+          <tr><th>ID</th><th>Nombre</th><th>Codigo</th><th>Tipo</th><th>Direccion</th><th>Activo</th></tr>
         </thead>
         <tbody>
           {locations.map((location) => (
@@ -45,7 +51,8 @@ export function PosLocationsPage() {
               <td>{location.id}</td>
               <td>{location.name}</td>
               <td>{location.code}</td>
-              <td>{location.location_type}</td>
+              <td>{LOCATION_LABELS[location.location_type] ?? location.location_type}</td>
+              <td>{location.address}</td>
               <td>{location.is_active ? "Si" : "No"}</td>
             </tr>
           ))}

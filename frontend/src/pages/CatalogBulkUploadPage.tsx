@@ -18,6 +18,10 @@ const REQUIRED_COLUMNS = [
   "disponible_fisico",
   "minimo_menudeo",
   "minimo_mayoreo",
+  "stripe_product_id",
+  "stripe_price_id_publico",
+  "stripe_price_id_menudeo",
+  "stripe_price_id_mayoreo",
 ];
 
 export function CatalogBulkUploadPage() {
@@ -52,6 +56,10 @@ export function CatalogBulkUploadPage() {
       "si",
       "1",
       "6",
+      "prod_demo_kit001",
+      "price_demo_public_kit001",
+      "price_demo_retail_kit001",
+      "price_demo_wholesale_kit001",
     ].join(",");
     const blob = new Blob([`${header}\n${demoRow}\n`], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
@@ -89,7 +97,7 @@ export function CatalogBulkUploadPage() {
           if (!row.nombre) return { index: index + 1, reason: "Falta nombre" };
           if (!row.sku) return { index: index + 1, reason: "Falta SKU" };
           if (!row.precio_publico || Number.isNaN(Number(row.precio_publico))) {
-            return { index: index + 1, reason: "precio_publico inválido" };
+            return { index: index + 1, reason: "precio_publico invalido" };
           }
           if (!row.visible_publico || !["si", "no"].includes(row.visible_publico.toLowerCase())) {
             return { index: index + 1, reason: "visible_publico debe ser si/no" };
@@ -111,14 +119,14 @@ export function CatalogBulkUploadPage() {
   return (
     <section>
       <PageHeader
-        title="Carga masiva de catálogo"
-        subtitle="Importa productos por layout con validación de columnas, errores y resumen de resultados."
+        title="Carga masiva de catalogo"
+        subtitle="Importa productos por layout, valida columnas y revisa estado de sincronizacion Stripe."
       />
 
       <section className="store-banner">
-        <h3>Guía rápida del layout</h3>
+        <h3>Guia rapida del layout</h3>
         <p>
-          El archivo debe incluir columnas para visibilidad por canal, precios público/menudeo/mayoreo, mínimos y stock.
+          El archivo debe incluir visibilidad por canal, precios publico/menudeo/mayoreo, minimos, stock y columnas Stripe.
         </p>
         <div className="row-gap">
           <button className="button button-outline" type="button" onClick={downloadTemplate}>
@@ -144,20 +152,29 @@ export function CatalogBulkUploadPage() {
 
       <section className="card-grid">
         <article className="card">
-          <h3>Resumen de importación</h3>
+          <h3>Resumen de importacion</h3>
           <p>Total filas: {summary.total}</p>
-          <p>Filas válidas: {summary.ok}</p>
+          <p>Filas validas: {summary.ok}</p>
           <p>Filas con error: {summary.errors}</p>
           <p>Calidad del archivo: {summary.validPercent}%</p>
         </article>
         <article className="card">
           <h3>Campos clave soportados</h3>
           <ul className="marketing-list">
-            <li>Visible público / visible distribuidor</li>
-            <li>Disponible en línea / físico / ambos</li>
-            <li>Precio público, menudeo y mayoreo</li>
-            <li>Mínimo por canal</li>
+            <li>Visible publico / visible distribuidor</li>
+            <li>Disponible en linea / fisico / ambos</li>
+            <li>Precio publico, menudeo y mayoreo</li>
+            <li>Minimo por canal</li>
             <li>Stock general</li>
+            <li>Stripe product ID y price IDs por canal</li>
+          </ul>
+        </article>
+        <article className="card">
+          <h3>Bloque Stripe</h3>
+          <ul className="marketing-list">
+            <li>Crear productos/precios en Stripe desde ComerCia con IDs vacios.</li>
+            <li>Importar IDs existentes desde Stripe para evitar duplicados.</li>
+            <li>Sincronizar price IDs por canal publico, menudeo y mayoreo.</li>
           </ul>
         </article>
       </section>

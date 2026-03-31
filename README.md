@@ -553,3 +553,9 @@ Verificacion puntual storefront REINPIA:
 - [docs/modules.md](docs/modules.md)
 - [CHECKLIST_COMERCIA.md](CHECKLIST_COMERCIA.md)
 
+## Actualizacion ejecucion 24
+- Reportes tenant: `reinpia_admin` ya puede seleccionar marca en lugar de depender de `tenant_id` asociado.
+- Catalogo y carga masiva: productos con campos Stripe (`stripe_product_id`, `stripe_price_id_public`, `stripe_price_id_retail`, `stripe_price_id_wholesale`) y layout CSV extendido para sincronizacion.
+- Operacion: mejoras visuales y de flujo en distribuidores, feedback moderable, citas/servicios y logistica adicional.
+- POS/monedas: etiquetas visibles en espanol para ubicaciones/metodos y preconfiguracion regional base en modulo de monedas.
+

@@ -44,11 +44,11 @@ export function FilterBar({ tenantId, dateFrom, dateTo, status, tenantOptions, t
         />
         <select value={status} onChange={(e) => onChange({ tenantId, dateFrom, dateTo, status: e.target.value })}>
           <option value="">Todos los estados</option>
-          <option value="paid">paid</option>
-          <option value="failed">failed</option>
-          <option value="pending">pending</option>
-          <option value="active">active</option>
-          <option value="inactive">inactive</option>
+          <option value="paid">Pagado</option>
+          <option value="failed">Fallido</option>
+          <option value="pending">Pendiente</option>
+          <option value="active">Activo</option>
+          <option value="inactive">Inactivo</option>
         </select>
       </div>
     </section>

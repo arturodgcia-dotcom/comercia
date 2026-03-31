@@ -13,6 +13,15 @@ interface TicketItem {
   unit_price: number;
 }
 
+const PAYMENT_LABELS: Record<string, string> = {
+  cash: "Efectivo",
+  transfer: "Transferencia",
+  mercado_pago_link: "Mercado Pago Link",
+  mercado_pago_qr: "Mercado Pago QR",
+  mercado_pago_point_placeholder: "Mercado Pago Point (placeholder)",
+  tarjeta_manual_placeholder: "Tarjeta manual (placeholder)",
+};
+
 export function PosPage() {
   const { token, user } = useAuth();
   const tenantId = user?.tenant_id ?? 1;
@@ -252,7 +261,7 @@ export function PosPage() {
             {payments.slice(0, 10).map((payment) => (
               <tr key={payment.id}>
                 <td>{payment.external_reference}</td>
-                <td>{payment.payment_method}</td>
+                <td>{PAYMENT_LABELS[payment.payment_method] ?? payment.payment_method}</td>
                 <td>{payment.status}</td>
                 <td>${Number(payment.amount).toLocaleString("es-MX")}</td>
                 <td>{new Date(payment.created_at).toLocaleString("es-MX")}</td>

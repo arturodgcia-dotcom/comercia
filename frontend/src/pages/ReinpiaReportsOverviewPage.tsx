@@ -27,7 +27,7 @@ export function ReinpiaReportsOverviewPage() {
 
   return (
     <section>
-      <PageHeader title="REINPIA Reports Overview" subtitle="Resumen ejecutivo global de reportes multi-tenant." />
+      <PageHeader title="Resumen ejecutivo de reportes" subtitle="Vista global multi-marca para direccion y seguimiento comercial." />
       <div className="inline-form">
         <PeriodSelector period={period} onChange={setPeriod} />
       </div>
@@ -42,4 +42,3 @@ export function ReinpiaReportsOverviewPage() {
     </section>
   );
 }
-

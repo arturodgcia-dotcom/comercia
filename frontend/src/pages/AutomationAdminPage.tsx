@@ -4,6 +4,14 @@ import { PageHeader } from "../components/PageHeader";
 import { api } from "../services/api";
 import { AutomationEventLog, BotChannelConfig, BotMessageTemplate } from "../types/domain";
 
+const EVENT_LABELS: Record<string, string> = {
+  new_plan_lead: "Nuevo lead comercial",
+  appointment_created: "Cita creada",
+  order_paid: "Pago confirmado",
+  logistics_delivered: "Entrega logistica completada",
+  followup_required: "Seguimiento comercial pendiente",
+};
+
 export function AutomationAdminPage() {
   const { token, user } = useAuth();
   const tenantId = user?.tenant_id ?? undefined;
@@ -44,43 +52,54 @@ export function AutomationAdminPage() {
 
   return (
     <section>
-      <PageHeader title="Automation Base" subtitle="Base de eventos y plantillas para futura integracion bots/WhatsApp." />
+      <PageHeader title="Mensajes automaticos" subtitle="Configura seguimiento comercial, recordatorios y avisos de operacion sin complejidad tecnica." />
+      <section className="card-grid">
+        <article className="card">
+          <h3>Que puedes automatizar</h3>
+          <ul className="marketing-list">
+            <li>Seguimiento comercial a nuevos leads.</li>
+            <li>Confirmaciones de cita con fecha, hora e instrucciones.</li>
+            <li>Notificaciones de pago confirmado o pendiente.</li>
+            <li>Alertas de logistica para entrega y seguimiento.</li>
+          </ul>
+        </article>
+      </section>
       <div className="card-grid">
         <form className="card" onSubmit={saveChannel}>
-          <h3>Canal</h3>
+          <h3>Canal de mensajeria</h3>
           <select value={channelForm.channel} onChange={(e) => setChannelForm((p) => ({ ...p, channel: e.target.value }))}>
-            <option value="whatsapp">whatsapp</option>
-            <option value="webchat">webchat</option>
+            <option value="whatsapp">WhatsApp (base)</option>
+            <option value="webchat">Webchat</option>
           </select>
-          <input value={channelForm.provider_name} onChange={(e) => setChannelForm((p) => ({ ...p, provider_name: e.target.value }))} />
-          <textarea value={channelForm.config_json} onChange={(e) => setChannelForm((p) => ({ ...p, config_json: e.target.value }))} />
+          <input placeholder="Proveedor" value={channelForm.provider_name} onChange={(e) => setChannelForm((p) => ({ ...p, provider_name: e.target.value }))} />
+          <textarea placeholder="Configuracion JSON" value={channelForm.config_json} onChange={(e) => setChannelForm((p) => ({ ...p, config_json: e.target.value }))} />
           <label className="checkbox">
             <input type="checkbox" checked={channelForm.is_enabled} onChange={(e) => setChannelForm((p) => ({ ...p, is_enabled: e.target.checked }))} />
-            Habilitado
+            Canal habilitado
           </label>
           <button className="button" type="submit">Guardar canal</button>
         </form>
         <form className="card" onSubmit={saveTemplate}>
-          <h3>Template</h3>
+          <h3>Mensaje automatico</h3>
           <select value={templateForm.event_type} onChange={(e) => setTemplateForm((p) => ({ ...p, event_type: e.target.value }))}>
-            <option value="new_plan_lead">new_plan_lead</option>
-            <option value="appointment_created">appointment_created</option>
-            <option value="order_paid">order_paid</option>
-            <option value="logistics_delivered">logistics_delivered</option>
-            <option value="followup_required">followup_required</option>
+            <option value="new_plan_lead">Nuevo lead comercial</option>
+            <option value="appointment_created">Confirmacion de cita</option>
+            <option value="order_paid">Notificacion de pago</option>
+            <option value="logistics_delivered">Entrega logistica</option>
+            <option value="followup_required">Recordatorio de seguimiento</option>
           </select>
           <select value={templateForm.channel} onChange={(e) => setTemplateForm((p) => ({ ...p, channel: e.target.value }))}>
-            <option value="whatsapp">whatsapp</option>
-            <option value="webchat">webchat</option>
+            <option value="whatsapp">WhatsApp</option>
+            <option value="webchat">Webchat</option>
           </select>
           <textarea value={templateForm.template_text} onChange={(e) => setTemplateForm((p) => ({ ...p, template_text: e.target.value }))} />
-          <button className="button" type="submit">Guardar template</button>
+          <button className="button" type="submit">Guardar mensaje</button>
         </form>
       </div>
       <section className="card">
         <h3>Canales configurados</h3>
         <table className="table">
-          <thead><tr><th>Canal</th><th>Provider</th><th>Enabled</th></tr></thead>
+          <thead><tr><th>Canal</th><th>Proveedor</th><th>Habilitado</th></tr></thead>
           <tbody>
             {channels.map((channel) => (
               <tr key={channel.id}>
@@ -93,13 +112,13 @@ export function AutomationAdminPage() {
         </table>
       </section>
       <section className="card">
-        <h3>Templates</h3>
+        <h3>Mensajes configurados</h3>
         <table className="table">
           <thead><tr><th>Evento</th><th>Canal</th><th>Texto</th></tr></thead>
           <tbody>
             {templates.map((template) => (
               <tr key={template.id}>
-                <td>{template.event_type}</td>
+                <td>{EVENT_LABELS[template.event_type] ?? template.event_type}</td>
                 <td>{template.channel}</td>
                 <td>{template.template_text}</td>
               </tr>
@@ -108,14 +127,14 @@ export function AutomationAdminPage() {
         </table>
       </section>
       <section className="card">
-        <h3>Eventos internos</h3>
+        <h3>Actividad reciente</h3>
         <table className="table">
           <thead><tr><th>Fecha</th><th>Evento</th><th>Entidad</th></tr></thead>
           <tbody>
             {events.slice(0, 20).map((row) => (
               <tr key={row.id}>
-                <td>{new Date(row.created_at).toLocaleString()}</td>
-                <td>{row.event_type}</td>
+                <td>{new Date(row.created_at).toLocaleString("es-MX")}</td>
+                <td>{EVENT_LABELS[row.event_type] ?? row.event_type}</td>
                 <td>{row.related_entity_type}#{row.related_entity_id}</td>
               </tr>
             ))}

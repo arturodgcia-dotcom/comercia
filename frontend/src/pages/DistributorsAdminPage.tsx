@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useAuth } from "../app/AuthContext";
 import { PageHeader } from "../components/PageHeader";
 import { api } from "../services/api";
@@ -44,6 +44,8 @@ export function DistributorsAdminPage() {
     loadEmployees(selectedProfileId).catch((err) => setError(err instanceof Error ? err.message : "No fue posible cargar empleados"));
   }, [selectedProfileId, token]);
 
+  const selectedProfile = useMemo(() => profiles.find((item) => item.id === selectedProfileId) ?? null, [profiles, selectedProfileId]);
+
   const addEmployee = async (event: FormEvent) => {
     event.preventDefault();
     if (!token || !tenantId || !selectedProfileId) return;
@@ -54,7 +56,7 @@ export function DistributorsAdminPage() {
       email: employeeForm.email,
       phone: employeeForm.phone || undefined,
       role_name: employeeForm.role_name || undefined,
-      is_active: true
+      is_active: true,
     });
     setEmployeeForm({ full_name: "", email: "", phone: "", role_name: "" });
     await loadEmployees(selectedProfileId);
@@ -62,9 +64,11 @@ export function DistributorsAdminPage() {
 
   return (
     <section>
-      <PageHeader title="Distributors" subtitle="Perfiles autorizados por marca y gestion de empleados." />
+      <PageHeader title="Distribuidores" subtitle="Canal comercial por marca con empleados, autorizacion y estatus operativo." />
       {error ? <p className="error">{error}</p> : null}
-      <div className="row-gap">
+
+      <article className="card">
+        <h3>Marca</h3>
         <select value={tenantId ?? ""} onChange={(e) => setTenantId(Number(e.target.value))}>
           {tenants.map((tenant) => (
             <option key={tenant.id} value={tenant.id}>
@@ -72,74 +76,97 @@ export function DistributorsAdminPage() {
             </option>
           ))}
         </select>
-        <select value={selectedProfileId ?? ""} onChange={(e) => setSelectedProfileId(Number(e.target.value))}>
-          {profiles.map((profile) => (
-            <option key={profile.id} value={profile.id}>
-              {profile.business_name}
-            </option>
-          ))}
-        </select>
-      </div>
+      </article>
 
-      <table className="table">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Negocio</th>
-            <th>Contacto</th>
-            <th>Autorizado</th>
-          </tr>
-        </thead>
-        <tbody>
-          {profiles.map((profile) => (
-            <tr key={profile.id}>
-              <td>{profile.id}</td>
-              <td>{profile.business_name}</td>
-              <td>{profile.contact_name}</td>
-              <td>{profile.is_authorized ? "Si" : "No"}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <article className="card">
+        <h3>Distribuidores registrados</h3>
+        <div className="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Distribuidor</th>
+                <th>Contacto</th>
+                <th>Autorizacion</th>
+                <th>Estatus</th>
+              </tr>
+            </thead>
+            <tbody>
+              {profiles.map((profile) => (
+                <tr
+                  key={profile.id}
+                  onClick={() => setSelectedProfileId(profile.id)}
+                  style={{ cursor: "pointer", background: selectedProfileId === profile.id ? "#f4f9ff" : "transparent" }}
+                >
+                  <td>{profile.id}</td>
+                  <td>{profile.business_name}</td>
+                  <td>
+                    {profile.contact_name}
+                    <br />
+                    {profile.email}
+                    <br />
+                    {profile.phone}
+                  </td>
+                  <td>{profile.is_authorized ? "Autorizado" : "Pendiente"}</td>
+                  <td>{profile.can_purchase_wholesale ? "Compra mayorista activa" : "Sin compra mayorista"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </article>
 
-      <form className="inline-form" onSubmit={addEmployee}>
-        <input
-          required
-          placeholder="Nombre"
-          value={employeeForm.full_name}
-          onChange={(e) => setEmployeeForm((p) => ({ ...p, full_name: e.target.value }))}
-        />
-        <input required placeholder="Email" value={employeeForm.email} onChange={(e) => setEmployeeForm((p) => ({ ...p, email: e.target.value }))} />
-        <input placeholder="Telefono" value={employeeForm.phone} onChange={(e) => setEmployeeForm((p) => ({ ...p, phone: e.target.value }))} />
-        <input placeholder="Rol" value={employeeForm.role_name} onChange={(e) => setEmployeeForm((p) => ({ ...p, role_name: e.target.value }))} />
-        <button className="button" type="submit">
-          Agregar empleado
-        </button>
-      </form>
+      {selectedProfile ? (
+        <>
+          <article className="card">
+            <h3>Detalle de distribuidor seleccionado</h3>
+            <p>Negocio: {selectedProfile.business_name}</p>
+            <p>Contacto: {selectedProfile.contact_name} | {selectedProfile.email}</p>
+            <p>Telefono: {selectedProfile.phone ?? "Sin telefono"}</p>
+            <p>Autorizacion: {selectedProfile.is_authorized ? "Activa" : "Pendiente"}</p>
+            <p>Notas entrega: {selectedProfile.delivery_notes ?? "Sin notas"}</p>
+          </article>
 
-      <table className="table">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Nombre</th>
-            <th>Email</th>
-            <th>Rol</th>
-            <th>Activo</th>
-          </tr>
-        </thead>
-        <tbody>
-          {employees.map((employee) => (
-            <tr key={employee.id}>
-              <td>{employee.id}</td>
-              <td>{employee.full_name}</td>
-              <td>{employee.email}</td>
-              <td>{employee.role_name ?? "-"}</td>
-              <td>{employee.is_active ? "Si" : "No"}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+          <article className="card">
+            <h3>Agregar empleado asociado</h3>
+            <form className="inline-form" onSubmit={addEmployee}>
+              <input required placeholder="Nombre" value={employeeForm.full_name} onChange={(e) => setEmployeeForm((p) => ({ ...p, full_name: e.target.value }))} />
+              <input required placeholder="Correo" value={employeeForm.email} onChange={(e) => setEmployeeForm((p) => ({ ...p, email: e.target.value }))} />
+              <input placeholder="Telefono" value={employeeForm.phone} onChange={(e) => setEmployeeForm((p) => ({ ...p, phone: e.target.value }))} />
+              <input placeholder="Puesto" value={employeeForm.role_name} onChange={(e) => setEmployeeForm((p) => ({ ...p, role_name: e.target.value }))} />
+              <button className="button" type="submit">Agregar empleado</button>
+            </form>
+          </article>
+
+          <article className="card">
+            <h3>Empleados del distribuidor</h3>
+            <div className="table-wrapper">
+              <table>
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Nombre</th>
+                    <th>Email</th>
+                    <th>Puesto</th>
+                    <th>Activo</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {employees.map((employee) => (
+                    <tr key={employee.id}>
+                      <td>{employee.id}</td>
+                      <td>{employee.full_name}</td>
+                      <td>{employee.email}</td>
+                      <td>{employee.role_name ?? "-"}</td>
+                      <td>{employee.is_active ? "Si" : "No"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </article>
+        </>
+      ) : null}
     </section>
   );
 }
-

@@ -93,6 +93,10 @@ export interface Product {
   price_public: number;
   price_wholesale?: number;
   price_retail?: number;
+  stripe_product_id?: string | null;
+  stripe_price_id_public?: string | null;
+  stripe_price_id_retail?: string | null;
+  stripe_price_id_wholesale?: string | null;
   is_featured: boolean;
   is_active: boolean;
 }

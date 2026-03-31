@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "../app/AuthContext";
 import { PageHeader } from "../components/PageHeader";
 import { api } from "../services/api";
-import { ProductReview } from "../types/domain";
+import { Product, ProductReview } from "../types/domain";
 
 type FeedbackChannel = "publico" | "distribuidor";
 type FeedbackStatus = "pending" | "approved" | "rejected" | "all";
@@ -16,6 +16,7 @@ function detectChannel(review: ProductReview): FeedbackChannel {
 export function FeedbackModerationPage() {
   const { token, user } = useAuth();
   const [reviews, setReviews] = useState<ProductReview[]>([]);
+  const [productsById, setProductsById] = useState<Record<number, Product>>({});
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
   const [statusFilter, setStatusFilter] = useState<FeedbackStatus>("pending");
@@ -25,12 +26,15 @@ export function FeedbackModerationPage() {
     if (!token || !user?.tenant_id) return;
     api.getProductsByTenant(token, user.tenant_id)
       .then(async (products) => {
-        const allReviews = await Promise.all(
-          products.map((product) => api.getProductReviews(product.id, true))
-        );
+        const productMap = products.reduce<Record<number, Product>>((acc, product) => {
+          acc[product.id] = product;
+          return acc;
+        }, {});
+        setProductsById(productMap);
+        const allReviews = await Promise.all(products.map((product) => api.getProductReviews(product.id, true)));
         setReviews(allReviews.flat());
       })
-      .catch((err) => setError(err instanceof Error ? err.message : "No fue posible cargar retroalimentación."));
+      .catch((err) => setError(err instanceof Error ? err.message : "No fue posible cargar retroalimentacion."));
   }, [token, user?.tenant_id]);
 
   const filteredReviews = useMemo(() => {
@@ -49,7 +53,7 @@ export function FeedbackModerationPage() {
       const updated = await api.approveProductReview(token, reviewId);
       setReviews((previous) => previous.map((item) => (item.id === updated.id ? updated : item)));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "No fue posible aprobar la reseña.");
+      setError(err instanceof Error ? err.message : "No fue posible aprobar la resena.");
     } finally {
       setSaving(false);
     }
@@ -62,7 +66,7 @@ export function FeedbackModerationPage() {
       const updated = await api.rejectProductReview(token, reviewId);
       setReviews((previous) => previous.map((item) => (item.id === updated.id ? updated : item)));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "No fue posible rechazar la reseña.");
+      setError(err instanceof Error ? err.message : "No fue posible rechazar la resena.");
     } finally {
       setSaving(false);
     }
@@ -70,10 +74,7 @@ export function FeedbackModerationPage() {
 
   return (
     <section>
-      <PageHeader
-        title="Retroalimentación moderable"
-        subtitle="Gestiona comentarios públicos y comerciales antes de publicación en tienda."
-      />
+      <PageHeader title="Retroalimentacion moderable" subtitle="Comentarios de publico y distribuidores con control antes de publicar." />
       {error ? <p className="error">{error}</p> : null}
 
       <section className="store-banner">
@@ -91,34 +92,57 @@ export function FeedbackModerationPage() {
             Canal
             <select value={channelFilter} onChange={(event) => setChannelFilter(event.target.value as "all" | FeedbackChannel)}>
               <option value="all">Todos</option>
-              <option value="publico">Público</option>
+              <option value="publico">Publico</option>
               <option value="distribuidor">Distribuidor</option>
             </select>
           </label>
         </div>
       </section>
 
-      <div className="card-grid">
-        {filteredReviews.map((review) => {
-          const channel = detectChannel(review);
-          return (
-            <article key={review.id} className="card">
-              <h3>{review.title ?? "Comentario sin título"}</h3>
-              <p>Calificación: {review.rating}/5</p>
-              <p>Canal: {channel === "publico" ? "Público" : "Distribuidor"}</p>
-              <p>Estado: {review.moderation_status}</p>
-              <p>{review.comment ?? "Sin comentario"}</p>
-              <div className="row-gap">
-                <button className="button" type="button" disabled={saving} onClick={() => approve(review.id)}>
-                  Aprobar
-                </button>
-                <button className="button button-outline" type="button" disabled={saving} onClick={() => reject(review.id)}>
-                  Rechazar
-                </button>
-              </div>
-            </article>
-          );
-        })}
+      <div className="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Quien comento</th>
+              <th>Canal</th>
+              <th>Producto/servicio</th>
+              <th>Comentario</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredReviews.map((review) => {
+              const channel = detectChannel(review);
+              const product = productsById[review.product_id];
+              return (
+                <tr key={review.id}>
+                  <td>{new Date(review.created_at).toLocaleString("es-MX")}</td>
+                  <td>{review.customer_id ? `Cliente #${review.customer_id}` : "Anonimo"}</td>
+                  <td>{channel === "publico" ? "Publico" : "Distribuidor"}</td>
+                  <td>{product?.name ?? `Producto #${review.product_id}`}</td>
+                  <td>
+                    <strong>{review.title ?? "Sin titulo"}</strong>
+                    <br />
+                    {review.comment ?? "Sin comentario"}
+                    <br />
+                    Calificacion: {review.rating}/5
+                  </td>
+                  <td>{review.moderation_status}</td>
+                  <td className="row-gap">
+                    <button className="button button-outline" type="button" disabled={saving} onClick={() => approve(review.id)}>
+                      Aprobar
+                    </button>
+                    <button className="button button-outline" type="button" disabled={saving} onClick={() => reject(review.id)}>
+                      Rechazar
+                    </button>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       </div>
       {filteredReviews.length === 0 ? <p>No hay elementos para los filtros seleccionados.</p> : null}
     </section>

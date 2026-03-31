@@ -21,6 +21,7 @@ from app.models.models import (
     Customer,
     CustomerLoyaltyAccount,
     DistributorApplication,
+    DistributorEmployee,
     DistributorProfile,
     ExchangeRate,
     LogisticsEvent,
@@ -140,14 +141,16 @@ def _seed_reinpia(db: Session, tenant: Tenant) -> None:
     c3 = _customer(db, tenant.id, "Erika Vidal", "erika@empresa.demo")
     _loyalty_account(db, tenant.id, lp.id, c1.id, 480)
     _loyalty_account(db, tenant.id, lp.id, c2.id, 210)
-    _review(db, tenant.id, p1.id, 5, "Excelente implementacion", True)
-    _review(db, tenant.id, p1.id, 4, "Buen arranque", True)
-    _review(db, tenant.id, p2.id, 5, "Automatizacion real", True)
-    _review(db, tenant.id, p2.id, 4, "Servicio recomendado", True)
-    _review(db, tenant.id, p1.id, 3, "Pendiente de aprobacion", False)
-    _review(db, tenant.id, p2.id, 4, "Pendiente de moderacion", False)
+    _review(db, tenant.id, p1.id, 5, "Excelente implementacion", True, "Equipo muy profesional, cumplieron fechas y objetivos.", "approved")
+    _review(db, tenant.id, p1.id, 4, "Buen arranque", True, "El onboarding fue claro para nuestro equipo comercial.", "approved")
+    _review(db, tenant.id, p2.id, 5, "Automatizacion real", True, "La automatizacion redujo tareas manuales en dos semanas.", "approved")
+    _review(db, tenant.id, p2.id, 4, "Servicio recomendado", True, "Lo recomiendo para marcas que ya venden y quieren escalar.", "approved")
+    _review(db, tenant.id, p1.id, 3, "Pendiente de aprobacion", False, "Comentario publico pendiente de publicacion por moderacion.", "pending")
+    _review(db, tenant.id, p2.id, 2, "Caso distribuidor mayoreo", False, "Soy distribuidor y pido ajuste de condiciones mayoreo.", "rejected")
     _dist_profile(db, tenant.id, "Agencia Andromeda", "ali@andromeda.demo", True)
     _dist_profile(db, tenant.id, "Canal Norte Tech", "jorge@norte.demo", True)
+    _dist_employee(db, tenant.id, "ali@andromeda.demo", "Mariana Suarez", "mariana@andromeda.demo", "Ejecutiva comercial")
+    _dist_employee(db, tenant.id, "jorge@norte.demo", "Luis Ortega", "luis@norte.demo", "Vendedor mayorista")
     _dist_app(db, tenant.id, "Canal Delta", "carlos@delta.demo")
     _appointment(db, tenant.id, c1.id, services[0].id, "confirmed")
     _appointment(db, tenant.id, c2.id, services[4].id, "pending")
@@ -257,10 +260,11 @@ def _seed_products_tenant(db: Session, tenant: Tenant, prefix: str) -> None:
     _loyalty_account(db, tenant.id, lp.id, ca.id, 160)
     _wishlist(db, tenant.id, ca.id, products[0].id)
     _wishlist(db, tenant.id, ca.id, products[4].id)
-    _review(db, tenant.id, products[0].id, 5, "Muy buen producto", True)
-    _review(db, tenant.id, products[1].id, 4, "Buena compra", True)
-    _review(db, tenant.id, products[2].id, 3, "Pendiente", False)
+    _review(db, tenant.id, products[0].id, 5, "Muy buen producto", True, "Entrega rapida y calidad consistente.", "approved")
+    _review(db, tenant.id, products[1].id, 4, "Buena compra", True, "Buen margen para canal publico.", "approved")
+    _review(db, tenant.id, products[2].id, 3, "Pendiente", False, "Comentario distribuidor pendiente por validar politicas comerciales.", "pending")
     _dist_profile(db, tenant.id, f"Distribuidor {tenant.slug} Norte", f"dist@{tenant.slug}.demo", True)
+    _dist_employee(db, tenant.id, f"dist@{tenant.slug}.demo", f"Ejecutivo {tenant.slug} Norte", f"ejecutivo@{tenant.slug}.demo", "Ejecutivo de cuenta")
     _dist_app(db, tenant.id, f"Canal {tenant.slug} Centro", f"solicitud@{tenant.slug}.demo")
     op = _order(db, tenant.id, ca.id, f"{tenant.slug}-ord-paid", 1720, 150, 1570, 39.25 if tenant.slug == "natura-vida" else 0, 1530.75 if tenant.slug == "natura-vida" else 1570, "paid", "plan2" if tenant.slug == "natura-vida" else "plan1")
     _order_item(db, op.id, product_id=products[0].id, unit=320, qty=2)
@@ -431,6 +435,11 @@ def _service(db: Session, tenant_id: int, cat_id: int, name: str, slug: str, pri
 def _product(db: Session, tenant_id: int, cat_id: int, name: str, slug: str, price: float, featured: bool) -> Product:
     p = db.scalar(select(Product).where(Product.tenant_id == tenant_id, Product.slug == slug)) or Product(tenant_id=tenant_id, category_id=cat_id, name=name, slug=slug, description=f"{name} demo", price_public=Decimal(str(price)), price_wholesale=Decimal(str(price))*Decimal("0.85"), price_retail=Decimal(str(price))*Decimal("0.93"), is_featured=featured, is_active=True)
     p.category_id, p.name, p.price_public, p.price_wholesale, p.price_retail, p.is_featured, p.is_active = cat_id, name, Decimal(str(price)), (Decimal(str(price))*Decimal("0.85")).quantize(Decimal("0.01")), (Decimal(str(price))*Decimal("0.93")).quantize(Decimal("0.01")), featured, True
+    seed_key = f"{tenant_id}-{slug}".replace("_", "-")
+    p.stripe_product_id = f"prod_demo_{seed_key}"
+    p.stripe_price_id_public = f"price_demo_public_{seed_key}"
+    p.stripe_price_id_retail = f"price_demo_retail_{seed_key}"
+    p.stripe_price_id_wholesale = f"price_demo_wholesale_{seed_key}"
     db.add(p); db.flush(); return p
 
 
@@ -470,9 +479,11 @@ def _loyalty_account(db: Session, tenant_id: int, lp_id: int, cust_id: int, poin
     db.add(a)
 
 
-def _review(db: Session, tenant_id: int, product_id: int, rating: int, title: str, ok: bool) -> None:
-    r = db.scalar(select(ProductReview).where(ProductReview.tenant_id == tenant_id, ProductReview.product_id == product_id, ProductReview.title == title)) or ProductReview(tenant_id=tenant_id, product_id=product_id, customer_id=None, rating=rating, title=title, comment="Review demo", is_approved=ok)
+def _review(db: Session, tenant_id: int, product_id: int, rating: int, title: str, ok: bool, comment: str | None = None, status: str | None = None) -> None:
+    r = db.scalar(select(ProductReview).where(ProductReview.tenant_id == tenant_id, ProductReview.product_id == product_id, ProductReview.title == title)) or ProductReview(tenant_id=tenant_id, product_id=product_id, customer_id=None, rating=rating, title=title, comment=comment or "Review demo", is_approved=ok, moderation_status=status or ("approved" if ok else "pending"))
     r.rating, r.is_approved = rating, ok
+    r.comment = comment or r.comment
+    r.moderation_status = status or ("approved" if ok else "pending")
     db.add(r)
 
 
@@ -480,6 +491,34 @@ def _dist_profile(db: Session, tenant_id: int, business: str, email: str, author
     d = db.scalar(select(DistributorProfile).where(DistributorProfile.tenant_id == tenant_id, DistributorProfile.email == email)) or DistributorProfile(tenant_id=tenant_id, business_name=business, contact_name=business, email=email, phone="+52 555 777 0000", is_authorized=authorized, authorization_date=datetime.utcnow() if authorized else None, can_purchase_wholesale=True, can_sell_as_franchise=False)
     d.business_name, d.is_authorized, d.authorization_date = business, authorized, datetime.utcnow() if authorized else None
     db.add(d)
+
+
+def _dist_employee(db: Session, tenant_id: int, profile_email: str, full_name: str, email: str, role_name: str) -> None:
+    profile = db.scalar(select(DistributorProfile).where(DistributorProfile.tenant_id == tenant_id, DistributorProfile.email == profile_email))
+    if not profile:
+        return
+    employee = db.scalar(
+        select(DistributorEmployee).where(
+            DistributorEmployee.tenant_id == tenant_id,
+            DistributorEmployee.distributor_profile_id == profile.id,
+            DistributorEmployee.email == email,
+        )
+    )
+    if not employee:
+        employee = DistributorEmployee(
+            tenant_id=tenant_id,
+            distributor_profile_id=profile.id,
+            full_name=full_name,
+            email=email,
+            phone="+52 555 123 4567",
+            role_name=role_name,
+            is_active=True,
+        )
+    else:
+        employee.full_name = full_name
+        employee.role_name = role_name
+        employee.is_active = True
+    db.add(employee)
 
 
 def _dist_app(db: Session, tenant_id: int, company: str, email: str) -> None:

@@ -14,6 +14,10 @@ class ProductCreate(BaseModel):
     price_public: Decimal
     price_wholesale: Decimal | None = None
     price_retail: Decimal | None = None
+    stripe_product_id: str | None = None
+    stripe_price_id_public: str | None = None
+    stripe_price_id_retail: str | None = None
+    stripe_price_id_wholesale: str | None = None
     is_featured: bool = False
     is_active: bool = True
 
@@ -26,6 +30,10 @@ class ProductUpdate(BaseModel):
     price_public: Decimal | None = None
     price_wholesale: Decimal | None = None
     price_retail: Decimal | None = None
+    stripe_product_id: str | None = None
+    stripe_price_id_public: str | None = None
+    stripe_price_id_retail: str | None = None
+    stripe_price_id_wholesale: str | None = None
     is_featured: bool | None = None
     is_active: bool | None = None
 
@@ -40,5 +48,9 @@ class ProductRead(TimestampSchema):
     price_public: Decimal
     price_wholesale: Decimal | None
     price_retail: Decimal | None
+    stripe_product_id: str | None
+    stripe_price_id_public: str | None
+    stripe_price_id_retail: str | None
+    stripe_price_id_wholesale: str | None
     is_featured: bool
     is_active: bool

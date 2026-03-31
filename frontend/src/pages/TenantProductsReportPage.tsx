@@ -66,19 +66,19 @@ export function TenantProductsReportPage() {
         <PeriodSelector period={period} onChange={setPeriod} />
         <ExportCsvButton onClick={exportCsv} />
       </div>
-      <ReportSection title="Top selling">
+      <ReportSection title="Mas vendidos">
         <RankingTable
           headers={["Producto", "Unidades", "Revenue"]}
           rows={topRows.map((row) => [String(row.name ?? "-"), Number(row.units ?? 0), `$${Number(row.revenue ?? 0).toLocaleString("es-MX")}`])}
         />
       </ReportSection>
-      <ReportSection title="Low selling">
+      <ReportSection title="Menor rotacion">
         <RankingTable
           headers={["Producto", "Unidades", "Revenue"]}
           rows={lowRows.map((row) => [String(row.name ?? "-"), Number(row.units ?? 0), `$${Number(row.revenue ?? 0).toLocaleString("es-MX")}`])}
         />
       </ReportSection>
-      <ReportSection title="Unsold">
+      <ReportSection title="Sin ventas">
         <RankingTable
           headers={["Producto", "Precio"]}
           rows={unsoldRows.map((row) => [String(row.name ?? "-"), `$${Number(row.price_public ?? 0).toLocaleString("es-MX")}`])}

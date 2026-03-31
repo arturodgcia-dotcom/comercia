@@ -69,14 +69,14 @@ export function ReinpiaDashboardPage() {
       />
 
       <div className="card-grid">
-        <KpiCard label="Total tenants" value={kpis.kpis.total_tenants} />
+        <KpiCard label="Total marcas" value={kpis.kpis.total_tenants} />
         <KpiCard label="Activos" value={kpis.kpis.tenants_active} />
         <KpiCard label="Inactivos" value={kpis.kpis.tenants_inactive} />
         <KpiCard label="Revenue" value={`$${kpis.kpis.total_revenue.toLocaleString("es-MX")}`} />
         <KpiCard label="Comisiones" value={`$${kpis.kpis.total_commissions.toLocaleString("es-MX")}`} />
         <KpiCard label="Neto" value={`$${kpis.kpis.total_net_amount.toLocaleString("es-MX")}`} />
-        <KpiCard label="Paid orders" value={kpis.kpis.total_paid_orders} />
-        <KpiCard label="Failed orders" value={kpis.kpis.total_failed_orders} />
+        <KpiCard label="Ordenes pagadas" value={kpis.kpis.total_paid_orders} />
+        <KpiCard label="Ordenes fallidas" value={kpis.kpis.total_failed_orders} />
         <KpiCard label="AOV" value={`$${kpis.kpis.average_order_value.toLocaleString("es-MX")}`} />
         <KpiCard label="Solicitudes distribuidor" value={kpis.kpis.total_distributor_applications} />
         <KpiCard label="Distribuidores aprobados" value={kpis.kpis.total_approved_distributors} />
@@ -97,9 +97,9 @@ export function ReinpiaDashboardPage() {
 
       {timeseries.length > 0 ? (
         <>
-          <SimpleChartSection title="Revenue over time" series={timeseries.map((point) => ({ label: point.day, value: point.revenue }))} />
-          <SimpleChartSection title="Commissions over time" series={timeseries.map((point) => ({ label: point.day, value: point.commissions }))} />
-          <SimpleChartSection title="Paid vs Failed" series={[{ label: "Paid", value: kpis.kpis.total_paid_orders }, { label: "Failed", value: kpis.kpis.total_failed_orders }]} />
+          <SimpleChartSection title="Ingresos en el tiempo" series={timeseries.map((point) => ({ label: point.day, value: point.revenue }))} />
+          <SimpleChartSection title="Comisiones en el tiempo" series={timeseries.map((point) => ({ label: point.day, value: point.commissions }))} />
+          <SimpleChartSection title="Pagadas vs fallidas" series={[{ label: "Pagadas", value: kpis.kpis.total_paid_orders }, { label: "Fallidas", value: kpis.kpis.total_failed_orders }]} />
         </>
       ) : null}
 
@@ -135,7 +135,7 @@ export function ReinpiaDashboardPage() {
       <section>
         <h3>Distribucion por tipo de negocio</h3>
         <SummaryTable
-          headers={["Business type", "Cantidad"]}
+          headers={["Tipo de negocio", "Cantidad"]}
           rows={kpis.business_type_distribution.map((item) => [item.business_type, item.count])}
         />
       </section>

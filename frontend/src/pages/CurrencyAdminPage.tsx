@@ -22,6 +22,25 @@ export function CurrencyAdminPage() {
       .catch((err) => setError(err instanceof Error ? err.message : "No fue posible cargar configuracion monetaria"));
   }, [token, tenantId]);
 
+  const applyRegionalPreset = (preset: "espana" | "europa" | "latam" | "brasil") => {
+    const next = {
+      espana: { base: "EUR", enabled: ["EUR"], localeHint: "es" },
+      europa: { base: "EUR", enabled: ["EUR", "USD"], localeHint: "en" },
+      latam: { base: "USD", enabled: ["USD", "MXN"], localeHint: "es" },
+      brasil: { base: "USD", enabled: ["USD", "BRL"], localeHint: "pt" },
+    }[preset];
+    setSettings((previous) =>
+      previous
+        ? {
+            ...previous,
+            base_currency: next.base,
+            enabled_currencies: next.enabled,
+            display_mode: "converted_display",
+          }
+        : previous
+    );
+  };
+
   const previewRate = useMemo(
     () =>
       rates.find(
@@ -32,7 +51,7 @@ export function CurrencyAdminPage() {
     [rates, settings]
   );
 
-  if (!settings) return <p>Cargando configuracion de moneda...</p>;
+  if (!settings) return <p>{error ? `Error: ${error}` : "Cargando configuracion de moneda..."}</p>;
 
   const handleSettingsSubmit = async (event: FormEvent) => {
     event.preventDefault();
@@ -135,6 +154,17 @@ export function CurrencyAdminPage() {
           Guardar configuracion de moneda
         </button>
       </form>
+
+      <section className="card">
+        <h3>Preconfiguracion regional</h3>
+        <div className="row-gap">
+          <button className="button button-outline" type="button" onClick={() => applyRegionalPreset("espana")}>Espana (es + EUR)</button>
+          <button className="button button-outline" type="button" onClick={() => applyRegionalPreset("europa")}>Europa general (en + EUR)</button>
+          <button className="button button-outline" type="button" onClick={() => applyRegionalPreset("latam")}>Latam (es + USD)</button>
+          <button className="button button-outline" type="button" onClick={() => applyRegionalPreset("brasil")}>Brasil (pt + USD)</button>
+        </div>
+        <p className="muted">Estas reglas quedan listas para automatizacion futura por region.</p>
+      </section>
 
       <form className="inline-form" onSubmit={handleManualRate}>
         <select value={manualRate.base_currency} onChange={(e) => setManualRate((p) => ({ ...p, base_currency: e.target.value }))}>

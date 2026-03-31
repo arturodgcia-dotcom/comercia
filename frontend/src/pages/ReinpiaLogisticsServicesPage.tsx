@@ -29,6 +29,7 @@ export function ReinpiaLogisticsServicesPage() {
   const [saving, setSaving] = useState(false);
   const [selected, setSelected] = useState<LogisticsAdditionalService | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [paymentLinkMessage, setPaymentLinkMessage] = useState("");
   const [filters, setFilters] = useState({
     tenant_id: 0,
     status: "",
@@ -121,6 +122,23 @@ export function ReinpiaLogisticsServicesPage() {
     });
   };
 
+  const createCollectionLink = async (row: LogisticsAdditionalService, provider: "stripe" | "mercadopago") => {
+    const tenant = tenants.find((item) => item.id === row.tenant_id);
+    const base = provider === "stripe" ? "https://buy.stripe.com/" : "https://www.mercadopago.com.mx/checkout/v1/redirect";
+    const reference = encodeURIComponent(`logistics-${row.id}-${tenant?.slug ?? row.tenant_id}`);
+    const amount = Number(row.total).toFixed(2);
+    const link =
+      provider === "stripe"
+        ? `${base}${reference}?amount=${amount}&currency=${row.currency}`
+        : `${base}?external_reference=${reference}&amount=${amount}&description=Servicio%20logistico`;
+    try {
+      await navigator.clipboard.writeText(link);
+      setPaymentLinkMessage(`Link de cobro (${provider}) copiado para servicio #${row.id}.`);
+    } catch {
+      setPaymentLinkMessage(`Link de cobro (${provider}): ${link}`);
+    }
+  };
+
   return (
     <section>
       <PageHeader
@@ -128,6 +146,7 @@ export function ReinpiaLogisticsServicesPage() {
         subtitle="Controla servicios de recoleccion, entrega y resguardo brindados a marcas para seguimiento operativo y facturacion."
       />
       {error ? <p className="error">{error}</p> : null}
+      {paymentLinkMessage ? <p>{paymentLinkMessage}</p> : null}
 
       <div className="card-grid">
         <article className="card">
@@ -231,6 +250,10 @@ export function ReinpiaLogisticsServicesPage() {
                 <th>Marca</th>
                 <th>Tipo</th>
                 <th>Ruta</th>
+                <th>Kilometros</th>
+                <th>Costo unitario</th>
+                <th>Subtotal</th>
+                <th>IVA</th>
                 <th>Estatus</th>
                 <th>Total</th>
                 <th>Accion</th>
@@ -245,9 +268,13 @@ export function ReinpiaLogisticsServicesPage() {
                     <td>{tenant?.name ?? row.tenant_id}</td>
                     <td>{row.service_type}</td>
                     <td>{row.origin} {"->"} {row.destination}</td>
+                    <td>{Number(row.kilometers).toLocaleString("es-MX")}</td>
+                    <td>{row.currency} {Number(row.unit_cost).toLocaleString("es-MX")}</td>
+                    <td>{row.currency} {Number(row.subtotal).toLocaleString("es-MX")}</td>
+                    <td>{row.currency} {Number(row.iva).toLocaleString("es-MX")}</td>
                     <td>{row.status}</td>
                     <td>{row.currency} {Number(row.total).toLocaleString("es-MX")}</td>
-                    <td>
+                    <td className="row-gap">
                       <button
                         type="button"
                         className="button button-outline"
@@ -257,6 +284,12 @@ export function ReinpiaLogisticsServicesPage() {
                         }}
                       >
                         Editar
+                      </button>
+                      <button type="button" className="button button-outline" onClick={() => createCollectionLink(row, "stripe")}>
+                        Cobro Stripe Link
+                      </button>
+                      <button type="button" className="button button-outline" onClick={() => createCollectionLink(row, "mercadopago")}>
+                        Cobro Mercado Pago
                       </button>
                     </td>
                   </tr>

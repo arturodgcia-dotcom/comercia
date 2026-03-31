@@ -70,7 +70,7 @@ export function ReinpiaOperationsPage() {
       <section>
         <h3>Citas por estado</h3>
         <SummaryTable
-          headers={["Status", "Count"]}
+          headers={["Estado", "Cantidad"]}
           rows={(appointments?.by_status ?? []).map((item) => [item.status, item.count])}
         />
       </section>
@@ -78,7 +78,7 @@ export function ReinpiaOperationsPage() {
       <section>
         <h3>Logistica por estado</h3>
         <SummaryTable
-          headers={["Status", "Count"]}
+          headers={["Estado", "Cantidad"]}
           rows={(logistics?.by_status ?? []).map((item) => [item.status, item.count])}
         />
       </section>

@@ -99,10 +99,10 @@ export function ReinpiaPaymentsPage() {
       {sales?.pos?.by_method?.length ? (
         <section className="card">
           <h3>POS por metodo de pago</h3>
-          <SummaryTable
-            headers={["Metodo", "Ventas", "Monto"]}
-            rows={sales.pos.by_method.map((row) => [row.payment_method, row.sales, `$${row.amount.toLocaleString("es-MX")}`])}
-          />
+        <SummaryTable
+          headers={["Metodo", "Ventas", "Monto"]}
+          rows={sales.pos.by_method.map((row) => [row.payment_method, row.sales, `$${row.amount.toLocaleString("es-MX")}`])}
+        />
         </section>
       ) : null}
 
@@ -114,7 +114,7 @@ export function ReinpiaPaymentsPage() {
       <section>
         <h3>Ordenes globales</h3>
         <SummaryTable
-          headers={["Order", "Tenant", "Status", "Total", "Comision", "Neto", "Fecha"]}
+          headers={["Orden", "Marca", "Estado", "Total", "Comision", "Neto", "Fecha"]}
           rows={orders.map((order) => [
             order.id,
             order.tenant_id,

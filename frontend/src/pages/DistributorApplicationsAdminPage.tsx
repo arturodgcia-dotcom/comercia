@@ -43,9 +43,10 @@ export function DistributorApplicationsAdminPage() {
 
   return (
     <section>
-      <PageHeader title="Distributor Applications" subtitle="Solicitud de distribuidores por marca con aprobacion/rechazo." />
+      <PageHeader title="Solicitudes de distribuidores" subtitle="Revision comercial por marca con aprobacion y rechazo." />
       {error ? <p className="error">{error}</p> : null}
-      <div className="row-gap">
+      <article className="card">
+        <h3>Marca</h3>
         <select value={tenantId ?? ""} onChange={(e) => setTenantId(Number(e.target.value))}>
           {tenants.map((tenant) => (
             <option key={tenant.id} value={tenant.id}>
@@ -53,41 +54,46 @@ export function DistributorApplicationsAdminPage() {
             </option>
           ))}
         </select>
-      </div>
-      <table className="table">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Empresa</th>
-            <th>Contacto</th>
-            <th>Estado</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          {items.map((item) => (
-            <tr key={item.id}>
-              <td>{item.id}</td>
-              <td>{item.company_name}</td>
-              <td>
-                {item.contact_name}
-                <br />
-                {item.email}
-              </td>
-              <td>{item.status}</td>
-              <td className="row-gap">
-                <button className="button button-outline" type="button" onClick={() => approve(item.id)} disabled={item.status !== "pending"}>
-                  Aprobar
-                </button>
-                <button className="button button-outline" type="button" onClick={() => reject(item.id)} disabled={item.status !== "pending"}>
-                  Rechazar
-                </button>
-              </td>
+      </article>
+      <div className="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Empresa</th>
+              <th>Contacto</th>
+              <th>Ubicacion</th>
+              <th>Estado</th>
+              <th>Acciones</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {items.map((item) => (
+              <tr key={item.id}>
+                <td>{item.id}</td>
+                <td>{item.company_name}</td>
+                <td>
+                  {item.contact_name}
+                  <br />
+                  {item.email}
+                  <br />
+                  {item.phone}
+                </td>
+                <td>{[item.city, item.state, item.country].filter(Boolean).join(", ") || "Sin dato"}</td>
+                <td>{item.status}</td>
+                <td className="row-gap">
+                  <button className="button button-outline" type="button" onClick={() => approve(item.id)} disabled={item.status !== "pending"}>
+                    Aprobar
+                  </button>
+                  <button className="button button-outline" type="button" onClick={() => reject(item.id)} disabled={item.status !== "pending"}>
+                    Rechazar
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </section>
   );
 }
-

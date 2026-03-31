@@ -4,7 +4,14 @@ import { PageHeader } from "../components/PageHeader";
 import { api } from "../services/api";
 import { Appointment, Tenant } from "../types/domain";
 
-const STATUS_OPTIONS = ["pending", "confirmed", "completed", "cancelled"];
+const STATUS_OPTIONS = [
+  { value: "pending", label: "pendiente" },
+  { value: "notified", label: "notificada" },
+  { value: "confirmed", label: "confirmada" },
+  { value: "attended", label: "asistio" },
+  { value: "completed", label: "cerrada" },
+  { value: "cancelled", label: "cancelada" },
+];
 
 export function AppointmentsAdminPage() {
   const { token } = useAuth();
@@ -37,17 +44,30 @@ export function AppointmentsAdminPage() {
     await load(tenantId);
   };
 
+  const markNotified = async (item: Appointment) => {
+    await updateStatus(item, "notified");
+  };
+
   const confirmReceived = async (item: Appointment) => {
     if (!token || !tenantId) return;
     await api.confirmAppointmentReceived(token, item.id);
     await load(tenantId);
   };
 
+  const markAttended = async (item: Appointment) => {
+    await updateStatus(item, "attended");
+  };
+
+  const closeAppointment = async (item: Appointment) => {
+    await updateStatus(item, "completed");
+  };
+
   return (
     <section>
-      <PageHeader title="Appointments" subtitle="Citas por tenant, estado y confirmacion de instrucciones." />
+      <PageHeader title="Citas y servicios" subtitle="Seguimiento de solicitudes, regalos y confirmaciones operativas." />
       {error ? <p className="error">{error}</p> : null}
-      <div className="row-gap">
+      <article className="card">
+        <h3>Marca</h3>
         <select value={tenantId ?? ""} onChange={(e) => setTenantId(Number(e.target.value))}>
           {tenants.map((tenant) => (
             <option key={tenant.id} value={tenant.id}>
@@ -55,43 +75,58 @@ export function AppointmentsAdminPage() {
             </option>
           ))}
         </select>
-      </div>
-      <table className="table">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Fecha</th>
-            <th>Estado</th>
-            <th>Regalo</th>
-            <th>Instrucciones</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          {appointments.map((item) => (
-            <tr key={item.id}>
-              <td>{item.id}</td>
-              <td>{item.scheduled_for ? new Date(item.scheduled_for).toLocaleString("es-MX") : "-"}</td>
-              <td>{item.status}</td>
-              <td>{item.is_gift ? "Si" : "No"}</td>
-              <td>{item.instructions_sent_at ? "Enviadas" : "Pendiente"}</td>
-              <td className="row-gap">
-                <select value={item.status} onChange={(e) => updateStatus(item, e.target.value)}>
-                  {STATUS_OPTIONS.map((option) => (
-                    <option key={option} value={option}>
-                      {option}
-                    </option>
-                  ))}
-                </select>
-                <button className="button button-outline" type="button" onClick={() => confirmReceived(item)}>
-                  Confirmar recibido
-                </button>
-              </td>
+      </article>
+
+      <div className="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Fecha y hora</th>
+              <th>Solicitante</th>
+              <th>Regalo</th>
+              <th>Mensaje</th>
+              <th>Instrucciones</th>
+              <th>Estado</th>
+              <th>Acciones</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {appointments.map((item) => (
+              <tr key={item.id}>
+                <td>{item.scheduled_for ? new Date(item.scheduled_for).toLocaleString("es-MX") : "Sin fecha"}</td>
+                <td>
+                  Cliente #{item.customer_id ?? "N/A"}
+                  <br />
+                  {item.gift_sender_name ? `Remitente: ${item.gift_sender_name}` : "Compra para si mismo"}
+                  <br />
+                  {item.gift_recipient_name ? `Destinatario: ${item.gift_recipient_name}` : "Sin destinatario"}
+                </td>
+                <td>
+                  {item.is_gift ? "Si" : "No"}
+                  {item.gift_is_anonymous ? " (anonimo)" : ""}
+                </td>
+                <td>{item.gift_message ?? "Sin mensaje"}</td>
+                <td>{item.instructions_sent_at ? "Enviadas" : "Pendiente"}</td>
+                <td>
+                  <select value={item.status} onChange={(e) => updateStatus(item, e.target.value)}>
+                    {STATUS_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </td>
+                <td className="row-gap">
+                  <button className="button button-outline" type="button" onClick={() => markNotified(item)}>Marcar notificada</button>
+                  <button className="button button-outline" type="button" onClick={() => confirmReceived(item)}>Confirmar recibido</button>
+                  <button className="button button-outline" type="button" onClick={() => markAttended(item)}>Confirmar asistencia</button>
+                  <button className="button button-outline" type="button" onClick={() => closeAppointment(item)}>Cerrar cita</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </section>
   );
 }
-

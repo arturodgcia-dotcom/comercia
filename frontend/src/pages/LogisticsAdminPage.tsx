@@ -21,6 +21,12 @@ export function LogisticsAdminPage() {
     delivery_notes: ""
   });
   const [scheduleDate, setScheduleDate] = useState("");
+  const deliveryTypeLabel: Record<string, string> = {
+    public: "Publico",
+    distributor: "Distribuidor",
+    internal_pickup: "Recoleccion interna",
+    franchise: "Franquicia",
+  };
 
   useEffect(() => {
     if (!token) return;
@@ -90,7 +96,7 @@ export function LogisticsAdminPage() {
 
   return (
     <section>
-      <PageHeader title="Logistics" subtitle="Ordenes logisticas, scheduling y tracking base." />
+      <PageHeader title="Logistica" subtitle="Ordenes logisticas, programacion y tracking base." />
       {error ? <p className="error">{error}</p> : null}
       <div className="row-gap">
         <select value={tenantId ?? ""} onChange={(e) => setTenantId(Number(e.target.value))}>
@@ -105,10 +111,10 @@ export function LogisticsAdminPage() {
 
       <form className="inline-form" onSubmit={create}>
         <select value={createForm.delivery_type} onChange={(e) => setCreateForm((p) => ({ ...p, delivery_type: e.target.value }))}>
-          <option value="public">public</option>
-          <option value="distributor">distributor</option>
-          <option value="internal_pickup">internal_pickup</option>
-          <option value="franchise">franchise</option>
+          <option value="public">Publico</option>
+          <option value="distributor">Distribuidor</option>
+          <option value="internal_pickup">Recoleccion interna</option>
+          <option value="franchise">Franquicia</option>
         </select>
         <input
           required
@@ -152,7 +158,7 @@ export function LogisticsAdminPage() {
           {rows.map((row) => (
             <tr key={row.id}>
               <td>{row.id}</td>
-              <td>{row.delivery_type}</td>
+              <td>{deliveryTypeLabel[row.delivery_type] ?? row.delivery_type}</td>
               <td>{row.status}</td>
               <td>{row.tracking_reference ?? "-"}</td>
               <td>{row.courier_name ?? "-"}</td>
@@ -199,4 +205,3 @@ export function LogisticsAdminPage() {
     </section>
   );
 }
-

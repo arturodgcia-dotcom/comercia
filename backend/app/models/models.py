@@ -181,6 +181,10 @@ class Product(Base, TimestampMixin):
     price_public: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
     price_wholesale: Mapped[Decimal | None] = mapped_column(Numeric(12, 2), nullable=True)
     price_retail: Mapped[Decimal | None] = mapped_column(Numeric(12, 2), nullable=True)
+    stripe_product_id: Mapped[str | None] = mapped_column(String(120), nullable=True, index=True)
+    stripe_price_id_public: Mapped[str | None] = mapped_column(String(120), nullable=True, index=True)
+    stripe_price_id_retail: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    stripe_price_id_wholesale: Mapped[str | None] = mapped_column(String(120), nullable=True)
     is_featured: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
