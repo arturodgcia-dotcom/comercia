@@ -12,6 +12,7 @@ export function ReinpiaOperationsPage() {
   const [appointments, setAppointments] = useState<{ total: number; by_status: Array<{ status: string; count: number }> } | null>(null);
   const [logistics, setLogistics] = useState<{ total: number; delivered: number; by_status: Array<{ status: string; count: number }> } | null>(null);
   const [distributors, setDistributors] = useState<{ total_applications: number; approved_profiles: number } | null>(null);
+  const [tenantOptions, setTenantOptions] = useState<Array<{ id: number; name: string }>>([]);
   const [error, setError] = useState("");
 
   const query = useMemo(() => {
@@ -38,10 +39,24 @@ export function ReinpiaOperationsPage() {
       .catch((err) => setError(err instanceof Error ? err.message : "No fue posible cargar operaciones globales"));
   }, [token, query]);
 
+  useEffect(() => {
+    if (!token) return;
+    api.getReinpiaTenantsSummary(token)
+      .then((rows) => setTenantOptions(rows.map((row) => ({ id: row.tenant_id, name: row.tenant_name }))))
+      .catch(() => setTenantOptions([]));
+  }, [token]);
+
   return (
     <section>
-      <PageHeader title="REINPIA Operations" subtitle="Citas, logistica y distribuidores consolidados." />
-      <FilterBar tenantId={filters.tenantId} dateFrom={filters.dateFrom} dateTo={filters.dateTo} status={filters.status} onChange={setFilters} />
+      <PageHeader title="Operacion global ComerCia" subtitle="Citas, logistica y distribuidores en vista global o por marca." />
+      <FilterBar
+        tenantId={filters.tenantId}
+        dateFrom={filters.dateFrom}
+        dateTo={filters.dateTo}
+        status={filters.status}
+        tenantOptions={tenantOptions}
+        onChange={setFilters}
+      />
       {error ? <p className="error">{error}</p> : null}
 
       <div className="card-grid">
@@ -70,4 +85,3 @@ export function ReinpiaOperationsPage() {
     </section>
   );
 }
-

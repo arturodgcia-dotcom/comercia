@@ -21,6 +21,7 @@ export function ReinpiaPaymentsPage() {
     pos?: { sales: number; amount: number; by_method: Array<{ payment_method: string; sales: number; amount: number }> };
   } | null>(null);
   const [commissions, setCommissions] = useState<{ total_commissions: number; total_net_amount: number } | null>(null);
+  const [tenantOptions, setTenantOptions] = useState<Array<{ id: number; name: string }>>([]);
   const [error, setError] = useState("");
 
   const query = useMemo(() => {
@@ -47,6 +48,13 @@ export function ReinpiaPaymentsPage() {
       .catch((err) => setError(err instanceof Error ? err.message : "No fue posible cargar payments globales"));
   }, [token, query]);
 
+  useEffect(() => {
+    if (!token) return;
+    api.getReinpiaTenantsSummary(token)
+      .then((rows) => setTenantOptions(rows.map((row) => ({ id: row.tenant_id, name: row.tenant_name }))))
+      .catch(() => setTenantOptions([]));
+  }, [token]);
+
   const handleExport = async (
     type: "sales" | "commissions" | "tenants" | "orders" | "commission-agents" | "plan-purchase-leads"
   ) => {
@@ -64,8 +72,15 @@ export function ReinpiaPaymentsPage() {
 
   return (
     <section>
-      <PageHeader title="REINPIA Payments" subtitle="Ventas, comisiones, netos y ordenes globales con filtros." />
-      <FilterBar tenantId={filters.tenantId} dateFrom={filters.dateFrom} dateTo={filters.dateTo} status={filters.status} onChange={setFilters} />
+      <PageHeader title="Pagos globales ComerCia" subtitle="Ventas totales o filtradas por marca, comisiones y netos." />
+      <FilterBar
+        tenantId={filters.tenantId}
+        dateFrom={filters.dateFrom}
+        dateTo={filters.dateTo}
+        status={filters.status}
+        tenantOptions={tenantOptions}
+        onChange={setFilters}
+      />
       {error ? <p className="error">{error}</p> : null}
 
       {sales && commissions ? (

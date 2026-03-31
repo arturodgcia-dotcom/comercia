@@ -5,11 +5,13 @@ import { PageHeader } from "../components/PageHeader";
 import { PeriodSelector } from "../components/PeriodSelector";
 import { ReportKpiCard } from "../components/ReportKpiCard";
 import { SimpleChartSection } from "../components/SimpleChartSection";
+import { useTenantScope } from "../hooks/useTenantScope";
 import { api } from "../services/api";
 import { TenantReportSales } from "../types/domain";
 
 export function TenantSalesReportPage() {
-  const { token, user } = useAuth();
+  const { token } = useAuth();
+  const { isGlobalAdmin, tenantIdForReports, tenantOptions, scopeError, setTenantIdForReports } = useTenantScope();
   const [period, setPeriod] = useState("month");
   const [data, setData] = useState<TenantReportSales | null>(null);
   const [error, setError] = useState("");
@@ -17,19 +19,20 @@ export function TenantSalesReportPage() {
   const query = useMemo(() => `period=${period}`, [period]);
 
   useEffect(() => {
-    if (!token || !user?.tenant_id) return;
+    if (!token || !tenantIdForReports) return;
     api
-      .getTenantReportSales(token, user.tenant_id, query)
+      .getTenantReportSales(token, tenantIdForReports, query)
       .then(setData)
       .catch((err) => setError(err instanceof Error ? err.message : "No fue posible cargar ventas"));
-  }, [token, user?.tenant_id, query]);
+  }, [token, tenantIdForReports, query]);
 
-  if (!user?.tenant_id) return <p className="error">Tu usuario no tiene tenant asociado.</p>;
+  if (!tenantIdForReports) return <p className="error">No hay marca seleccionada para reportes.</p>;
+  if (scopeError) return <p className="error">{scopeError}</p>;
   if (error) return <p className="error">{error}</p>;
   if (!data) return <p>Cargando reporte de ventas...</p>;
 
   const exportCsv = async () => {
-    const url = api.getTenantReportExportUrl(user.tenant_id as number, "sales", query);
+    const url = api.getTenantReportExportUrl(tenantIdForReports, "sales", query);
     const response = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
     const blob = await response.blob();
     const blobUrl = URL.createObjectURL(blob);
@@ -44,6 +47,15 @@ export function TenantSalesReportPage() {
     <section>
       <PageHeader title="Reporte de Ventas" subtitle="Analitica de ordenes, ticket promedio y comportamiento por periodo." />
       <div className="inline-form">
+        {isGlobalAdmin ? (
+          <select value={tenantIdForReports} onChange={(event) => setTenantIdForReports(Number(event.target.value))}>
+            {tenantOptions.map((tenant) => (
+              <option key={tenant.tenant_id} value={tenant.tenant_id}>
+                {tenant.tenant_name}
+              </option>
+            ))}
+          </select>
+        ) : null}
         <PeriodSelector period={period} onChange={setPeriod} />
         <ExportCsvButton onClick={exportCsv} />
       </div>
@@ -61,4 +73,3 @@ export function TenantSalesReportPage() {
     </section>
   );
 }
-

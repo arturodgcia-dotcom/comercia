@@ -3,19 +3,35 @@ type FilterBarProps = {
   dateFrom: string;
   dateTo: string;
   status: string;
+  tenantOptions?: Array<{ id: number; name: string }>;
+  tenantLabel?: string;
   onChange: (next: { tenantId: string; dateFrom: string; dateTo: string; status: string }) => void;
 };
 
-export function FilterBar({ tenantId, dateFrom, dateTo, status, onChange }: FilterBarProps) {
+export function FilterBar({ tenantId, dateFrom, dateTo, status, tenantOptions, tenantLabel = "Marca", onChange }: FilterBarProps) {
   return (
     <section className="store-banner">
       <h3>Filtros</h3>
       <div className="inline-form">
-        <input
-          placeholder="Tenant ID"
-          value={tenantId}
-          onChange={(e) => onChange({ tenantId: e.target.value, dateFrom, dateTo, status })}
-        />
+        {tenantOptions?.length ? (
+          <label>
+            {tenantLabel}
+            <select value={tenantId} onChange={(e) => onChange({ tenantId: e.target.value, dateFrom, dateTo, status })}>
+              <option value="">Todas</option>
+              {tenantOptions.map((tenant) => (
+                <option key={tenant.id} value={tenant.id}>
+                  {tenant.name}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : (
+          <input
+            placeholder="ID de marca"
+            value={tenantId}
+            onChange={(e) => onChange({ tenantId: e.target.value, dateFrom, dateTo, status })}
+          />
+        )}
         <input
           type="date"
           value={dateFrom}

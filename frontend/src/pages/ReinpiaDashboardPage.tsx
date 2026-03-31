@@ -17,6 +17,7 @@ export function ReinpiaDashboardPage() {
   const [timeseries, setTimeseries] = useState<ReinpiaTimeseriesPoint[]>([]);
   const [topTenants, setTopTenants] = useState<Array<{ tenant_id: number; tenant_name: string; revenue: number; commissions: number; net_amount: number }>>([]);
   const [alerts, setAlerts] = useState<InternalAlert[]>([]);
+  const [tenantOptions, setTenantOptions] = useState<Array<{ id: number; name: string }>>([]);
   const [error, setError] = useState("");
 
   const query = useMemo(() => {
@@ -45,13 +46,27 @@ export function ReinpiaDashboardPage() {
       .catch((err) => setError(err instanceof Error ? err.message : "No fue posible cargar dashboard global"));
   }, [token, query]);
 
+  useEffect(() => {
+    if (!token) return;
+    api.getReinpiaTenantsSummary(token)
+      .then((rows) => setTenantOptions(rows.map((row) => ({ id: row.tenant_id, name: row.tenant_name }))))
+      .catch(() => setTenantOptions([]));
+  }, [token]);
+
   if (error) return <p className="error">{error}</p>;
   if (!kpis) return <p>Cargando dashboard global...</p>;
 
   return (
     <section>
-      <PageHeader title="REINPIA Global Dashboard" subtitle="Vista consolidada multi-tenant de ComerCia." />
-      <FilterBar tenantId={filters.tenantId} dateFrom={filters.dateFrom} dateTo={filters.dateTo} status={filters.status} onChange={setFilters} />
+      <PageHeader title="Dashboard global ComerCia" subtitle="Resumen total y seguimiento por marca para operacion comercial." />
+      <FilterBar
+        tenantId={filters.tenantId}
+        dateFrom={filters.dateFrom}
+        dateTo={filters.dateTo}
+        status={filters.status}
+        tenantOptions={tenantOptions}
+        onChange={setFilters}
+      />
 
       <div className="card-grid">
         <KpiCard label="Total tenants" value={kpis.kpis.total_tenants} />

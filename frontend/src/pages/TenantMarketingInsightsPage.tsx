@@ -5,11 +5,13 @@ import { InsightCard } from "../components/InsightCard";
 import { PageHeader } from "../components/PageHeader";
 import { PeriodSelector } from "../components/PeriodSelector";
 import { RankingTable } from "../components/RankingTable";
+import { useTenantScope } from "../hooks/useTenantScope";
 import { api } from "../services/api";
 import { MarketingInsightItem } from "../types/domain";
 
 export function TenantMarketingInsightsPage() {
   const { token, user } = useAuth();
+  const { isGlobalAdmin, tenantIdForReports, tenantOptions, scopeError, setTenantIdForReports } = useTenantScope();
   const [period, setPeriod] = useState("month");
   const [insights, setInsights] = useState<MarketingInsightItem[]>([]);
   const [categories, setCategories] = useState<Array<Record<string, unknown>>>([]);
@@ -17,13 +19,13 @@ export function TenantMarketingInsightsPage() {
   const query = useMemo(() => `period=${period}`, [period]);
 
   useEffect(() => {
-    if (!token || !user?.tenant_id) return;
+    if (!token || !tenantIdForReports) return;
     api
-      .getTenantMarketingInsights(token, user.tenant_id, query)
+      .getTenantMarketingInsights(token, tenantIdForReports, query)
       .then((res) => {
         const normalized = ((res.insights ?? []) as Array<Record<string, unknown>>).map((row, idx) => ({
           id: Number(row.id ?? idx + 1),
-          tenant_id: Number(row.tenant_id ?? user.tenant_id ?? 0),
+          tenant_id: Number(row.tenant_id ?? tenantIdForReports ?? 0),
           insight_type: String(row.insight_type ?? "insight"),
           category: row.category ? String(row.category) : null,
           product_id: row.product_id ? Number(row.product_id) : null,
@@ -36,11 +38,11 @@ export function TenantMarketingInsightsPage() {
         setCategories(res.top_categories ?? []);
       })
       .catch((err) => setError(err instanceof Error ? err.message : "No fue posible cargar insights"));
-  }, [token, user?.tenant_id, query]);
+  }, [token, tenantIdForReports, query, user?.tenant_id]);
 
   const exportCsv = async () => {
-    if (!token || !user?.tenant_id) return;
-    const url = api.getTenantReportExportUrl(user.tenant_id, "marketing-insights", query);
+    if (!token || !tenantIdForReports) return;
+    const url = api.getTenantReportExportUrl(tenantIdForReports, "marketing-insights", query);
     const response = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
     const blob = await response.blob();
     const link = document.createElement("a");
@@ -49,13 +51,23 @@ export function TenantMarketingInsightsPage() {
     link.click();
   };
 
-  if (!user?.tenant_id) return <p className="error">Tu usuario no tiene tenant asociado.</p>;
+  if (!tenantIdForReports) return <p className="error">No hay marca seleccionada para reportes.</p>;
+  if (scopeError) return <p className="error">{scopeError}</p>;
   if (error) return <p className="error">{error}</p>;
 
   return (
     <section>
       <PageHeader title="Insights de Marketing" subtitle="Recomendaciones accionables por productos, categorias y recompra." />
       <div className="inline-form">
+        {isGlobalAdmin ? (
+          <select value={tenantIdForReports} onChange={(event) => setTenantIdForReports(Number(event.target.value))}>
+            {tenantOptions.map((tenant) => (
+              <option key={tenant.tenant_id} value={tenant.tenant_id}>
+                {tenant.tenant_name}
+              </option>
+            ))}
+          </select>
+        ) : null}
         <PeriodSelector period={period} onChange={setPeriod} />
         <ExportCsvButton onClick={exportCsv} />
       </div>

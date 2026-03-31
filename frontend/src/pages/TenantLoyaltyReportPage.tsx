@@ -5,10 +5,12 @@ import { PageHeader } from "../components/PageHeader";
 import { PeriodSelector } from "../components/PeriodSelector";
 import { ReportKpiCard } from "../components/ReportKpiCard";
 import { StatusSummaryCard } from "../components/StatusSummaryCard";
+import { useTenantScope } from "../hooks/useTenantScope";
 import { api } from "../services/api";
 
 export function TenantLoyaltyReportPage() {
-  const { token, user } = useAuth();
+  const { token } = useAuth();
+  const { isGlobalAdmin, tenantIdForReports, tenantOptions, scopeError, setTenantIdForReports } = useTenantScope();
   const [period, setPeriod] = useState("month");
   const [membership, setMembership] = useState<Record<string, number>>({});
   const [loyalty, setLoyalty] = useState<Record<string, unknown>>({});
@@ -16,23 +18,24 @@ export function TenantLoyaltyReportPage() {
   const query = useMemo(() => `period=${period}`, [period]);
 
   useEffect(() => {
-    if (!token || !user?.tenant_id) return;
+    if (!token || !tenantIdForReports) return;
     Promise.all([
-      api.getTenantReportMemberships(token, user.tenant_id, query),
-      api.getTenantReportLoyalty(token, user.tenant_id, query)
+      api.getTenantReportMemberships(token, tenantIdForReports, query),
+      api.getTenantReportLoyalty(token, tenantIdForReports, query)
     ])
       .then(([m, l]) => {
         setMembership(m);
         setLoyalty(l);
       })
       .catch((err) => setError(err instanceof Error ? err.message : "No fue posible cargar fidelizacion"));
-  }, [token, user?.tenant_id, query]);
+  }, [token, tenantIdForReports, query]);
 
-  if (!user?.tenant_id) return <p className="error">Tu usuario no tiene tenant asociado.</p>;
+  if (!tenantIdForReports) return <p className="error">No hay marca seleccionada para reportes.</p>;
+  if (scopeError) return <p className="error">{scopeError}</p>;
   if (error) return <p className="error">{error}</p>;
 
   const exportCsv = async () => {
-    const url = api.getTenantReportExportUrl(user.tenant_id as number, "loyalty", query);
+    const url = api.getTenantReportExportUrl(tenantIdForReports, "loyalty", query);
     const response = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
     const blob = await response.blob();
     const blobUrl = URL.createObjectURL(blob);
@@ -51,6 +54,15 @@ export function TenantLoyaltyReportPage() {
     <section>
       <PageHeader title="Reporte de Fidelizacion" subtitle="Membresias, puntos, cupones y recompra." />
       <div className="inline-form">
+        {isGlobalAdmin ? (
+          <select value={tenantIdForReports} onChange={(event) => setTenantIdForReports(Number(event.target.value))}>
+            {tenantOptions.map((tenant) => (
+              <option key={tenant.tenant_id} value={tenant.tenant_id}>
+                {tenant.tenant_name}
+              </option>
+            ))}
+          </select>
+        ) : null}
         <PeriodSelector period={period} onChange={setPeriod} />
         <ExportCsvButton onClick={exportCsv} />
       </div>
@@ -71,4 +83,3 @@ export function TenantLoyaltyReportPage() {
     </section>
   );
 }
-

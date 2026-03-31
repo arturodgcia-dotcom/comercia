@@ -6,11 +6,13 @@ import { ReportKpiCard } from "../components/ReportKpiCard";
 import { ReportSection } from "../components/ReportSection";
 import { RankingTable } from "../components/RankingTable";
 import { SimpleChartSection } from "../components/SimpleChartSection";
+import { useTenantScope } from "../hooks/useTenantScope";
 import { api } from "../services/api";
 import { TenantReportOverview } from "../types/domain";
 
 export function TenantReportsOverviewPage() {
-  const { token, user } = useAuth();
+  const { token } = useAuth();
+  const { isGlobalAdmin, tenantIdForReports, tenantOptions, scopeError, setTenantIdForReports } = useTenantScope();
   const [period, setPeriod] = useState("month");
   const [data, setData] = useState<TenantReportOverview | null>(null);
   const [error, setError] = useState("");
@@ -18,14 +20,15 @@ export function TenantReportsOverviewPage() {
   const query = useMemo(() => `period=${period}`, [period]);
 
   useEffect(() => {
-    if (!token || !user?.tenant_id) return;
+    if (!token || !tenantIdForReports) return;
     api
-      .getTenantReportOverview(token, user.tenant_id, query)
+      .getTenantReportOverview(token, tenantIdForReports, query)
       .then(setData)
       .catch((err) => setError(err instanceof Error ? err.message : "No fue posible cargar overview"));
-  }, [token, user?.tenant_id, query]);
+  }, [token, tenantIdForReports, query]);
 
-  if (!user?.tenant_id) return <p className="error">Tu usuario no tiene tenant asociado.</p>;
+  if (!tenantIdForReports) return <p className="error">No hay marca seleccionada para reportes.</p>;
+  if (scopeError) return <p className="error">{scopeError}</p>;
   if (error) return <p className="error">{error}</p>;
   if (!data) return <p>Cargando reportes...</p>;
 
@@ -33,6 +36,15 @@ export function TenantReportsOverviewPage() {
     <section>
       <PageHeader title="Reportes Tenant" subtitle="KPIs clave para operacion comercial y crecimiento." />
       <div className="inline-form">
+        {isGlobalAdmin ? (
+          <select value={tenantIdForReports} onChange={(event) => setTenantIdForReports(Number(event.target.value))}>
+            {tenantOptions.map((tenant) => (
+              <option key={tenant.tenant_id} value={tenant.tenant_id}>
+                {tenant.tenant_name}
+              </option>
+            ))}
+          </select>
+        ) : null}
         <PeriodSelector period={period} onChange={setPeriod} />
       </div>
       <div className="card-grid">

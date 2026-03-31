@@ -6,10 +6,12 @@ import { PageHeader } from "../components/PageHeader";
 import { PeriodSelector } from "../components/PeriodSelector";
 import { RankingTable } from "../components/RankingTable";
 import { ReportSection } from "../components/ReportSection";
+import { useTenantScope } from "../hooks/useTenantScope";
 import { api } from "../services/api";
 
 export function TenantProductsReportPage() {
-  const { token, user } = useAuth();
+  const { token } = useAuth();
+  const { isGlobalAdmin, tenantIdForReports, tenantOptions, scopeError, setTenantIdForReports } = useTenantScope();
   const [period, setPeriod] = useState("month");
   const [topRows, setTopRows] = useState<Array<Record<string, unknown>>>([]);
   const [lowRows, setLowRows] = useState<Array<Record<string, unknown>>>([]);
@@ -18,11 +20,11 @@ export function TenantProductsReportPage() {
   const query = useMemo(() => `period=${period}`, [period]);
 
   useEffect(() => {
-    if (!token || !user?.tenant_id) return;
+    if (!token || !tenantIdForReports) return;
     Promise.all([
-      api.getTenantTopProducts(token, user.tenant_id, query),
-      api.getTenantLowProducts(token, user.tenant_id, query),
-      api.getTenantUnsoldProducts(token, user.tenant_id, query)
+      api.getTenantTopProducts(token, tenantIdForReports, query),
+      api.getTenantLowProducts(token, tenantIdForReports, query),
+      api.getTenantUnsoldProducts(token, tenantIdForReports, query)
     ])
       .then(([top, low, unsold]) => {
         setTopRows(top);
@@ -30,13 +32,14 @@ export function TenantProductsReportPage() {
         setUnsoldRows(unsold);
       })
       .catch((err) => setError(err instanceof Error ? err.message : "No fue posible cargar productos"));
-  }, [token, user?.tenant_id, query]);
+  }, [token, tenantIdForReports, query]);
 
-  if (!user?.tenant_id) return <p className="error">Tu usuario no tiene tenant asociado.</p>;
+  if (!tenantIdForReports) return <p className="error">No hay marca seleccionada para reportes.</p>;
+  if (scopeError) return <p className="error">{scopeError}</p>;
   if (error) return <p className="error">{error}</p>;
 
   const exportCsv = async () => {
-    const url = api.getTenantReportExportUrl(user.tenant_id as number, "products", query);
+    const url = api.getTenantReportExportUrl(tenantIdForReports, "products", query);
     const response = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
     const blob = await response.blob();
     const blobUrl = URL.createObjectURL(blob);
@@ -51,6 +54,15 @@ export function TenantProductsReportPage() {
     <section>
       <PageHeader title="Reporte de Productos" subtitle="Top, baja rotacion y productos sin ventas." />
       <div className="inline-form">
+        {isGlobalAdmin ? (
+          <select value={tenantIdForReports} onChange={(event) => setTenantIdForReports(Number(event.target.value))}>
+            {tenantOptions.map((tenant) => (
+              <option key={tenant.tenant_id} value={tenant.tenant_id}>
+                {tenant.tenant_name}
+              </option>
+            ))}
+          </select>
+        ) : null}
         <PeriodSelector period={period} onChange={setPeriod} />
         <ExportCsvButton onClick={exportCsv} />
       </div>
@@ -82,4 +94,3 @@ export function TenantProductsReportPage() {
     </section>
   );
 }
-

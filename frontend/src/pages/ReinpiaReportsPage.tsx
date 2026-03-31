@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "../app/AuthContext";
 import { ExportButtons } from "../components/ExportButtons";
 import { FilterBar } from "../components/FilterBar";
@@ -9,6 +9,7 @@ import { api } from "../services/api";
 export function ReinpiaReportsPage() {
   const { token } = useAuth();
   const [filters, setFilters] = useState({ tenantId: "", dateFrom: "", dateTo: "", status: "" });
+  const [tenantOptions, setTenantOptions] = useState<Array<{ id: number; name: string }>>([]);
   const [message, setMessage] = useState("");
   const [summary, setSummary] = useState<Record<string, unknown>>({});
 
@@ -43,10 +44,24 @@ export function ReinpiaReportsPage() {
     setSummary(data);
   };
 
+  useEffect(() => {
+    if (!token) return;
+    api.getReinpiaTenantsSummary(token)
+      .then((rows) => setTenantOptions(rows.map((row) => ({ id: row.tenant_id, name: row.tenant_name }))))
+      .catch(() => setTenantOptions([]));
+  }, [token]);
+
   return (
     <section>
-      <PageHeader title="REINPIA Reports" subtitle="Exportes CSV globales para analitica y seguimiento comercial." />
-      <FilterBar tenantId={filters.tenantId} dateFrom={filters.dateFrom} dateTo={filters.dateTo} status={filters.status} onChange={setFilters} />
+      <PageHeader title="Reportes globales ComerCia" subtitle="Exportes y resumen ejecutivo global o filtrado por marca." />
+      <FilterBar
+        tenantId={filters.tenantId}
+        dateFrom={filters.dateFrom}
+        dateTo={filters.dateTo}
+        status={filters.status}
+        tenantOptions={tenantOptions}
+        onChange={setFilters}
+      />
       <button type="button" className="button" onClick={loadSummary}>
         Cargar resumen comercial
       </button>
