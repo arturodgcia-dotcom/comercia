@@ -36,6 +36,15 @@ export function ComerciaLandingPage() {
       .catch(() => setRefStatus("invalid"));
   }, [refQuery]);
 
+  useEffect(() => {
+    document.body.classList.add("public-landing");
+    document.body.classList.remove("modal-open");
+    document.body.style.overflow = "";
+    return () => {
+      document.body.classList.remove("public-landing");
+    };
+  }, []);
+
   const handleLeadSubmit = async (event: FormEvent) => {
     event.preventDefault();
     try {

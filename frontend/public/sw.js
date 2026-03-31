@@ -1,13 +1,9 @@
-const CACHE_NAME = "comercia-pos-shell-v1";
+const CACHE_NAME = "comercia-pos-shell-v2";
 const STATIC_ASSETS = [
-  "/",
-  "/comercia",
-  "/login",
-  "/pos",
   "/manifest.webmanifest",
   "/icons/icon-192.png",
   "/icons/icon-512.png",
-  "/icons/apple-touch-icon.png"
+  "/icons/apple-touch-icon.png",
 ];
 
 self.addEventListener("install", (event) => {
@@ -28,6 +24,21 @@ self.addEventListener("activate", (event) => {
 
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
+  const requestUrl = new URL(event.request.url);
+
+  // Para navegacion HTML, priorizamos red y solo usamos cache como fallback.
+  // Evita servir shells antiguos que pueden dejar UI desactualizada.
+  if (event.request.mode === "navigate") {
+    event.respondWith(
+      fetch(event.request).catch(() => caches.match("/comercia") || caches.match("/"))
+    );
+    return;
+  }
+
+  // Solo cacheamos assets estaticos same-origin.
+  if (requestUrl.origin !== self.location.origin) {
+    return;
+  }
 
   event.respondWith(
     caches.match(event.request).then((cached) => {

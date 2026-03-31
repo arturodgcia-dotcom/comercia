@@ -102,9 +102,29 @@ Write-Host "- Panel REINPIA global: http://localhost:$frontendPort/reinpia/dashb
 Write-Host ""
 
 Start-Sleep -Seconds 2
-try {
-  $health = Invoke-RestMethod -Uri "http://localhost:$backendPort/health" -Method Get -TimeoutSec 4
-  Write-Host "Healthcheck backend OK: $($health.status)" -ForegroundColor Green
-} catch {
-  Write-Host "Healthcheck backend aun no responde. Espera unos segundos y reintenta." -ForegroundColor Yellow
+$healthUrl = "http://localhost:$backendPort/health"
+$maxAttempts = 12
+$attempt = 0
+$healthy = $false
+
+while (-not $healthy -and $attempt -lt $maxAttempts) {
+  $attempt++
+  try {
+    $health = Invoke-RestMethod -Uri $healthUrl -Method Get -TimeoutSec 4
+    if ($health.status) {
+      Write-Host "Healthcheck backend OK: $($health.status) (intento $attempt/$maxAttempts)" -ForegroundColor Green
+    } else {
+      Write-Host "Healthcheck backend OK (intento $attempt/$maxAttempts)" -ForegroundColor Green
+    }
+    $healthy = $true
+  } catch {
+    if ($attempt -lt $maxAttempts) {
+      Write-Host "Backend aun iniciando (intento $attempt/$maxAttempts). Reintentando..." -ForegroundColor DarkYellow
+      Start-Sleep -Seconds 2
+    }
+  }
+}
+
+if (-not $healthy) {
+  Write-Host "Healthcheck backend no respondio tras $maxAttempts intentos. Revisa la ventana de backend para detalles." -ForegroundColor Yellow
 }
