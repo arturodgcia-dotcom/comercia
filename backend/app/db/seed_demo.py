@@ -163,6 +163,41 @@ def _seed_reinpia(db: Session, tenant: Tenant) -> None:
     _logistics(db, tenant.id, o1.id, c1.id, "scheduled")
     _logistics(db, tenant.id, o3.id, c3.id, "in_transit")
 
+    identity = BrandIdentityData(
+        brand_name="REINPIA",
+        business_description="Marca de tecnologia aplicada a ventas, operacion y automatizacion para empresas.",
+        business_type="services",
+        has_existing_landing=False,
+        existing_landing_url=None,
+        primary_color="#0F3E5A",
+        secondary_color="#E6F4FA",
+        brand_tone="profesional",
+        logo_asset_id=None,
+        base_image_asset_ids=[],
+    )
+    prompt = "Marca tecnologica enfocada en soluciones SaaS, automatizacion comercial y servicios B2B."
+    generated = generate_brand_content(identity, prompt)
+    payload = json.loads(cfg.config_json) if cfg.config_json else {}
+    payload["workflow"] = {
+        "current_step": "landing_setup",
+        "is_published": False,
+        "prompt_master": prompt,
+        "selected_template": "premium_moderno",
+        "flow_type": "without_landing",
+        "steps": [
+            {"code": "brand_identity", "title": "Identidad de marca", "status": "approved", "approved": True},
+            {"code": "landing_setup", "title": "Landing", "status": "in_progress", "approved": False},
+            {"code": "ecommerce_setup", "title": "Ecommerce publico", "status": "pending", "approved": False},
+            {"code": "distributors_setup", "title": "Ecommerce distribuidores", "status": "pending", "approved": False},
+            {"code": "pos_setup", "title": "POS / WebApp", "status": "pending", "approved": False},
+            {"code": "final_review", "title": "Revision y publicacion", "status": "pending", "approved": False},
+        ],
+    }
+    payload["identity_data"] = identity.model_dump()
+    payload["generated_content"] = generated.model_dump()
+    cfg.config_json = json.dumps(payload, ensure_ascii=False)
+    db.add(cfg)
+
 
 def _seed_instituto_zaro_latino(db: Session, tenant: Tenant) -> None:
     _branding(
@@ -186,6 +221,8 @@ def _seed_instituto_zaro_latino(db: Session, tenant: Tenant) -> None:
         brand_name="Instituto Zaro Latino",
         business_description="Servicios educativos en cosmetologia, podologia y diplomados profesionales.",
         business_type="services",
+        has_existing_landing=True,
+        existing_landing_url="https://instituto-zaro-latino.demo",
         primary_color="#6E2EB8",
         secondary_color="#F3E9FF",
         brand_tone="premium",
@@ -197,9 +234,8 @@ def _seed_instituto_zaro_latino(db: Session, tenant: Tenant) -> None:
     landing = generate_landing_draft(identity, generated)
     workflow_steps = [
         {"code": "brand_identity", "title": "Identidad de marca", "status": "approved", "approved": True},
-        {"code": "base_content", "title": "Contenido base (prompt + IA)", "status": "approved", "approved": True},
-        {"code": "landing_setup", "title": "Landing", "status": "approved", "approved": True},
-        {"code": "ecommerce_setup", "title": "Ecommerce", "status": "in_progress", "approved": False},
+        {"code": "ecommerce_setup", "title": "Ecommerce publico", "status": "in_progress", "approved": False},
+        {"code": "distributors_setup", "title": "Ecommerce distribuidores", "status": "pending", "approved": False},
         {"code": "pos_setup", "title": "POS / WebApp", "status": "pending", "approved": False},
         {"code": "final_review", "title": "Revision y publicacion", "status": "pending", "approved": False},
     ]
@@ -209,6 +245,7 @@ def _seed_instituto_zaro_latino(db: Session, tenant: Tenant) -> None:
         "is_published": False,
         "prompt_master": prompt,
         "selected_template": "premium_moderno",
+        "flow_type": "with_existing_landing",
         "steps": workflow_steps,
     }
     payload["identity_data"] = identity.model_dump()

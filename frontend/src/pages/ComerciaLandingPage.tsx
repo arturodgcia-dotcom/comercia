@@ -1,7 +1,6 @@
 import { FormEvent, useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { LanguageSelector } from "../components/LanguageSelector";
-import { AgentWidgetPlaceholder } from "../components/marketing/AgentWidgetPlaceholder";
 import { AudienceSplitSection } from "../components/marketing/AudienceSplitSection";
 import { CTASection } from "../components/marketing/CTASection";
 import { HeroSection } from "../components/marketing/HeroSection";
@@ -15,6 +14,7 @@ export function ComerciaLandingPage() {
   const [refStatus, setRefStatus] = useState<"unknown" | "valid" | "invalid">("unknown");
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
+  const [liaResult, setLiaResult] = useState("");
   const [leadForm, setLeadForm] = useState({
     company_name: "",
     legal_type: "constituted_company",
@@ -26,6 +26,15 @@ export function ComerciaLandingPage() {
     needs_followup: true,
     needs_appointment: false,
     notes: "",
+  });
+  const [liaForm, setLiaForm] = useState({
+    business_type: "productos",
+    current_stage: "iniciando",
+    main_need: "vender_mas",
+    sells_online: "no",
+    needs_logistics: "si",
+    needs_distributors: "no",
+    main_goal: "ordenar_y_crecer",
   });
 
   useEffect(() => {
@@ -59,6 +68,32 @@ export function ComerciaLandingPage() {
     } catch (err) {
       setError(err instanceof Error ? err.message : "No fue posible registrar el lead comercial");
     }
+  };
+
+  const handleLiaSubmit = (event: FormEvent) => {
+    event.preventDefault();
+    const scoreEscala =
+      (liaForm.current_stage === "creciendo" || liaForm.current_stage === "expansion" ? 2 : 0) +
+      (liaForm.sells_online === "si" ? 1 : 0) +
+      (liaForm.needs_distributors === "si" ? 1 : 0) +
+      (liaForm.main_need === "automatizar" || liaForm.main_need === "canal_distribuidor" ? 1 : 0);
+
+    const suggestedPlan = scoreEscala >= 3 ? "COMERCIA_ESCALA" : "COMERCIA_IMPULSA";
+    const suggestedText =
+      suggestedPlan === "COMERCIA_ESCALA"
+        ? "Recomendacion: ComerCia ESCALA. Tu escenario necesita automatizacion y estructura comercial mas robusta."
+        : "Recomendacion: ComerCia IMPULSA. Tu marca puede acelerar ventas con una base comercial ordenada.";
+
+    setLeadForm((prev) => ({
+      ...prev,
+      selected_plan_code: suggestedPlan,
+      needs_followup: true,
+      needs_appointment: liaForm.main_goal === "diagnostico_guiado" || liaForm.main_need === "asesoria",
+      notes: `Diagnostico Lia | etapa=${liaForm.current_stage}; necesidad=${liaForm.main_need}; online=${liaForm.sells_online}; logistica=${liaForm.needs_logistics}; distribuidores=${liaForm.needs_distributors}; objetivo=${liaForm.main_goal}`,
+    }));
+    setLiaResult(`${suggestedText} Completa el diagnostico para que un asesor te contacte con ruta de implementacion.`);
+    const target = document.getElementById("diagnostico");
+    if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
   return (
@@ -133,7 +168,7 @@ export function ComerciaLandingPage() {
               "Flujo comercial con diagnostico guiado",
             ]}
             primaryTo="#diagnostico"
-            secondaryTo="#lia-comercial"
+            secondaryTo="#lia-diagnostico"
           />
           <PackageCard
             name="ComerCia ESCALA"
@@ -145,7 +180,7 @@ export function ComerciaLandingPage() {
               "Panel de operacion y reportes ejecutivos",
             ]}
             primaryTo="#diagnostico"
-            secondaryTo="#lia-comercial"
+            secondaryTo="#lia-diagnostico"
           />
         </div>
       </section>
@@ -181,19 +216,47 @@ export function ComerciaLandingPage() {
         </div>
       </section>
 
-      <AgentWidgetPlaceholder
-        id="lia-comercial"
-        name="Lia de ComerCia"
-        description="Asesora comercial virtual para ayudarte a elegir plan, resolver dudas y llevarte a una conversacion de cierre con contexto real."
-        bullets={[
-          "Detecta etapa de tu negocio",
-          "Recomienda IMPULSA o ESCALA",
-          "Conecta contigo para diagnostico y cierre",
-        ]}
-        accent="#1c5fd4"
-        advisorTarget="#diagnostico"
-        onRecommendPlan={(planCode) => setLeadForm((prev) => ({ ...prev, selected_plan_code: planCode }))}
-      />
+      <section id="lia-diagnostico" className="card">
+        <h2>Lia: diagnostico comercial inteligente</h2>
+        <p>Responde estas preguntas y te recomendamos el plan adecuado para tu etapa comercial.</p>
+        <form className="inline-form" onSubmit={handleLiaSubmit}>
+          <select value={liaForm.business_type} onChange={(e) => setLiaForm((p) => ({ ...p, business_type: e.target.value }))}>
+            <option value="productos">Negocio de productos</option>
+            <option value="servicios">Negocio de servicios</option>
+            <option value="mixto">Modelo mixto</option>
+          </select>
+          <select value={liaForm.current_stage} onChange={(e) => setLiaForm((p) => ({ ...p, current_stage: e.target.value }))}>
+            <option value="iniciando">Estoy iniciando</option>
+            <option value="creciendo">Ya estoy creciendo</option>
+            <option value="expansion">Estoy en expansion</option>
+          </select>
+          <select value={liaForm.main_need} onChange={(e) => setLiaForm((p) => ({ ...p, main_need: e.target.value }))}>
+            <option value="vender_mas">Necesito vender mas</option>
+            <option value="automatizar">Necesito automatizar operacion</option>
+            <option value="canal_distribuidor">Necesito canal distribuidor</option>
+            <option value="asesoria">Necesito asesoria comercial</option>
+          </select>
+          <select value={liaForm.sells_online} onChange={(e) => setLiaForm((p) => ({ ...p, sells_online: e.target.value }))}>
+            <option value="si">Ya vendo en linea</option>
+            <option value="no">Aun no vendo en linea</option>
+          </select>
+          <select value={liaForm.needs_logistics} onChange={(e) => setLiaForm((p) => ({ ...p, needs_logistics: e.target.value }))}>
+            <option value="si">Necesito logistica adicional</option>
+            <option value="no">No necesito logistica</option>
+          </select>
+          <select value={liaForm.needs_distributors} onChange={(e) => setLiaForm((p) => ({ ...p, needs_distributors: e.target.value }))}>
+            <option value="si">Quiero canal de distribuidores</option>
+            <option value="no">No requiero distribuidores</option>
+          </select>
+          <select value={liaForm.main_goal} onChange={(e) => setLiaForm((p) => ({ ...p, main_goal: e.target.value }))}>
+            <option value="ordenar_y_crecer">Ordenar y crecer ventas</option>
+            <option value="diagnostico_guiado">Agendar diagnostico guiado</option>
+            <option value="escalar_operacion">Escalar operacion comercial</option>
+          </select>
+          <button className="button" type="submit">Recomendar plan</button>
+        </form>
+        {liaResult ? <p>{liaResult}</p> : null}
+      </section>
 
       <AudienceSplitSection
         title="Ruta de atencion comercial"
@@ -255,7 +318,7 @@ export function ComerciaLandingPage() {
         primaryLabel="Solicitar diagnostico"
         primaryTo="#diagnostico"
         secondaryLabel="Hablar con un asesor"
-        secondaryTo="#lia-comercial"
+        secondaryTo="#lia-diagnostico"
       />
     </main>
   );

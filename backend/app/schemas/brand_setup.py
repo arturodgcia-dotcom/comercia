@@ -25,6 +25,8 @@ class BrandIdentityData(BaseModel):
     brand_name: str
     business_description: str
     business_type: str
+    has_existing_landing: bool = False
+    existing_landing_url: str | None = None
     primary_color: str
     secondary_color: str
     brand_tone: str
@@ -58,6 +60,9 @@ class BrandEcommerceData(BaseModel):
     catalog_mode: str = "manual"
     categories_ready: bool = False
     products_ready: bool = False
+    distributor_catalog_ready: bool = False
+    volume_rules_ready: bool = False
+    recurring_orders_ready: bool = False
     massive_upload_enabled: bool = False
     notes: str | None = None
 
@@ -78,6 +83,7 @@ class BrandSetupWorkflowRead(BaseModel):
     is_published: bool = False
     prompt_master: str | None = None
     selected_template: str | None = None
+    flow_type: str = "without_landing"
     steps: list[BrandSetupStepState]
     assets: list[BrandSetupAssetRead]
     identity_data: BrandIdentityData | None = None
@@ -92,6 +98,7 @@ class BrandSetupWorkflowUpdate(BaseModel):
     is_published: bool | None = None
     prompt_master: str | None = None
     selected_template: str | None = None
+    flow_type: str | None = None
     steps: list[BrandSetupStepState] | None = None
     identity_data: BrandIdentityData | None = None
     generated_content: BrandGeneratedContent | None = None

@@ -264,3 +264,15 @@
 - [x] Citas/servicios rediseñadas con acciones operativas (notificar, confirmar recibido, asistencia, cerrar)
 - [x] POS y modulos relacionados con etiquetas visibles en español (tipos de punto y metodos de pago)
 - [x] Monedas robustecidas (fallback de error y preconfiguracion regional base)
+
+## Entregables ejecucion 25 (Wizard condicional + login estable + Lia comercial)
+- [x] Barrido de navegacion duplicada en panel de marca (rutas repetidas simplificadas)
+- [x] Wizard de setup rehacido como flujo secuencial condicional (con landing / sin landing)
+- [x] Paso 1 condicional con URL de landing existente y prompt maestro obligatorio
+- [x] Flujos separados: con landing existente (5 pasos) y sin landing (6 pasos)
+- [x] Paso landing bloqueado por aprobacion con generar/regenerar/preview
+- [x] Paso ecommerce distribuidores separado del ecommerce publico
+- [x] Persistencia de progreso por `flow_type`, `current_step`, `steps` y drafts por etapa
+- [x] Login reforzado para evitar estado colgado (`Ingresando...`) y timeout de API
+- [x] Bloque de Lía reemplazado por formulario comercial inteligente de diagnostico
+- [x] Seeds demo actualizados para probar ambos flujos (REINPIA sin landing, Instituto Zaro Latino con landing)

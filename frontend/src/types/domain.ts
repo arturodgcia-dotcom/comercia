@@ -152,6 +152,7 @@ export interface BrandSetupWorkflow {
   is_published: boolean;
   prompt_master?: string | null;
   selected_template?: string | null;
+  flow_type: "with_existing_landing" | "without_landing" | string;
   steps: BrandSetupStepState[];
   assets: BrandSetupAsset[];
   identity_data?: BrandIdentityData | null;
@@ -165,6 +166,8 @@ export interface BrandIdentityData {
   brand_name: string;
   business_description: string;
   business_type: "products" | "services" | "mixed" | string;
+  has_existing_landing: boolean;
+  existing_landing_url?: string | null;
   primary_color: string;
   secondary_color: string;
   brand_tone: string;
@@ -198,6 +201,9 @@ export interface BrandEcommerceData {
   catalog_mode: "manual" | "bulk" | string;
   categories_ready: boolean;
   products_ready: boolean;
+  distributor_catalog_ready: boolean;
+  volume_rules_ready: boolean;
+  recurring_orders_ready: boolean;
   massive_upload_enabled: boolean;
   notes?: string | null;
 }

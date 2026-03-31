@@ -14,20 +14,19 @@ import {
 } from "../types/domain";
 import { api } from "../services/api";
 
-const STEP_CODES = [
-  "brand_identity",
-  "base_content",
-  "landing_setup",
-  "ecommerce_setup",
-  "pos_setup",
-  "final_review",
-] as const;
+type StepCode =
+  | "brand_identity"
+  | "landing_setup"
+  | "ecommerce_setup"
+  | "distributors_setup"
+  | "pos_setup"
+  | "final_review";
 
-const STEP_LABELS: Record<(typeof STEP_CODES)[number], string> = {
+const STEP_LABELS: Record<StepCode, string> = {
   brand_identity: "Identidad de marca",
-  base_content: "Contenido base (prompt + IA)",
   landing_setup: "Landing",
-  ecommerce_setup: "Ecommerce",
+  ecommerce_setup: "Ecommerce publico",
+  distributors_setup: "Ecommerce distribuidores",
   pos_setup: "POS / WebApp",
   final_review: "Revision y publicacion",
 };
@@ -36,6 +35,8 @@ const defaultIdentity: BrandIdentityData = {
   brand_name: "",
   business_description: "",
   business_type: "mixed",
+  has_existing_landing: false,
+  existing_landing_url: "",
   primary_color: "#0447A6",
   secondary_color: "#DCE8FB",
   brand_tone: "profesional",
@@ -55,11 +56,11 @@ const defaultLanding: BrandLandingDraft = {
   hero_title: "",
   hero_subtitle: "",
   cta_primary: "Solicitar diagnostico",
-  cta_secondary: "Hablar con un asesor",
+  cta_secondary: "Hablar con asesor",
   sections: [
-    { title: "Seccion 1", body: "" },
-    { title: "Seccion 2", body: "" },
-    { title: "Seccion 3", body: "" },
+    { title: "Bloque 1", body: "" },
+    { title: "Bloque 2", body: "" },
+    { title: "Bloque 3", body: "" },
   ],
   contact_cta: "",
 };
@@ -68,6 +69,9 @@ const defaultEcommerce: BrandEcommerceData = {
   catalog_mode: "manual",
   categories_ready: false,
   products_ready: false,
+  distributor_catalog_ready: false,
+  volume_rules_ready: false,
+  recurring_orders_ready: false,
   massive_upload_enabled: false,
   notes: "",
 };
@@ -80,10 +84,15 @@ const defaultPosSetup: BrandPosSetupData = {
   notes: "",
 };
 
+function isStepCode(value: string): value is StepCode {
+  return ["brand_identity", "landing_setup", "ecommerce_setup", "distributors_setup", "pos_setup", "final_review"].includes(value);
+}
+
 export function BrandSetupWizard() {
   const { token } = useAuth();
   const { tenantId } = useParams();
   const tenantNumericId = Number(tenantId);
+
   const [workflow, setWorkflow] = useState<BrandSetupWorkflow | null>(null);
   const [channelSettings, setChannelSettings] = useState<BrandChannelSettings | null>(null);
   const [identity, setIdentity] = useState<BrandIdentityData>(defaultIdentity);
@@ -91,7 +100,8 @@ export function BrandSetupWizard() {
   const [landingDraft, setLandingDraft] = useState<BrandLandingDraft>(defaultLanding);
   const [ecommerceData, setEcommerceData] = useState<BrandEcommerceData>(defaultEcommerce);
   const [posSetupData, setPosSetupData] = useState<BrandPosSetupData>(defaultPosSetup);
-  const [selectedStep, setSelectedStep] = useState<(typeof STEP_CODES)[number]>("brand_identity");
+
+  const [selectedStep, setSelectedStep] = useState<StepCode>("brand_identity");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -109,11 +119,18 @@ export function BrandSetupWizard() {
       setWorkflow(workflowData);
       setChannelSettings(channelData);
       setIdentity(workflowData.identity_data ?? { ...defaultIdentity, brand_name: workflowData.tenant_name });
-      setGenerated(workflowData.generated_content ?? defaultGenerated);
+      setGenerated({ ...defaultGenerated, ...(workflowData.generated_content ?? {}), prompt_master: workflowData.prompt_master ?? workflowData.generated_content?.prompt_master ?? "" });
       setLandingDraft(workflowData.landing_draft ?? defaultLanding);
       setEcommerceData(workflowData.ecommerce_data ?? defaultEcommerce);
       setPosSetupData(workflowData.pos_setup_data ?? defaultPosSetup);
-      setSelectedStep((workflowData.current_step as (typeof STEP_CODES)[number]) ?? "brand_identity");
+
+      const nextStep = workflowData.current_step;
+      if (isStepCode(nextStep)) {
+        setSelectedStep(nextStep);
+      } else {
+        const firstStep = workflowData.steps.find((step) => isStepCode(step.code));
+        setSelectedStep(firstStep && isStepCode(firstStep.code) ? firstStep.code : "brand_identity");
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "No fue posible cargar el wizard.");
     } finally {
@@ -126,32 +143,42 @@ export function BrandSetupWizard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, tenantNumericId]);
 
-  const stepIndexMap = useMemo(
-    () => Object.fromEntries(STEP_CODES.map((code, index) => [code, index])) as Record<string, number>,
-    []
-  );
-
+  const steps = useMemo(() => (workflow?.steps ?? []).filter((step) => isStepCode(step.code)) as BrandSetupStepState[], [workflow]);
+  const activeCodes = useMemo(() => steps.map((step) => step.code as StepCode), [steps]);
+  const selectedIndex = useMemo(() => activeCodes.findIndex((code) => code === selectedStep), [activeCodes, selectedStep]);
   const firstPendingIndex = useMemo(() => {
-    if (!workflow) return 0;
-    const idx = workflow.steps.findIndex((step) => !step.approved);
-    return idx === -1 ? STEP_CODES.length - 1 : idx;
-  }, [workflow]);
-
+    const idx = steps.findIndex((step) => !step.approved);
+    return idx === -1 ? Math.max(steps.length - 1, 0) : idx;
+  }, [steps]);
   const completion = useMemo(() => {
-    if (!workflow || workflow.steps.length === 0) return 0;
-    const approvedCount = workflow.steps.filter((step) => step.approved).length;
-    return Math.round((approvedCount / workflow.steps.length) * 100);
-  }, [workflow]);
+    if (!steps.length) return 0;
+    const approvedCount = steps.filter((step) => step.approved).length;
+    return Math.round((approvedCount / steps.length) * 100);
+  }, [steps]);
 
-  const isLocked = (code: (typeof STEP_CODES)[number]) => {
-    const index = stepIndexMap[code];
+  const isLocked = (code: StepCode) => {
+    const index = activeCodes.findIndex((item) => item === code);
+    if (index < 0) return true;
     return index > firstPendingIndex;
   };
 
-  const setStep = (code: (typeof STEP_CODES)[number]) => {
+  const stepStatus = (code: StepCode) => steps.find((step) => step.code === code);
+
+  const selectStep = (code: StepCode) => {
     if (!isLocked(code)) {
       setSelectedStep(code);
     }
+  };
+
+  const approveStep = async (code: StepCode, text: string) => {
+    if (!token || !workflow) return;
+    const updated = await api.approveBrandSetupStep(token, workflow.tenant_id, code);
+    setWorkflow(updated);
+    const nextStep = updated.current_step;
+    if (isStepCode(nextStep)) {
+      setSelectedStep(nextStep);
+    }
+    setMessage(text);
   };
 
   const uploadAsset = async (event: ChangeEvent<HTMLInputElement>, assetType: "logo" | "base_image") => {
@@ -161,11 +188,11 @@ export function BrandSetupWizard() {
     try {
       setSaving(true);
       const uploaded = await api.uploadBrandAsset(token, workflow.tenant_id, "brand_identity", assetType, file);
-      setWorkflow((prev) => (prev ? { ...prev, assets: [...prev.assets, uploaded] } : prev));
+      setWorkflow((previous) => (previous ? { ...previous, assets: [...previous.assets, uploaded] } : previous));
       if (assetType === "logo") {
-        setIdentity((prev) => ({ ...prev, logo_asset_id: uploaded.id }));
+        setIdentity((previous) => ({ ...previous, logo_asset_id: uploaded.id }));
       } else {
-        setIdentity((prev) => ({ ...prev, base_image_asset_ids: [...prev.base_image_asset_ids, uploaded.id] }));
+        setIdentity((previous) => ({ ...previous, base_image_asset_ids: [...previous.base_image_asset_ids, uploaded.id] }));
       }
       setMessage(`Archivo cargado: ${uploaded.file_name}`);
     } catch (err) {
@@ -176,33 +203,34 @@ export function BrandSetupWizard() {
     }
   };
 
-  const approveCurrentStep = async (code: (typeof STEP_CODES)[number], customMessage: string) => {
-    if (!token || !workflow) return;
-    const approved = await api.approveBrandSetupStep(token, workflow.tenant_id, code);
-    setWorkflow(approved);
-    setSelectedStep((approved.current_step as (typeof STEP_CODES)[number]) ?? code);
-    setMessage(customMessage);
-  };
-
-  const saveIdentityAndContinue = async (event: FormEvent) => {
+  const saveIdentity = async (event: FormEvent) => {
     event.preventDefault();
     if (!token || !workflow) return;
-    if (
-      !identity.brand_name.trim() ||
-      !identity.business_description.trim() ||
-      !identity.brand_tone.trim() ||
-      !identity.primary_color ||
-      !identity.secondary_color
-    ) {
-      setError("Completa los campos obligatorios de identidad antes de continuar.");
+
+    if (!identity.brand_name.trim() || !identity.business_description.trim()) {
+      setError("Completa nombre y descripcion de la marca para continuar.");
       return;
     }
+    if (!generated.prompt_master.trim()) {
+      setError("Escribe el prompt maestro del negocio para continuar.");
+      return;
+    }
+    if (identity.has_existing_landing && !identity.existing_landing_url?.trim()) {
+      setError("Si indicas landing existente, debes capturar su URL.");
+      return;
+    }
+
     try {
       setSaving(true);
       setError("");
-      const updated = await api.updateBrandSetupWorkflow(token, workflow.tenant_id, { identity_data: identity });
+      const flowType = identity.has_existing_landing ? "with_existing_landing" : "without_landing";
+      const updated = await api.updateBrandSetupWorkflow(token, workflow.tenant_id, {
+        identity_data: identity,
+        prompt_master: generated.prompt_master,
+        flow_type: flowType,
+      });
       setWorkflow(updated);
-      await approveCurrentStep("brand_identity", "Identidad aprobada. Continuamos al paso 2.");
+      await approveStep("brand_identity", "Paso 1 aprobado. Continuamos con la configuracion comercial.");
     } catch (err) {
       setError(err instanceof Error ? err.message : "No fue posible guardar identidad.");
     } finally {
@@ -210,68 +238,34 @@ export function BrandSetupWizard() {
     }
   };
 
-  const generateContent = async () => {
-    if (!token || !workflow) return;
-    if (!generated.prompt_master.trim()) {
-      setError("Escribe el prompt del negocio para generar la propuesta.");
-      return;
-    }
-    try {
-      setSaving(true);
-      setError("");
-      const updated = await api.generateBrandSetupContent(token, workflow.tenant_id, generated.prompt_master);
-      setWorkflow(updated);
-      setGenerated(updated.generated_content ?? generated);
-      setMessage("Propuesta de contenido generada. Revísala y aprueba para continuar.");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "No fue posible generar contenido.");
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const approveContentAndContinue = async () => {
-    if (!token || !workflow) return;
-    if (!generated.value_proposition.trim() || !generated.base_copy.trim()) {
-      setError("Completa la propuesta de valor y el copy base antes de aprobar.");
-      return;
-    }
-    try {
-      setSaving(true);
-      setError("");
-      const updated = await api.updateBrandSetupWorkflow(token, workflow.tenant_id, {
-        prompt_master: generated.prompt_master,
-        generated_content: generated,
-      });
-      setWorkflow(updated);
-      await approveCurrentStep("base_content", "Contenido base aprobado. Continuamos al paso 3.");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "No fue posible aprobar contenido.");
-    } finally {
-      setSaving(false);
-    }
-  };
-
   const generateLanding = async (regenerate = false) => {
     if (!token || !workflow) return;
+    if (!generated.prompt_master.trim()) {
+      setError("Captura el prompt maestro para generar la landing.");
+      return;
+    }
     try {
       setSaving(true);
       setError("");
+      await api.updateBrandSetupWorkflow(token, workflow.tenant_id, { prompt_master: generated.prompt_master });
       const updated = await api.generateBrandSetupLanding(token, workflow.tenant_id, regenerate);
       setWorkflow(updated);
+      if (updated.generated_content) {
+        setGenerated(updated.generated_content);
+      }
       setLandingDraft(updated.landing_draft ?? defaultLanding);
-      setMessage(regenerate ? "Landing regenerada." : "Landing generada. Revisa y aprueba.");
+      setMessage(regenerate ? "Landing regenerada correctamente." : "Landing generada. Revisa y aprueba para continuar.");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "No fue posible generar landing.");
+      setError(err instanceof Error ? err.message : "No fue posible generar la landing.");
     } finally {
       setSaving(false);
     }
   };
 
-  const approveLandingAndContinue = async () => {
+  const approveLanding = async () => {
     if (!token || !workflow) return;
     if (!landingDraft.hero_title.trim() || !landingDraft.hero_subtitle.trim() || !landingDraft.contact_cta.trim()) {
-      setError("Completa hero y CTA de contacto antes de aprobar.");
+      setError("Completa hero y CTA final antes de aprobar la landing.");
       return;
     }
     try {
@@ -279,20 +273,21 @@ export function BrandSetupWizard() {
       setError("");
       const updated = await api.updateBrandSetupWorkflow(token, workflow.tenant_id, {
         landing_draft: landingDraft,
+        generated_content: generated,
       });
       setWorkflow(updated);
-      await approveCurrentStep("landing_setup", "Landing aprobada. Continuamos al paso 4.");
+      await approveStep("landing_setup", "Landing aprobada. Seguimos con ecommerce publico.");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "No fue posible aprobar landing.");
+      setError(err instanceof Error ? err.message : "No fue posible aprobar la landing.");
     } finally {
       setSaving(false);
     }
   };
 
-  const saveEcommerceAndContinue = async () => {
+  const saveEcommercePublic = async () => {
     if (!token || !workflow) return;
     if (!ecommerceData.categories_ready || !ecommerceData.products_ready) {
-      setError("Marca categorías y productos listos antes de continuar.");
+      setError("Debes dejar categorias y productos listos antes de continuar.");
       return;
     }
     try {
@@ -302,18 +297,39 @@ export function BrandSetupWizard() {
         ecommerce_data: ecommerceData,
       });
       setWorkflow(updated);
-      await approveCurrentStep("ecommerce_setup", "Ecommerce aprobado. Continuamos al paso 5.");
+      await approveStep("ecommerce_setup", "Ecommerce publico aprobado. Continuamos con distribuidores.");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "No fue posible guardar configuración ecommerce.");
+      setError(err instanceof Error ? err.message : "No fue posible guardar ecommerce publico.");
     } finally {
       setSaving(false);
     }
   };
 
-  const savePosAndContinue = async () => {
+  const saveDistributors = async () => {
+    if (!token || !workflow) return;
+    if (!ecommerceData.distributor_catalog_ready || !ecommerceData.volume_rules_ready) {
+      setError("Completa catalogo y reglas de volumen para distribuidores.");
+      return;
+    }
+    try {
+      setSaving(true);
+      setError("");
+      const updated = await api.updateBrandSetupWorkflow(token, workflow.tenant_id, {
+        ecommerce_data: ecommerceData,
+      });
+      setWorkflow(updated);
+      await approveStep("distributors_setup", "Canal de distribuidores aprobado. Continuamos con POS/WebApp.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "No fue posible guardar el canal distribuidor.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const savePos = async () => {
     if (!token || !workflow || !channelSettings) return;
     if (!posSetupData.payment_methods.length) {
-      setError("Selecciona al menos un método de pago POS.");
+      setError("Selecciona al menos un metodo de pago para POS.");
       return;
     }
     try {
@@ -324,7 +340,7 @@ export function BrandSetupWizard() {
         pos_setup_data: posSetupData,
       });
       setWorkflow(updated);
-      await approveCurrentStep("pos_setup", "POS/WebApp aprobado. Continuamos a revisión final.");
+      await approveStep("pos_setup", "POS/WebApp aprobado. Ya puedes revisar y publicar.");
     } catch (err) {
       setError(err instanceof Error ? err.message : "No fue posible guardar POS/WebApp.");
     } finally {
@@ -334,11 +350,9 @@ export function BrandSetupWizard() {
 
   const publishBrand = async () => {
     if (!token || !workflow) return;
-    const previousReady = workflow.steps
-      .filter((step) => step.code !== "final_review")
-      .every((step) => step.approved);
-    if (!previousReady) {
-      setError("Debes aprobar todos los pasos antes de publicar.");
+    const allReady = steps.filter((step) => step.code !== "final_review").every((step) => step.approved);
+    if (!allReady) {
+      setError("Debes aprobar todos los pasos previos antes de publicar.");
       return;
     }
     try {
@@ -346,8 +360,8 @@ export function BrandSetupWizard() {
       setError("");
       const approvedFinal = await api.approveBrandSetupStep(token, workflow.tenant_id, "final_review");
       const published = await api.updateBrandSetupWorkflow(token, workflow.tenant_id, {
-        is_published: true,
         current_step: "final_review",
+        is_published: true,
       });
       setWorkflow({ ...published, steps: approvedFinal.steps });
       setMessage("Marca publicada correctamente.");
@@ -358,50 +372,63 @@ export function BrandSetupWizard() {
     }
   };
 
+  const goPrevious = () => {
+    if (selectedIndex <= 0) return;
+    setSelectedStep(activeCodes[selectedIndex - 1]);
+  };
+
+  const goNext = () => {
+    if (selectedIndex < 0 || selectedIndex >= activeCodes.length - 1) return;
+    const next = activeCodes[selectedIndex + 1];
+    if (!isLocked(next)) {
+      setSelectedStep(next);
+    }
+  };
+
   if (loading || !workflow || !channelSettings) {
     return <p>Cargando wizard de setup...</p>;
   }
 
-  const step = workflow.steps.find((row) => row.code === selectedStep);
+  const currentMeta = stepStatus(selectedStep);
 
   return (
     <section>
       <PageHeader
         title={`Wizard de setup: ${workflow.tenant_name}`}
-        subtitle="Flujo secuencial tipo SaaS para construir, revisar y publicar la marca."
+        subtitle="Flujo guiado, secuencial y condicional para activar una marca sin perder contexto comercial."
       />
 
       <article className="card">
         <div className="row-gap" style={{ justifyContent: "space-between" }}>
           <p>Progreso: {completion}%</p>
           <p>
-            Paso {stepIndexMap[selectedStep] + 1} de {STEP_CODES.length}
+            Paso {Math.max(selectedIndex + 1, 1)} de {activeCodes.length}
           </p>
         </div>
         <div className="row-gap">
-          {STEP_CODES.map((code) => (
+          {activeCodes.map((code, index) => (
             <button
               key={code}
               type="button"
               className={isLocked(code) ? "button button-outline" : code === selectedStep ? "button" : "button button-outline"}
-              onClick={() => setStep(code)}
               disabled={isLocked(code)}
+              onClick={() => selectStep(code)}
             >
-              {stepIndexMap[code] + 1}. {STEP_LABELS[code]}
+              {index + 1}. {STEP_LABELS[code]}
             </button>
           ))}
         </div>
       </article>
 
       {selectedStep === "brand_identity" ? (
-        <form className="card" onSubmit={saveIdentityAndContinue}>
-          <h3>Step 1: Identidad de marca</h3>
+        <form className="card" onSubmit={saveIdentity}>
+          <h3>Paso 1: Identidad y decision de flujo</h3>
           <label>
-            Nombre de marca
+            Nombre del comercio / marca
             <input value={identity.brand_name} onChange={(event) => setIdentity((prev) => ({ ...prev, brand_name: event.target.value }))} required />
           </label>
           <label>
-            Descripción del negocio
+            Descripcion del negocio
             <textarea value={identity.business_description} onChange={(event) => setIdentity((prev) => ({ ...prev, business_description: event.target.value }))} required />
           </label>
           <label>
@@ -412,14 +439,52 @@ export function BrandSetupWizard() {
               <option value="mixed">Mixto</option>
             </select>
           </label>
-          <label>
-            Color principal
-            <input type="color" value={identity.primary_color} onChange={(event) => setIdentity((prev) => ({ ...prev, primary_color: event.target.value }))} />
+
+          <p>Ya tienes landing publicada?</p>
+          <label className="checkbox">
+            <input
+              type="radio"
+              name="landing_mode"
+              checked={identity.has_existing_landing}
+              onChange={() => setIdentity((prev) => ({ ...prev, has_existing_landing: true }))}
+            />
+            Si, ya tengo landing
           </label>
-          <label>
-            Color secundario
-            <input type="color" value={identity.secondary_color} onChange={(event) => setIdentity((prev) => ({ ...prev, secondary_color: event.target.value }))} />
+          <label className="checkbox">
+            <input
+              type="radio"
+              name="landing_mode"
+              checked={!identity.has_existing_landing}
+              onChange={() => setIdentity((prev) => ({ ...prev, has_existing_landing: false, existing_landing_url: "" }))}
+            />
+            No, necesito generar landing
           </label>
+
+          {identity.has_existing_landing ? (
+            <label>
+              URL de landing existente
+              <input
+                type="url"
+                placeholder="https://mi-marca.com"
+                value={identity.existing_landing_url ?? ""}
+                onChange={(event) => setIdentity((prev) => ({ ...prev, existing_landing_url: event.target.value }))}
+              />
+            </label>
+          ) : null}
+
+          {!identity.has_existing_landing ? (
+            <>
+              <label>
+                Color principal
+                <input type="color" value={identity.primary_color} onChange={(event) => setIdentity((prev) => ({ ...prev, primary_color: event.target.value }))} />
+              </label>
+              <label>
+                Color secundario
+                <input type="color" value={identity.secondary_color} onChange={(event) => setIdentity((prev) => ({ ...prev, secondary_color: event.target.value }))} />
+              </label>
+            </>
+          ) : null}
+
           <label>
             Tono de marca
             <select value={identity.brand_tone} onChange={(event) => setIdentity((prev) => ({ ...prev, brand_tone: event.target.value }))}>
@@ -429,72 +494,38 @@ export function BrandSetupWizard() {
               <option value="tecnico">Tecnico</option>
             </select>
           </label>
+
           <label>
-            Logo
+            Prompt maestro de la marca
+            <textarea
+              value={generated.prompt_master}
+              onChange={(event) => setGenerated((prev) => ({ ...prev, prompt_master: event.target.value }))}
+              placeholder="Describe negocio, cliente ideal, canales, objetivos y operacion esperada"
+              required
+            />
+          </label>
+
+          <label>
+            Logotipo
             <input type="file" accept="image/*" onChange={(event) => uploadAsset(event, "logo")} />
           </label>
           <label>
-            Imágenes base (opcional)
+            Imagenes base (opcional)
             <input type="file" accept="image/*" onChange={(event) => uploadAsset(event, "base_image")} />
           </label>
-          <p className="muted">Logo cargado: {identity.logo_asset_id ? "Si" : "No"} | Imágenes base: {identity.base_image_asset_ids.length}</p>
+          <p className="muted">
+            Logo cargado: {identity.logo_asset_id ? "Si" : "No"} | Imagenes base: {identity.base_image_asset_ids.length}
+          </p>
+
           <button className="button" type="submit" disabled={saving}>
             Guardar y continuar
           </button>
         </form>
       ) : null}
 
-      {selectedStep === "base_content" ? (
-        <article className="card">
-          <h3>Step 2: Contenido base (prompt + IA)</h3>
-          <label>
-            Prompt de negocio (obligatorio)
-            <textarea
-              value={generated.prompt_master}
-              onChange={(event) => setGenerated((prev) => ({ ...prev, prompt_master: event.target.value }))}
-            />
-          </label>
-          <div className="row-gap">
-            <button className="button" type="button" onClick={generateContent} disabled={saving}>
-              Generar propuesta de marca
-            </button>
-          </div>
-          <label>
-            Propuesta de valor
-            <textarea value={generated.value_proposition} onChange={(event) => setGenerated((prev) => ({ ...prev, value_proposition: event.target.value }))} />
-          </label>
-          <label>
-            Tono de comunicación
-            <input value={generated.communication_tone} onChange={(event) => setGenerated((prev) => ({ ...prev, communication_tone: event.target.value }))} />
-          </label>
-          <label>
-            Copy base
-            <textarea value={generated.base_copy} onChange={(event) => setGenerated((prev) => ({ ...prev, base_copy: event.target.value }))} />
-          </label>
-          <label>
-            Secciones sugeridas (una por línea)
-            <textarea
-              value={generated.suggested_sections.join("\n")}
-              onChange={(event) =>
-                setGenerated((prev) => ({
-                  ...prev,
-                  suggested_sections: event.target.value
-                    .split("\n")
-                    .map((line) => line.trim())
-                    .filter(Boolean),
-                }))
-              }
-            />
-          </label>
-          <button className="button" type="button" onClick={approveContentAndContinue} disabled={saving}>
-            Aprobar y continuar
-          </button>
-        </article>
-      ) : null}
-
       {selectedStep === "landing_setup" ? (
         <article className="card">
-          <h3>Step 3: Landing</h3>
+          <h3>Paso Landing: generacion, edicion y aprobacion</h3>
           <div className="row-gap">
             <button className="button" type="button" onClick={() => generateLanding(false)} disabled={saving}>
               Generar landing
@@ -503,33 +534,43 @@ export function BrandSetupWizard() {
               Regenerar landing
             </button>
           </div>
+
           <section className="marketing-hero" style={{ marginTop: "12px" }}>
             <input className="input-inline" value={landingDraft.hero_title} onChange={(event) => setLandingDraft((prev) => ({ ...prev, hero_title: event.target.value }))} />
             <textarea className="input-inline" value={landingDraft.hero_subtitle} onChange={(event) => setLandingDraft((prev) => ({ ...prev, hero_subtitle: event.target.value }))} />
           </section>
+
           <div className="card-grid">
             {landingDraft.sections.map((section, index) => (
               <article key={`${section.title}-${index}`} className="card marketing-card">
-                <input value={section.title} onChange={(event) => {
-                  const next = [...landingDraft.sections];
-                  next[index] = { ...next[index], title: event.target.value };
-                  setLandingDraft((prev) => ({ ...prev, sections: next }));
-                }} />
-                <textarea value={section.body} onChange={(event) => {
-                  const next = [...landingDraft.sections];
-                  next[index] = { ...next[index], body: event.target.value };
-                  setLandingDraft((prev) => ({ ...prev, sections: next }));
-                }} />
+                <input
+                  value={section.title}
+                  onChange={(event) => {
+                    const next = [...landingDraft.sections];
+                    next[index] = { ...next[index], title: event.target.value };
+                    setLandingDraft((prev) => ({ ...prev, sections: next }));
+                  }}
+                />
+                <textarea
+                  value={section.body}
+                  onChange={(event) => {
+                    const next = [...landingDraft.sections];
+                    next[index] = { ...next[index], body: event.target.value };
+                    setLandingDraft((prev) => ({ ...prev, sections: next }));
+                  }}
+                />
               </article>
             ))}
           </div>
+
           <label>
-            CTA de contacto final
+            CTA final de contacto
             <input value={landingDraft.contact_cta} onChange={(event) => setLandingDraft((prev) => ({ ...prev, contact_cta: event.target.value }))} />
           </label>
+
           <div className="row-gap">
             <Link className="button button-outline" to={`/store/${workflow.tenant_slug}`}>Ver preview web</Link>
-            <button className="button" type="button" onClick={approveLandingAndContinue} disabled={saving}>
+            <button className="button" type="button" onClick={approveLanding} disabled={saving}>
               Aprobar y continuar
             </button>
           </div>
@@ -538,7 +579,7 @@ export function BrandSetupWizard() {
 
       {selectedStep === "ecommerce_setup" ? (
         <article className="card">
-          <h3>Step 4: Ecommerce</h3>
+          <h3>Paso Ecommerce publico</h3>
           <label>
             Modo de carga
             <select value={ecommerceData.catalog_mode} onChange={(event) => setEcommerceData((prev) => ({ ...prev, catalog_mode: event.target.value }))}>
@@ -548,11 +589,11 @@ export function BrandSetupWizard() {
           </label>
           <label className="checkbox">
             <input type="checkbox" checked={ecommerceData.categories_ready} onChange={(event) => setEcommerceData((prev) => ({ ...prev, categories_ready: event.target.checked }))} />
-            Categorías configuradas
+            Categorias configuradas
           </label>
           <label className="checkbox">
             <input type="checkbox" checked={ecommerceData.products_ready} onChange={(event) => setEcommerceData((prev) => ({ ...prev, products_ready: event.target.checked }))} />
-            Productos/servicios cargados
+            Productos o servicios listos
           </label>
           <label className="checkbox">
             <input type="checkbox" checked={ecommerceData.massive_upload_enabled} onChange={(event) => setEcommerceData((prev) => ({ ...prev, massive_upload_enabled: event.target.checked }))} />
@@ -563,11 +604,35 @@ export function BrandSetupWizard() {
             <textarea value={ecommerceData.notes ?? ""} onChange={(event) => setEcommerceData((prev) => ({ ...prev, notes: event.target.value }))} />
           </label>
           <div className="row-gap">
-            <Link className="button button-outline" to="/products">Ir a productos</Link>
-            <Link className="button button-outline" to="/categories">Ir a categorias</Link>
-            <Link className="button button-outline" to="/admin/catalog/bulk-upload">Ir a carga masiva</Link>
-            <button className="button" type="button" onClick={saveEcommerceAndContinue} disabled={saving}>
-              Guardar y continuar
+            <Link className="button button-outline" to="/products">Productos</Link>
+            <Link className="button button-outline" to="/categories">Categorias</Link>
+            <Link className="button button-outline" to="/admin/catalog/bulk-upload">Carga masiva</Link>
+            <button className="button" type="button" onClick={saveEcommercePublic} disabled={saving}>
+              Aprobar ecommerce publico
+            </button>
+          </div>
+        </article>
+      ) : null}
+
+      {selectedStep === "distributors_setup" ? (
+        <article className="card">
+          <h3>Paso Ecommerce distribuidores</h3>
+          <label className="checkbox">
+            <input type="checkbox" checked={ecommerceData.distributor_catalog_ready} onChange={(event) => setEcommerceData((prev) => ({ ...prev, distributor_catalog_ready: event.target.checked }))} />
+            Catalogo distribuidor listo
+          </label>
+          <label className="checkbox">
+            <input type="checkbox" checked={ecommerceData.volume_rules_ready} onChange={(event) => setEcommerceData((prev) => ({ ...prev, volume_rules_ready: event.target.checked }))} />
+            Reglas de volumen y mayoreo listas
+          </label>
+          <label className="checkbox">
+            <input type="checkbox" checked={ecommerceData.recurring_orders_ready} onChange={(event) => setEcommerceData((prev) => ({ ...prev, recurring_orders_ready: event.target.checked }))} />
+            Compra recurrente habilitada
+          </label>
+          <div className="row-gap">
+            <Link className="button button-outline" to="/admin/distributors">Distribuidores</Link>
+            <button className="button" type="button" onClick={saveDistributors} disabled={saving}>
+              Aprobar canal distribuidor
             </button>
           </div>
         </article>
@@ -575,12 +640,12 @@ export function BrandSetupWizard() {
 
       {selectedStep === "pos_setup" ? (
         <article className="card">
-          <h3>Step 5: POS / WebApp</h3>
+          <h3>Paso POS / WebApp</h3>
           <label className="checkbox">
             <input type="checkbox" checked={posSetupData.pos_enabled} onChange={(event) => setPosSetupData((prev) => ({ ...prev, pos_enabled: event.target.checked }))} />
             POS habilitado
           </label>
-          <p>Métodos de pago</p>
+          <p>Metodos de pago</p>
           {["efectivo", "transferencia", "mercado_pago_qr", "mercado_pago_link"].map((method) => (
             <label key={method} className="checkbox">
               <input
@@ -621,8 +686,8 @@ export function BrandSetupWizard() {
           <div className="row-gap">
             <Link className="button button-outline" to="/pos">Abrir POS</Link>
             <Link className="button button-outline" to="/admin/settings/payments/mercadopago">Configurar Mercado Pago</Link>
-            <button className="button" type="button" onClick={savePosAndContinue} disabled={saving}>
-              Guardar y continuar
+            <button className="button" type="button" onClick={savePos} disabled={saving}>
+              Aprobar POS / WebApp
             </button>
           </div>
         </article>
@@ -630,13 +695,16 @@ export function BrandSetupWizard() {
 
       {selectedStep === "final_review" ? (
         <article className="card">
-          <h3>Step 6: Revisión y publicación</h3>
+          <h3>Revision final y publicacion</h3>
           <ul className="marketing-list">
-            {workflow.steps.map((row) => (
-              <li key={row.code}>
-                {STEP_LABELS[row.code as (typeof STEP_CODES)[number]] ?? row.code}: {row.approved ? "✔" : "Pendiente"}
-              </li>
-            ))}
+            {steps.map((row) => {
+              const code = row.code as StepCode;
+              return (
+                <li key={row.code}>
+                  {STEP_LABELS[code] ?? row.code}: {row.approved ? "OK" : "Pendiente"}
+                </li>
+              );
+            })}
           </ul>
           <div className="row-gap">
             <Link className="button button-outline" to={`/store/${workflow.tenant_slug}`}>
@@ -652,8 +720,21 @@ export function BrandSetupWizard() {
       <article className="card">
         <h3>Estado del paso actual</h3>
         <p>Paso: {STEP_LABELS[selectedStep]}</p>
-        <p>Status: {step?.status ?? "pending"}</p>
-        <p>Aprobado: {step?.approved ? "Si" : "No"}</p>
+        <p>Status: {currentMeta?.status ?? "pending"}</p>
+        <p>Aprobado: {currentMeta?.approved ? "Si" : "No"}</p>
+        <div className="row-gap">
+          <button className="button button-outline" type="button" onClick={goPrevious} disabled={selectedIndex <= 0}>
+            Anterior
+          </button>
+          <button
+            className="button button-outline"
+            type="button"
+            onClick={goNext}
+            disabled={selectedIndex < 0 || selectedIndex >= activeCodes.length - 1 || isLocked(activeCodes[selectedIndex + 1])}
+          >
+            Siguiente
+          </button>
+        </div>
       </article>
 
       {message ? <p>{message}</p> : null}

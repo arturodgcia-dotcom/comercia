@@ -39,8 +39,8 @@ export function AdminLayout() {
       roles: ADMIN_ROLES,
       items: [
         { label: "Landing", to: userRole === "reinpia_admin" ? "/reinpia/brands/new" : tenantId ? `/tenants/${tenantId}/branding` : "/tenants" },
-        { label: "Ecommerce publico", to: "/products" },
-        { label: "Ecommerce distribuidores", to: "/admin/distributors" },
+        { label: "Ecommerce publico", to: "/admin/reports/sales" },
+        { label: "Ecommerce distribuidores", to: "/admin/reports/distributors" },
         { label: t("nav.banners"), to: "/admin/banners", roles: ["tenant_admin", "reinpia_admin"] },
         { label: t("nav.coupons"), to: "/admin/coupons", roles: ["tenant_admin", "reinpia_admin"] },
       ],
@@ -71,7 +71,6 @@ export function AdminLayout() {
       roles: ADMIN_ROLES,
       items: [
         { label: t("nav.logistics"), to: "/admin/logistics" },
-        { label: "Almacenes", to: "/admin/inventory" },
         { label: t("nav.services"), to: "/admin/services" },
         { label: t("nav.appointments"), to: "/admin/appointments" },
         { label: t("nav.recurring"), to: "/admin/recurring-orders" },
@@ -82,7 +81,7 @@ export function AdminLayout() {
       roles: ADMIN_ROLES,
       items: [
         { label: "Puntos de venta", to: "/pos/locations" },
-        { label: "Empleados", to: "/admin/distributors", roles: ["tenant_admin", "reinpia_admin"] },
+        { label: "Empleados", to: "/pos/locations", roles: ["tenant_admin", "reinpia_admin"] },
         { label: "Credenciales", to: "/admin/loyalty", roles: ["tenant_admin", "reinpia_admin"] },
         { label: "Ventas POS", to: "/pos/sales" },
         { label: "Caja POS", to: "/pos" },

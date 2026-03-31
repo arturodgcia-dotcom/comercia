@@ -75,6 +75,7 @@ import {
 } from "../types/domain";
 
 const BASE_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8000";
+const REQUEST_TIMEOUT_MS = Number(import.meta.env.VITE_API_TIMEOUT_MS ?? "15000");
 
 class ApiError extends Error {
   status: number;
@@ -90,15 +91,24 @@ async function request<T>(path: string, init: RequestInit = {}, token?: string):
   headers.set("Content-Type", "application/json");
   if (token) headers.set("Authorization", `Bearer ${token}`);
 
+  const controller = new AbortController();
+  const timeoutId = window.setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
   let response: Response;
   try {
-    response = await fetch(`${BASE_URL}${path}`, { ...init, headers });
+    response = await fetch(`${BASE_URL}${path}`, { ...init, headers, signal: controller.signal });
   } catch (error) {
+    window.clearTimeout(timeoutId);
+    if (error instanceof DOMException && error.name === "AbortError") {
+      throw new ApiError("La solicitud excedio el tiempo de espera. Verifica backend y red local.", 0);
+    }
     const message =
       `No fue posible conectar con el backend (${BASE_URL}). ` +
-      "Verifica que la API esté arriba y que VITE_API_URL apunte al puerto correcto.";
+      "Verifica que la API este arriba y que VITE_API_URL apunte al puerto correcto.";
     throw new ApiError(message, 0);
   }
+
+  window.clearTimeout(timeoutId);
   if (!response.ok) {
     const errorText = await response.text();
     throw new ApiError(errorText || response.statusText, response.status);
@@ -133,6 +143,7 @@ export const api = {
       is_published?: boolean;
       prompt_master?: string;
       selected_template?: string;
+      flow_type?: string;
       steps?: BrandSetupStepState[];
       identity_data?: BrandIdentityData;
       generated_content?: BrandGeneratedContent;
@@ -574,3 +585,6 @@ export const api = {
 };
 
 export { ApiError };
+
+
+

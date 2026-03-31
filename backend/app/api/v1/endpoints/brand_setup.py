@@ -29,11 +29,19 @@ from app.services.brand_setup_generator import generate_brand_content, generate_
 
 router = APIRouter()
 
-DEFAULT_STEPS = [
+DEFAULT_STEPS_WITHOUT_LANDING = [
     {"code": "brand_identity", "title": "Identidad de marca", "status": "pending", "approved": False},
-    {"code": "base_content", "title": "Contenido base (prompt + IA)", "status": "pending", "approved": False},
     {"code": "landing_setup", "title": "Landing", "status": "pending", "approved": False},
-    {"code": "ecommerce_setup", "title": "Ecommerce", "status": "pending", "approved": False},
+    {"code": "ecommerce_setup", "title": "Ecommerce publico", "status": "pending", "approved": False},
+    {"code": "distributors_setup", "title": "Ecommerce distribuidores", "status": "pending", "approved": False},
+    {"code": "pos_setup", "title": "POS / WebApp", "status": "pending", "approved": False},
+    {"code": "final_review", "title": "Revision y publicacion", "status": "pending", "approved": False},
+]
+
+DEFAULT_STEPS_WITH_EXISTING_LANDING = [
+    {"code": "brand_identity", "title": "Identidad de marca", "status": "pending", "approved": False},
+    {"code": "ecommerce_setup", "title": "Ecommerce publico", "status": "pending", "approved": False},
+    {"code": "distributors_setup", "title": "Ecommerce distribuidores", "status": "pending", "approved": False},
     {"code": "pos_setup", "title": "POS / WebApp", "status": "pending", "approved": False},
     {"code": "final_review", "title": "Revision y publicacion", "status": "pending", "approved": False},
 ]
@@ -64,11 +72,12 @@ def get_brand_setup_workflow(tenant_id: int, db: Session = Depends(get_db)) -> B
     tenant = _get_tenant_or_404(db, tenant_id)
     config, payload = _load_brand_payload(db, tenant_id)
     workflow = payload.get("workflow", {})
-    steps_raw = workflow.get("steps", DEFAULT_STEPS)
+    flow_type = workflow.get("flow_type", "without_landing")
+    steps_raw = workflow.get("steps", _build_default_steps(flow_type))
     assets_raw = payload.get("assets", [])
 
     steps = [BrandSetupStepState(**step) for step in steps_raw]
-    steps = _normalize_steps(steps)
+    steps = _normalize_steps(steps, flow_type=flow_type)
     assets = [BrandSetupAssetRead(**asset) for asset in assets_raw]
     current_step = workflow.get("current_step") or _next_step_code(steps)
     identity_data = _parse_identity(payload)
@@ -85,6 +94,7 @@ def get_brand_setup_workflow(tenant_id: int, db: Session = Depends(get_db)) -> B
         is_published=bool(workflow.get("is_published", False)),
         prompt_master=workflow.get("prompt_master"),
         selected_template=workflow.get("selected_template"),
+        flow_type=flow_type,
         steps=steps,
         assets=assets,
         identity_data=identity_data,
@@ -109,15 +119,24 @@ def update_brand_setup_workflow(
     for key in ("current_step", "is_published", "prompt_master", "selected_template"):
         if key in update_data:
             workflow[key] = update_data[key]
+    if "flow_type" in update_data and update_data["flow_type"] is not None:
+        workflow["flow_type"] = update_data["flow_type"]
+        workflow["steps"] = _build_default_steps(update_data["flow_type"])
     if "steps" in update_data and update_data["steps"] is not None:
         incoming_steps = [step.model_dump() if isinstance(step, BrandSetupStepState) else step for step in update_data["steps"]]
-        workflow["steps"] = [step.model_dump() for step in _normalize_steps([BrandSetupStepState(**row) for row in incoming_steps])]
+        workflow["steps"] = [step.model_dump() for step in _normalize_steps([BrandSetupStepState(**row) for row in incoming_steps], flow_type=workflow.get("flow_type", "without_landing"))]
     if "identity_data" in update_data and update_data["identity_data"] is not None:
         payload_identity: BrandIdentityData = (
             update_data["identity_data"] if isinstance(update_data["identity_data"], BrandIdentityData) else BrandIdentityData(**update_data["identity_data"])
         )
         raw_payload["identity_data"] = payload_identity.model_dump()
         _sync_tenant_identity(db, tenant, payload_identity)
+        flow_type = "with_existing_landing" if payload_identity.has_existing_landing else "without_landing"
+        workflow["flow_type"] = flow_type
+        workflow["steps"] = _merge_steps_with_flow(
+            existing_steps=[BrandSetupStepState(**row) for row in workflow.get("steps", _build_default_steps(flow_type))],
+            flow_type=flow_type,
+        )
     if "generated_content" in update_data and update_data["generated_content"] is not None:
         generated_content: BrandGeneratedContent = (
             update_data["generated_content"]
@@ -148,8 +167,9 @@ def update_brand_setup_workflow(
         raw_payload["pos_setup_data"] = pos_setup_data.model_dump()
 
     if "steps" not in update_data:
-        existing_steps = [BrandSetupStepState(**step) for step in workflow.get("steps", DEFAULT_STEPS)]
-        workflow["steps"] = [step.model_dump() for step in _normalize_steps(existing_steps)]
+        flow_type = workflow.get("flow_type", "without_landing")
+        existing_steps = [BrandSetupStepState(**step) for step in workflow.get("steps", _build_default_steps(flow_type))]
+        workflow["steps"] = [step.model_dump() for step in _normalize_steps(existing_steps, flow_type=flow_type)]
     workflow["current_step"] = _next_step_code([BrandSetupStepState(**step) for step in workflow["steps"]])
 
     _save_brand_payload(config, raw_payload, db)
@@ -169,11 +189,12 @@ def generate_brand_setup_content(
         raise HTTPException(status_code=400, detail="Completa la identidad de marca antes de generar contenido.")
     generated = generate_brand_content(identity, payload.prompt_master)
     workflow = raw_payload.setdefault("workflow", {})
-    steps = _normalize_steps([BrandSetupStepState(**step) for step in workflow.get("steps", DEFAULT_STEPS)])
-    _mark_step_in_progress(steps, "base_content")
+    flow_type = workflow.get("flow_type", "without_landing")
+    steps = _normalize_steps([BrandSetupStepState(**step) for step in workflow.get("steps", _build_default_steps(flow_type))], flow_type=flow_type)
+    _mark_step_in_progress(steps, "landing_setup" if flow_type == "without_landing" else "ecommerce_setup")
     workflow["steps"] = [step.model_dump() for step in steps]
     workflow["prompt_master"] = payload.prompt_master
-    workflow["current_step"] = "base_content"
+    workflow["current_step"] = _next_step_code(steps)
     raw_payload["generated_content"] = generated.model_dump()
     _save_brand_payload(config, raw_payload, db)
     return get_brand_setup_workflow(tenant.id, db)
@@ -189,13 +210,22 @@ def generate_brand_setup_landing(
     config, raw_payload = _load_brand_payload(db, tenant_id)
     identity = _parse_identity(raw_payload)
     generated = _parse_generated_content(raw_payload)
-    if not identity or not generated:
-        raise HTTPException(status_code=400, detail="Primero genera y aprueba el contenido base.")
+    if not identity:
+        raise HTTPException(status_code=400, detail="Primero completa la identidad de marca.")
+    workflow = raw_payload.setdefault("workflow", {})
+    flow_type = workflow.get("flow_type", "without_landing")
+    if flow_type == "with_existing_landing":
+        raise HTTPException(status_code=400, detail="La marca ya indico landing existente. Este paso no aplica.")
+    prompt_master = (workflow.get("prompt_master") or "").strip()
+    if not prompt_master and not generated:
+        raise HTTPException(status_code=400, detail="Define el prompt maestro para generar la landing.")
+    if not generated:
+        generated = generate_brand_content(identity, prompt_master)
+        raw_payload["generated_content"] = generated.model_dump()
     if raw_payload.get("landing_draft") and not payload.regenerate:
         raise HTTPException(status_code=400, detail="Ya existe una landing generada. Usa regenerar para reemplazarla.")
     landing_draft = generate_landing_draft(identity, generated)
-    workflow = raw_payload.setdefault("workflow", {})
-    steps = _normalize_steps([BrandSetupStepState(**step) for step in workflow.get("steps", DEFAULT_STEPS)])
+    steps = _normalize_steps([BrandSetupStepState(**step) for step in workflow.get("steps", _build_default_steps(flow_type))], flow_type=flow_type)
     _mark_step_in_progress(steps, "landing_setup")
     workflow["steps"] = [step.model_dump() for step in steps]
     workflow["current_step"] = "landing_setup"
@@ -213,8 +243,9 @@ def approve_brand_setup_step(
     tenant = _get_tenant_or_404(db, tenant_id)
     config, raw_payload = _load_brand_payload(db, tenant_id)
     workflow = raw_payload.setdefault("workflow", {})
-    steps = _normalize_steps([BrandSetupStepState(**step) for step in workflow.get("steps", DEFAULT_STEPS)])
-    index = _step_index(step_code)
+    flow_type = workflow.get("flow_type", "without_landing")
+    steps = _normalize_steps([BrandSetupStepState(**step) for step in workflow.get("steps", _build_default_steps(flow_type))], flow_type=flow_type)
+    index = _step_index(step_code, flow_type=flow_type)
     if index < 0:
         raise HTTPException(status_code=404, detail="Paso no encontrado")
     for previous_step in steps[:index]:
@@ -224,7 +255,7 @@ def approve_brand_setup_step(
     target.approved = True
     target.status = "approved"
     target.updated_at = datetime.utcnow()
-    workflow["steps"] = [step.model_dump() for step in _normalize_steps(steps)]
+    workflow["steps"] = [step.model_dump() for step in _normalize_steps(steps, flow_type=flow_type)]
     workflow["current_step"] = _next_step_code([BrandSetupStepState(**step) for step in workflow["steps"]])
     _save_brand_payload(config, raw_payload, db)
     return get_brand_setup_workflow(tenant.id, db)
@@ -369,6 +400,10 @@ def _parse_landing_draft(payload: dict) -> BrandLandingDraft | None:
     raw = payload.get("landing_draft")
     if not raw:
         return None
+    try:
+        return BrandLandingDraft(**raw)
+    except Exception:
+        return None
 
 
 def _parse_ecommerce_data(payload: dict) -> BrandEcommerceData | None:
@@ -389,24 +424,21 @@ def _parse_pos_setup_data(payload: dict) -> BrandPosSetupData | None:
         return BrandPosSetupData(**raw)
     except Exception:
         return None
-    try:
-        return BrandLandingDraft(**raw)
-    except Exception:
-        return None
 
 
-def _step_index(step_code: str) -> int:
-    for idx, row in enumerate(DEFAULT_STEPS):
+def _step_index(step_code: str, flow_type: str = "without_landing") -> int:
+    for idx, row in enumerate(_build_default_steps(flow_type)):
         if row["code"] == step_code:
             return idx
     return -1
 
 
-def _normalize_steps(steps: list[BrandSetupStepState]) -> list[BrandSetupStepState]:
+def _normalize_steps(steps: list[BrandSetupStepState], flow_type: str = "without_landing") -> list[BrandSetupStepState]:
+    defaults = _build_default_steps(flow_type)
     by_code = {step.code: step for step in steps}
     normalized: list[BrandSetupStepState] = []
     previous_approved = True
-    for default in DEFAULT_STEPS:
+    for default in defaults:
         step = by_code.get(default["code"]) or BrandSetupStepState(**default)
         if not previous_approved and step.approved:
             step.approved = False
@@ -453,3 +485,23 @@ def _sync_tenant_identity(db: Session, tenant: Tenant, identity: BrandIdentityDa
     branding.primary_color = identity.primary_color
     branding.secondary_color = identity.secondary_color
     db.add(branding)
+
+
+def _build_default_steps(flow_type: str) -> list[dict]:
+    if flow_type == "with_existing_landing":
+        return [row.copy() for row in DEFAULT_STEPS_WITH_EXISTING_LANDING]
+    return [row.copy() for row in DEFAULT_STEPS_WITHOUT_LANDING]
+
+
+def _merge_steps_with_flow(existing_steps: list[BrandSetupStepState], flow_type: str) -> list[dict]:
+    incoming_by_code = {step.code: step for step in existing_steps}
+    merged: list[BrandSetupStepState] = []
+    for default in _build_default_steps(flow_type):
+        code = default["code"]
+        existing = incoming_by_code.get(code)
+        if existing:
+            merged.append(existing)
+        else:
+            merged.append(BrandSetupStepState(**default))
+    normalized = _normalize_steps(merged, flow_type=flow_type)
+    return [step.model_dump() for step in normalized]

@@ -27,6 +27,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+    setLoading(true);
     api.me(token)
       .then((loadedUser) => {
         setUser(loadedUser);
@@ -49,9 +50,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       user,
       loading,
       login: async (email: string, password: string) => {
-        const auth = await api.login(email, password);
-        localStorage.setItem(TOKEN_KEY, auth.access_token);
-        setToken(auth.access_token);
+        setLoading(true);
+        try {
+          const auth = await api.login(email, password);
+          localStorage.setItem(TOKEN_KEY, auth.access_token);
+          const loadedUser = await api.me(auth.access_token);
+          if (loadedUser.preferred_language) {
+            i18n.changeLanguage(loadedUser.preferred_language);
+            localStorage.setItem("comercia_lang", loadedUser.preferred_language);
+          }
+          setUser(loadedUser);
+          setToken(auth.access_token);
+        } catch (error) {
+          localStorage.removeItem(TOKEN_KEY);
+          setToken(null);
+          setUser(null);
+          throw error;
+        } finally {
+          setLoading(false);
+        }
       },
       logout: () => {
         localStorage.removeItem(TOKEN_KEY);
