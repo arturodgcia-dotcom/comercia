@@ -85,7 +85,15 @@ async function request<T>(path: string, init: RequestInit = {}, token?: string):
   headers.set("Content-Type", "application/json");
   if (token) headers.set("Authorization", `Bearer ${token}`);
 
-  const response = await fetch(`${BASE_URL}${path}`, { ...init, headers });
+  let response: Response;
+  try {
+    response = await fetch(`${BASE_URL}${path}`, { ...init, headers });
+  } catch (error) {
+    const message =
+      `No fue posible conectar con el backend (${BASE_URL}). ` +
+      "Verifica que la API esté arriba y que VITE_API_URL apunte al puerto correcto.";
+    throw new ApiError(message, 0);
+  }
   if (!response.ok) {
     const errorText = await response.text();
     throw new ApiError(errorText || response.statusText, response.status);

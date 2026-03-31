@@ -1,5 +1,6 @@
 param(
-  [int]$Port = 5173
+  [int]$Port = 5173,
+  [string]$ApiUrl = "http://localhost:8000"
 )
 
 $ErrorActionPreference = "Stop"
@@ -36,5 +37,9 @@ if (Test-PortInUse -Port $Port) {
 }
 
 Write-Host "Iniciando frontend en http://localhost:$Port" -ForegroundColor Green
+Write-Host "API backend configurada en $ApiUrl" -ForegroundColor Cyan
 Set-Location $frontendPath
+if ($ApiUrl) {
+  $env:VITE_API_URL = $ApiUrl
+}
 & npm run dev -- --host 0.0.0.0 --port $Port

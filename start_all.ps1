@@ -85,11 +85,12 @@ if (Test-PortInUse -Port $frontendPort) {
 
 $backendScript = Join-Path $PSScriptRoot "start_backend_only.ps1"
 $frontendScript = Join-Path $PSScriptRoot "start_frontend_only.ps1"
+$backendApiUrl = "http://localhost:$backendPort"
 
 Write-Host "Iniciando backend y frontend en nuevas ventanas..." -ForegroundColor Cyan
 Start-Process powershell -ArgumentList "-NoExit", "-ExecutionPolicy", "Bypass", "-File", $backendScript, "-Port", $backendPort, $(if ($bootstrapEnabled) {"-Bootstrap"} else {""}) | Out-Null
 Start-Sleep -Seconds 1
-Start-Process powershell -ArgumentList "-NoExit", "-ExecutionPolicy", "Bypass", "-File", $frontendScript, "-Port", $frontendPort | Out-Null
+Start-Process powershell -ArgumentList "-NoExit", "-ExecutionPolicy", "Bypass", "-File", $frontendScript, "-Port", $frontendPort, "-ApiUrl", $backendApiUrl | Out-Null
 
 Write-Host ""
 Write-Host "URLs utiles:" -ForegroundColor Yellow
@@ -99,6 +100,7 @@ Write-Host "- Landing ComerCia:     http://localhost:$frontendPort/comercia"
 Write-Host "- Store REINPIA:        http://localhost:$frontendPort/store/reinpia"
 Write-Host "- Login admin:          http://localhost:$frontendPort/login"
 Write-Host "- Panel REINPIA global: http://localhost:$frontendPort/reinpia/dashboard"
+Write-Host "- Backend API URL usada por frontend: $backendApiUrl"
 Write-Host ""
 
 Start-Sleep -Seconds 2
