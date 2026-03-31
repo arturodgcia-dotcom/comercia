@@ -2,6 +2,11 @@ import {
   Appointment,
   AutomationEventLog,
   Banner,
+  BrandGeneratedContent,
+  BrandEcommerceData,
+  BrandIdentityData,
+  BrandLandingDraft,
+  BrandPosSetupData,
   BrandChannelSettings,
   BrandSetupAsset,
   BrandSetupStepState,
@@ -129,8 +134,27 @@ export const api = {
       prompt_master?: string;
       selected_template?: string;
       steps?: BrandSetupStepState[];
+      identity_data?: BrandIdentityData;
+      generated_content?: BrandGeneratedContent;
+      landing_draft?: BrandLandingDraft;
+      ecommerce_data?: BrandEcommerceData;
+      pos_setup_data?: BrandPosSetupData;
     }
   ) => request<BrandSetupWorkflow>(`/api/v1/brand-setup/${tenantId}`, { method: "PUT", body: JSON.stringify(payload) }, token),
+  generateBrandSetupContent: (token: string, tenantId: number, prompt_master: string) =>
+    request<BrandSetupWorkflow>(
+      `/api/v1/brand-setup/${tenantId}/generate-content`,
+      { method: "POST", body: JSON.stringify({ prompt_master }) },
+      token
+    ),
+  generateBrandSetupLanding: (token: string, tenantId: number, regenerate = false) =>
+    request<BrandSetupWorkflow>(
+      `/api/v1/brand-setup/${tenantId}/generate-landing`,
+      { method: "POST", body: JSON.stringify({ regenerate }) },
+      token
+    ),
+  approveBrandSetupStep: (token: string, tenantId: number, stepCode: string) =>
+    request<BrandSetupWorkflow>(`/api/v1/brand-setup/${tenantId}/steps/${stepCode}/approve`, { method: "POST" }, token),
   uploadBrandAsset: async (token: string, tenantId: number, stepCode: string, assetType: string, file: File) => {
     const formData = new FormData();
     formData.set("step_code", stepCode);

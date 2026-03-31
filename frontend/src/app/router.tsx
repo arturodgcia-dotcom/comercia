@@ -36,7 +36,7 @@ import { RecurringOrdersAdminPage } from "../pages/RecurringOrdersAdminPage";
 import { AutomationAdminPage } from "../pages/AutomationAdminPage";
 import { ReinpiaDashboardPage } from "../pages/ReinpiaDashboardPage";
 import { ReinpiaBrandsNewPage } from "../pages/ReinpiaBrandsNewPage";
-import { ReinpiaBrandSetupPage } from "../pages/ReinpiaBrandSetupPage";
+import { BrandSetupWizard } from "../pages/BrandSetupWizard";
 import { ReinpiaCommissionAgentsPage } from "../pages/ReinpiaCommissionAgentsPage";
 import { ReinpiaOperationsPage } from "../pages/ReinpiaOperationsPage";
 import { ReinpiaPaymentsPage } from "../pages/ReinpiaPaymentsPage";
@@ -138,7 +138,7 @@ export function AppRouter() {
             <Route element={<RoleRoute allowedRoles={["reinpia_admin"]} />}>
               <Route path="reinpia/dashboard" element={<ReinpiaDashboardPage />} />
               <Route path="reinpia/brands/new" element={<ReinpiaBrandsNewPage />} />
-              <Route path="reinpia/brands/:tenantId/setup" element={<ReinpiaBrandSetupPage />} />
+              <Route path="reinpia/brands/:tenantId/setup" element={<BrandSetupWizard />} />
               <Route path="reinpia/tenants" element={<ReinpiaTenantsPage />} />
               <Route path="reinpia/tenants/:tenantId" element={<ReinpiaTenantDetailPage />} />
               <Route path="reinpia/payments" element={<ReinpiaPaymentsPage />} />

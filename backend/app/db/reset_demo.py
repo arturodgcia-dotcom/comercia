@@ -65,7 +65,7 @@ from app.models.models import (
     AutomationEventLog,
 )
 
-DEMO_TENANT_SLUGS = {"reinpia", "natura-vida", "cafe-monte-alto", "demo-inactivo"}
+DEMO_TENANT_SLUGS = {"reinpia", "natura-vida", "cafe-monte-alto", "instituto-zaro-latino", "demo-inactivo"}
 DEMO_AGENT_CODE_PREFIX = "COD-DEMO-"
 DEMO_AGENT_CODES = {"COD-REINPIA-1001", "COD-REINPIA-1002"}
 DEMO_USER_EMAILS = {
@@ -73,6 +73,7 @@ DEMO_USER_EMAILS = {
     "admin@reinpia-tenant.demo",
     "admin@natura.demo",
     "admin@cafe.demo",
+    "admin@zaro.demo",
     "distributor1@natura.demo",
     "distributor2@cafe.demo",
 }

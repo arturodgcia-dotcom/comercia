@@ -21,6 +21,55 @@ class BrandSetupAssetRead(BaseModel):
     uploaded_at: datetime
 
 
+class BrandIdentityData(BaseModel):
+    brand_name: str
+    business_description: str
+    business_type: str
+    primary_color: str
+    secondary_color: str
+    brand_tone: str
+    logo_asset_id: str | None = None
+    base_image_asset_ids: list[str] = Field(default_factory=list)
+
+
+class BrandGeneratedContent(BaseModel):
+    prompt_master: str
+    value_proposition: str
+    communication_tone: str
+    suggested_sections: list[str] = Field(default_factory=list)
+    base_copy: str
+
+
+class BrandLandingSection(BaseModel):
+    title: str
+    body: str
+
+
+class BrandLandingDraft(BaseModel):
+    hero_title: str
+    hero_subtitle: str
+    cta_primary: str
+    cta_secondary: str
+    sections: list[BrandLandingSection] = Field(default_factory=list)
+    contact_cta: str
+
+
+class BrandEcommerceData(BaseModel):
+    catalog_mode: str = "manual"
+    categories_ready: bool = False
+    products_ready: bool = False
+    massive_upload_enabled: bool = False
+    notes: str | None = None
+
+
+class BrandPosSetupData(BaseModel):
+    pos_enabled: bool = True
+    payment_methods: list[str] = Field(default_factory=list)
+    qr_enabled: bool = True
+    payment_link_enabled: bool = True
+    notes: str | None = None
+
+
 class BrandSetupWorkflowRead(BaseModel):
     tenant_id: int
     tenant_name: str
@@ -31,6 +80,11 @@ class BrandSetupWorkflowRead(BaseModel):
     selected_template: str | None = None
     steps: list[BrandSetupStepState]
     assets: list[BrandSetupAssetRead]
+    identity_data: BrandIdentityData | None = None
+    generated_content: BrandGeneratedContent | None = None
+    landing_draft: BrandLandingDraft | None = None
+    ecommerce_data: BrandEcommerceData | None = None
+    pos_setup_data: BrandPosSetupData | None = None
 
 
 class BrandSetupWorkflowUpdate(BaseModel):
@@ -39,6 +93,19 @@ class BrandSetupWorkflowUpdate(BaseModel):
     prompt_master: str | None = None
     selected_template: str | None = None
     steps: list[BrandSetupStepState] | None = None
+    identity_data: BrandIdentityData | None = None
+    generated_content: BrandGeneratedContent | None = None
+    landing_draft: BrandLandingDraft | None = None
+    ecommerce_data: BrandEcommerceData | None = None
+    pos_setup_data: BrandPosSetupData | None = None
+
+
+class BrandGenerateContentRequest(BaseModel):
+    prompt_master: str
+
+
+class BrandGenerateLandingRequest(BaseModel):
+    regenerate: bool = False
 
 
 class BrandChannelSettingsRead(BaseModel):

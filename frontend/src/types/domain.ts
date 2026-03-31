@@ -125,7 +125,7 @@ export interface StorefrontConfig {
 export interface BrandSetupStepState {
   code: string;
   title: string;
-  status: "pending" | "in_review" | "approved" | "rejected" | string;
+  status: "pending" | "in_progress" | "approved" | string;
   approved: boolean;
   review_notes?: string | null;
   updated_at?: string | null;
@@ -150,6 +150,60 @@ export interface BrandSetupWorkflow {
   selected_template?: string | null;
   steps: BrandSetupStepState[];
   assets: BrandSetupAsset[];
+  identity_data?: BrandIdentityData | null;
+  generated_content?: BrandGeneratedContent | null;
+  landing_draft?: BrandLandingDraft | null;
+  ecommerce_data?: BrandEcommerceData | null;
+  pos_setup_data?: BrandPosSetupData | null;
+}
+
+export interface BrandIdentityData {
+  brand_name: string;
+  business_description: string;
+  business_type: "products" | "services" | "mixed" | string;
+  primary_color: string;
+  secondary_color: string;
+  brand_tone: string;
+  logo_asset_id?: string | null;
+  base_image_asset_ids: string[];
+}
+
+export interface BrandGeneratedContent {
+  prompt_master: string;
+  value_proposition: string;
+  communication_tone: string;
+  suggested_sections: string[];
+  base_copy: string;
+}
+
+export interface BrandLandingSection {
+  title: string;
+  body: string;
+}
+
+export interface BrandLandingDraft {
+  hero_title: string;
+  hero_subtitle: string;
+  cta_primary: string;
+  cta_secondary: string;
+  sections: BrandLandingSection[];
+  contact_cta: string;
+}
+
+export interface BrandEcommerceData {
+  catalog_mode: "manual" | "bulk" | string;
+  categories_ready: boolean;
+  products_ready: boolean;
+  massive_upload_enabled: boolean;
+  notes?: string | null;
+}
+
+export interface BrandPosSetupData {
+  pos_enabled: boolean;
+  payment_methods: string[];
+  qr_enabled: boolean;
+  payment_link_enabled: boolean;
+  notes?: string | null;
 }
 
 export interface BrandChannelSettings {

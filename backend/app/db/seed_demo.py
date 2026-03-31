@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from datetime import datetime, timedelta
 from decimal import Decimal
 
@@ -58,6 +59,8 @@ from app.services.currency_service import create_manual_exchange_rate, upsert_cu
 from app.services.marketing_insights_service import generate_tenant_growth_insights
 from app.services.security_watch_service import block_entity
 from app.services.storefront_initializer import initialize_storefront
+from app.services.brand_setup_generator import generate_brand_content, generate_landing_draft
+from app.schemas.brand_setup import BrandIdentityData
 
 pwd_context = CryptContext(schemes=["bcrypt", "pbkdf2_sha256"], deprecated="auto")
 
@@ -69,6 +72,7 @@ def seed_demo_data(db: Session) -> None:
         _tenant(db, "REINPIA", "reinpia", "services", True, plans["PLAN_1"].id),
         _tenant(db, "NATURA VIDA", "natura-vida", "mixed", True, plans["PLAN_2"].id),
         _tenant(db, "CAFE MONTE ALTO", "cafe-monte-alto", "products", True, plans["PLAN_1"].id),
+        _tenant(db, "Instituto Zaro Latino", "instituto-zaro-latino", "services", True, plans["PLAN_1"].id),
         _tenant(db, "TENANT DEMO INACTIVO", "demo-inactivo", "mixed", False, plans["PLAN_1"].id),
     ]
     db.commit()
@@ -79,6 +83,7 @@ def seed_demo_data(db: Session) -> None:
     _seed_reinpia(db, tenants[0])
     _seed_products_tenant(db, tenants[1], "NAT")
     _seed_products_tenant(db, tenants[2], "CAF")
+    _seed_instituto_zaro_latino(db, tenants[3])
     _seed_subscriptions(db, tenants, plans)
     _seed_users(db, tenants)
     _seed_currency_settings(db, tenants)
@@ -156,6 +161,70 @@ def _seed_reinpia(db: Session, tenant: Tenant) -> None:
     _logistics(db, tenant.id, o3.id, c3.id, "in_transit")
 
 
+def _seed_instituto_zaro_latino(db: Session, tenant: Tenant) -> None:
+    _branding(
+        db,
+        tenant.id,
+        "#6E2EB8",
+        "#F3E9FF",
+        "https://placehold.co/300x80?text=Instituto+Zaro+Latino",
+        "Formacion profesional para cosmetologia y podologia",
+    )
+    config = _storefront(db, tenant.id, "Inscripciones abiertas para diplomados y certificaciones")
+    cat1 = _category(db, tenant.id, "Cosmetologia", "cosmetologia")
+    cat2 = _category(db, tenant.id, "Podologia", "podologia")
+    cat3 = _category(db, tenant.id, "Diplomados", "diplomados")
+    s1 = _service(db, tenant.id, cat1.id, "Diplomado de cosmetologia integral", "diplomado-cosmetologia-integral", 9800)
+    _service(db, tenant.id, cat2.id, "Certificacion avanzada en podologia", "certificacion-podologia-avanzada", 11200)
+    _service(db, tenant.id, cat3.id, "Diplomado master en estetica aplicada", "diplomado-master-estetica", 12800)
+    _banner(db, tenant.id, config.id, "Convierte tu talento en una carrera rentable", "hero", f"/store/{tenant.slug}/services")
+
+    identity = BrandIdentityData(
+        brand_name="Instituto Zaro Latino",
+        business_description="Servicios educativos en cosmetologia, podologia y diplomados profesionales.",
+        business_type="services",
+        primary_color="#6E2EB8",
+        secondary_color="#F3E9FF",
+        brand_tone="premium",
+        logo_asset_id=None,
+        base_image_asset_ids=[],
+    )
+    prompt = "Centro educativo enfocado en cosmetologia, podologia y diplomados con orientacion a empleabilidad."
+    generated = generate_brand_content(identity, prompt)
+    landing = generate_landing_draft(identity, generated)
+    workflow_steps = [
+        {"code": "brand_identity", "title": "Identidad de marca", "status": "approved", "approved": True},
+        {"code": "base_content", "title": "Contenido base (prompt + IA)", "status": "approved", "approved": True},
+        {"code": "landing_setup", "title": "Landing", "status": "approved", "approved": True},
+        {"code": "ecommerce_setup", "title": "Ecommerce", "status": "in_progress", "approved": False},
+        {"code": "pos_setup", "title": "POS / WebApp", "status": "pending", "approved": False},
+        {"code": "final_review", "title": "Revision y publicacion", "status": "pending", "approved": False},
+    ]
+    payload = json.loads(config.config_json) if config.config_json else {}
+    payload["workflow"] = {
+        "current_step": "ecommerce_setup",
+        "is_published": False,
+        "prompt_master": prompt,
+        "selected_template": "premium_moderno",
+        "steps": workflow_steps,
+    }
+    payload["identity_data"] = identity.model_dump()
+    payload["generated_content"] = generated.model_dump()
+    payload["landing_draft"] = landing.model_dump()
+    payload["ecommerce_data"] = {
+        "catalog_mode": "manual",
+        "categories_ready": True,
+        "products_ready": False,
+        "massive_upload_enabled": True,
+        "notes": "Demo inicial: activar carga de programas y productos educativos.",
+    }
+    config.config_json = json.dumps(payload, ensure_ascii=False)
+    db.add(config)
+    c = _customer(db, tenant.id, "Paola Mendoza", "paola@zarolatino.demo")
+    o = _order(db, tenant.id, c.id, "zaro-ord-1", 9800, 0, 9800, 0, 9800, "paid", "plan1")
+    _order_item(db, o.id, service_id=s1.id, unit=9800, qty=1)
+
+
 def _seed_products_tenant(db: Session, tenant: Tenant, prefix: str) -> None:
     _branding(db, tenant.id, "#2F7D32" if prefix == "NAT" else "#5A3A22", "#ECF8EE" if prefix == "NAT" else "#F6EFE9", f"https://placehold.co/300x80?text={tenant.slug.upper()}", f"{tenant.name}: tienda demo lista para venta")
     cfg = _storefront(db, tenant.id, f"Promociones activas de {tenant.name}")
@@ -208,7 +277,13 @@ def _seed_products_tenant(db: Session, tenant: Tenant, prefix: str) -> None:
 
 
 def _seed_subscriptions(db: Session, tenants: list[Tenant], plans: dict[str, Plan]) -> None:
-    for slug, plan_code, status in [("reinpia", "PLAN_1", "active"), ("natura-vida", "PLAN_2", "active"), ("cafe-monte-alto", "PLAN_1", "trial"), ("demo-inactivo", "PLAN_1", "cancelled")]:
+    for slug, plan_code, status in [
+        ("reinpia", "PLAN_1", "active"),
+        ("natura-vida", "PLAN_2", "active"),
+        ("cafe-monte-alto", "PLAN_1", "trial"),
+        ("instituto-zaro-latino", "PLAN_1", "active"),
+        ("demo-inactivo", "PLAN_1", "cancelled"),
+    ]:
         t = next(x for x in tenants if x.slug == slug)
         s = db.scalar(select(Subscription).where(Subscription.tenant_id == t.id))
         if not s:
@@ -232,6 +307,7 @@ def _seed_users(db: Session, tenants: list[Tenant]) -> None:
         ("pos.marca@reinpia.demo", "REINPIA Operador POS", "tenant_staff", tenant_map["reinpia"]),
         ("admin@natura.demo", "NATURA VIDA Admin", "tenant_admin", tenant_map["natura-vida"]),
         ("admin@cafe.demo", "CAFE MONTE ALTO Admin", "tenant_admin", tenant_map["cafe-monte-alto"]),
+        ("admin@zaro.demo", "Instituto Zaro Latino Admin", "tenant_admin", tenant_map["instituto-zaro-latino"]),
         ("distributor1@natura.demo", "Distribuidor NATURA", "distributor_user", tenant_map["natura-vida"]),
         ("distributor2@cafe.demo", "Distribuidor CAFE", "distributor_user", tenant_map["cafe-monte-alto"]),
         ("admin@distribuidor.demo", "Admin Distribuidor Demo", "distributor_user", tenant_map["natura-vida"]),
