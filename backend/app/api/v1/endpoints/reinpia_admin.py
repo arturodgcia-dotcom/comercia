@@ -21,6 +21,7 @@ from app.schemas.commission_agents import (
     SalesReferralCreate,
     SalesReferralRead,
 )
+from app.schemas.customer_contact import CustomerContactLeadRead
 from app.schemas.reinpia import SubscriptionRead
 from app.schemas.logistics_additional import (
     LogisticsAdditionalServiceCreate,
@@ -55,6 +56,7 @@ from app.services.commission_agents_service import (
     register_plan_purchase_lead,
     update_commission_agent,
 )
+from app.services.customer_contact_service import list_customer_contact_leads
 from app.services.export_service import (
     export_commission_agents_csv,
     export_commissions_summary_csv,
@@ -493,6 +495,23 @@ def list_plan_purchase_leads(
     if date_to:
         filters.append(PlanPurchaseLead.created_at <= date_to)
     return db.scalars(select(PlanPurchaseLead).where(*filters).order_by(PlanPurchaseLead.id.desc())).all()
+
+
+@router.get("/customer-contact-leads", response_model=list[CustomerContactLeadRead])
+def list_customer_contacts(
+    status: str | None = None,
+    channel: str | None = None,
+    date_from: datetime | None = None,
+    date_to: datetime | None = None,
+    db: Session = Depends(get_db),
+):
+    return list_customer_contact_leads(
+        db,
+        status=status,
+        channel=channel,
+        date_from=date_from,
+        date_to=date_to,
+    )
 
 
 @router.get("/alerts", response_model=list[InternalAlertRead])

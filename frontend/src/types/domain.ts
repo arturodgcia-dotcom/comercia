@@ -700,6 +700,21 @@ export interface PlanPurchaseLead {
   updated_at: string;
 }
 
+export interface CustomerContactLead {
+  id: number;
+  name: string;
+  email: string;
+  phone?: string | null;
+  company?: string | null;
+  contact_reason: string;
+  message: string;
+  channel: string;
+  recommended_plan?: string | null;
+  status: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface InternalAlert {
   id: number;
   alert_type: string;

@@ -644,6 +644,21 @@ class PlanPurchaseLead(Base, TimestampMixin):
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
 
 
+class CustomerContactLead(Base, TimestampMixin):
+    __tablename__ = "customer_contact_leads"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    name: Mapped[str] = mapped_column(String(180), nullable=False)
+    email: Mapped[str] = mapped_column(String(180), nullable=False, index=True)
+    phone: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    company: Mapped[str | None] = mapped_column(String(180), nullable=True)
+    contact_reason: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
+    message: Mapped[str] = mapped_column(Text, nullable=False)
+    channel: Mapped[str] = mapped_column(String(40), default="customer_service_form", nullable=False, index=True)
+    recommended_plan: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    status: Mapped[str] = mapped_column(String(30), default="new", nullable=False, index=True)
+
+
 class InternalAlert(Base):
     __tablename__ = "internal_alerts"
 

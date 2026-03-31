@@ -5,8 +5,10 @@ from fastapi import Depends
 
 from app.db.session import get_db
 from app.models.models import SalesCommissionAgent
+from app.schemas.customer_contact import CustomerContactLeadCreate, CustomerContactLeadRead
 from app.schemas.commission_agents import PlanPurchaseLeadCreate, PlanPurchaseLeadRead
 from app.services.commission_agents_service import register_plan_purchase_lead
+from app.services.customer_contact_service import create_customer_contact_lead
 from app.services.security_hooks import on_referral_validation_failed
 
 router = APIRouter()
@@ -28,3 +30,8 @@ def validate_referral_code(code: str, request: Request, db: Session = Depends(ge
 @router.post("/plan-purchase-leads", response_model=PlanPurchaseLeadRead)
 def create_plan_purchase_lead(payload: PlanPurchaseLeadCreate, db: Session = Depends(get_db)):
     return register_plan_purchase_lead(db, **payload.model_dump())
+
+
+@router.post("/customer-contact-leads", response_model=CustomerContactLeadRead)
+def create_customer_contact(payload: CustomerContactLeadCreate, db: Session = Depends(get_db)):
+    return create_customer_contact_lead(db, **payload.model_dump())

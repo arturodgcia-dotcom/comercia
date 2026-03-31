@@ -19,6 +19,7 @@ import {
   ContractTemplate,
   Coupon,
   CurrencySettings,
+  CustomerContactLead,
   DistributorApplication,
   DistributorEmployee,
   DistributorProfile,
@@ -485,6 +486,10 @@ export const api = {
     request<{ valid: boolean; code: string; agent_name?: string }>(`/api/v1/comercia/referral/${encodeURIComponent(refCode)}`),
   createComerciaPlanPurchaseLead: (payload: Record<string, unknown>) =>
     request<PlanPurchaseLead>("/api/v1/comercia/plan-purchase-leads", { method: "POST", body: JSON.stringify(payload) }),
+  createComerciaCustomerContactLead: (payload: Record<string, unknown>) =>
+    request<CustomerContactLead>("/api/v1/comercia/customer-contact-leads", { method: "POST", body: JSON.stringify(payload) }),
+  getReinpiaCustomerContactLeads: (token: string, query = "") =>
+    request<CustomerContactLead[]>(`/api/v1/reinpia/customer-contact-leads${query ? `?${query}` : ""}`, {}, token),
 
   getOnboardingGuides: (token: string) => request<OnboardingGuide[]>("/api/v1/onboarding/guides", {}, token),
   getOnboardingGuide: (token: string, guideId: number) =>
