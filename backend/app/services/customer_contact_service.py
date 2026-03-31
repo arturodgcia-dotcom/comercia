@@ -63,3 +63,29 @@ def list_customer_contact_leads(
     if date_to:
         filters.append(CustomerContactLead.created_at <= date_to)
     return db.scalars(select(CustomerContactLead).where(*filters).order_by(CustomerContactLead.id.desc())).all()
+
+
+def update_customer_contact_lead(
+    db: Session,
+    *,
+    lead_id: int,
+    status: str | None = None,
+    message: str | None = None,
+    contact_reason: str | None = None,
+    recommended_plan: str | None = None,
+) -> CustomerContactLead | None:
+    lead = db.get(CustomerContactLead, lead_id)
+    if not lead:
+        return None
+    if status is not None:
+        lead.status = status.strip().lower()
+    if message is not None:
+        lead.message = message.strip()
+    if contact_reason is not None:
+        lead.contact_reason = contact_reason.strip().lower()
+    if recommended_plan is not None:
+        lead.recommended_plan = recommended_plan.strip().upper() if recommended_plan else None
+    db.add(lead)
+    db.commit()
+    db.refresh(lead)
+    return lead

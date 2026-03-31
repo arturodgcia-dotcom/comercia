@@ -21,7 +21,7 @@ from app.schemas.commission_agents import (
     SalesReferralCreate,
     SalesReferralRead,
 )
-from app.schemas.customer_contact import CustomerContactLeadRead
+from app.schemas.customer_contact import CustomerContactLeadRead, CustomerContactLeadUpdate
 from app.schemas.reinpia import SubscriptionRead
 from app.schemas.logistics_additional import (
     LogisticsAdditionalServiceCreate,
@@ -56,7 +56,7 @@ from app.services.commission_agents_service import (
     register_plan_purchase_lead,
     update_commission_agent,
 )
-from app.services.customer_contact_service import list_customer_contact_leads
+from app.services.customer_contact_service import list_customer_contact_leads, update_customer_contact_lead
 from app.services.export_service import (
     export_commission_agents_csv,
     export_commissions_summary_csv,
@@ -512,6 +512,20 @@ def list_customer_contacts(
         date_from=date_from,
         date_to=date_to,
     )
+
+
+@router.put("/customer-contact-leads/{lead_id}", response_model=CustomerContactLeadRead)
+def update_customer_contact(
+    lead_id: int,
+    payload: CustomerContactLeadUpdate,
+    db: Session = Depends(get_db),
+):
+    lead = update_customer_contact_lead(db, lead_id=lead_id, **payload.model_dump(exclude_unset=True))
+    if not lead:
+        from fastapi import HTTPException
+
+        raise HTTPException(status_code=404, detail="contacto no encontrado")
+    return lead
 
 
 @router.get("/alerts", response_model=list[InternalAlertRead])

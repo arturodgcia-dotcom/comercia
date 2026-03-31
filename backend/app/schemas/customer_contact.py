@@ -26,3 +26,10 @@ class CustomerContactLeadRead(TimestampSchema):
     channel: str
     recommended_plan: str | None
     status: str
+
+
+class CustomerContactLeadUpdate(BaseModel):
+    status: str | None = Field(default=None, max_length=30)
+    message: str | None = Field(default=None, min_length=8, max_length=3000)
+    contact_reason: str | None = Field(default=None, min_length=2, max_length=50)
+    recommended_plan: str | None = Field(default=None, max_length=40)

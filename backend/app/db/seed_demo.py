@@ -15,6 +15,7 @@ from app.models.models import (
     Banner,
     Base,
     Category,
+    CustomerContactLead,
     CommissionDetail,
     Coupon,
     CurrencySettings,
@@ -54,6 +55,9 @@ from app.models.models import (
     TenantBranding,
     User,
     WishlistItem,
+    BotChannelConfig,
+    BotMessageTemplate,
+    AutomationEventLog,
 )
 from app.services.commission_agents_service import register_plan_purchase_lead
 from app.services.currency_service import create_manual_exchange_rate, upsert_currency_settings
@@ -93,6 +97,7 @@ def seed_demo_data(db: Session) -> None:
     _seed_agents_and_leads(db)
     _seed_security_demo_data(db, tenants)
     _seed_additional_logistics_services(db, tenants)
+    _seed_customer_contact_and_automation(db, tenants)
     _spread_demo_timestamps(db, tenants)
     for tenant in tenants:
         if tenant.is_active:
@@ -945,6 +950,157 @@ def _seed_security_demo_data(db: Session, tenants: list[Tenant]) -> None:
         blocked_until=None,
         auto_commit=False,
     )
+
+
+def _seed_customer_contact_and_automation(db: Session, tenants: list[Tenant]) -> None:
+    reinpia = next((t for t in tenants if t.slug == "reinpia"), None)
+    if not reinpia:
+        return
+
+    leads_demo = [
+        {
+            "name": "Carlos Vela",
+            "email": "carlos.vela@demo.com",
+            "phone": "+52 5511110001",
+            "company": "Grupo Vela",
+            "contact_reason": "planes",
+            "message": "Quiero evaluar IMPULSA para arrancar ecommerce y seguimiento comercial.",
+            "channel": "contacto",
+            "recommended_plan": "COMERCIA_IMPULSA",
+            "status": "nuevo",
+        },
+        {
+            "name": "Monica Reyes",
+            "email": "monica.reyes@demo.com",
+            "phone": "+52 5511110002",
+            "company": "Reyes Distribucion",
+            "contact_reason": "distribuidores",
+            "message": "Necesito canal de distribuidores y reglas de volumen para mis revendedores.",
+            "channel": "diagnostico",
+            "recommended_plan": "COMERCIA_ESCALA",
+            "status": "en_seguimiento",
+        },
+        {
+            "name": "Diego Campos",
+            "email": "diego.campos@demo.com",
+            "phone": "+52 5511110003",
+            "company": "Campos Retail",
+            "contact_reason": "pos_pagos",
+            "message": "Busco POS con cobros QR para sucursales y control por vendedor.",
+            "channel": "lia_widget",
+            "recommended_plan": "COMERCIA_ESCALA",
+            "status": "agendado",
+        },
+        {
+            "name": "Andrea Lozano",
+            "email": "andrea.lozano@demo.com",
+            "phone": "+52 5511110004",
+            "company": "Lozano Lab",
+            "contact_reason": "logistica",
+            "message": "Tengo dudas sobre el servicio de recoleccion y resguardo para mi operacion.",
+            "channel": "whatsapp",
+            "recommended_plan": "COMERCIA_IMPULSA",
+            "status": "contactado",
+        },
+        {
+            "name": "Jorge Santillan",
+            "email": "jorge.santillan@demo.com",
+            "phone": "+52 5511110005",
+            "company": "Santillan Co",
+            "contact_reason": "ecommerce",
+            "message": "Ya tengo landing, quiero montar ecommerce y activar campañas.",
+            "channel": "contacto",
+            "recommended_plan": "COMERCIA_ESCALA",
+            "status": "cerrado_ganado",
+        },
+        {
+            "name": "Paula Duarte",
+            "email": "paula.duarte@demo.com",
+            "phone": "+52 5511110006",
+            "company": "Duarte Studio",
+            "contact_reason": "soporte",
+            "message": "Necesito asesoria para definir si conviene IMPULSA o ESCALA en mi etapa.",
+            "channel": "diagnostico",
+            "recommended_plan": "COMERCIA_IMPULSA",
+            "status": "cerrado_perdido",
+        },
+    ]
+
+    for row in leads_demo:
+        exists = db.scalar(select(CustomerContactLead).where(CustomerContactLead.email == row["email"]))
+        if not exists:
+            db.add(CustomerContactLead(**row))
+        else:
+            for key, value in row.items():
+                setattr(exists, key, value)
+            db.add(exists)
+
+    channels_demo = [
+        ("whatsapp", True, "twilio_placeholder"),
+        ("webchat", True, "internal_widget"),
+    ]
+    for channel, enabled, provider in channels_demo:
+        row = db.scalar(select(BotChannelConfig).where(BotChannelConfig.channel == channel, BotChannelConfig.tenant_id == reinpia.id))
+        if not row:
+            row = BotChannelConfig(tenant_id=reinpia.id, channel=channel)
+        row.is_enabled = enabled
+        row.provider_name = provider
+        row.config_json = '{"mode":"demo"}'
+        db.add(row)
+
+    templates_demo = [
+        ("new_plan_lead", "whatsapp", "Nuevo lead detectado. Responde en menos de 15 minutos para elevar cierre."),
+        ("followup_required", "whatsapp", "Lead en seguimiento pendiente. Programa contacto y confirma siguiente paso."),
+        ("appointment_created", "whatsapp", "Tu diagnostico ya fue agendado. Te compartimos fecha, hora y ubicacion."),
+        ("lead_interested_plan", "whatsapp", "Vemos interes en {{plan}}. Prepara propuesta y llamada de cierre."),
+        ("logistics_question", "whatsapp", "Respondamos duda de logistica con propuesta de recoleccion/entrega."),
+        ("ecommerce_question", "webchat", "Comparte demo de ecommerce y casos de crecimiento por canal."),
+        ("pos_question", "webchat", "Explica POS, cobros QR y trazabilidad por vendedor para avanzar el cierre."),
+    ]
+    for event_type, channel, text in templates_demo:
+        row = db.scalar(
+            select(BotMessageTemplate).where(
+                BotMessageTemplate.tenant_id == reinpia.id,
+                BotMessageTemplate.event_type == event_type,
+                BotMessageTemplate.channel == channel,
+            )
+        )
+        if not row:
+            row = BotMessageTemplate(tenant_id=reinpia.id, event_type=event_type, channel=channel, template_text=text, is_active=True)
+        row.template_text = text
+        row.is_active = True
+        db.add(row)
+
+    events_demo = [
+        ("new_plan_lead", "plan_purchase_lead", 1, '{"source":"lia_widget"}'),
+        ("followup_required", "customer_contact_lead", 2, '{"channel":"contacto"}'),
+        ("appointment_created", "appointment", 1, '{"context":"diagnostico"}'),
+        ("lead_interested_plan", "customer_contact_lead", 3, '{"plan":"COMERCIA_ESCALA"}'),
+        ("logistics_question", "customer_contact_lead", 4, '{"topic":"logistica"}'),
+        ("ecommerce_question", "customer_contact_lead", 5, '{"topic":"ecommerce"}'),
+        ("pos_question", "customer_contact_lead", 6, '{"topic":"pos"}'),
+    ]
+    for event_type, related_entity_type, related_entity_id, payload in events_demo:
+        row = db.scalar(
+            select(AutomationEventLog).where(
+                AutomationEventLog.tenant_id == reinpia.id,
+                AutomationEventLog.event_type == event_type,
+                AutomationEventLog.related_entity_type == related_entity_type,
+                AutomationEventLog.related_entity_id == related_entity_id,
+            )
+        )
+        if not row:
+            row = AutomationEventLog(
+                tenant_id=reinpia.id,
+                event_type=event_type,
+                related_entity_type=related_entity_type,
+                related_entity_id=related_entity_id,
+                payload_json=payload,
+                created_at=datetime.utcnow(),
+            )
+        else:
+            row.payload_json = payload
+        db.add(row)
 
 
 def _spread_demo_timestamps(db: Session, tenants: list[Tenant]) -> None:
