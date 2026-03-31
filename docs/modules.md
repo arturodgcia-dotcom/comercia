@@ -42,7 +42,7 @@
 | Fidelizacion en POS | Base funcional | uso/suma de puntos en cierre de venta |
 | Automation bots/WhatsApp base | Inicial funcional | eventos, canales y templates sin proveedor externo |
 | Centinela seguridad/antifraude | Inicial funcional | eventos, reglas, alertas, bloqueos y panel REINPIA security |
-| Workflow guiado de alta de marca | Inicial funcional | creacion de marca + setup por etapas + preview + regenerar/rehacer + publicacion controlada |
+| Workflow guiado de alta de marca | Inicial funcional | wizard secuencial SaaS (6 pasos bloqueados) + generacion de contenido/landing + aprobacion y publicacion |
 | Media assets por etapa | Base funcional | carga de archivos locales por etapa de setup |
 | Configuracion NFC/Mercado Pago/MFA | Base funcional | NFC opcional identificacion, Mercado Pago para POS, MFA por marca |
 | Carga masiva catalogo | Inicial funcional | descarga plantilla + validacion de columnas/filas + resumen de errores e importacion |
@@ -88,6 +88,9 @@
 - `/api/v1/reinpia/logistics-services-summary`
 - `/api/v1/comercia/plan-purchase-leads`
 - `/api/v1/comercia/referral/{code}`
+- `/api/v1/brand-setup/{tenant_id}/generate-content`
+- `/api/v1/brand-setup/{tenant_id}/generate-landing`
+- `/api/v1/brand-setup/{tenant_id}/steps/{step_code}/approve`
 
 ## Endpoints reportes tenant
 - `/api/v1/reports/tenant/{tenant_id}/overview`

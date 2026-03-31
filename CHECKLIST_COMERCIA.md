@@ -242,3 +242,13 @@
 - [x] Servicios logisticos adicionales globales mejorados con filtros y edicion
 - [x] Healthcheck de `start_all` con mensajes mas claros y API URL efectiva
 - [x] Validacion: backend compile + frontend build
+
+## Entregables ejecucion 23 (Wizard SaaS de setup de marca)
+- [x] `BrandSetupWizard` reemplaza flujo de cards independientes
+- [x] Flujo secuencial bloqueado en 6 pasos (identidad, contenido IA, landing, ecommerce, POS, publicacion)
+- [x] Generacion backend de contenido base por prompt (`generate-content`)
+- [x] Generacion backend de landing draft desde identidad + contenido (`generate-landing`)
+- [x] Aprobacion secuencial de pasos con bloqueo backend (`steps/{step_code}/approve`)
+- [x] Persistencia de progreso real (`current_step`, estados y payload por etapa en `StorefrontConfig.config_json`)
+- [x] Seed demo de marca `Instituto Zaro Latino` con identidad + contenido + landing aprobada
+- [x] Validacion: backend compile + frontend build

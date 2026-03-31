@@ -294,9 +294,19 @@ Se reforzo el modelo funcional:
 - Marcas cliente (tenants) = REINPIA, Natura Vida, Cafe Monte Alto, etc.
 
 Nuevos bloques:
-- workflow guiado de alta y publicacion por marca:
-  - `GET/PUT /api/v1/brand-setup/{tenant_id}`
-  - pasos con aprobacion/revision/rehacer/publicar
+- workflow guiado de alta y publicacion por marca (wizard SaaS secuencial):
+  - pasos bloqueados:
+    1. identidad
+    2. contenido base (prompt + IA)
+    3. landing
+    4. ecommerce
+    5. POS/WebApp
+    6. revision/publicacion
+  - endpoints:
+    - `GET/PUT /api/v1/brand-setup/{tenant_id}`
+    - `POST /api/v1/brand-setup/{tenant_id}/generate-content`
+    - `POST /api/v1/brand-setup/{tenant_id}/generate-landing`
+    - `POST /api/v1/brand-setup/{tenant_id}/steps/{step_code}/approve`
 - assets por etapa desde archivo local:
   - `POST /api/v1/brand-setup/{tenant_id}/assets`
 - configuracion opcional por marca:
@@ -305,7 +315,10 @@ Nuevos bloques:
   - MFA TOTP / Google Authenticator (base de habilitacion)
   - `GET/PUT /api/v1/brand-setup/{tenant_id}/channel-settings`
 
-Se guardan en `StorefrontConfig.config_json` para mantener compatibilidad local sin romper migraciones actuales.
+Se guardan en `StorefrontConfig.config_json` para mantener compatibilidad local sin romper migraciones actuales:
+- `current_step`
+- estado por paso (`pending`, `in_progress`, `approved`)
+- `identity_data`, `generated_content`, `landing_draft`, `ecommerce_data`, `pos_setup_data`
 
 Frontend nuevo:
 - `/reinpia/brands/new`
@@ -313,6 +326,12 @@ Frontend nuevo:
 - `/admin/catalog/bulk-upload`
 - `/admin/inventory`
 - `/admin/feedback`
+
+Seed demo adicional:
+- marca `Instituto Zaro Latino` (`instituto-zaro-latino`) con:
+  - identidad cargada
+  - contenido base generado
+  - landing demo aprobada (pasos 1-3 listos)
 
 ## 24) WebApp instalable (PWA) priorizada para POS
 Se agrego base PWA para experiencia tipo app en celular:

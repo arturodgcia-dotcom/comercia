@@ -260,21 +260,36 @@ npm run dev
   - onboarding cliente (`/onboarding/client`)
 - progreso por usuario en `UserOnboardingProgress`
 
-### Workflow guiado de marca (nuevo)
+### Workflow guiado de marca (wizard SaaS)
 - rutas globales ComerCia:
   - `/reinpia/brands/new`
   - `/reinpia/brands/{id}/setup`
+- frontend:
+  - `BrandSetupWizard` con pasos secuenciales bloqueados
+  - progreso visible "Paso X de 6"
+  - sin cards sueltas, cada paso en vista dedicada
+- pasos obligatorios:
+  1. Identidad de marca
+  2. Contenido base (prompt + IA)
+  3. Landing
+  4. Ecommerce
+  5. POS / WebApp
+  6. Revision y publicacion
 - backend:
   - `GET/PUT /api/v1/brand-setup/{tenant_id}`
+  - `POST /api/v1/brand-setup/{tenant_id}/generate-content`
+  - `POST /api/v1/brand-setup/{tenant_id}/generate-landing`
+  - `POST /api/v1/brand-setup/{tenant_id}/steps/{step_code}/approve`
   - `POST /api/v1/brand-setup/{tenant_id}/assets`
   - `GET/PUT /api/v1/brand-setup/{tenant_id}/channel-settings`
-- usa `StorefrontConfig.config_json` para guardar:
-  - estado por etapa (aprobado, en revisión, rehacer)
-  - assets cargados desde archivo local
-  - configuración NFC / Mercado Pago / MFA TOTP por marca
-  - preview por etapa (landing, ecommerce público, ecommerce distribuidores, POS)
-  - acciones de regeneración y rehacer antes de publicar
-
+- persistencia en `StorefrontConfig.config_json`:
+  - `current_step`
+  - estado de pasos (`pending`, `in_progress`, `approved`)
+  - identidad de marca
+  - contenido generado
+  - landing draft
+  - setup ecommerce
+  - setup POS/WebApp
 ### Operación de catálogo y feedback (nuevo)
 - Carga masiva visible: `/admin/catalog/bulk-upload`
 - Inventario operativo base: `/admin/inventory`
@@ -500,6 +515,7 @@ Scripts disponibles:
 - `pos.marca@reinpia.demo` / `Admin12345!` (`tenant_staff`)
 - `admin@natura.demo` / `Admin12345!` (`tenant_admin`)
 - `admin@cafe.demo` / `Admin12345!` (`tenant_admin`)
+- `admin@zaro.demo` / `Admin12345!` (`tenant_admin`)
 - `distributor1@natura.demo` / `Admin12345!` (`distributor_user`)
 - `distributor2@cafe.demo` / `Admin12345!` (`distributor_user`)
 - `admin@distribuidor.demo` / `Admin12345!` (`distributor_user`)
@@ -513,9 +529,9 @@ Permisos visibles esperados:
 - `distributor_user` y `public_customer`: sin acceso al admin interno; uso de rutas de storefront/canal correspondiente.
 
 ### Datos DEMO generados
-- tenants: `reinpia`, `natura-vida`, `cafe-monte-alto` + tenant inactivo demo
+- tenants: `reinpia`, `natura-vida`, `cafe-monte-alto`, `instituto-zaro-latino` + tenant inactivo demo
 - branding/storefront/banners por tenant
-- servicios REINPIA + catalogos de productos para NATURA/CAFE
+- servicios REINPIA + catalogos de productos para NATURA/CAFE + marca educativa Instituto Zaro Latino
 - loyalty, memberships, cupones, reviews, wishlist
 - distribuidores, solicitudes, citas, recurrentes y logistica
 - ordenes paid/failed con comisiones (incluye casos PLAN_2)
@@ -536,3 +552,4 @@ Verificacion puntual storefront REINPIA:
 - [docs/architecture.md](docs/architecture.md)
 - [docs/modules.md](docs/modules.md)
 - [CHECKLIST_COMERCIA.md](CHECKLIST_COMERCIA.md)
+
