@@ -68,6 +68,8 @@ Mensajes de arranque y troubleshooting:
 - si falta `python-multipart`, backend lo reporta con instruccion clara (o lo instala en modo bootstrap).
 - si un puerto esta ocupado, los scripts detectan el conflicto y levantan en el siguiente puerto disponible.
 - `start_all` imprime URLs utiles reales para backend/frontend.
+- `start_all` pasa automaticamente la URL real del backend al frontend (`VITE_API_URL`) para evitar `Failed to fetch` cuando el backend usa puerto alterno.
+- CORS backend acepta puertos locales dinamicos (`localhost` / `127.0.0.1`) para desarrollo estable.
 
 ### Backend
 ```bash
@@ -503,6 +505,12 @@ Scripts disponibles:
 - `admin@distribuidor.demo` / `Admin12345!` (`distributor_user`)
 - `vendedor@distribuidor.demo` / `Admin12345!` (`distributor_user`)
 - `cliente.final@publico.demo` / `Admin12345!` (`public_customer`)
+
+Permisos visibles esperados:
+- `reinpia_admin`: panel global completo (`/reinpia/*`) + administracion de marca.
+- `tenant_admin`: administracion de su marca (configuracion, pagos, reportes, onboarding, catalogo, operacion).
+- `tenant_staff`: operacion diaria (catalogo, inventario, logistica, citas, distribuidores operativos, POS) sin vistas globales ni configuraciones sensibles.
+- `distributor_user` y `public_customer`: sin acceso al admin interno; uso de rutas de storefront/canal correspondiente.
 
 ### Datos DEMO generados
 - tenants: `reinpia`, `natura-vida`, `cafe-monte-alto` + tenant inactivo demo

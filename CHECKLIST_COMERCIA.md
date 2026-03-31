@@ -234,3 +234,11 @@
 - [x] `package.json` raiz actualizado con `dev:all` y `dev:all:bootstrap`
 - [x] Mensajes de error mejorados (venv faltante, dependencia faltante, puerto ocupado)
 - [x] Validacion: backend compile + frontend build
+
+## Entregables ejecucion 22 (Estabilidad landing/login + operacion global)
+- [x] Overlay/residuo visual de landing mitigado (estado body + cache PWA menos agresivo)
+- [x] Login sin falso `Failed to fetch` por puertos dinamicos (CORS local + `VITE_API_URL` dinamica)
+- [x] Rutas y menus reforzados por rol (`tenant_admin` vs `tenant_staff` vs `reinpia_admin`)
+- [x] Servicios logisticos adicionales globales mejorados con filtros y edicion
+- [x] Healthcheck de `start_all` con mensajes mas claros y API URL efectiva
+- [x] Validacion: backend compile + frontend build

@@ -92,6 +92,24 @@ export function AppRouter() {
         <Route path="/" element={<AdminLayout />}>
           <Route element={<RoleRoute allowedRoles={["tenant_admin", "reinpia_admin", "tenant_staff"]} />}>
             <Route index element={<DashboardPage />} />
+            <Route path="admin/services" element={<ServicesAdminPage />} />
+            <Route path="admin/catalog/bulk-upload" element={<CatalogBulkUploadPage />} />
+            <Route path="admin/inventory" element={<InventoryPage />} />
+            <Route path="admin/feedback" element={<FeedbackModerationPage />} />
+            <Route path="admin/appointments" element={<AppointmentsAdminPage />} />
+            <Route path="admin/distributor-applications" element={<DistributorApplicationsAdminPage />} />
+            <Route path="admin/distributors" element={<DistributorsAdminPage />} />
+            <Route path="admin/recurring-orders" element={<RecurringOrdersAdminPage />} />
+            <Route path="admin/logistics" element={<LogisticsAdminPage />} />
+            <Route path="pos" element={<PosPage />} />
+            <Route path="pos/locations" element={<PosLocationsPage />} />
+            <Route path="pos/sales" element={<PosSalesPage />} />
+            <Route path="pos/customers" element={<PosCustomersPage />} />
+            <Route path="categories" element={<CategoriesPage />} />
+            <Route path="products" element={<ProductsPage />} />
+          </Route>
+
+          <Route element={<RoleRoute allowedRoles={["tenant_admin", "reinpia_admin"]} />}>
             <Route path="tenants" element={<TenantsPage />} />
             <Route path="tenants/:tenantId" element={<TenantDetailPage />} />
             <Route path="tenants/:tenantId/branding" element={<BrandingEditorPage />} />
@@ -102,16 +120,7 @@ export function AppRouter() {
             <Route path="admin/coupons" element={<CouponsAdminPage />} />
             <Route path="admin/banners" element={<BannersAdminPage />} />
             <Route path="admin/reviews" element={<ReviewsAdminPage />} />
-            <Route path="admin/services" element={<ServicesAdminPage />} />
-            <Route path="admin/catalog/bulk-upload" element={<CatalogBulkUploadPage />} />
-            <Route path="admin/inventory" element={<InventoryPage />} />
-            <Route path="admin/feedback" element={<FeedbackModerationPage />} />
-            <Route path="admin/appointments" element={<AppointmentsAdminPage />} />
-            <Route path="admin/distributor-applications" element={<DistributorApplicationsAdminPage />} />
-            <Route path="admin/distributors" element={<DistributorsAdminPage />} />
             <Route path="admin/contracts" element={<ContractsAdminPage />} />
-            <Route path="admin/recurring-orders" element={<RecurringOrdersAdminPage />} />
-            <Route path="admin/logistics" element={<LogisticsAdminPage />} />
             <Route path="admin/currency" element={<CurrencyAdminPage />} />
             <Route path="admin/settings/payments/stripe" element={<StripeSettingsPage />} />
             <Route path="admin/settings/payments/mercadopago" element={<MercadoPagoSettingsPage />} />
@@ -125,10 +134,6 @@ export function AppRouter() {
             <Route path="admin/reports/marketing" element={<TenantMarketingInsightsPage />} />
             <Route path="onboarding/sales" element={<OnboardingSalesPage />} />
             <Route path="onboarding/client" element={<OnboardingClientPage />} />
-            <Route path="pos" element={<PosPage />} />
-            <Route path="pos/locations" element={<PosLocationsPage />} />
-            <Route path="pos/sales" element={<PosSalesPage />} />
-            <Route path="pos/customers" element={<PosCustomersPage />} />
             <Route path="admin/automation" element={<AutomationAdminPage />} />
             <Route element={<RoleRoute allowedRoles={["reinpia_admin"]} />}>
               <Route path="reinpia/dashboard" element={<ReinpiaDashboardPage />} />
@@ -152,8 +157,6 @@ export function AppRouter() {
               <Route path="reinpia/security/rules" element={<ReinpiaSecurityRulesPage />} />
               <Route path="reinpia/security/blocked" element={<ReinpiaBlockedEntitiesPage />} />
             </Route>
-            <Route path="categories" element={<CategoriesPage />} />
-            <Route path="products" element={<ProductsPage />} />
           </Route>
           <Route path="*" element={<Navigate to="/comercia" replace />} />
         </Route>

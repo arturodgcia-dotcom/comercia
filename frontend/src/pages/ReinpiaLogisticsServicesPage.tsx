@@ -28,18 +28,35 @@ export function ReinpiaLogisticsServicesPage() {
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
   const [selected, setSelected] = useState<LogisticsAdditionalService | null>(null);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [filters, setFilters] = useState({
+    tenant_id: 0,
+    status: "",
+    date_from: "",
+    date_to: "",
+  });
 
   const formSubtotal = useMemo(() => Number(form.kilometers) * Number(form.unit_cost), [form.kilometers, form.unit_cost]);
   const formTotal = useMemo(() => formSubtotal + Number(form.iva), [formSubtotal, form.iva]);
+
+  const buildQuery = () => {
+    const query = new URLSearchParams();
+    if (filters.tenant_id) query.set("tenant_id", String(filters.tenant_id));
+    if (filters.status) query.set("status", filters.status);
+    if (filters.date_from) query.set("date_from", new Date(filters.date_from).toISOString());
+    if (filters.date_to) query.set("date_to", new Date(filters.date_to).toISOString());
+    return query.toString();
+  };
 
   const load = async () => {
     if (!token) return;
     try {
       setError("");
+      const query = buildQuery();
       const [tenantRows, rows, summaryRow] = await Promise.all([
         api.getTenants(token),
-        api.getReinpiaLogisticsServices(token),
-        api.getReinpiaLogisticsServiceSummary(token),
+        api.getReinpiaLogisticsServices(token, query),
+        api.getReinpiaLogisticsServiceSummary(token, query),
       ]);
       setTenants(tenantRows);
       setServices(rows);
@@ -55,7 +72,7 @@ export function ReinpiaLogisticsServicesPage() {
   useEffect(() => {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token]);
+  }, [token, filters.tenant_id, filters.status, filters.date_from, filters.date_to]);
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
@@ -69,15 +86,39 @@ export function ReinpiaLogisticsServicesPage() {
         total: formTotal,
         service_date: form.service_date || new Date().toISOString(),
       };
-      const created = await api.createReinpiaLogisticsService(token, payload);
-      setServices((prev) => [created, ...prev]);
-      setForm((prev) => ({ ...defaultForm, tenant_id: prev.tenant_id || created.tenant_id, currency: "MXN" }));
+      let result: LogisticsAdditionalService;
+      if (editingId) {
+        result = await api.updateReinpiaLogisticsService(token, editingId, payload);
+      } else {
+        result = await api.createReinpiaLogisticsService(token, payload);
+      }
+      setServices((prev) => (editingId ? prev.map((item) => (item.id === result.id ? result : item)) : [result, ...prev]));
+      setForm((prev) => ({ ...defaultForm, tenant_id: prev.tenant_id || result.tenant_id, currency: "MXN" }));
+      setEditingId(null);
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : "No fue posible registrar el servicio logistico.");
     } finally {
       setSaving(false);
     }
+  };
+
+  const startEdit = (row: LogisticsAdditionalService) => {
+    setEditingId(row.id);
+    setForm({
+      tenant_id: row.tenant_id,
+      service_type: row.service_type,
+      origin: row.origin,
+      destination: row.destination,
+      kilometers: Number(row.kilometers),
+      unit_cost: Number(row.unit_cost),
+      iva: Number(row.iva),
+      currency: row.currency,
+      observations: row.observations ?? "",
+      status: row.status,
+      service_date: row.service_date.slice(0, 16),
+      billing_summary: row.billing_summary ?? "",
+    });
   };
 
   return (
@@ -106,6 +147,31 @@ export function ReinpiaLogisticsServicesPage() {
           <p className="metric-value">${Number(summary?.total ?? 0).toLocaleString("es-MX")}</p>
         </article>
       </div>
+
+      <article className="card">
+        <h3>Filtros</h3>
+        <form className="inline-form">
+          <select value={filters.tenant_id} onChange={(e) => setFilters((prev) => ({ ...prev, tenant_id: Number(e.target.value) }))}>
+            <option value={0}>Todas las marcas</option>
+            {tenants.map((tenant) => (
+              <option key={tenant.id} value={tenant.id}>{tenant.name}</option>
+            ))}
+          </select>
+          <select value={filters.status} onChange={(e) => setFilters((prev) => ({ ...prev, status: e.target.value }))}>
+            <option value="">Todos los estatus</option>
+            <option value="pendiente">Pendiente</option>
+            <option value="programado">Programado</option>
+            <option value="facturable">Facturable</option>
+            <option value="pendiente_pago">Pendiente pago</option>
+            <option value="pagado">Pagado</option>
+          </select>
+          <input type="date" value={filters.date_from} onChange={(e) => setFilters((prev) => ({ ...prev, date_from: e.target.value }))} />
+          <input type="date" value={filters.date_to} onChange={(e) => setFilters((prev) => ({ ...prev, date_to: e.target.value }))} />
+          <button type="button" className="button button-outline" onClick={() => setFilters({ tenant_id: 0, status: "", date_from: "", date_to: "" })}>
+            Limpiar filtros
+          </button>
+        </form>
+      </article>
 
       <article className="card">
         <h3>Alta de servicio logistico</h3>
@@ -138,8 +204,20 @@ export function ReinpiaLogisticsServicesPage() {
           <input placeholder="Resumen facturacion" value={form.billing_summary} onChange={(e) => setForm((p) => ({ ...p, billing_summary: e.target.value }))} />
           <p className="muted">Subtotal estimado: ${formSubtotal.toLocaleString("es-MX")} | Total estimado: ${formTotal.toLocaleString("es-MX")}</p>
           <button className="button" type="submit" disabled={saving || !form.tenant_id}>
-            {saving ? "Guardando..." : "Registrar servicio"}
+            {saving ? "Guardando..." : editingId ? "Guardar cambios" : "Registrar servicio"}
           </button>
+          {editingId ? (
+            <button
+              className="button button-outline"
+              type="button"
+              onClick={() => {
+                setEditingId(null);
+                setForm((prev) => ({ ...defaultForm, tenant_id: prev.tenant_id }));
+              }}
+            >
+              Cancelar edicion
+            </button>
+          ) : null}
         </form>
       </article>
 
@@ -155,6 +233,7 @@ export function ReinpiaLogisticsServicesPage() {
                 <th>Ruta</th>
                 <th>Estatus</th>
                 <th>Total</th>
+                <th>Accion</th>
               </tr>
             </thead>
             <tbody>
@@ -168,6 +247,18 @@ export function ReinpiaLogisticsServicesPage() {
                     <td>{row.origin} {"->"} {row.destination}</td>
                     <td>{row.status}</td>
                     <td>{row.currency} {Number(row.total).toLocaleString("es-MX")}</td>
+                    <td>
+                      <button
+                        type="button"
+                        className="button button-outline"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          startEdit(row);
+                        }}
+                      >
+                        Editar
+                      </button>
+                    </td>
                   </tr>
                 );
               })}
