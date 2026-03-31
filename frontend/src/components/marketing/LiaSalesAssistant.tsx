@@ -1,4 +1,4 @@
-import { FormEvent, useMemo, useState } from "react";
+﻿import { FormEvent, useEffect, useMemo, useState } from "react";
 import { api } from "../../services/api";
 
 type LiaAnswers = {
@@ -116,11 +116,11 @@ function getRecommendation(answers: LiaAnswers) {
 
   if (answers.stage === "expansion") {
     score += 2;
-    reasons.push("Tu negocio ya esta en fase de expansion y necesita mayor control operativo.");
+    reasons.push("Tu negocio esta en fase de expansion y necesita mayor control operativo.");
   }
   if (answers.needs_distributors === "si") {
     score += 2;
-    reasons.push("Necesitas un canal distribuidor con reglas y seguimiento comercial.");
+    reasons.push("Necesitas canal distribuidor con reglas y seguimiento comercial.");
   }
   if (answers.needs_pos === "si") {
     score += 1;
@@ -134,33 +134,36 @@ function getRecommendation(answers: LiaAnswers) {
     reasons.push("Aun no vendes online y conviene activar salida comercial de forma rapida.");
   }
   if (answers.has_landing === "no") {
-    reasons.push("Necesitas una landing comercial para captar demanda y convertir.");
-  }
-  if (answers.needs_logistics === "si") {
-    reasons.push("Necesitas logistica integrada para operar sin friccion.");
+    reasons.push("Necesitas landing comercial para captar demanda y convertir mejor.");
   }
 
   const planCode = score >= 4 ? "COMERCIA_ESCALA" : "COMERCIA_IMPULSA";
   const planLabel = planCode === "COMERCIA_ESCALA" ? "ComerCia ESCALA" : "ComerCia IMPULSA";
   const rationale =
     planCode === "COMERCIA_ESCALA"
-      ? "Te conviene una estructura robusta para crecer con automatizacion, canal distribuidor y control operativo."
-      : "Te conviene activar una base comercial ordenada, medible y lista para escalar sin complejidad inicial.";
+      ? "Te conviene una estructura robusta para crecer con automatizacion y canal distribuidor."
+      : "Te conviene activar una base comercial ordenada y medible para acelerar resultados.";
 
   return { planCode, planLabel, rationale, reasons };
 }
 
-export function LiaSalesAssistant({ referralCode }: { referralCode: string }) {
+type Props = {
+  referralCode: string;
+  onOpenDiagnostic: () => void;
+  onOpenContact: () => void;
+  onOpenPackages: () => void;
+};
+
+export function LiaSalesAssistant({ referralCode, onOpenDiagnostic, onOpenContact, onOpenPackages }: Props) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [position, setPosition] = useState({ x: Math.max(window.innerWidth - 390, 18), y: Math.max(window.innerHeight - 590, 18) });
+  const [dragging, setDragging] = useState(false);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+
   const [answers, setAnswers] = useState<LiaAnswers>({});
   const [messages, setMessages] = useState<Message[]>([
-    {
-      role: "lia",
-      text: "Hola, soy Lia. En 2 minutos te ayudo a elegir la ruta comercial ideal para tu marca.",
-    },
-    {
-      role: "lia",
-      text: QUESTIONS[0].question,
-    },
+    { role: "lia", text: "Hola, soy Lia. Te ayudo a definir la mejor ruta comercial para tu marca." },
+    { role: "lia", text: QUESTIONS[0].question },
   ]);
   const [stepIndex, setStepIndex] = useState(0);
   const [leadForm, setLeadForm] = useState<LeadForm>({
@@ -171,6 +174,28 @@ export function LiaSalesAssistant({ referralCode }: { referralCode: string }) {
   });
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    const openHandler = () => setIsOpen(true);
+    window.addEventListener("lia:open", openHandler);
+    return () => window.removeEventListener("lia:open", openHandler);
+  }, []);
+
+  useEffect(() => {
+    if (!dragging) return;
+    const onMove = (event: MouseEvent) => {
+      const nextX = Math.min(Math.max(event.clientX - dragOffset.x, 8), window.innerWidth - 320);
+      const nextY = Math.min(Math.max(event.clientY - dragOffset.y, 8), window.innerHeight - 120);
+      setPosition({ x: nextX, y: nextY });
+    };
+    const onUp = () => setDragging(false);
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+    return () => {
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+    };
+  }, [dragging, dragOffset]);
 
   const done = stepIndex >= QUESTIONS.length;
   const recommendation = useMemo(() => (done ? getRecommendation(answers) : null), [answers, done]);
@@ -184,19 +209,14 @@ export function LiaSalesAssistant({ referralCode }: { referralCode: string }) {
     const nextIndex = stepIndex + 1;
 
     if (nextIndex < QUESTIONS.length) {
-      nextMessages.push({
-        role: "lia",
-        text: `${QUESTIONS[nextIndex].question} ${QUESTIONS[nextIndex].helper}`,
-      });
+      nextMessages.push({ role: "lia", text: `${QUESTIONS[nextIndex].question} ${QUESTIONS[nextIndex].helper}` });
     } else {
       const result = getRecommendation(nextAnswers);
-      nextMessages.push({
-        role: "lia",
-        text: `Listo. Para tu caso te recomiendo ${result.planLabel}. Te explico por que y como aprovecharlo para cerrar mas ventas.`,
-      });
+      nextMessages.push({ role: "lia", text: `Listo. Para tu caso te recomiendo ${result.planLabel}.` });
+      nextMessages.push({ role: "lia", text: result.rationale });
     }
 
-    setMessages(nextMessages);
+    setMessages(nextMessages.slice(-12));
     setStepIndex(nextIndex);
   };
 
@@ -205,7 +225,7 @@ export function LiaSalesAssistant({ referralCode }: { referralCode: string }) {
     if (!recommendation) return;
     try {
       setError("");
-      const payload = {
+      await api.createComerciaPlanPurchaseLead({
         company_name: leadForm.company_name,
         legal_type: "constituted_company",
         buyer_name: leadForm.buyer_name,
@@ -217,19 +237,18 @@ export function LiaSalesAssistant({ referralCode }: { referralCode: string }) {
         needs_followup: true,
         needs_appointment: true,
         purchase_status: "pending_contact",
-        notes: `channel=lia_assistant | respuestas=${JSON.stringify(answers)} | recomendacion=${recommendation.planCode}`,
-      };
-      await api.createComerciaPlanPurchaseLead(payload);
+        notes: `channel=lia_widget | respuestas=${JSON.stringify(answers)} | recomendacion=${recommendation.planCode}`,
+      });
       await api.createComerciaCustomerContactLead({
         name: leadForm.buyer_name,
         email: leadForm.buyer_email,
         phone: leadForm.buyer_phone,
         company: leadForm.company_name,
         contact_reason: "planes",
-        message: `Solicitud comercial desde Lia. ${recommendation.rationale}`,
-        channel: "lia_assistant",
+        message: `Solicitud comercial desde Lia widget. ${recommendation.rationale}`,
+        channel: "lia_widget",
         recommended_plan: recommendation.planCode,
-        status: "new",
+        status: "nuevo",
       });
       setSubmitted(true);
     } catch (err) {
@@ -237,87 +256,85 @@ export function LiaSalesAssistant({ referralCode }: { referralCode: string }) {
     }
   };
 
+  const widgetStyle = { left: `${position.x}px`, top: `${position.y}px` };
+
   return (
-    <section className="lia-assistant" id="lia-comercial">
-      <div className="lia-header">
-        <div className="lia-avatar">L</div>
-        <div>
-          <p className="lia-kicker">Asistente comercial IA</p>
-          <h3>Lia by ComerCia</h3>
-          <p>
-            Diagnostico conversacional para recomendar plan, resolver dudas y ayudarte a tomar decision con claridad.
-          </p>
-        </div>
-      </div>
-
-      <div className="lia-chat">
-        {messages.map((message, index) => (
-          <div key={`${message.role}-${index}`} className={`lia-bubble ${message.role === "lia" ? "lia-bubble-ai" : "lia-bubble-user"}`}>
-            {message.text}
-          </div>
-        ))}
-      </div>
-
-      {!done && currentQuestion ? (
-        <div className="lia-options">
-          <p>{currentQuestion.helper}</p>
-          <div className="lia-chip-list">
-            {currentQuestion.options.map((option) => (
-              <button key={String(option.value)} type="button" className="lia-chip" onClick={() => chooseOption(option.label, option.value)}>
-                {option.label}
-              </button>
-            ))}
-          </div>
-        </div>
+    <>
+      {!isOpen ? (
+        <button className="lia-fab" type="button" onClick={() => setIsOpen(true)} aria-label="Abrir Lia">
+          <span>L</span>
+          <small>Lia</small>
+        </button>
       ) : null}
 
-      {recommendation ? (
-        <div className="lia-result">
-          <h4>Plan recomendado: {recommendation.planLabel}</h4>
-          <p>{recommendation.rationale}</p>
-          <ul className="marketing-list">
-            {recommendation.reasons.map((reason) => (
-              <li key={reason}>{reason}</li>
+      {isOpen ? (
+        <section className="lia-widget" style={widgetStyle}>
+          <header
+            className="lia-widget-header"
+            onMouseDown={(event) => {
+              setDragging(true);
+              setDragOffset({ x: event.clientX - position.x, y: event.clientY - position.y });
+            }}
+          >
+            <div>
+              <strong>Lia by ComerCia</strong>
+              <p>Asistente comercial IA</p>
+            </div>
+            <button type="button" className="button button-outline" onClick={() => setIsOpen(false)}>
+              Cerrar
+            </button>
+          </header>
+
+          <div className="lia-widget-body">
+            {messages.map((message, index) => (
+              <div key={`${message.role}-${index}`} className={`lia-bubble ${message.role === "lia" ? "lia-bubble-ai" : "lia-bubble-user"}`}>
+                {message.text}
+              </div>
             ))}
-          </ul>
-          <div className="row-gap lia-cta-row">
-            <a className="button" href="#diagnostico">Continuar diagnostico completo</a>
-            <a className="button button-outline" href="#atencion-cliente">Solicitar asesoria directa</a>
-            <a className="button button-outline" href="#paquetes">Revisar paquetes</a>
           </div>
 
-          <form className="inline-form" onSubmit={submitLead}>
-            <input
-              required
-              placeholder="Tu nombre"
-              value={leadForm.buyer_name}
-              onChange={(event) => setLeadForm((prev) => ({ ...prev, buyer_name: event.target.value }))}
-            />
-            <input
-              required
-              placeholder="Empresa o marca"
-              value={leadForm.company_name}
-              onChange={(event) => setLeadForm((prev) => ({ ...prev, company_name: event.target.value }))}
-            />
-            <input
-              required
-              placeholder="Correo"
-              value={leadForm.buyer_email}
-              onChange={(event) => setLeadForm((prev) => ({ ...prev, buyer_email: event.target.value }))}
-            />
-            <input
-              required
-              placeholder="WhatsApp"
-              value={leadForm.buyer_phone}
-              onChange={(event) => setLeadForm((prev) => ({ ...prev, buyer_phone: event.target.value }))}
-            />
-            <button className="button" type="submit">Solicitar propuesta con Lia</button>
-          </form>
+          {!done && currentQuestion ? (
+            <div className="lia-widget-actions">
+              <p>{currentQuestion.helper}</p>
+              <div className="lia-chip-list">
+                {currentQuestion.options.map((option) => (
+                  <button key={String(option.value)} type="button" className="lia-chip" onClick={() => chooseOption(option.label, option.value)}>
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : null}
 
-          {submitted ? <p>Listo. Ya registre tu solicitud y el equipo comercial te contactara con un siguiente paso concreto.</p> : null}
-          {error ? <p className="error">{error}</p> : null}
-        </div>
+          {recommendation ? (
+            <div className="lia-result">
+              <h4>Plan recomendado: {recommendation.planLabel}</h4>
+              <ul className="marketing-list">
+                {recommendation.reasons.map((reason) => (
+                  <li key={reason}>{reason}</li>
+                ))}
+              </ul>
+
+              <div className="lia-quick-cta-grid">
+                <button type="button" className="button" onClick={onOpenDiagnostic}>Solicitar diagnostico</button>
+                <button type="button" className="button button-outline" onClick={onOpenContact}>Hablar con asesor</button>
+                <button type="button" className="button button-outline" onClick={onOpenPackages}>Ir a paquetes</button>
+              </div>
+
+              <form className="inline-form" onSubmit={submitLead}>
+                <input required placeholder="Nombre" value={leadForm.buyer_name} onChange={(event) => setLeadForm((prev) => ({ ...prev, buyer_name: event.target.value }))} />
+                <input required placeholder="Empresa" value={leadForm.company_name} onChange={(event) => setLeadForm((prev) => ({ ...prev, company_name: event.target.value }))} />
+                <input required placeholder="Correo" value={leadForm.buyer_email} onChange={(event) => setLeadForm((prev) => ({ ...prev, buyer_email: event.target.value }))} />
+                <input required placeholder="WhatsApp" value={leadForm.buyer_phone} onChange={(event) => setLeadForm((prev) => ({ ...prev, buyer_phone: event.target.value }))} />
+                <button className="button" type="submit">Dejar mis datos</button>
+              </form>
+
+              {submitted ? <p>Listo. Ya registre tu solicitud y el equipo te contactara para cierre comercial.</p> : null}
+              {error ? <p className="error">{error}</p> : null}
+            </div>
+          ) : null}
+        </section>
       ) : null}
-    </section>
+    </>
   );
 }

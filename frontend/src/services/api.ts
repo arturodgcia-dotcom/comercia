@@ -490,6 +490,8 @@ export const api = {
     request<CustomerContactLead>("/api/v1/comercia/customer-contact-leads", { method: "POST", body: JSON.stringify(payload) }),
   getReinpiaCustomerContactLeads: (token: string, query = "") =>
     request<CustomerContactLead[]>(`/api/v1/reinpia/customer-contact-leads${query ? `?${query}` : ""}`, {}, token),
+  updateReinpiaCustomerContactLead: (token: string, leadId: number, payload: Record<string, unknown>) =>
+    request<CustomerContactLead>(`/api/v1/reinpia/customer-contact-leads/${leadId}`, { method: "PUT", body: JSON.stringify(payload) }, token),
 
   getOnboardingGuides: (token: string) => request<OnboardingGuide[]>("/api/v1/onboarding/guides", {}, token),
   getOnboardingGuide: (token: string, guideId: number) =>

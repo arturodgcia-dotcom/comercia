@@ -108,7 +108,7 @@ export function AdminLayout() {
         { label: "Pagos POS (Mercado Pago)", to: "/admin/settings/payments/mercadopago", roles: ["tenant_admin", "reinpia_admin"] },
         { label: t("nav.currency"), to: "/admin/currency", roles: ["tenant_admin", "reinpia_admin"] },
         { label: "Idioma", to: "/" },
-        { label: "Automatizacion", to: "/admin/automation", roles: ["tenant_admin", "reinpia_admin"] },
+        { label: "Seguimiento comercial y Bot WhatsApp", to: "/admin/automation", roles: ["tenant_admin", "reinpia_admin"] },
       ],
     },
   ];
@@ -136,6 +136,7 @@ export function AdminLayout() {
         { label: t("nav.globalLeads"), to: "/reinpia/reports/leads" },
         { label: t("nav.globalMarketing"), to: "/reinpia/reports/marketing-opportunities" },
         { label: t("nav.globalAgents"), to: "/reinpia/commission-agents" },
+        { label: "Inbox comercial", to: "/reinpia/commercial-inbox" },
         { label: t("nav.globalAlerts"), to: "/reinpia/alerts" },
       ],
     },

@@ -11,6 +11,10 @@ const EVENT_LABELS: Record<string, string> = {
   order_paid: "Pago confirmado",
   logistics_delivered: "Entrega logistica completada",
   followup_required: "Seguimiento comercial pendiente",
+  lead_interested_plan: "Interes en plan",
+  logistics_question: "Duda sobre logistica",
+  ecommerce_question: "Duda sobre ecommerce",
+  pos_question: "Duda sobre POS",
 };
 
 export function AutomationAdminPage() {
@@ -53,11 +57,11 @@ export function AutomationAdminPage() {
 
   return (
     <section>
-      <PageHeader title="Mensajes automaticos" subtitle="Configura seguimiento comercial, recordatorios y avisos de operacion sin complejidad tecnica." />
+      <PageHeader title="Seguimiento comercial y Bot WhatsApp" subtitle="Configura mensajes automaticos para leads, citas, pagos y dudas comerciales." />
       <ModuleOnboardingCard
         moduleKey="automation"
-        title="Automatizacion"
-        whatItDoes="Define canales y mensajes para seguimiento comercial y avisos operativos."
+        title="Mensajes automaticos"
+        whatItDoes="Define plantillas para WhatsApp y webchat en cada evento comercial relevante."
         whyItMatters="Reduce trabajo manual y acelera respuesta en momentos clave del cliente."
         whatToCapture={["Canal (WhatsApp/Webchat)", "Evento disparador", "Plantilla de mensaje", "Estado habilitado"]}
         impact="Mejora conversion y cumplimiento operativo con comunicaciones consistentes."
@@ -70,6 +74,7 @@ export function AutomationAdminPage() {
             <li>Confirmaciones de cita con fecha, hora e instrucciones.</li>
             <li>Notificaciones de pago confirmado o pendiente.</li>
             <li>Alertas de logistica para entrega y seguimiento.</li>
+            <li>Respuestas iniciales para dudas de ecommerce, POS o logistica.</li>
           </ul>
         </article>
       </section>
@@ -96,6 +101,10 @@ export function AutomationAdminPage() {
             <option value="order_paid">Notificacion de pago</option>
             <option value="logistics_delivered">Entrega logistica</option>
             <option value="followup_required">Recordatorio de seguimiento</option>
+            <option value="lead_interested_plan">Interes en plan</option>
+            <option value="logistics_question">Duda de logistica</option>
+            <option value="ecommerce_question">Duda de ecommerce</option>
+            <option value="pos_question">Duda de POS</option>
           </select>
           <select value={templateForm.channel} onChange={(e) => setTemplateForm((p) => ({ ...p, channel: e.target.value }))}>
             <option value="whatsapp">WhatsApp</option>

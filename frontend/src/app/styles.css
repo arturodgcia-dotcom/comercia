@@ -966,6 +966,130 @@ textarea {
   margin: 4px 0 0;
 }
 
+.contact-section-premium {
+  border: 1px solid #d3e2f8;
+  border-radius: 18px;
+  background: linear-gradient(140deg, #ffffff, #f4f8ff);
+  padding: 22px;
+  box-shadow: 0 14px 32px rgba(13, 48, 110, 0.1);
+}
+
+.contact-form-premium {
+  max-width: 860px;
+}
+
+.diagnostic-modal {
+  width: min(740px, 100%);
+  max-height: 85vh;
+  overflow: auto;
+}
+
+.link-button {
+  border: none;
+  background: transparent;
+  color: #1a4da8;
+  margin: 0 0 7px;
+  padding: 0;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+}
+
+.link-button:hover {
+  text-decoration: underline;
+}
+
+.lia-fab {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 30;
+  width: 68px;
+  height: 68px;
+  border-radius: 999px;
+  border: 1px solid #2a66c5;
+  background: radial-gradient(circle at 20% 20%, #89c6ff, #1457bc);
+  box-shadow: 0 18px 34px rgba(12, 43, 99, 0.28);
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+
+.lia-fab small {
+  font-size: 11px;
+  line-height: 1;
+}
+
+.lia-widget {
+  position: fixed;
+  z-index: 31;
+  width: min(360px, calc(100vw - 16px));
+  max-height: min(620px, calc(100vh - 16px));
+  border-radius: 16px;
+  border: 1px solid #aac5ef;
+  background: linear-gradient(150deg, #fbfdff, #eff5ff);
+  box-shadow: 0 20px 42px rgba(8, 31, 74, 0.26);
+  overflow: hidden;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+}
+
+.lia-widget-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 12px;
+  background: linear-gradient(130deg, #0f3572, #1c64c9);
+  color: #fff;
+  cursor: move;
+}
+
+.lia-widget-header p {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: #dbe9ff;
+}
+
+.lia-widget-body {
+  padding: 10px;
+  display: grid;
+  gap: 8px;
+  overflow: auto;
+  max-height: 290px;
+}
+
+.lia-widget-actions {
+  border-top: 1px dashed #bfd2f0;
+  padding: 10px;
+  display: grid;
+  gap: 8px;
+}
+
+.lia-widget-actions p {
+  margin: 0;
+  color: #465f84;
+  font-size: 13px;
+}
+
+.lia-quick-cta-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+@media (max-width: 900px) {
+  .lia-widget {
+    width: calc(100vw - 16px);
+  }
+
+  .lia-quick-cta-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 900px) {
   .app-shell {
     grid-template-columns: 1fr;
