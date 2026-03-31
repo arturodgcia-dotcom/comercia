@@ -581,3 +581,30 @@ Se agregaron bloques de confianza/compliance y conversion en `/comercia`:
 
 El endpoint de planes existente se mantiene:
 - `POST /api/v1/comercia/plan-purchase-leads`
+
+## Flujo comercial actualizado en landing
+- Lía ahora funciona como widget flotante tipo chat web (no bloque estatico).
+- Diagnostico comercial se abre en modal/subflujo para mejor conversion.
+- Seccion "Contáctanos" reemplaza "Atencion al cliente" con formulario premium.
+- Canales de trazabilidad comercial activos:
+  - `lia_widget`
+  - `contacto`
+  - `diagnostico`
+  - `whatsapp`
+
+## Inbox comercial REINPIA
+Nuevo modulo global para seguimiento comercial:
+- ruta frontend: `/reinpia/commercial-inbox`
+- listado, filtros, detalle y cambio de estatus
+- estados operativos:
+  - `nuevo`
+  - `en_seguimiento`
+  - `contactado`
+  - `agendado`
+  - `cerrado_ganado`
+  - `cerrado_perdido`
+
+## Endpoints comerciales actualizados
+- `POST /api/v1/comercia/customer-contact-leads`
+- `GET /api/v1/reinpia/customer-contact-leads`
+- `PUT /api/v1/reinpia/customer-contact-leads/{id}`

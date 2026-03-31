@@ -457,3 +457,15 @@ Se incorpora un flujo paralelo al lead de compra de plan para soporte y atencion
 Esto separa claramente:
 - Diagnostico/compra de plan (`PlanPurchaseLead`).
 - Atencion al cliente general (`CustomerContactLead`).
+
+## Ajuste arquitectonico de captura comercial
+Se unifica la bandeja comercial sobre `CustomerContactLead` con canales de origen:
+- `lia_widget`
+- `contacto`
+- `diagnostico`
+- `whatsapp`
+
+Se incorpora actualizacion de estatus desde REINPIA:
+- `PUT /api/v1/reinpia/customer-contact-leads/{id}`
+
+Esto habilita un flujo de seguimiento comercial end-to-end sin depender de formularios aislados en frontend.

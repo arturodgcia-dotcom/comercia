@@ -311,3 +311,15 @@
 - [x] Lía evolucionada a asistente comercial conversacional y persuasivo con captura de lead
 - [x] Footer landing reforzado con enlaces legales/contacto/atencion
 - [x] Validacion: backend compile + frontend build
+
+## Entregables ejecucion 29 (Lía flotante + flujo comercial unificado)
+- [x] Lía migrada a widget flotante tipo chat web (abrir/cerrar, historial corto, chips, recomendacion y CTAs)
+- [x] Seccion "Atencion al cliente" reemplazada por "Contáctanos" con formulario premium
+- [x] Diagnostico comercial movido a subflujo modal (ya no barra suelta)
+- [x] CTAs de landing alineados: abrir Lía, abrir diagnostico, abrir contáctanos, ver paquetes
+- [x] Copy "Dolor" eliminado y reemplazado por etiqueta comercial "Reto actual"
+- [x] Modulo interno "Inbox comercial" para leads/mensajes/diagnosticos con filtros y cambio de estatus
+- [x] Endpoint REINPIA para actualizar estatus de contacto (`PUT /api/v1/reinpia/customer-contact-leads/{id}`)
+- [x] Seeds demo ampliados con leads de canales `lia_widget`, `contacto`, `diagnostico`, `whatsapp`
+- [x] Base WhatsApp/bot reforzada con plantillas y eventos comerciales demo
+- [x] Validacion: backend compile + frontend build

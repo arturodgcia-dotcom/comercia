@@ -130,3 +130,13 @@ Nuevos componentes y capacidades:
 Nuevos endpoints:
 - `POST /api/v1/comercia/customer-contact-leads`
 - `GET /api/v1/reinpia/customer-contact-leads`
+
+## Actualizacion UX comercial
+- Lía migrada a widget flotante conversacional con acciones de cierre.
+- Diagnostico comercial presentado como modal/subflujo.
+- Seccion "Contáctanos" separada y orientada a conversion.
+- Copy de retos comerciales ajustado (se elimina etiqueta "Dolor").
+
+## Modulo interno de seguimiento
+- `ReinpiaCommercialInboxPage` centraliza contacto, leads de Lía, diagnosticos y solicitudes de asesoria.
+- Filtros por canal y estatus + edicion de estatus desde detalle.
