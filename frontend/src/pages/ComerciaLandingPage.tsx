@@ -112,7 +112,8 @@ export function ComerciaLandingPage() {
         secondaryTo="#paquetes"
       />
 
-      <section className="card-grid">
+      <section className="marketing-highlight-band">
+        <div className="card-grid">
         <SolutionCard
           title="Mas conversion desde el primer mes"
           description="Landing y ecommerce pensados para vender, no para verse bonitos sin resultados."
@@ -128,9 +129,10 @@ export function ComerciaLandingPage() {
           description="Logistica, fidelizacion, seguimiento comercial y reportes accionables en un solo lugar."
           tag="Operacion"
         />
+        </div>
       </section>
 
-      <section>
+      <section className="marketing-section">
         <h2>Para que tipo de marca fue creado ComerCia</h2>
         <p>
           ComerCia esta pensada para empresas constituidas o personas con actividad empresarial que necesitan vender,
@@ -143,7 +145,7 @@ export function ComerciaLandingPage() {
         </div>
       </section>
 
-      <section>
+      <section className="marketing-section">
         <h2>Que incluye ComerCia</h2>
         <div className="card-grid">
           <SolutionCard title="Landing premium por marca" description="Mensaje comercial fuerte, bloques configurables y CTA orientados a cierre." tag="Landing" />
@@ -155,7 +157,7 @@ export function ComerciaLandingPage() {
         </div>
       </section>
 
-      <section id="paquetes">
+      <section id="paquetes" className="marketing-section">
         <h2>Paquetes ComerCia</h2>
         <div className="card-grid">
           <PackageCard
@@ -185,7 +187,7 @@ export function ComerciaLandingPage() {
         </div>
       </section>
 
-      <section>
+      <section className="marketing-section">
         <h2>Servicios adicionales activables</h2>
         <div className="card-grid">
           <SolutionCard
@@ -216,7 +218,7 @@ export function ComerciaLandingPage() {
         </div>
       </section>
 
-      <section id="lia-diagnostico" className="card">
+      <section id="lia-diagnostico" className="card marketing-section">
         <h2>Lia: diagnostico comercial inteligente</h2>
         <p>Responde estas preguntas y te recomendamos el plan adecuado para tu etapa comercial.</p>
         <form className="inline-form" onSubmit={handleLiaSubmit}>
@@ -274,7 +276,7 @@ export function ComerciaLandingPage() {
         ]}
       />
 
-      <section id="diagnostico" className="store-banner">
+      <section id="diagnostico" className="store-banner marketing-section">
         <h2>Diagnostico comercial</h2>
         <p>Comparte tus datos y te guiamos al paquete correcto. Solo para empresas constituidas o actividad empresarial.</p>
         <form className="inline-form" onSubmit={handleLeadSubmit}>

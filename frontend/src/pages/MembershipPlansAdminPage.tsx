@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useState } from "react";
 import { useAuth } from "../app/AuthContext";
+import { ModuleOnboardingCard } from "../components/ModuleOnboardingCard";
 import { PageHeader } from "../components/PageHeader";
 import { api } from "../services/api";
 import { MembershipPlan, Tenant } from "../types/domain";
@@ -47,7 +48,15 @@ export function MembershipPlansAdminPage() {
 
   return (
     <section>
-      <PageHeader title="Membership Plans" subtitle="Gestion de planes de membresia y beneficios." />
+      <PageHeader title="Planes de membresia" subtitle="Gestion de planes de membresia y beneficios." />
+      <ModuleOnboardingCard
+        moduleKey="memberships"
+        title="Membresias"
+        whatItDoes="Define planes de membresia con duracion, costo y beneficios comerciales."
+        whyItMatters="Ayuda a aumentar recompra, ticket promedio y retencion de clientes."
+        whatToCapture={["Nombre del plan", "Duracion en dias", "Precio", "Beneficios y multiplicador de puntos"]}
+        impact="Genera ingresos recurrentes y fidelizacion medible."
+      />
       {error ? <p className="error">{error}</p> : null}
       <select value={tenantId ?? ""} onChange={(e) => setTenantId(Number(e.target.value))}>
         {tenants.map((tenant) => (
@@ -58,7 +67,7 @@ export function MembershipPlansAdminPage() {
       </select>
       <form className="inline-form" onSubmit={create}>
         <input required placeholder="Nombre" value={form.name} onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))} />
-        <input placeholder="Descripcion" value={form.description} onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))} />
+          <input placeholder="Descripcion" value={form.description} onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))} />
         <input type="number" value={form.duration_days} onChange={(e) => setForm((p) => ({ ...p, duration_days: Number(e.target.value) }))} />
         <input type="number" value={form.price} onChange={(e) => setForm((p) => ({ ...p, price: Number(e.target.value) }))} />
         <input
@@ -67,7 +76,7 @@ export function MembershipPlansAdminPage() {
           onChange={(e) => setForm((p) => ({ ...p, points_multiplier: Number(e.target.value) }))}
         />
         <input
-          placeholder="benefits_json"
+          placeholder="beneficios_json"
           value={form.benefits_json}
           onChange={(e) => setForm((p) => ({ ...p, benefits_json: e.target.value }))}
         />
@@ -82,7 +91,7 @@ export function MembershipPlansAdminPage() {
             <th>Nombre</th>
             <th>Duracion</th>
             <th>Precio</th>
-            <th>Multiplier</th>
+            <th>Multiplicador</th>
           </tr>
         </thead>
         <tbody>

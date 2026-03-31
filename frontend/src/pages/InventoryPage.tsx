@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "../app/AuthContext";
+import { ModuleOnboardingCard } from "../components/ModuleOnboardingCard";
 import { PageHeader } from "../components/PageHeader";
 import { api } from "../services/api";
 import { Product } from "../types/domain";
@@ -84,6 +85,14 @@ export function InventoryPage() {
       <PageHeader
         title="Inventario y surtido"
         subtitle="Control visible de stock general, por canal, por almacén y ajustes rápidos de movimiento."
+      />
+      <ModuleOnboardingCard
+        moduleKey="inventory"
+        title="Almacenes e inventario"
+        whatItDoes="Muestra stock general y por canal con movimientos rapidos por producto."
+        whyItMatters="Evita sobreventa y ayuda a priorizar surtido entre ecommerce, distribuidores y POS."
+        whatToCapture={["Stock general", "Asignacion por canal", "Ajustes de movimiento", "Control por almacen"]}
+        impact="Mejora disponibilidad real y reduce quiebres de inventario."
       />
       {error ? <p className="error">{error}</p> : null}
 

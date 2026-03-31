@@ -276,3 +276,12 @@
 - [x] Login reforzado para evitar estado colgado (`Ingresando...`) y timeout de API
 - [x] Bloque de Lía reemplazado por formulario comercial inteligente de diagnostico
 - [x] Seeds demo actualizados para probar ambos flujos (REINPIA sin landing, Instituto Zaro Latino con landing)
+
+## Entregables ejecucion 26 (Landing premium + onboarding modular + demo reforzada)
+- [x] Landing de ComerCia elevada visualmente (jerarquia, bloques, fondos y CTA)
+- [x] Onboarding contextual por modulo con tarjeta reusable y boton "Entendido"
+- [x] Onboarding aplicado en modulos clave: landing/branding, productos, carga masiva, distribuidores, membresias, retroalimentacion, logistica, inventario, servicios, citas, POS, reportes, monedas, automatizacion, Stripe y Mercado Pago
+- [x] Seeds demo reforzados: citas (normal/regalo/anonima + estados), feedback adicional, logistica adicional (recoleccion/entrega/ambos/resguardo con estatus)
+- [x] REINPIA demo mantenido con workflow, servicios y datos de evaluacion visual/comercial
+- [x] UX general pulida con estados vacios mas utiles y textos clave en espanol
+- [x] Validacion: backend compile + frontend build

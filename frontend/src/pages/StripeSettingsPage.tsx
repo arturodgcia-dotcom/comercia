@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useState } from "react";
 import { useAuth } from "../app/AuthContext";
+import { ModuleOnboardingCard } from "../components/ModuleOnboardingCard";
 import { PageHeader } from "../components/PageHeader";
 import { api } from "../services/api";
 import { StripeConfig } from "../types/domain";
@@ -55,6 +56,14 @@ export function StripeSettingsPage() {
       <PageHeader
         title="Pagos online con Stripe"
         subtitle="Usa Stripe para ecommerce publico, ecommerce distribuidores, suscripciones y checkout online."
+      />
+      <ModuleOnboardingCard
+        moduleKey="payments_stripe"
+        title="Pagos online con Stripe"
+        whatItDoes="Gestiona llaves y webhook para cobros online y suscripciones."
+        whyItMatters="Sin configuracion correcta, el checkout ecommerce no podra confirmar pagos."
+        whatToCapture={["Publishable key", "Secret key", "Webhook secret", "Account Connect (si aplica)"]}
+        impact="Asegura cobros confiables y trazabilidad de ordenes online."
       />
       <p className="muted">
         Este modulo no aplica al POS. El POS/WebApp usa Mercado Pago.

@@ -1,4 +1,5 @@
 import { ChangeEvent, useMemo, useState } from "react";
+import { ModuleOnboardingCard } from "../components/ModuleOnboardingCard";
 import { PageHeader } from "../components/PageHeader";
 
 type ImportRow = Record<string, string>;
@@ -121,6 +122,14 @@ export function CatalogBulkUploadPage() {
       <PageHeader
         title="Carga masiva de catalogo"
         subtitle="Importa productos por layout, valida columnas y revisa estado de sincronizacion Stripe."
+      />
+      <ModuleOnboardingCard
+        moduleKey="bulk_upload"
+        title="Carga masiva"
+        whatItDoes="Permite importar catalogos completos por archivo CSV con validacion previa."
+        whyItMatters="Acelera altas de productos y evita errores manuales en precios o visibilidad."
+        whatToCapture={["Plantilla oficial", "Columnas obligatorias", "Price IDs de Stripe", "Resumen de errores"]}
+        impact="Reduce tiempo operativo y mantiene consistencia de datos en ecommerce."
       />
 
       <section className="store-banner">

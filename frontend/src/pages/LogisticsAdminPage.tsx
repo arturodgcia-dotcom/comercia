@@ -1,5 +1,6 @@
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useAuth } from "../app/AuthContext";
+import { ModuleOnboardingCard } from "../components/ModuleOnboardingCard";
 import { PageHeader } from "../components/PageHeader";
 import { api } from "../services/api";
 import { LogisticsEvent, LogisticsOrder, Tenant } from "../types/domain";
@@ -58,6 +59,13 @@ export function LogisticsAdminPage() {
     loadEvents(selectedId).catch((err) => setError(err instanceof Error ? err.message : "No fue posible cargar eventos"));
   }, [selectedId, token]);
 
+  const summary = useMemo(() => {
+    const delivered = rows.filter((row) => row.status === "delivered").length;
+    const pending = rows.filter((row) => row.status === "pending" || row.status === "scheduled").length;
+    const inTransit = rows.filter((row) => row.status === "in_transit").length;
+    return { total: rows.length, delivered, pending, inTransit };
+  }, [rows]);
+
   const create = async (event: FormEvent) => {
     event.preventDefault();
     if (!token || !tenantId) return;
@@ -97,6 +105,14 @@ export function LogisticsAdminPage() {
   return (
     <section>
       <PageHeader title="Logistica" subtitle="Ordenes logisticas, programacion y tracking base." />
+      <ModuleOnboardingCard
+        moduleKey="logistics"
+        title="Logistica y seguimiento"
+        whatItDoes="Administra ordenes de entrega, reprogramaciones, tracking y eventos operativos."
+        whyItMatters="Permite cumplir promesas de entrega y medir cuellos de botella en operacion."
+        whatToCapture={["Tipo de servicio", "Direccion y origen", "Tracking/courier", "Fecha programada y estado"]}
+        impact="Reduce incidencias y mejora la experiencia de entrega para cliente y distribuidor."
+      />
       {error ? <p className="error">{error}</p> : null}
       <div className="row-gap">
         <select value={tenantId ?? ""} onChange={(e) => setTenantId(Number(e.target.value))}>
@@ -108,6 +124,13 @@ export function LogisticsAdminPage() {
         </select>
         <input type="datetime-local" value={scheduleDate} onChange={(e) => setScheduleDate(e.target.value)} />
       </div>
+
+      <section className="card-grid">
+        <article className="card"><h3>Total ordenes</h3><p>{summary.total}</p></article>
+        <article className="card"><h3>Pendientes</h3><p>{summary.pending}</p></article>
+        <article className="card"><h3>En transito</h3><p>{summary.inTransit}</p></article>
+        <article className="card"><h3>Entregadas</h3><p>{summary.delivered}</p></article>
+      </section>
 
       <form className="inline-form" onSubmit={create}>
         <select value={createForm.delivery_type} onChange={(e) => setCreateForm((p) => ({ ...p, delivery_type: e.target.value }))}>
@@ -180,6 +203,12 @@ export function LogisticsAdminPage() {
           ))}
         </tbody>
       </table>
+
+      {rows.length === 0 ? (
+        <article className="card">
+          <p>Aun no hay ordenes logisticas para esta marca. Aqui veras recoleccion, entrega y seguimiento operativo.</p>
+        </article>
+      ) : null}
 
       <h3>Eventos</h3>
       <table className="table">

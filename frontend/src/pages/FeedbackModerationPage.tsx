@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "../app/AuthContext";
+import { ModuleOnboardingCard } from "../components/ModuleOnboardingCard";
 import { PageHeader } from "../components/PageHeader";
 import { api } from "../services/api";
 import { Product, ProductReview } from "../types/domain";
@@ -75,6 +76,14 @@ export function FeedbackModerationPage() {
   return (
     <section>
       <PageHeader title="Retroalimentacion moderable" subtitle="Comentarios de publico y distribuidores con control antes de publicar." />
+      <ModuleOnboardingCard
+        moduleKey="feedback"
+        title="Retroalimentacion y moderacion"
+        whatItDoes="Centraliza comentarios y resenas para aprobar, rechazar o mantener en revision."
+        whyItMatters="Protege reputacion y permite aprender del cliente antes de publicar contenido."
+        whatToCapture={["Estado de moderacion", "Canal de origen", "Comentario y calificacion", "Producto o servicio relacionado"]}
+        impact="Mejora confianza de marca y calidad de contenido publico."
+      />
       {error ? <p className="error">{error}</p> : null}
 
       <section className="store-banner">

@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useAuth } from "../app/AuthContext";
+import { ModuleOnboardingCard } from "../components/ModuleOnboardingCard";
 import { PageHeader } from "../components/PageHeader";
 import { api } from "../services/api";
 import { CurrencySettings, ExchangeRate } from "../types/domain";
@@ -84,6 +85,14 @@ export function CurrencyAdminPage() {
   return (
     <section>
       <PageHeader title="Monedas y Tipo de Cambio" subtitle="Configura moneda base, conversion y modo de checkout por tenant." />
+      <ModuleOnboardingCard
+        moduleKey="currency"
+        title="Monedas"
+        whatItDoes="Configura moneda base, monedas visibles y tipo de cambio manual o automatico."
+        whyItMatters="Permite vender en distintos mercados sin perder control financiero."
+        whatToCapture={["Moneda base", "Monedas habilitadas", "Modo de conversion", "Tasa manual cuando aplique"]}
+        impact="Mejora claridad de precios para cliente y consistencia en reportes."
+      />
       {error ? <p className="error">{error}</p> : null}
       <form className="detail-form" onSubmit={handleSettingsSubmit}>
         <label>
@@ -116,9 +125,9 @@ export function CurrencyAdminPage() {
             value={settings.display_mode}
             onChange={(e) => setSettings((prev) => (prev ? { ...prev, display_mode: e.target.value } : prev))}
           >
-            <option value="base_only">base_only</option>
-            <option value="converted_display">converted_display</option>
-            <option value="localized_checkout">localized_checkout</option>
+            <option value="base_only">Solo moneda base</option>
+            <option value="converted_display">Mostrar conversion</option>
+            <option value="localized_checkout">Checkout localizado</option>
           </select>
         </label>
         <label>
@@ -127,8 +136,8 @@ export function CurrencyAdminPage() {
             value={settings.exchange_mode}
             onChange={(e) => setSettings((prev) => (prev ? { ...prev, exchange_mode: e.target.value } : prev))}
           >
-            <option value="manual">manual</option>
-            <option value="automatic">automatic</option>
+            <option value="manual">Manual</option>
+            <option value="automatic">Automatico</option>
           </select>
         </label>
         <label>
@@ -137,9 +146,9 @@ export function CurrencyAdminPage() {
             value={settings.rounding_mode}
             onChange={(e) => setSettings((prev) => (prev ? { ...prev, rounding_mode: e.target.value } : prev))}
           >
-            <option value="none">none</option>
+            <option value="none">Sin redondeo</option>
             <option value=".99">.99</option>
-            <option value="whole">whole</option>
+            <option value="whole">Entero</option>
           </select>
         </label>
         <label className="checkbox">
@@ -193,7 +202,7 @@ export function CurrencyAdminPage() {
           {previewRate ? `${(100 * Number(previewRate.rate)).toFixed(2)} ${previewRate.target_currency}` : "sin conversion disponible"}
         </p>
         <p>
-          Checkout mode:{" "}
+          Modo checkout:{" "}
           {settings.display_mode === "localized_checkout"
             ? "Intentara cobrar en moneda local cuando el flujo de pago lo soporte."
             : "Checkout permanece en moneda base y solo muestra conversion."}

@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useState } from "react";
 import { useAuth } from "../app/AuthContext";
+import { ModuleOnboardingCard } from "../components/ModuleOnboardingCard";
 import { PageHeader } from "../components/PageHeader";
 import { api } from "../services/api";
 import { AutomationEventLog, BotChannelConfig, BotMessageTemplate } from "../types/domain";
@@ -53,6 +54,14 @@ export function AutomationAdminPage() {
   return (
     <section>
       <PageHeader title="Mensajes automaticos" subtitle="Configura seguimiento comercial, recordatorios y avisos de operacion sin complejidad tecnica." />
+      <ModuleOnboardingCard
+        moduleKey="automation"
+        title="Automatizacion"
+        whatItDoes="Define canales y mensajes para seguimiento comercial y avisos operativos."
+        whyItMatters="Reduce trabajo manual y acelera respuesta en momentos clave del cliente."
+        whatToCapture={["Canal (WhatsApp/Webchat)", "Evento disparador", "Plantilla de mensaje", "Estado habilitado"]}
+        impact="Mejora conversion y cumplimiento operativo con comunicaciones consistentes."
+      />
       <section className="card-grid">
         <article className="card">
           <h3>Que puedes automatizar</h3>

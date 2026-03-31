@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "../app/AuthContext";
+import { ModuleOnboardingCard } from "../components/ModuleOnboardingCard";
 import { PageHeader } from "../components/PageHeader";
 import { PeriodSelector } from "../components/PeriodSelector";
 import { ReportKpiCard } from "../components/ReportKpiCard";
@@ -34,7 +35,15 @@ export function TenantReportsOverviewPage() {
 
   return (
     <section>
-      <PageHeader title="Reportes Tenant" subtitle="KPIs clave para operacion comercial y crecimiento." />
+      <PageHeader title="Reportes de marca" subtitle="KPIs clave para operacion comercial y crecimiento." />
+      <ModuleOnboardingCard
+        moduleKey="reports_overview"
+        title="Reportes"
+        whatItDoes="Resume ventas, usuarios y desempeno de productos en un solo tablero."
+        whyItMatters="Ayuda a detectar oportunidades comerciales y riesgos operativos a tiempo."
+        whatToCapture={["Periodo de analisis", "Marca objetivo", "KPIs clave", "Lectura de tendencias"]}
+        impact="Facilita decisiones de marketing, precios y operacion con datos reales."
+      />
       <div className="inline-form">
         {isGlobalAdmin ? (
           <select value={tenantIdForReports} onChange={(event) => setTenantIdForReports(Number(event.target.value))}>
@@ -57,7 +66,7 @@ export function TenantReportsOverviewPage() {
       </div>
 
       <SimpleChartSection
-        title="Revenue timeseries"
+        title="Serie de ingresos"
         series={data.sales.timeseries.map((row) => ({ label: row.bucket, value: row.revenue }))}
       />
 

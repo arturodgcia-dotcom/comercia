@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useAuth } from "../app/AuthContext";
+import { ModuleOnboardingCard } from "../components/ModuleOnboardingCard";
 import { PageHeader } from "../components/PageHeader";
 import { api } from "../services/api";
 import { DistributorEmployee, DistributorProfile, Tenant } from "../types/domain";
@@ -65,6 +66,14 @@ export function DistributorsAdminPage() {
   return (
     <section>
       <PageHeader title="Distribuidores" subtitle="Canal comercial por marca con empleados, autorizacion y estatus operativo." />
+      <ModuleOnboardingCard
+        moduleKey="distributors"
+        title="Canal distribuidores"
+        whatItDoes="Controla distribuidores autorizados, su estatus comercial y equipo asignado."
+        whyItMatters="Permite separar el canal B2B del publico y escalar ventas con control."
+        whatToCapture={["Datos de contacto", "Autorizacion comercial", "Empleados del distribuidor", "Notas de entrega"]}
+        impact="Mejora seguimiento comercial y reduce errores en pedidos de canal mayorista."
+      />
       {error ? <p className="error">{error}</p> : null}
 
       <article className="card">
@@ -114,6 +123,7 @@ export function DistributorsAdminPage() {
             </tbody>
           </table>
         </div>
+        {profiles.length === 0 ? <p>Aun no hay distribuidores para esta marca. Aqui veras altas, autorizaciones y equipo asociado.</p> : null}
       </article>
 
       {selectedProfile ? (

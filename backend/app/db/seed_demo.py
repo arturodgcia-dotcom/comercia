@@ -147,13 +147,47 @@ def _seed_reinpia(db: Session, tenant: Tenant) -> None:
     _review(db, tenant.id, p2.id, 4, "Servicio recomendado", True, "Lo recomiendo para marcas que ya venden y quieren escalar.", "approved")
     _review(db, tenant.id, p1.id, 3, "Pendiente de aprobacion", False, "Comentario publico pendiente de publicacion por moderacion.", "pending")
     _review(db, tenant.id, p2.id, 2, "Caso distribuidor mayoreo", False, "Soy distribuidor y pido ajuste de condiciones mayoreo.", "rejected")
+    _review(db, tenant.id, p1.id, 4, "Observacion de servicio", False, "El servicio fue bueno, pero pido ajustar instrucciones previas.", "pending")
+    _review(db, tenant.id, p2.id, 3, "Observacion de logistica", True, "La entrega llego con retraso menor, pero el seguimiento fue claro.", "approved")
     _dist_profile(db, tenant.id, "Agencia Andromeda", "ali@andromeda.demo", True)
     _dist_profile(db, tenant.id, "Canal Norte Tech", "jorge@norte.demo", True)
     _dist_employee(db, tenant.id, "ali@andromeda.demo", "Mariana Suarez", "mariana@andromeda.demo", "Ejecutiva comercial")
     _dist_employee(db, tenant.id, "jorge@norte.demo", "Luis Ortega", "luis@norte.demo", "Vendedor mayorista")
     _dist_app(db, tenant.id, "Canal Delta", "carlos@delta.demo")
-    _appointment(db, tenant.id, c1.id, services[0].id, "confirmed")
-    _appointment(db, tenant.id, c2.id, services[4].id, "pending")
+    _appointment(db, tenant.id, c1.id, services[0].id, "notified", notes_suffix="normal-notificada")
+    _appointment(db, tenant.id, c1.id, services[0].id, "confirmed", notes_suffix="normal-confirmada", confirmation_received=True)
+    _appointment(
+        db,
+        tenant.id,
+        c2.id,
+        services[4].id,
+        "attended",
+        is_gift=True,
+        gift_sender_name="Daniela Ruiz",
+        gift_sender_email="daniela@regalos.demo",
+        gift_recipient_name="Marcos Leon",
+        gift_recipient_email="marcos@cliente.demo",
+        gift_recipient_phone="+52 5512345678",
+        gift_message="Te regalo esta consultoria para impulsar tu negocio.",
+        instructions_sent=True,
+        confirmation_received=True,
+        notes_suffix="regalo-asistio",
+    )
+    _appointment(
+        db,
+        tenant.id,
+        c3.id,
+        services[1].id,
+        "completed",
+        is_gift=True,
+        gift_is_anonymous=True,
+        gift_recipient_name="Cliente anonimo",
+        gift_message="Un obsequio especial para tu marca.",
+        instructions_sent=True,
+        confirmation_received=True,
+        notes_suffix="regalo-anonimo-cerrada",
+    )
+    _appointment(db, tenant.id, c2.id, services[2].id, "cancelled", notes_suffix="normal-cancelada")
     o1 = _order(db, tenant.id, c1.id, "reinpia-ord-1", 14500, 500, 14000, 0, 14000, "paid", "plan1")
     _order_item(db, o1.id, service_id=services[0].id, unit=14500, qty=1)
     o2 = _order(db, tenant.id, c2.id, "reinpia-ord-2", 16800, 0, 16800, 0, 16800, "failed", "plan1")
@@ -385,6 +419,34 @@ def _seed_additional_logistics_services(db: Session, tenants: list[Tenant]) -> N
             "billing_summary": "Ruta de entrega semanal para marca REINPIA",
         },
         {
+            "tenant_id": reinpia.id,
+            "service_type": "recoleccion",
+            "origin": "Tienda Roma Norte",
+            "destination": "Bodega central REINPIA",
+            "kilometers": Decimal("12"),
+            "unit_cost": Decimal("30"),
+            "subtotal": Decimal("360"),
+            "iva": Decimal("57.60"),
+            "total": Decimal("417.60"),
+            "status": "pagado",
+            "service_date": datetime.utcnow() - timedelta(days=2),
+            "billing_summary": "Recoleccion puntual para consolidacion de pedidos",
+        },
+        {
+            "tenant_id": natura.id,
+            "service_type": "entrega",
+            "origin": "Bodega Natura Vida",
+            "destination": "Cliente final zona sur",
+            "kilometers": Decimal("18"),
+            "unit_cost": Decimal("26"),
+            "subtotal": Decimal("468"),
+            "iva": Decimal("74.88"),
+            "total": Decimal("542.88"),
+            "status": "facturable",
+            "service_date": datetime.utcnow() - timedelta(days=4),
+            "billing_summary": "Entrega directa de pedidos promocionales",
+        },
+        {
             "tenant_id": natura.id,
             "service_type": "resguardo",
             "origin": "Bodega norte",
@@ -564,10 +626,50 @@ def _dist_app(db: Session, tenant_id: int, company: str, email: str) -> None:
     db.add(d)
 
 
-def _appointment(db: Session, tenant_id: int, customer_id: int, service_id: int, status: str) -> None:
-    key = f"{tenant_id}-{customer_id}-{service_id}-{status}"
-    a = db.scalar(select(Appointment).where(Appointment.notes == key)) or Appointment(tenant_id=tenant_id, customer_id=customer_id, service_offering_id=service_id, scheduled_for=datetime.utcnow() + timedelta(days=2), service_name="Servicio demo", starts_at=datetime.utcnow() + timedelta(days=2), ends_at=datetime.utcnow() + timedelta(days=2, minutes=90), status=status, is_gift=status == "pending", notes=key)
+def _appointment(
+    db: Session,
+    tenant_id: int,
+    customer_id: int,
+    service_id: int,
+    status: str,
+    *,
+    is_gift: bool = False,
+    gift_sender_name: str | None = None,
+    gift_sender_email: str | None = None,
+    gift_is_anonymous: bool = False,
+    gift_message: str | None = None,
+    gift_recipient_name: str | None = None,
+    gift_recipient_email: str | None = None,
+    gift_recipient_phone: str | None = None,
+    instructions_sent: bool = False,
+    confirmation_received: bool = False,
+    notes_suffix: str = "base",
+) -> None:
+    key = f"{tenant_id}-{customer_id}-{service_id}-{status}-{notes_suffix}"
+    scheduled_at = datetime.utcnow() + timedelta(days=2)
+    a = db.scalar(select(Appointment).where(Appointment.notes == key)) or Appointment(
+        tenant_id=tenant_id,
+        customer_id=customer_id,
+        service_offering_id=service_id,
+        scheduled_for=scheduled_at,
+        service_name="Servicio demo",
+        starts_at=scheduled_at,
+        ends_at=scheduled_at + timedelta(minutes=90),
+        status=status,
+        is_gift=is_gift,
+        notes=key,
+    )
     a.status = status
+    a.is_gift = is_gift
+    a.gift_sender_name = gift_sender_name
+    a.gift_sender_email = gift_sender_email
+    a.gift_is_anonymous = gift_is_anonymous
+    a.gift_message = gift_message
+    a.gift_recipient_name = gift_recipient_name
+    a.gift_recipient_email = gift_recipient_email
+    a.gift_recipient_phone = gift_recipient_phone
+    a.instructions_sent_at = datetime.utcnow() if instructions_sent else None
+    a.confirmation_received_at = datetime.utcnow() if confirmation_received else None
     db.add(a)
 
 

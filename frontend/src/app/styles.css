@@ -374,11 +374,49 @@ textarea {
 .marketing-shell {
   max-width: 1120px;
   margin: 0 auto;
-  padding: 30px 24px 60px;
+  padding: 30px 24px 70px;
   display: grid;
-  gap: 24px;
+  gap: 28px;
   position: relative;
   z-index: 1;
+}
+
+.marketing-shell::before {
+  content: "";
+  position: absolute;
+  inset: 20px 0 auto;
+  height: 240px;
+  border-radius: 24px;
+  background: radial-gradient(circle at 85% 20%, rgba(61, 125, 245, 0.24), transparent 45%),
+    radial-gradient(circle at 10% 65%, rgba(18, 57, 130, 0.2), transparent 45%);
+  z-index: -1;
+}
+
+.marketing-section {
+  display: grid;
+  gap: 14px;
+}
+
+.marketing-section > h2 {
+  margin: 0;
+  font-size: clamp(24px, 3vw, 34px);
+  letter-spacing: -0.02em;
+}
+
+.marketing-section > p {
+  margin: 0;
+  color: #425677;
+  max-width: 900px;
+  line-height: 1.55;
+}
+
+.marketing-highlight-band {
+  display: grid;
+  gap: 14px;
+  border: 1px solid #ccdcf8;
+  border-radius: 18px;
+  padding: 18px;
+  background: linear-gradient(135deg, #f0f6ff, #f8fbff 60%, #edf4ff);
 }
 
 .marketing-hero {
@@ -414,6 +452,7 @@ textarea {
   border-radius: 14px;
   border: 1px solid #dbe7fa;
   box-shadow: 0 10px 26px rgba(20, 44, 88, 0.08);
+  background: linear-gradient(180deg, #ffffff, #fbfdff);
 }
 
 .marketing-tag {
@@ -511,6 +550,26 @@ textarea {
   border: 1px solid #c9daf5;
   border-radius: 14px;
   padding: 22px;
+  box-shadow: 0 12px 30px rgba(17, 55, 124, 0.12);
+}
+
+.module-onboarding-card {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 14px;
+  border: 1px solid #cfe0ff;
+  border-radius: 14px;
+  padding: 14px;
+  background: linear-gradient(135deg, #f7fbff, #eef4ff);
+}
+
+.module-onboarding-kicker {
+  margin: 0;
+  color: #1a4da8;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .store-layout {

@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useState } from "react";
 import { useAuth } from "../app/AuthContext";
+import { ModuleOnboardingCard } from "../components/ModuleOnboardingCard";
 import { PageHeader } from "../components/PageHeader";
 import { api } from "../services/api";
 import { ServiceOffering, Tenant } from "../types/domain";
@@ -67,7 +68,15 @@ export function ServicesAdminPage() {
 
   return (
     <section>
-      <PageHeader title="Services" subtitle="Servicios por tenant con duracion, precio y estado." />
+      <PageHeader title="Servicios" subtitle="Servicios por marca con duracion, precio y estado." />
+      <ModuleOnboardingCard
+        moduleKey="services"
+        title="Servicios"
+        whatItDoes="Gestiona servicios, duracion, precio y disponibilidad para agenda y venta."
+        whyItMatters="Permite vender servicios con claridad operativa y control de oferta."
+        whatToCapture={["Nombre y slug", "Duracion", "Precio", "Estado activo y destacado"]}
+        impact="Aumenta conversion en servicios y ordena la operacion de citas."
+      />
       {error ? <p className="error">{error}</p> : null}
       <div className="row-gap">
         <select value={tenantId ?? ""} onChange={(e) => setTenantId(Number(e.target.value))}>
@@ -127,4 +136,3 @@ export function ServicesAdminPage() {
     </section>
   );
 }
-

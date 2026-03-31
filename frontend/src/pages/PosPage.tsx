@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { useAuth } from "../app/AuthContext";
 import { AppInstallHelp } from "../components/AppInstallHelp";
 import { InstallAppPrompt } from "../components/InstallAppPrompt";
+import { ModuleOnboardingCard } from "../components/ModuleOnboardingCard";
 import { PageHeader } from "../components/PageHeader";
 import { api } from "../services/api";
 import { PosCustomer, PosLocation, PosPaymentTransaction, PosSale, Product } from "../types/domain";
@@ -147,6 +148,14 @@ export function PosPage() {
   return (
     <section>
       <PageHeader title="POS WebApp" subtitle="Venta en punto de venta con fidelizacion y control por ubicacion." />
+      <ModuleOnboardingCard
+        moduleKey="pos"
+        title="POS / Caja POS"
+        whatItDoes="Permite registrar ventas en punto fisico, elegir metodo de pago y asociar cliente."
+        whyItMatters="Conecta operacion de tienda con fidelizacion, reportes y control de caja."
+        whatToCapture={["Ubicacion", "Cliente", "Productos del ticket", "Metodo de pago"]}
+        impact="Da visibilidad real de ventas presenciales por marca y por punto."
+      />
       <InstallAppPrompt />
       <AppInstallHelp context="POS" />
       <div className="row-gap">

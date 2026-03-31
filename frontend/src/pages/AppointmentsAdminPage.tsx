@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../app/AuthContext";
+import { ModuleOnboardingCard } from "../components/ModuleOnboardingCard";
 import { PageHeader } from "../components/PageHeader";
 import { api } from "../services/api";
 import { Appointment, Tenant } from "../types/domain";
@@ -65,6 +66,14 @@ export function AppointmentsAdminPage() {
   return (
     <section>
       <PageHeader title="Citas y servicios" subtitle="Seguimiento de solicitudes, regalos y confirmaciones operativas." />
+      <ModuleOnboardingCard
+        moduleKey="appointments"
+        title="Citas"
+        whatItDoes="Centraliza citas normales y de regalo con su estado operativo."
+        whyItMatters="Mejora confirmacion de asistencia y reduce cancelaciones por falta de seguimiento."
+        whatToCapture={["Fecha y hora", "Solicitante y beneficiario", "Mensaje/instrucciones", "Estado de la cita"]}
+        impact="Permite una experiencia de servicio mas ordenada y medible."
+      />
       {error ? <p className="error">{error}</p> : null}
       <article className="card">
         <h3>Marca</h3>

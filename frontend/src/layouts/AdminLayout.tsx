@@ -168,6 +168,9 @@ export function AdminLayout() {
         <p className="sidebar-user">{user?.full_name}</p>
         <p className="sidebar-role">{user?.role}</p>
         <LanguageSelector />
+        <p className="muted" style={{ color: "#b8cae9", fontSize: "12px", margin: "8px 0 12px" }}>
+          Idioma: cambia todo el panel al idioma seleccionado para operar con mayor claridad.
+        </p>
         <nav className="nav-sections">
           {brandSections
             .filter((section) => canView(userRole, section.roles))

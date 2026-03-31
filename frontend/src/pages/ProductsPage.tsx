@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useState } from "react";
 import { useAuth } from "../app/AuthContext";
+import { ModuleOnboardingCard } from "../components/ModuleOnboardingCard";
 import { PageHeader } from "../components/PageHeader";
 import { api } from "../services/api";
 import { Category, Product, Tenant } from "../types/domain";
@@ -118,6 +119,14 @@ export function ProductsPage() {
   return (
     <section>
       <PageHeader title="Productos" subtitle="Catalogo base por marca con sincronizacion Stripe." />
+      <ModuleOnboardingCard
+        moduleKey="products"
+        title="Productos y ecommerce publico"
+        whatItDoes="Administra productos, precios por canal y estado de sincronizacion con Stripe."
+        whyItMatters="Este modulo alimenta ventas online y define margenes por segmento comercial."
+        whatToCapture={["Nombre y SKU", "Precios publico/menudeo/mayoreo", "Categoria", "IDs Stripe"]}
+        impact="Mejora conversion en tienda y evita inconsistencias entre catalogo y cobro."
+      />
       {error ? <p className="error">{error}</p> : null}
 
       <div className="row-gap">
@@ -199,6 +208,11 @@ export function ProductsPage() {
           ))}
         </tbody>
       </table>
+      {items.length === 0 ? (
+        <article className="card">
+          <p>Aun no hay productos. Aqui veras catalogo y estado de sincronizacion Stripe por producto.</p>
+        </article>
+      ) : null}
     </section>
   );
 }

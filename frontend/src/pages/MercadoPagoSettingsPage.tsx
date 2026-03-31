@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useState } from "react";
 import { useAuth } from "../app/AuthContext";
+import { ModuleOnboardingCard } from "../components/ModuleOnboardingCard";
 import { PageHeader } from "../components/PageHeader";
 import { api } from "../services/api";
 import { MercadoPagoSettings } from "../types/domain";
@@ -60,6 +61,14 @@ export function MercadoPagoSettingsPage() {
       <PageHeader
         title="Pagos POS/WebApp con Mercado Pago"
         subtitle="Links de pago y QR para punto de venta, con preparacion para Point."
+      />
+      <ModuleOnboardingCard
+        moduleKey="payments_mercadopago"
+        title="Pagos POS con Mercado Pago"
+        whatItDoes="Configura cobro por link y QR para ventas en punto de venta."
+        whyItMatters="Permite cobrar digitalmente en operacion presencial sin depender de Stripe."
+        whatToCapture={["Public key", "Access token", "Modo QR/link", "Uso exclusivo POS"]}
+        impact="Mejora velocidad de cobro y control de transacciones en caja."
       />
       <p className="muted">
         Este modulo aplica al POS/WebApp. El ecommerce online sigue usando Stripe.
