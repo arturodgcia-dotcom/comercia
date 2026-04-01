@@ -189,6 +189,23 @@ class Product(Base, TimestampMixin):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
 
+class CatalogImportJob(Base):
+    __tablename__ = "catalog_import_jobs"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id"), nullable=False, index=True)
+    source: Mapped[str] = mapped_column(String(40), default="csv_manual", nullable=False)
+    total_rows: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    valid_rows: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    error_rows: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    categories_created: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    products_created: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    products_updated: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    status: Mapped[str] = mapped_column(String(30), default="completed", nullable=False, index=True)
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+
+
 class ServiceOffering(Base, TimestampMixin):
     __tablename__ = "service_offerings"
 

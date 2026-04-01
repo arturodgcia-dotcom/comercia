@@ -13,6 +13,7 @@ import {
   BrandSetupWorkflow,
   BotChannelConfig,
   BotMessageTemplate,
+  CatalogBulkImportResult,
   Category,
   CheckoutSessionRequest,
   CheckoutSessionResponse,
@@ -220,6 +221,15 @@ export const api = {
     request<Product>("/api/v1/products", { method: "POST", body: JSON.stringify(payload) }, token),
   updateProduct: (token: string, productId: number, payload: Partial<Product>) =>
     request<Product>(`/api/v1/products/${productId}`, { method: "PUT", body: JSON.stringify(payload) }, token),
+  bulkImportCatalog: (
+    token: string,
+    payload: {
+      tenant_id: number;
+      rows: Array<Record<string, unknown>>;
+    }
+  ) => request<CatalogBulkImportResult>("/api/v1/products/bulk-import", { method: "POST", body: JSON.stringify(payload) }, token),
+  getLatestCatalogImportJob: (token: string, tenantId: number) =>
+    request<CatalogBulkImportResult["job"] | null>(`/api/v1/products/bulk-import/tenant/${tenantId}/latest`, {}, token),
   getServicesByTenant: (token: string, tenantId: number) =>
     request<ServiceOffering[]>(`/api/v1/services/by-tenant/${tenantId}`, {}, token),
   createService: (token: string, payload: Record<string, unknown>) =>

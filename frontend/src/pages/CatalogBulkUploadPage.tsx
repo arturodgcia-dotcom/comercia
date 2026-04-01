@@ -1,6 +1,9 @@
-import { ChangeEvent, useMemo, useState } from "react";
+import { ChangeEvent, useEffect, useMemo, useState } from "react";
+import { useAuth } from "../app/AuthContext";
 import { ModuleOnboardingCard } from "../components/ModuleOnboardingCard";
 import { PageHeader } from "../components/PageHeader";
+import { api } from "../services/api";
+import { CatalogBulkImportResult, CatalogImportJob, Tenant } from "../types/domain";
 
 type ImportRow = Record<string, string>;
 
@@ -26,9 +29,35 @@ const REQUIRED_COLUMNS = [
 ];
 
 export function CatalogBulkUploadPage() {
+  const { token } = useAuth();
+  const [tenants, setTenants] = useState<Tenant[]>([]);
+  const [tenantId, setTenantId] = useState<number | null>(null);
+
   const [rows, setRows] = useState<ImportRow[]>([]);
   const [columnErrors, setColumnErrors] = useState<string[]>([]);
   const [errorRows, setErrorRows] = useState<Array<{ index: number; reason: string }>>([]);
+  const [latestJob, setLatestJob] = useState<CatalogImportJob | null>(null);
+  const [lastResult, setLastResult] = useState<CatalogBulkImportResult | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
+
+  useEffect(() => {
+    if (!token) return;
+    api.getTenants(token)
+      .then((list) => {
+        setTenants(list);
+        setTenantId((previous) => previous ?? list[0]?.id ?? null);
+      })
+      .catch((err) => setError(err instanceof Error ? err.message : "No fue posible cargar marcas"));
+  }, [token]);
+
+  useEffect(() => {
+    if (!token || !tenantId) return;
+    api.getLatestCatalogImportJob(token, tenantId)
+      .then(setLatestJob)
+      .catch((err) => setError(err instanceof Error ? err.message : "No fue posible cargar la ultima importacion"));
+  }, [token, tenantId]);
 
   const summary = useMemo(
     () => ({
@@ -74,6 +103,9 @@ export function CatalogBulkUploadPage() {
   const loadCsv = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
+    setError("");
+    setMessage("");
+    setLastResult(null);
     const reader = new FileReader();
     reader.onload = () => {
       const content = String(reader.result ?? "");
@@ -93,7 +125,7 @@ export function CatalogBulkUploadPage() {
         }, {});
       });
 
-      const errors = parsed
+      const detectedErrors = parsed
         .map((row, index) => {
           if (!row.nombre) return { index: index + 1, reason: "Falta nombre" };
           if (!row.sku) return { index: index + 1, reason: "Falta SKU" };
@@ -111,26 +143,73 @@ export function CatalogBulkUploadPage() {
         .filter((item): item is { index: number; reason: string } => Boolean(item));
 
       setRows(parsed);
-      setErrorRows(errors);
+      setErrorRows(detectedErrors);
     };
     reader.readAsText(file, "utf-8");
     event.target.value = "";
+  };
+
+  const importCatalog = async () => {
+    if (!token || !tenantId) return;
+    if (!rows.length) {
+      setError("Primero carga un archivo CSV para importar.");
+      return;
+    }
+    if (columnErrors.length) {
+      setError("Corrige las columnas faltantes antes de importar.");
+      return;
+    }
+    if (errorRows.length) {
+      setError("El CSV tiene errores por fila. Corrige el archivo antes de importar.");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError("");
+      setMessage("");
+      const result = await api.bulkImportCatalog(token, { tenant_id: tenantId, rows });
+      setLastResult(result);
+      setLatestJob(result.job);
+      setMessage(
+        `Importacion completada: ${result.job.valid_rows} validas, ${result.job.error_rows} con error, ` +
+        `${result.job.products_created} productos creados y ${result.job.products_updated} actualizados.`
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "No fue posible ejecutar la importacion.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <section>
       <PageHeader
         title="Carga masiva de catalogo"
-        subtitle="Importa productos por layout, valida columnas y revisa estado de sincronizacion Stripe."
+        subtitle="Importa productos por marca y deja trazabilidad real para el wizard de ecommerce."
       />
       <ModuleOnboardingCard
         moduleKey="bulk_upload"
         title="Carga masiva"
         whatItDoes="Permite importar catalogos completos por archivo CSV con validacion previa."
         whyItMatters="Acelera altas de productos y evita errores manuales en precios o visibilidad."
-        whatToCapture={["Plantilla oficial", "Columnas obligatorias", "Price IDs de Stripe", "Resumen de errores"]}
-        impact="Reduce tiempo operativo y mantiene consistencia de datos en ecommerce."
+        whatToCapture={["Marca (tenant)", "Plantilla oficial", "Columnas obligatorias", "Price IDs de Stripe", "Resumen de errores"]}
+        impact="Reduce tiempo operativo y sincroniza automaticamente el estado del ecommerce en el wizard."
       />
+
+      {error ? <p className="error">{error}</p> : null}
+      {message ? <p>{message}</p> : null}
+
+      <section className="card">
+        <h3>Marca objetivo de la importacion</h3>
+        <select value={tenantId ?? ""} onChange={(event) => setTenantId(Number(event.target.value))}>
+          {tenants.map((tenant) => (
+            <option key={tenant.id} value={tenant.id}>
+              {tenant.name}
+            </option>
+          ))}
+        </select>
+      </section>
 
       <section className="store-banner">
         <h3>Guia rapida del layout</h3>
@@ -145,8 +224,25 @@ export function CatalogBulkUploadPage() {
             Cargar archivo CSV
             <input type="file" accept=".csv" style={{ display: "none" }} onChange={loadCsv} />
           </label>
+          <button className="button" type="button" onClick={importCatalog} disabled={loading || !rows.length}>
+            {loading ? "Importando..." : "Importar al catalogo de la marca"}
+          </button>
         </div>
       </section>
+
+      {latestJob ? (
+        <article className="card">
+          <h3>Ultima importacion registrada</h3>
+          <p>Fecha: {new Date(latestJob.created_at).toLocaleString("es-MX")}</p>
+          <p>Filas totales: {latestJob.total_rows}</p>
+          <p>Filas validas: {latestJob.valid_rows}</p>
+          <p>Filas con error: {latestJob.error_rows}</p>
+          <p>Categorias creadas: {latestJob.categories_created}</p>
+          <p>Productos creados: {latestJob.products_created}</p>
+          <p>Productos actualizados: {latestJob.products_updated}</p>
+          <p>Estatus: {latestJob.status}</p>
+        </article>
+      ) : null}
 
       {columnErrors.length > 0 ? (
         <article className="card">
@@ -161,7 +257,7 @@ export function CatalogBulkUploadPage() {
 
       <section className="card-grid">
         <article className="card">
-          <h3>Resumen de importacion</h3>
+          <h3>Resumen de validacion local</h3>
           <p>Total filas: {summary.total}</p>
           <p>Filas validas: {summary.ok}</p>
           <p>Filas con error: {summary.errors}</p>
@@ -213,6 +309,30 @@ export function CatalogBulkUploadPage() {
           </div>
         )}
       </article>
+
+      {lastResult?.errors.length ? (
+        <article className="card">
+          <h3>Errores devueltos por backend</h3>
+          <div className="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Fila</th>
+                  <th>Error</th>
+                </tr>
+              </thead>
+              <tbody>
+                {lastResult.errors.map((item) => (
+                  <tr key={`${item.index}-${item.reason}`}>
+                    <td>{item.index}</td>
+                    <td>{item.reason}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </article>
+      ) : null}
     </section>
   );
 }

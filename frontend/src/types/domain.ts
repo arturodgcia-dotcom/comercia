@@ -217,6 +217,32 @@ export interface BrandPosSetupData {
   notes?: string | null;
 }
 
+export interface CatalogImportErrorRow {
+  index: number;
+  reason: string;
+}
+
+export interface CatalogImportJob {
+  id: number;
+  tenant_id: number;
+  source: string;
+  total_rows: number;
+  valid_rows: number;
+  error_rows: number;
+  categories_created: number;
+  products_created: number;
+  products_updated: number;
+  status: string;
+  notes?: string | null;
+  created_at: string;
+}
+
+export interface CatalogBulkImportResult {
+  tenant_id: number;
+  job: CatalogImportJob;
+  errors: CatalogImportErrorRow[];
+}
+
 export interface BrandChannelSettings {
   tenant_id: number;
   nfc_enabled: boolean;
