@@ -18,6 +18,7 @@ class BrandSetupAssetRead(BaseModel):
     asset_type: str
     file_name: str
     file_path: str
+    file_url: str | None = None
     uploaded_at: datetime
 
 

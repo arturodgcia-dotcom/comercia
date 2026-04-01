@@ -4,6 +4,7 @@ from datetime import datetime
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+from fastapi.encoders import jsonable_encoder
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -28,6 +29,7 @@ from app.schemas.brand_setup import (
 from app.services.brand_setup_generator import generate_brand_content, generate_landing_draft
 
 router = APIRouter()
+ALLOWED_ASSET_TYPES = {"logo", "base_image"}
 
 DEFAULT_STEPS_WITHOUT_LANDING = [
     {"code": "brand_identity", "title": "Identidad de marca", "status": "pending", "approved": False},
@@ -78,7 +80,7 @@ def get_brand_setup_workflow(tenant_id: int, db: Session = Depends(get_db)) -> B
 
     steps = [BrandSetupStepState(**step) for step in steps_raw]
     steps = _normalize_steps(steps, flow_type=flow_type)
-    assets = [BrandSetupAssetRead(**asset) for asset in assets_raw]
+    assets = _normalize_assets(assets_raw)
     current_step = workflow.get("current_step") or _next_step_code(steps)
     identity_data = _parse_identity(payload)
     generated_content = _parse_generated_content(payload)
@@ -270,6 +272,13 @@ async def upload_brand_setup_asset(
     db: Session = Depends(get_db),
 ) -> BrandSetupAssetRead:
     _get_tenant_or_404(db, tenant_id)
+    if asset_type not in ALLOWED_ASSET_TYPES:
+        raise HTTPException(status_code=400, detail="Tipo de archivo invalido para el wizard.")
+    if not file.filename:
+        raise HTTPException(status_code=400, detail="Debes seleccionar un archivo valido.")
+    if not (file.content_type or "").startswith("image/"):
+        raise HTTPException(status_code=400, detail="Solo se permiten imagenes para logo y base visual.")
+
     config, payload = _load_brand_payload(db, tenant_id)
 
     media_root = Path(__file__).resolve().parents[4] / "media" / f"tenant_{tenant_id}" / step_code
@@ -277,6 +286,7 @@ async def upload_brand_setup_asset(
     extension = Path(file.filename or "").suffix or ".bin"
     generated_name = f"{datetime.utcnow().strftime('%Y%m%d%H%M%S')}_{uuid.uuid4().hex[:8]}{extension}"
     destination = media_root / generated_name
+    relative_file = Path(f"tenant_{tenant_id}") / step_code / generated_name
 
     with destination.open("wb") as output:
         output.write(await file.read())
@@ -286,11 +296,12 @@ async def upload_brand_setup_asset(
         step_code=step_code,
         asset_type=asset_type,
         file_name=file.filename or generated_name,
-        file_path=str(destination),
+        file_path=str(relative_file.as_posix()),
+        file_url=f"/media/{relative_file.as_posix()}",
         uploaded_at=datetime.utcnow(),
     )
     assets = payload.setdefault("assets", [])
-    assets.append(asset.model_dump())
+    assets.append(asset.model_dump(mode="json"))
     _save_brand_payload(config, payload, db)
     return asset
 
@@ -340,7 +351,7 @@ def _load_brand_payload(db: Session, tenant_id: int) -> tuple[StorefrontConfig, 
 
 
 def _save_brand_payload(config: StorefrontConfig, payload: dict, db: Session) -> None:
-    config.config_json = json.dumps(payload, ensure_ascii=False)
+    config.config_json = json.dumps(jsonable_encoder(payload), ensure_ascii=False)
     db.add(config)
     db.commit()
     db.refresh(config)
@@ -424,6 +435,27 @@ def _parse_pos_setup_data(payload: dict) -> BrandPosSetupData | None:
         return BrandPosSetupData(**raw)
     except Exception:
         return None
+
+
+def _normalize_assets(rows: list[dict]) -> list[BrandSetupAssetRead]:
+    assets: list[BrandSetupAssetRead] = []
+    for row in rows:
+        asset = dict(row)
+        if not asset.get("file_url"):
+            file_path = str(asset.get("file_path", "")).replace("\\", "/")
+            if "/media/" in file_path:
+                asset["file_url"] = file_path[file_path.index("/media/") :]
+            elif file_path:
+                cleaned = file_path.lstrip("./")
+                if "tenant_" in cleaned:
+                    tenant_index = cleaned.index("tenant_")
+                    asset["file_url"] = f"/media/{cleaned[tenant_index:]}"
+                else:
+                    asset["file_url"] = f"/media/{cleaned}"
+            else:
+                asset["file_url"] = None
+        assets.append(BrandSetupAssetRead(**asset))
+    return assets
 
 
 def _step_index(step_code: str, flow_type: str = "without_landing") -> int:

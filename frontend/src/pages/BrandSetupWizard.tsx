@@ -2,6 +2,7 @@ import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useAuth } from "../app/AuthContext";
 import { PageHeader } from "../components/PageHeader";
+import { ApiError, api } from "../services/api";
 import {
   BrandChannelSettings,
   BrandEcommerceData,
@@ -9,10 +10,12 @@ import {
   BrandIdentityData,
   BrandLandingDraft,
   BrandPosSetupData,
+  BrandSetupAsset,
   BrandSetupStepState,
   BrandSetupWorkflow,
 } from "../types/domain";
-import { api } from "../services/api";
+
+const API_BASE_URL = import.meta.env.VITE_API_URL ?? "http://127.0.0.1:8000";
 
 type StepCode =
   | "brand_identity"
@@ -88,6 +91,18 @@ function isStepCode(value: string): value is StepCode {
   return ["brand_identity", "landing_setup", "ecommerce_setup", "distributors_setup", "pos_setup", "final_review"].includes(value);
 }
 
+function toUiError(error: unknown, fallback: string): string {
+  if (error instanceof ApiError) return `${fallback} ${error.message}`;
+  if (error instanceof Error) return `${fallback} ${error.message}`;
+  return fallback;
+}
+
+function toAssetUrl(fileUrl?: string | null): string | null {
+  if (!fileUrl) return null;
+  if (fileUrl.startsWith("http://") || fileUrl.startsWith("https://")) return fileUrl;
+  return `${API_BASE_URL}${fileUrl}`;
+}
+
 export function BrandSetupWizard() {
   const { token } = useAuth();
   const { tenantId } = useParams();
@@ -155,6 +170,25 @@ export function BrandSetupWizard() {
     const approvedCount = steps.filter((step) => step.approved).length;
     return Math.round((approvedCount / steps.length) * 100);
   }, [steps]);
+  const wizardAssets = workflow?.assets ?? [];
+
+  const assetsById = useMemo(() => {
+    const map = new Map<string, BrandSetupAsset>();
+    for (const asset of wizardAssets) {
+      map.set(asset.id, asset);
+    }
+    return map;
+  }, [wizardAssets]);
+
+  const logoAsset = useMemo(() => {
+    if (!identity.logo_asset_id) return null;
+    return assetsById.get(identity.logo_asset_id) ?? null;
+  }, [assetsById, identity.logo_asset_id]);
+
+  const baseImageAssets = useMemo(
+    () => identity.base_image_asset_ids.map((assetId) => assetsById.get(assetId)).filter(Boolean) as BrandSetupAsset[],
+    [assetsById, identity.base_image_asset_ids]
+  );
 
   const isLocked = (code: StepCode) => {
     const index = activeCodes.findIndex((item) => item === code);
@@ -187,6 +221,7 @@ export function BrandSetupWizard() {
     if (!file) return;
     try {
       setSaving(true);
+      setError("");
       const uploaded = await api.uploadBrandAsset(token, workflow.tenant_id, "brand_identity", assetType, file);
       setWorkflow((previous) => (previous ? { ...previous, assets: [...previous.assets, uploaded] } : previous));
       if (assetType === "logo") {
@@ -194,9 +229,13 @@ export function BrandSetupWizard() {
       } else {
         setIdentity((previous) => ({ ...previous, base_image_asset_ids: [...previous.base_image_asset_ids, uploaded.id] }));
       }
-      setMessage(`Archivo cargado: ${uploaded.file_name}`);
+      setMessage(
+        assetType === "logo"
+          ? `Logotipo cargado correctamente: ${uploaded.file_name}.`
+          : `Imagen base cargada correctamente: ${uploaded.file_name}.`
+      );
     } catch (err) {
-      setError(err instanceof Error ? err.message : "No fue posible cargar el archivo.");
+      setError(toUiError(err, "No fue posible cargar el archivo."));
     } finally {
       setSaving(false);
       event.target.value = "";
@@ -230,9 +269,19 @@ export function BrandSetupWizard() {
         flow_type: flowType,
       });
       setWorkflow(updated);
-      await approveStep("brand_identity", "Paso 1 aprobado. Continuamos con la configuracion comercial.");
+      setMessage("Paso 1 guardado correctamente.");
+      try {
+        const approved = await api.approveBrandSetupStep(token, workflow.tenant_id, "brand_identity");
+        setWorkflow(approved);
+        if (isStepCode(approved.current_step)) {
+          setSelectedStep(approved.current_step);
+        }
+        setMessage("Paso 1 aprobado. Continuamos con la configuracion comercial.");
+      } catch (approveError) {
+        setError(toUiError(approveError, "Los datos del paso 1 se guardaron, pero no se pudo aprobar automaticamente."));
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "No fue posible guardar identidad.");
+      setError(toUiError(err, "No fue posible guardar el paso 1 del wizard."));
     } finally {
       setSaving(false);
     }
@@ -256,7 +305,7 @@ export function BrandSetupWizard() {
       setLandingDraft(updated.landing_draft ?? defaultLanding);
       setMessage(regenerate ? "Landing regenerada correctamente." : "Landing generada. Revisa y aprueba para continuar.");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "No fue posible generar la landing.");
+      setError(toUiError(err, "No fue posible generar la landing."));
     } finally {
       setSaving(false);
     }
@@ -278,7 +327,7 @@ export function BrandSetupWizard() {
       setWorkflow(updated);
       await approveStep("landing_setup", "Landing aprobada. Seguimos con ecommerce publico.");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "No fue posible aprobar la landing.");
+      setError(toUiError(err, "No fue posible aprobar la landing."));
     } finally {
       setSaving(false);
     }
@@ -299,7 +348,7 @@ export function BrandSetupWizard() {
       setWorkflow(updated);
       await approveStep("ecommerce_setup", "Ecommerce publico aprobado. Continuamos con distribuidores.");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "No fue posible guardar ecommerce publico.");
+      setError(toUiError(err, "No fue posible guardar ecommerce publico."));
     } finally {
       setSaving(false);
     }
@@ -320,7 +369,7 @@ export function BrandSetupWizard() {
       setWorkflow(updated);
       await approveStep("distributors_setup", "Canal de distribuidores aprobado. Continuamos con POS/WebApp.");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "No fue posible guardar el canal distribuidor.");
+      setError(toUiError(err, "No fue posible guardar el canal distribuidor."));
     } finally {
       setSaving(false);
     }
@@ -342,7 +391,7 @@ export function BrandSetupWizard() {
       setWorkflow(updated);
       await approveStep("pos_setup", "POS/WebApp aprobado. Ya puedes revisar y publicar.");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "No fue posible guardar POS/WebApp.");
+      setError(toUiError(err, "No fue posible guardar POS/WebApp."));
     } finally {
       setSaving(false);
     }
@@ -366,7 +415,7 @@ export function BrandSetupWizard() {
       setWorkflow({ ...published, steps: approvedFinal.steps });
       setMessage("Marca publicada correctamente.");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "No fue posible publicar la marca.");
+      setError(toUiError(err, "No fue posible publicar la marca."));
     } finally {
       setSaving(false);
     }
@@ -423,6 +472,7 @@ export function BrandSetupWizard() {
       {selectedStep === "brand_identity" ? (
         <form className="card" onSubmit={saveIdentity}>
           <h3>Paso 1: Identidad y decision de flujo</h3>
+          {error ? <p className="error">{error}</p> : null}
           <label>
             Nombre del comercio / marca
             <input value={identity.brand_name} onChange={(event) => setIdentity((prev) => ({ ...prev, brand_name: event.target.value }))} required />
@@ -516,6 +566,30 @@ export function BrandSetupWizard() {
           <p className="muted">
             Logo cargado: {identity.logo_asset_id ? "Si" : "No"} | Imagenes base: {identity.base_image_asset_ids.length}
           </p>
+          {logoAsset ? (
+            <div>
+              <p className="muted">Logotipo actual:</p>
+              {toAssetUrl(logoAsset.file_url) ? (
+                <img src={toAssetUrl(logoAsset.file_url) ?? undefined} alt="Logotipo de la marca" style={{ maxWidth: "180px", borderRadius: "8px" }} />
+              ) : null}
+              <p className="muted">{logoAsset.file_name}</p>
+            </div>
+          ) : null}
+          {baseImageAssets.length ? (
+            <div>
+              <p className="muted">Imagenes base cargadas:</p>
+              <div className="row-gap">
+                {baseImageAssets.map((asset) => (
+                  <div key={asset.id}>
+                    {toAssetUrl(asset.file_url) ? (
+                      <img src={toAssetUrl(asset.file_url) ?? undefined} alt={asset.file_name} style={{ maxWidth: "180px", borderRadius: "8px" }} />
+                    ) : null}
+                    <p className="muted">{asset.file_name}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
 
           <button className="button" type="submit" disabled={saving}>
             Guardar y continuar
@@ -526,6 +600,7 @@ export function BrandSetupWizard() {
       {selectedStep === "landing_setup" ? (
         <article className="card">
           <h3>Paso Landing: generacion, edicion y aprobacion</h3>
+          {error ? <p className="error">{error}</p> : null}
           <div className="row-gap">
             <button className="button" type="button" onClick={() => generateLanding(false)} disabled={saving}>
               Generar landing
@@ -580,6 +655,7 @@ export function BrandSetupWizard() {
       {selectedStep === "ecommerce_setup" ? (
         <article className="card">
           <h3>Paso Ecommerce publico</h3>
+          {error ? <p className="error">{error}</p> : null}
           <label>
             Modo de carga
             <select value={ecommerceData.catalog_mode} onChange={(event) => setEcommerceData((prev) => ({ ...prev, catalog_mode: event.target.value }))}>
@@ -617,6 +693,7 @@ export function BrandSetupWizard() {
       {selectedStep === "distributors_setup" ? (
         <article className="card">
           <h3>Paso Ecommerce distribuidores</h3>
+          {error ? <p className="error">{error}</p> : null}
           <label className="checkbox">
             <input type="checkbox" checked={ecommerceData.distributor_catalog_ready} onChange={(event) => setEcommerceData((prev) => ({ ...prev, distributor_catalog_ready: event.target.checked }))} />
             Catalogo distribuidor listo
@@ -641,6 +718,7 @@ export function BrandSetupWizard() {
       {selectedStep === "pos_setup" ? (
         <article className="card">
           <h3>Paso POS / WebApp</h3>
+          {error ? <p className="error">{error}</p> : null}
           <label className="checkbox">
             <input type="checkbox" checked={posSetupData.pos_enabled} onChange={(event) => setPosSetupData((prev) => ({ ...prev, pos_enabled: event.target.checked }))} />
             POS habilitado
@@ -696,6 +774,7 @@ export function BrandSetupWizard() {
       {selectedStep === "final_review" ? (
         <article className="card">
           <h3>Revision final y publicacion</h3>
+          {error ? <p className="error">{error}</p> : null}
           <ul className="marketing-list">
             {steps.map((row) => {
               const code = row.code as StepCode;
@@ -738,7 +817,9 @@ export function BrandSetupWizard() {
       </article>
 
       {message ? <p>{message}</p> : null}
-      {error ? <p className="error">{error}</p> : null}
+      {selectedStep !== "brand_identity" && selectedStep !== "landing_setup" && selectedStep !== "ecommerce_setup" && selectedStep !== "distributors_setup" && selectedStep !== "pos_setup" && selectedStep !== "final_review" && error ? (
+        <p className="error">{error}</p>
+      ) : null}
     </section>
   );
 }

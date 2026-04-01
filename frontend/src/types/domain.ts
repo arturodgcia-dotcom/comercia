@@ -141,6 +141,7 @@ export interface BrandSetupAsset {
   asset_type: string;
   file_name: string;
   file_path: string;
+  file_url?: string | null;
   uploaded_at: string;
 }
 

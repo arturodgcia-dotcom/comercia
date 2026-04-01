@@ -173,14 +173,20 @@ export const api = {
     formData.set("step_code", stepCode);
     formData.set("asset_type", assetType);
     formData.set("file", file);
-    const response = await fetch(`${BASE_URL}/api/v1/brand-setup/${tenantId}/assets`, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${token}` },
-      body: formData,
-    });
+    const endpoint = `${BASE_URL}/api/v1/brand-setup/${tenantId}/assets`;
+    let response: Response;
+    try {
+      response = await fetch(endpoint, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+    } catch {
+      throw new ApiError(`No fue posible conectar con el endpoint de upload (${endpoint}).`, 0);
+    }
     if (!response.ok) {
       const errorText = await response.text();
-      throw new ApiError(errorText || response.statusText, response.status);
+      throw new ApiError(`Error ${response.status} al subir archivo en ${endpoint}: ${errorText || response.statusText}`, response.status);
     }
     return (await response.json()) as BrandSetupAsset;
   },
