@@ -169,6 +169,8 @@ export const api = {
     ),
   approveBrandSetupStep: (token: string, tenantId: number, stepCode: string) =>
     request<BrandSetupWorkflow>(`/api/v1/brand-setup/${tenantId}/steps/${stepCode}/approve`, { method: "POST" }, token),
+  activateBrandSetupEcommercePublic: (token: string, tenantId: number) =>
+    request<BrandSetupWorkflow>(`/api/v1/brand-setup/${tenantId}/ecommerce-public/activate`, { method: "POST" }, token),
   uploadBrandAsset: async (token: string, tenantId: number, stepCode: string, assetType: string, file: File) => {
     const formData = new FormData();
     formData.set("step_code", stepCode);

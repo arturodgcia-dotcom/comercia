@@ -68,6 +68,25 @@ class BrandEcommerceData(BaseModel):
     notes: str | None = None
 
 
+class EcommercePublicSummary(BaseModel):
+    categories_count: int = 0
+    products_count: int = 0
+    services_count: int = 0
+    stripe_products_synced: int = 0
+    stripe_products_total: int = 0
+    stripe_sync_status: str = "pendiente"
+    last_import_at: datetime | None = None
+    last_import_total_rows: int = 0
+    last_import_valid_rows: int = 0
+    last_import_error_rows: int = 0
+    last_import_categories_created: int = 0
+    last_import_products_created: int = 0
+    last_import_products_updated: int = 0
+    import_completed: bool = False
+    ready_for_approval: bool = False
+    step_status: str = "pending"
+
+
 class BrandPosSetupData(BaseModel):
     pos_enabled: bool = True
     payment_methods: list[str] = Field(default_factory=list)
@@ -91,6 +110,7 @@ class BrandSetupWorkflowRead(BaseModel):
     generated_content: BrandGeneratedContent | None = None
     landing_draft: BrandLandingDraft | None = None
     ecommerce_data: BrandEcommerceData | None = None
+    ecommerce_public_summary: EcommercePublicSummary | None = None
     pos_setup_data: BrandPosSetupData | None = None
 
 

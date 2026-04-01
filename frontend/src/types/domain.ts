@@ -160,6 +160,7 @@ export interface BrandSetupWorkflow {
   generated_content?: BrandGeneratedContent | null;
   landing_draft?: BrandLandingDraft | null;
   ecommerce_data?: BrandEcommerceData | null;
+  ecommerce_public_summary?: EcommercePublicSummary | null;
   pos_setup_data?: BrandPosSetupData | null;
 }
 
@@ -241,6 +242,25 @@ export interface CatalogBulkImportResult {
   tenant_id: number;
   job: CatalogImportJob;
   errors: CatalogImportErrorRow[];
+}
+
+export interface EcommercePublicSummary {
+  categories_count: number;
+  products_count: number;
+  services_count: number;
+  stripe_products_synced: number;
+  stripe_products_total: number;
+  stripe_sync_status: string;
+  last_import_at?: string | null;
+  last_import_total_rows: number;
+  last_import_valid_rows: number;
+  last_import_error_rows: number;
+  last_import_categories_created: number;
+  last_import_products_created: number;
+  last_import_products_updated: number;
+  import_completed: boolean;
+  ready_for_approval: boolean;
+  step_status: string;
 }
 
 export interface BrandChannelSettings {

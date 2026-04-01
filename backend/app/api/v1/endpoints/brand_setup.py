@@ -5,12 +5,12 @@ from pathlib import Path
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from fastapi.encoders import jsonable_encoder
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user, get_reinpia_admin
 from app.db.session import get_db
-from app.models.models import MercadoPagoSettings, StorefrontConfig, Tenant, TenantBranding, User
+from app.models.models import CatalogImportJob, Category, MercadoPagoSettings, Product, ServiceOffering, StorefrontConfig, Tenant, TenantBranding, User
 from app.schemas.brand_setup import (
     BrandChannelSettingsRead,
     BrandChannelSettingsUpdate,
@@ -18,6 +18,7 @@ from app.schemas.brand_setup import (
     BrandGenerateContentRequest,
     BrandGenerateLandingRequest,
     BrandGeneratedContent,
+    EcommercePublicSummary,
     BrandEcommerceData,
     BrandIdentityData,
     BrandLandingDraft,
@@ -80,6 +81,8 @@ def get_brand_setup_workflow(tenant_id: int, db: Session = Depends(get_db)) -> B
 
     steps = [BrandSetupStepState(**step) for step in steps_raw]
     steps = _normalize_steps(steps, flow_type=flow_type)
+    ecommerce_summary = _build_ecommerce_public_summary(db, tenant_id)
+    steps = _apply_ecommerce_step_status(steps, ecommerce_summary)
     assets = _normalize_assets(assets_raw)
     current_step = workflow.get("current_step") or _next_step_code(steps)
     identity_data = _parse_identity(payload)
@@ -103,6 +106,7 @@ def get_brand_setup_workflow(tenant_id: int, db: Session = Depends(get_db)) -> B
         generated_content=generated_content,
         landing_draft=landing_draft,
         ecommerce_data=ecommerce_data,
+        ecommerce_public_summary=ecommerce_summary,
         pos_setup_data=pos_setup_data,
     )
 
@@ -257,6 +261,52 @@ def approve_brand_setup_step(
     target.approved = True
     target.status = "approved"
     target.updated_at = datetime.utcnow()
+    workflow["steps"] = [step.model_dump() for step in _normalize_steps(steps, flow_type=flow_type)]
+    workflow["current_step"] = _next_step_code([BrandSetupStepState(**step) for step in workflow["steps"]])
+    _save_brand_payload(config, raw_payload, db)
+    return get_brand_setup_workflow(tenant.id, db)
+
+
+@router.post("/{tenant_id}/ecommerce-public/activate", response_model=BrandSetupWorkflowRead, dependencies=[Depends(get_reinpia_admin)])
+def activate_brand_setup_ecommerce_public(
+    tenant_id: int,
+    db: Session = Depends(get_db),
+) -> BrandSetupWorkflowRead:
+    tenant = _get_tenant_or_404(db, tenant_id)
+    summary = _build_ecommerce_public_summary(db, tenant_id)
+    if not summary.ready_for_approval:
+        raise HTTPException(
+            status_code=400,
+            detail="Aun no hay categorias y catalogo suficientes para aprobar el ecommerce publico.",
+        )
+
+    config, raw_payload = _load_brand_payload(db, tenant_id)
+    workflow = raw_payload.setdefault("workflow", {})
+    flow_type = workflow.get("flow_type", "without_landing")
+    steps = _normalize_steps([BrandSetupStepState(**step) for step in workflow.get("steps", _build_default_steps(flow_type))], flow_type=flow_type)
+    index = _step_index("ecommerce_setup", flow_type=flow_type)
+    if index < 0:
+        raise HTTPException(status_code=404, detail="Paso ecommerce publico no encontrado")
+    for previous_step in steps[:index]:
+        if not previous_step.approved:
+            raise HTTPException(
+                status_code=400,
+                detail="Debes aprobar los pasos anteriores antes de activar ecommerce publico.",
+            )
+
+    target = steps[index]
+    target.approved = True
+    target.status = "approved"
+    target.updated_at = datetime.utcnow()
+
+    ecommerce_data = _parse_ecommerce_data(raw_payload) or BrandEcommerceData()
+    ecommerce_data.categories_ready = summary.categories_count > 0
+    ecommerce_data.products_ready = (summary.products_count + summary.services_count) > 0
+    ecommerce_data.massive_upload_enabled = summary.last_import_valid_rows > 0
+    raw_payload["ecommerce_data"] = ecommerce_data.model_dump()
+
+    config.ecommerce_enabled = True
+    config.is_initialized = True
     workflow["steps"] = [step.model_dump() for step in _normalize_steps(steps, flow_type=flow_type)]
     workflow["current_step"] = _next_step_code([BrandSetupStepState(**step) for step in workflow["steps"]])
     _save_brand_payload(config, raw_payload, db)
@@ -425,6 +475,80 @@ def _parse_ecommerce_data(payload: dict) -> BrandEcommerceData | None:
         return BrandEcommerceData(**raw)
     except Exception:
         return None
+
+
+def _build_ecommerce_public_summary(db: Session, tenant_id: int) -> EcommercePublicSummary:
+    categories_count = db.scalar(select(func.count()).select_from(Category).where(Category.tenant_id == tenant_id)) or 0
+    products_count = db.scalar(select(func.count()).select_from(Product).where(Product.tenant_id == tenant_id)) or 0
+    services_count = db.scalar(select(func.count()).select_from(ServiceOffering).where(ServiceOffering.tenant_id == tenant_id)) or 0
+    stripe_products_synced = (
+        db.scalar(
+            select(func.count()).select_from(Product).where(
+                Product.tenant_id == tenant_id,
+                Product.stripe_product_id.is_not(None),
+                Product.stripe_price_id_public.is_not(None),
+            )
+        )
+        or 0
+    )
+    stripe_products_total = products_count
+    if stripe_products_total == 0:
+        stripe_sync_status = "pendiente"
+    elif stripe_products_synced == stripe_products_total:
+        stripe_sync_status = "si"
+    elif stripe_products_synced == 0:
+        stripe_sync_status = "no"
+    else:
+        stripe_sync_status = "pendiente"
+
+    latest_import = db.scalar(
+        select(CatalogImportJob)
+        .where(CatalogImportJob.tenant_id == tenant_id)
+        .order_by(CatalogImportJob.created_at.desc(), CatalogImportJob.id.desc())
+    )
+
+    has_catalog = categories_count > 0 and (products_count + services_count) > 0
+    has_partial_data = bool(categories_count or products_count or services_count)
+    if latest_import and latest_import.valid_rows > 0:
+        has_partial_data = True
+
+    step_status = "pending"
+    if has_catalog:
+        step_status = "ready"
+    elif has_partial_data:
+        step_status = "in_progress"
+
+    return EcommercePublicSummary(
+        categories_count=categories_count,
+        products_count=products_count,
+        services_count=services_count,
+        stripe_products_synced=stripe_products_synced,
+        stripe_products_total=stripe_products_total,
+        stripe_sync_status=stripe_sync_status,
+        last_import_at=latest_import.created_at if latest_import else None,
+        last_import_total_rows=latest_import.total_rows if latest_import else 0,
+        last_import_valid_rows=latest_import.valid_rows if latest_import else 0,
+        last_import_error_rows=latest_import.error_rows if latest_import else 0,
+        last_import_categories_created=latest_import.categories_created if latest_import else 0,
+        last_import_products_created=latest_import.products_created if latest_import else 0,
+        last_import_products_updated=latest_import.products_updated if latest_import else 0,
+        import_completed=bool(latest_import and latest_import.valid_rows > 0 and latest_import.error_rows == 0),
+        ready_for_approval=has_catalog,
+        step_status=step_status,
+    )
+
+
+def _apply_ecommerce_step_status(steps: list[BrandSetupStepState], summary: EcommercePublicSummary) -> list[BrandSetupStepState]:
+    for step in steps:
+        if step.code != "ecommerce_setup":
+            continue
+        if step.approved:
+            summary.step_status = "approved"
+            step.status = "approved"
+            return steps
+        step.status = summary.step_status
+        return steps
+    return steps
 
 
 def _parse_pos_setup_data(payload: dict) -> BrandPosSetupData | None:

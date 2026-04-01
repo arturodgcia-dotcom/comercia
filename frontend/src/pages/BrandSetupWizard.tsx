@@ -136,7 +136,14 @@ export function BrandSetupWizard() {
       setIdentity(workflowData.identity_data ?? { ...defaultIdentity, brand_name: workflowData.tenant_name });
       setGenerated({ ...defaultGenerated, ...(workflowData.generated_content ?? {}), prompt_master: workflowData.prompt_master ?? workflowData.generated_content?.prompt_master ?? "" });
       setLandingDraft(workflowData.landing_draft ?? defaultLanding);
-      setEcommerceData(workflowData.ecommerce_data ?? defaultEcommerce);
+      const summary = workflowData.ecommerce_public_summary;
+      setEcommerceData({
+        ...defaultEcommerce,
+        ...(workflowData.ecommerce_data ?? {}),
+        categories_ready: summary ? summary.categories_count > 0 : (workflowData.ecommerce_data?.categories_ready ?? false),
+        products_ready: summary ? summary.products_count + summary.services_count > 0 : (workflowData.ecommerce_data?.products_ready ?? false),
+        massive_upload_enabled: summary ? summary.last_import_valid_rows > 0 : (workflowData.ecommerce_data?.massive_upload_enabled ?? false),
+      });
       setPosSetupData(workflowData.pos_setup_data ?? defaultPosSetup);
 
       const nextStep = workflowData.current_step;
@@ -171,6 +178,7 @@ export function BrandSetupWizard() {
     return Math.round((approvedCount / steps.length) * 100);
   }, [steps]);
   const wizardAssets = workflow?.assets ?? [];
+  const ecommerceSummary = workflow?.ecommerce_public_summary ?? null;
 
   const assetsById = useMemo(() => {
     const map = new Map<string, BrandSetupAsset>();
@@ -334,19 +342,23 @@ export function BrandSetupWizard() {
   };
 
   const saveEcommercePublic = async () => {
-    if (!token || !workflow) return;
-    if (!ecommerceData.categories_ready || !ecommerceData.products_ready) {
-      setError("Debes dejar categorias y productos listos antes de continuar.");
+    if (!token || !workflow || !ecommerceSummary) return;
+    if (!ecommerceSummary.ready_for_approval) {
+      setError("Aun no hay suficiente catalogo para activar ecommerce publico. Carga categorias y productos/servicios.");
       return;
     }
     try {
       setSaving(true);
       setError("");
-      const updated = await api.updateBrandSetupWorkflow(token, workflow.tenant_id, {
+      await api.updateBrandSetupWorkflow(token, workflow.tenant_id, {
         ecommerce_data: ecommerceData,
       });
-      setWorkflow(updated);
-      await approveStep("ecommerce_setup", "Ecommerce publico aprobado. Continuamos con distribuidores.");
+      const activated = await api.activateBrandSetupEcommercePublic(token, workflow.tenant_id);
+      setWorkflow(activated);
+      if (isStepCode(activated.current_step)) {
+        setSelectedStep(activated.current_step);
+      }
+      setMessage("Ecommerce publico aprobado y activado. Continuamos con distribuidores.");
     } catch (err) {
       setError(toUiError(err, "No fue posible guardar ecommerce publico."));
     } finally {
@@ -656,6 +668,59 @@ export function BrandSetupWizard() {
         <article className="card">
           <h3>Paso Ecommerce publico</h3>
           {error ? <p className="error">{error}</p> : null}
+          {ecommerceSummary ? (
+            <>
+              <section className="card-grid">
+                <article className="card">
+                  <h4>Resumen del catalogo de la marca</h4>
+                  <p>Categorias configuradas: {ecommerceSummary.categories_count}</p>
+                  <p>Productos cargados: {ecommerceSummary.products_count}</p>
+                  <p>Servicios cargados: {ecommerceSummary.services_count}</p>
+                  <p>
+                    Ultima importacion:{" "}
+                    {ecommerceSummary.last_import_at
+                      ? new Date(ecommerceSummary.last_import_at).toLocaleString("es-MX")
+                      : "Sin importaciones registradas"}
+                  </p>
+                </article>
+                <article className="card">
+                  <h4>Estado de carga masiva</h4>
+                  <p>Carga masiva completada: {ecommerceSummary.import_completed ? "Si" : "No"}</p>
+                  <p>Filas validas: {ecommerceSummary.last_import_valid_rows}</p>
+                  <p>Filas con error: {ecommerceSummary.last_import_error_rows}</p>
+                  <p>Categorias creadas en ultima importacion: {ecommerceSummary.last_import_categories_created}</p>
+                  <p>
+                    Productos creados/actualizados: {ecommerceSummary.last_import_products_created}/
+                    {ecommerceSummary.last_import_products_updated}
+                  </p>
+                </article>
+                <article className="card">
+                  <h4>Sincronizacion Stripe</h4>
+                  <p>
+                    Estado:{" "}
+                    {ecommerceSummary.stripe_sync_status === "si"
+                      ? "Si"
+                      : ecommerceSummary.stripe_sync_status === "no"
+                        ? "No"
+                        : "Pendiente"}
+                  </p>
+                  <p>
+                    Productos sincronizados: {ecommerceSummary.stripe_products_synced}/{ecommerceSummary.stripe_products_total}
+                  </p>
+                  <p>Estado del paso: {ecommerceSummary.step_status === "ready" ? "Listo para aprobacion" : ecommerceSummary.step_status}</p>
+                </article>
+              </section>
+              <article className="card">
+                <h4>Checklist automatico</h4>
+                <ul className="marketing-list">
+                  <li>Categorias configuradas: {ecommerceSummary.categories_count > 0 ? "OK" : "Pendiente"}</li>
+                  <li>Catalogo cargado (productos/servicios): {ecommerceSummary.products_count + ecommerceSummary.services_count > 0 ? "OK" : "Pendiente"}</li>
+                  <li>Ultima importacion registrada: {ecommerceSummary.last_import_at ? "OK" : "Pendiente"}</li>
+                  <li>Listo para aprobar: {ecommerceSummary.ready_for_approval ? "Si" : "No"}</li>
+                </ul>
+              </article>
+            </>
+          ) : null}
           <label>
             Modo de carga
             <select value={ecommerceData.catalog_mode} onChange={(event) => setEcommerceData((prev) => ({ ...prev, catalog_mode: event.target.value }))}>
@@ -663,18 +728,9 @@ export function BrandSetupWizard() {
               <option value="bulk">Carga masiva</option>
             </select>
           </label>
-          <label className="checkbox">
-            <input type="checkbox" checked={ecommerceData.categories_ready} onChange={(event) => setEcommerceData((prev) => ({ ...prev, categories_ready: event.target.checked }))} />
-            Categorias configuradas
-          </label>
-          <label className="checkbox">
-            <input type="checkbox" checked={ecommerceData.products_ready} onChange={(event) => setEcommerceData((prev) => ({ ...prev, products_ready: event.target.checked }))} />
-            Productos o servicios listos
-          </label>
-          <label className="checkbox">
-            <input type="checkbox" checked={ecommerceData.massive_upload_enabled} onChange={(event) => setEcommerceData((prev) => ({ ...prev, massive_upload_enabled: event.target.checked }))} />
-            Habilitar carga masiva
-          </label>
+          <p className="muted">
+            Este estado se calcula automaticamente con el catalogo real de la marca (categorias, productos/servicios e importacion).
+          </p>
           <label>
             Notas
             <textarea value={ecommerceData.notes ?? ""} onChange={(event) => setEcommerceData((prev) => ({ ...prev, notes: event.target.value }))} />
@@ -683,8 +739,13 @@ export function BrandSetupWizard() {
             <Link className="button button-outline" to="/products">Productos</Link>
             <Link className="button button-outline" to="/categories">Categorias</Link>
             <Link className="button button-outline" to="/admin/catalog/bulk-upload">Carga masiva</Link>
-            <button className="button" type="button" onClick={saveEcommercePublic} disabled={saving}>
-              Aprobar ecommerce publico
+            <button
+              className="button"
+              type="button"
+              onClick={saveEcommercePublic}
+              disabled={saving || !ecommerceSummary?.ready_for_approval}
+            >
+              {ecommerceSummary?.ready_for_approval ? "Aprobar y activar ecommerce publico" : "Generar ecommerce publico"}
             </button>
           </div>
         </article>
