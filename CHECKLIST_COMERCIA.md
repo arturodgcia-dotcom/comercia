@@ -336,3 +336,14 @@
 - [x] Modo demo local con autologin superadmin (`VITE_DEMO_AUTOLOGIN`) y boton rapido en login
 - [x] Seed demo idempotente actualizado: `superadmin@comercia.demo / Demo1234!`
 - [x] Validacion ejecutada: backend compile, frontend build, `/health`, `/docs`, endpoint wizard, upload logo/base image y guardado paso 1
+## Entregables ejecucion 31 (Carga masiva + catalogo + wizard ecommerce)
+- [x] Carga masiva conectada a backend real por tenant (`POST /api/v1/products/bulk-import`)
+- [x] Categorias desde CSV creadas automaticamente y asociadas a productos del tenant
+- [x] Persistencia de importaciones por marca en `catalog_import_jobs` (fecha, totales, validas, errores, creados/actualizados)
+- [x] Endpoint de ultima importacion por tenant (`GET /api/v1/products/bulk-import/tenant/{tenant_id}/latest`)
+- [x] Paso Ecommerce publico del wizard ahora muestra resumen real de catalogo/importacion/sincronizacion Stripe
+- [x] Estado del paso ecommerce calculado automaticamente (`pending`, `in_progress`, `ready`, `approved`)
+- [x] Accion de aprobacion/activacion ecommerce publico (`POST /api/v1/brand-setup/{tenant_id}/ecommerce-public/activate`)
+- [x] Persistencia del progreso del wizard tras importacion (sin reset de checkboxes/manual)
+- [x] Frontend en `Carga masiva` ahora importa al tenant activo y muestra ultima corrida
+- [x] Validacion ejecutada: backend compile, frontend build, import CSV por tenant, lectura de wizard con resumen y progreso restaurado
