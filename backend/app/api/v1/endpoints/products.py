@@ -1,3 +1,4 @@
+import json
 import re
 from datetime import datetime
 
@@ -7,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
 from app.db.session import get_db
-from app.models.models import CatalogImportJob, Category, Product, Tenant, User
+from app.models.models import CatalogImportJob, Category, Product, StorefrontConfig, Tenant, User
 from app.schemas.product import (
     CatalogBulkImportRequest,
     CatalogBulkImportResult,
@@ -166,6 +167,14 @@ def bulk_import_catalog(
         notes=f"Importacion ejecutada {datetime.utcnow().isoformat()}",
     )
     db.add(job)
+
+    _sync_brand_setup_ecommerce_state(
+        db=db,
+        tenant_id=tenant.id,
+        categories_count=len(category_by_slug),
+        catalog_items_count=len(product_by_slug),
+    )
+
     db.commit()
     db.refresh(job)
 
@@ -255,3 +264,40 @@ def _to_catalog_job_read(job: CatalogImportJob) -> CatalogImportJobRead:
         notes=job.notes,
         created_at=job.created_at.isoformat(),
     )
+
+
+def _sync_brand_setup_ecommerce_state(
+    *,
+    db: Session,
+    tenant_id: int,
+    categories_count: int,
+    catalog_items_count: int,
+) -> None:
+    config = db.scalar(select(StorefrontConfig).where(StorefrontConfig.tenant_id == tenant_id))
+    if not config:
+        return
+    payload: dict = {}
+    if config.config_json:
+        try:
+            payload = json.loads(config.config_json)
+        except json.JSONDecodeError:
+            payload = {}
+    ecommerce_data = dict(payload.get("ecommerce_data", {}))
+    ecommerce_data["categories_ready"] = categories_count > 0
+    ecommerce_data["products_ready"] = catalog_items_count > 0
+    ecommerce_data["massive_upload_enabled"] = True
+    payload["ecommerce_data"] = ecommerce_data
+
+    workflow = payload.get("workflow")
+    if isinstance(workflow, dict):
+        steps = workflow.get("steps")
+        if isinstance(steps, list):
+            for step in steps:
+                if not isinstance(step, dict) or step.get("code") != "ecommerce_setup":
+                    continue
+                if step.get("approved"):
+                    break
+                step["status"] = "in_progress" if categories_count > 0 or catalog_items_count > 0 else "pending"
+                break
+    config.config_json = json.dumps(payload, ensure_ascii=False)
+    db.add(config)
