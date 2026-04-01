@@ -39,7 +39,7 @@ def _get_forced_superadmin_user(db: Session) -> User:
 
 def get_current_user(token: str | None = Depends(oauth2_scheme), db: Session = Depends(get_db)) -> User:
     settings = get_settings()
-    if settings.force_superadmin_auth:
+    if settings.environment.lower() != "production" and settings.force_superadmin_auth:
         return _get_forced_superadmin_user(db)
 
     credentials_error = HTTPException(

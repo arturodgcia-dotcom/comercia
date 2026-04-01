@@ -14,6 +14,7 @@ const resources = {
         password: "Contrasena",
         login: "Iniciar sesion",
         loading: "Ingresando...",
+        demoSuperadmin: "Entrar como superadmin demo",
         goLanding: "Ver landing ComerCia"
       },
       nav: {
@@ -86,6 +87,7 @@ const resources = {
         password: "Password",
         login: "Sign in",
         loading: "Signing in...",
+        demoSuperadmin: "Enter as demo superadmin",
         goLanding: "View ComerCia landing"
       },
       nav: {

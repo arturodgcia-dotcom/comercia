@@ -6,6 +6,10 @@ import { InstallAppPrompt } from "../components/InstallAppPrompt";
 import { LanguageSelector } from "../components/LanguageSelector";
 import { useTranslation } from "react-i18next";
 
+const DEMO_AUTOLOGIN = !import.meta.env.PROD && ["1", "true", "yes"].includes((import.meta.env.VITE_DEMO_AUTOLOGIN ?? "").toLowerCase());
+const DEMO_SUPERADMIN_EMAIL = import.meta.env.VITE_DEMO_SUPERADMIN_EMAIL ?? "superadmin@comercia.demo";
+const DEMO_SUPERADMIN_PASSWORD = import.meta.env.VITE_DEMO_SUPERADMIN_PASSWORD ?? "Demo1234!";
+
 export function LoginPage() {
   const { login } = useAuth();
   const { t } = useTranslation();
@@ -14,8 +18,8 @@ export function LoginPage() {
   const nextFromQuery = new URLSearchParams(location.search).get("next");
   const redirectTo = nextFromQuery || (location.state as { from?: string } | undefined)?.from || "/";
 
-  const [email, setEmail] = useState("admin@reinpia.com");
-  const [password, setPassword] = useState("admin123");
+  const [email, setEmail] = useState(DEMO_AUTOLOGIN ? DEMO_SUPERADMIN_EMAIL : "admin@reinpia.com");
+  const [password, setPassword] = useState(DEMO_AUTOLOGIN ? DEMO_SUPERADMIN_PASSWORD : "admin123");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -53,6 +57,29 @@ export function LoginPage() {
         <button className="button" type="submit" disabled={loading}>
           {loading ? t("auth.loading") : t("auth.login")}
         </button>
+        {DEMO_AUTOLOGIN ? (
+          <button
+            className="button button-outline"
+            type="button"
+            onClick={async () => {
+              try {
+                setLoading(true);
+                setError("");
+                setEmail(DEMO_SUPERADMIN_EMAIL);
+                setPassword(DEMO_SUPERADMIN_PASSWORD);
+                await login(DEMO_SUPERADMIN_EMAIL, DEMO_SUPERADMIN_PASSWORD);
+                navigate(redirectTo, { replace: true });
+              } catch (err) {
+                setError(err instanceof Error ? err.message : "No fue posible iniciar sesion con superadmin demo.");
+              } finally {
+                setLoading(false);
+              }
+            }}
+            disabled={loading}
+          >
+            {t("auth.demoSuperadmin")}
+          </button>
+        ) : null}
         <InstallAppPrompt compact />
         <AppInstallHelp context="POS y operacion" />
         <Link className="button button-outline" to="/comercia">

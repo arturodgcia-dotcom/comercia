@@ -395,12 +395,26 @@ def _seed_users(db: Session, tenants: list[Tenant]) -> None:
         ("cliente.final@publico.demo", "Cliente Final Demo", "public_customer", tenant_map["reinpia"]),
     ]
     for email, name, role, tenant_id in users:
+        default_password = "Demo1234!" if email == "superadmin@comercia.demo" else "Admin12345!"
+        hashed_password = pwd_context.hash(default_password, scheme="pbkdf2_sha256")
         u = db.scalar(select(User).where(User.email == email))
         if not u:
-            db.add(User(email=email, full_name=name, hashed_password=pwd_context.hash("Admin12345!", scheme="pbkdf2_sha256"), role=role, is_active=True, tenant_id=tenant_id, preferred_language="es"))
+            db.add(
+                User(
+                    email=email,
+                    full_name=name,
+                    hashed_password=hashed_password,
+                    role=role,
+                    is_active=True,
+                    tenant_id=tenant_id,
+                    preferred_language="es",
+                )
+            )
         else:
             u.full_name, u.role, u.tenant_id, u.is_active = name, role, tenant_id, True
             u.preferred_language = "es"
+            if email == "superadmin@comercia.demo":
+                u.hashed_password = hashed_password
 
 
 def _seed_additional_logistics_services(db: Session, tenants: list[Tenant]) -> None:
