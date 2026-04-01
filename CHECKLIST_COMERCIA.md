@@ -323,3 +323,16 @@
 - [x] Seeds demo ampliados con leads de canales `lia_widget`, `contacto`, `diagnostico`, `whatsapp`
 - [x] Base WhatsApp/bot reforzada con plantillas y eventos comerciales demo
 - [x] Validacion: backend compile + frontend build
+
+## Entregables ejecucion 30 (Conexion wizard + upload + demo superadmin)
+- [x] URL base frontend unificada a `http://127.0.0.1:8000` (env, fallbacks y mensajes de error)
+- [x] CORS backend ampliado para puertos locales Vite (`5173-5176`, localhost y 127.0.0.1)
+- [x] Scripts de arranque actualizados con URLs visibles: frontend `http://localhost:5175`, API `http://127.0.0.1:8000`, docs y health
+- [x] `start_all.ps1` corregido (sin argumentos vacios en `Start-Process`)
+- [x] Upload del wizard reparado: `multipart/form-data`, validacion de imagen y respuesta con `file_url`
+- [x] Assets del wizard servidos por backend en `/media/*` con persistencia por tenant/paso
+- [x] Paso 1 del wizard reforzado: guardado completo, mensajes claros y confirmacion visual de logo/imagenes
+- [x] Errores API mejorados con endpoint y contexto (conexion, timeout, upload invalido)
+- [x] Modo demo local con autologin superadmin (`VITE_DEMO_AUTOLOGIN`) y boton rapido en login
+- [x] Seed demo idempotente actualizado: `superadmin@comercia.demo / Demo1234!`
+- [x] Validacion ejecutada: backend compile, frontend build, `/health`, `/docs`, endpoint wizard, upload logo/base image y guardado paso 1
