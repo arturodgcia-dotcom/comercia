@@ -11,7 +11,16 @@ class Settings(BaseSettings):
     api_v1_prefix: str = Field(default="/api/v1", alias="API_V1_PREFIX")
     database_url: str = Field(default="sqlite:///./comercia.db", alias="DATABASE_URL")
     cors_origins: List[str] = Field(
-        default=["http://localhost:5173", "http://localhost:5174", "http://127.0.0.1:5173", "http://127.0.0.1:5174"],
+        default=[
+            "http://localhost:5173",
+            "http://localhost:5174",
+            "http://localhost:5175",
+            "http://localhost:5176",
+            "http://127.0.0.1:5173",
+            "http://127.0.0.1:5174",
+            "http://127.0.0.1:5175",
+            "http://127.0.0.1:5176",
+        ],
         alias="CORS_ORIGINS",
     )
     jwt_secret_key: str = Field(default="change-this-in-production", alias="JWT_SECRET_KEY")
@@ -19,6 +28,8 @@ class Settings(BaseSettings):
     jwt_expire_minutes: int = Field(default=120, alias="JWT_EXPIRE_MINUTES")
     default_currency: str = Field(default="mxn", alias="DEFAULT_CURRENCY")
     data_mode: str = Field(default="demo", alias="DATA_MODE")
+    force_superadmin_auth: bool = Field(default=False, alias="FORCE_SUPERADMIN_AUTH")
+    force_superadmin_email: str = Field(default="superadmin@comercia.demo", alias="FORCE_SUPERADMIN_EMAIL")
 
     model_config = SettingsConfigDict(
         env_file=".env",

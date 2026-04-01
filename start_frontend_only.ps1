@@ -1,6 +1,6 @@
 param(
-  [int]$Port = 5173,
-  [string]$ApiUrl = "http://localhost:8000"
+  [int]$Port = 5175,
+  [string]$ApiUrl = "http://127.0.0.1:8000"
 )
 
 $ErrorActionPreference = "Stop"

@@ -4,6 +4,8 @@ import { User } from "../types/domain";
 import i18n from "../i18n";
 
 const TOKEN_KEY = "comercia_access_token";
+const FORCE_SUPERADMIN = import.meta.env.VITE_FORCE_SUPERADMIN === "1";
+const DEV_SUPERADMIN_TOKEN = "dev-superadmin-token";
 
 interface AuthContextValue {
   token: string | null;
@@ -16,9 +18,18 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [token, setToken] = useState<string | null>(() => localStorage.getItem(TOKEN_KEY));
+  const [token, setToken] = useState<string | null>(() => localStorage.getItem(TOKEN_KEY) ?? (FORCE_SUPERADMIN ? DEV_SUPERADMIN_TOKEN : null));
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    if (!FORCE_SUPERADMIN) return;
+    const stored = localStorage.getItem(TOKEN_KEY);
+    if (stored !== DEV_SUPERADMIN_TOKEN) {
+      localStorage.setItem(TOKEN_KEY, DEV_SUPERADMIN_TOKEN);
+      setToken(DEV_SUPERADMIN_TOKEN);
+    }
+  }, []);
 
   useEffect(() => {
     if (!token) {

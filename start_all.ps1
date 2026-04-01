@@ -69,7 +69,7 @@ if (!(Test-Path $backendRequirements)) {
 }
 
 $backendPort = 8000
-$frontendPort = 5173
+$frontendPort = 5175
 
 if (Test-PortInUse -Port $backendPort) {
   $newBackendPort = Get-FreePort -StartPort ($backendPort + 1)
@@ -85,17 +85,22 @@ if (Test-PortInUse -Port $frontendPort) {
 
 $backendScript = Join-Path $PSScriptRoot "start_backend_only.ps1"
 $frontendScript = Join-Path $PSScriptRoot "start_frontend_only.ps1"
-$backendApiUrl = "http://localhost:$backendPort"
+$backendApiUrl = "http://127.0.0.1:$backendPort"
 
 Write-Host "Iniciando backend y frontend en nuevas ventanas..." -ForegroundColor Cyan
-Start-Process powershell -ArgumentList "-NoExit", "-ExecutionPolicy", "Bypass", "-File", $backendScript, "-Port", $backendPort, $(if ($bootstrapEnabled) {"-Bootstrap"} else {""}) | Out-Null
+$backendArgs = @("-NoExit", "-ExecutionPolicy", "Bypass", "-File", $backendScript, "-Port", $backendPort)
+if ($bootstrapEnabled) {
+  $backendArgs += "-Bootstrap"
+}
+Start-Process powershell -ArgumentList $backendArgs | Out-Null
 Start-Sleep -Seconds 1
-Start-Process powershell -ArgumentList "-NoExit", "-ExecutionPolicy", "Bypass", "-File", $frontendScript, "-Port", $frontendPort, "-ApiUrl", $backendApiUrl | Out-Null
+$frontendArgs = @("-NoExit", "-ExecutionPolicy", "Bypass", "-File", $frontendScript, "-Port", $frontendPort, "-ApiUrl", $backendApiUrl)
+Start-Process powershell -ArgumentList $frontendArgs | Out-Null
 
 Write-Host ""
 Write-Host "URLs utiles:" -ForegroundColor Yellow
-Write-Host "- API docs:             http://localhost:$backendPort/docs"
-Write-Host "- Health:               http://localhost:$backendPort/health"
+Write-Host "- API docs:             http://127.0.0.1:$backendPort/docs"
+Write-Host "- Health:               http://127.0.0.1:$backendPort/health"
 Write-Host "- Landing ComerCia:     http://localhost:$frontendPort/comercia"
 Write-Host "- Store REINPIA:        http://localhost:$frontendPort/store/reinpia"
 Write-Host "- Login admin:          http://localhost:$frontendPort/login"
@@ -104,7 +109,7 @@ Write-Host "- Backend API URL usada por frontend: $backendApiUrl"
 Write-Host ""
 
 Start-Sleep -Seconds 2
-$healthUrl = "http://localhost:$backendPort/health"
+$healthUrl = "http://127.0.0.1:$backendPort/health"
 $maxAttempts = 12
 $attempt = 0
 $healthy = $false

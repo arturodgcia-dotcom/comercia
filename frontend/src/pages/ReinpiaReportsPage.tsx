@@ -26,7 +26,7 @@ export function ReinpiaReportsPage() {
     type: "sales" | "commissions" | "tenants" | "orders" | "commission-agents" | "plan-purchase-leads"
   ) => {
     if (!token) return;
-    const url = `${import.meta.env.VITE_API_URL ?? "http://localhost:8000"}/api/v1/reinpia/exports/${type}.csv${query ? `?${query}` : ""}`;
+    const url = `${import.meta.env.VITE_API_URL ?? "http://127.0.0.1:8000"}/api/v1/reinpia/exports/${type}.csv${query ? `?${query}` : ""}`;
     const response = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
     const blob = await response.blob();
     const blobUrl = URL.createObjectURL(blob);
