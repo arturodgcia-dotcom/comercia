@@ -469,29 +469,29 @@ export function ComerciaLandingPage() {
 
       <header className="cp-nav cp-animate-up" id="top">
         <div>
-          <p className="cp-kicker">{brandTheme.channelBadge} Â· COMERCIA by REINPIA Â· {planVariant.badge}</p>
-          <h1>{planVariant.headline}</h1>
+          <p className="cp-kicker">LANDING COMERCIAL · COMERCIA BY REINPIA</p>
+          <h1>Activa tu ecommerce y comienza a vender con una estructura profesional desde el primer día</h1>
           <p className="cp-brand-context">{businessSpecificText}</p>
         </div>
         <div className="cp-nav-actions">
           <LanguageSelector />
           <button type="button" className="button" onClick={openDiagnostic}>
-            {planVariant.ctaPrimary}
+            Solicitar demo
           </button>
         </div>
       </header>
 
       <section className="cp-hero cp-animate-up" aria-label="Hero principal">
         <div className="cp-hero-copy">
-          <p className="cp-eyebrow">{brandTheme.name} Â· {brandTheme.tone}</p>
-          <h2>{planVariant.subtitle}</h2>
-          <p>{brandTheme.valueProp}</p>
+          <p className="cp-eyebrow">{brandTheme.name} · {brandTheme.tone}</p>
+          <h2>Elige el modelo que mejor se adapte a tu negocio: inversión fija o esquema por comisión. Tecnología, operación e inteligencia artificial en una sola plataforma.</h2>
+          <p>Sin ambigüedades: puedes iniciar con inversión definida o con esquema por resultados, siempre con control total de tu operación y tus ventas.</p>
           <div className="cp-cta-row">
             <button type="button" className="button" onClick={openDiagnostic}>
-              {planVariant.ctaPrimary}
+              Solicitar demo
             </button>
             <button type="button" className="button button-outline" onClick={openPlans}>
-              {planVariant.ctaSecondary}
+              Ver modelos de negocio
             </button>
             <button type="button" className="button button-outline" onClick={openLia}>
               Hablar con Lia IA
@@ -509,22 +509,34 @@ export function ComerciaLandingPage() {
             <p>Dashboard ejecutivo</p>
             <h3>Ventas + IA + Operacion</h3>
             <ul>
-              <li>Embudo comercial en vivo</li>
-              <li>Alertas de conversion y recompra</li>
+              <li>Embudo comercial en tiempo real</li>
+              <li>Alertas de conversión y recompra</li>
               <li>Control omnicanal por marca</li>
             </ul>
           </article>
           <article className="cp-mock-card">
             <p>Ecommerce premium</p>
             <h3>Checkout optimizado</h3>
+            <ul>
+              <li>Flujo de compra diseñado para conversión</li>
+              <li>Integración con promociones y cupones</li>
+            </ul>
           </article>
           <article className="cp-mock-card">
             <p>POS WebApp</p>
-            <h3>Venta fisica conectada</h3>
+            <h3>Venta física conectada</h3>
+            <ul>
+              <li>Sincronización con inventario y clientes</li>
+              <li>Información en tiempo real</li>
+            </ul>
           </article>
           <article className="cp-mock-card">
             <p>Canal distribuidor</p>
             <h3>B2B con reglas de negocio</h3>
+            <ul>
+              <li>Precios por volumen</li>
+              <li>Condiciones comerciales automatizadas</li>
+            </ul>
           </article>
         </aside>
       </section>
@@ -1125,3 +1137,4 @@ export function ComerciaLandingPage() {
     </main>
   );
 }
+
