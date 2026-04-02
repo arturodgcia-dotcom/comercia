@@ -386,3 +386,12 @@
 - [x] Ajuste de puertos por defecto frontend/scripts a `8001` para evitar bloqueo recurrente en `8000`
 - [x] Frontend API client actualizado con fallback local `8001` y `8000`
 - [x] Validacion de build frontend + compile backend
+
+## Entregables ejecucion 36 (Monedas + alineacion API local)
+- [x] Diagnostico de conexion de Monedas completado (sin hardcode `8002` en codigo)
+- [x] Alineacion de base API local a `http://127.0.0.1:8000` en frontend y scripts
+- [x] Cliente API central reforzado para evitar quedarse pegado a puertos runtime efimeros
+- [x] Fallback local controlado `8000 -> 8001` para no romper desarrollo
+- [x] Reuso de helper API base en wizard de marca y exportes REINPIA
+- [x] Modulo Monedas reforzado con loading, error util, reintento y estado vacio editable
+- [x] Validacion ejecutada: backend compile + frontend build

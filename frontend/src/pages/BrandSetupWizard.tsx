@@ -16,7 +16,6 @@ import {
   CatalogImportErrorRow,
 } from "../types/domain";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL ?? "http://127.0.0.1:8000";
 
 type StepCode =
   | "brand_identity"
@@ -124,7 +123,7 @@ function toUiError(error: unknown, fallback: string): string {
 function toAssetUrl(fileUrl?: string | null): string | null {
   if (!fileUrl) return null;
   if (fileUrl.startsWith("http://") || fileUrl.startsWith("https://")) return fileUrl;
-  return `${API_BASE_URL}${fileUrl}`;
+  return `${api.getBaseUrl()}${fileUrl}`;
 }
 
 export function BrandSetupWizard() {

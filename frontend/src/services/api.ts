@@ -81,15 +81,36 @@ function normalizeBaseUrl(raw: string): string {
   return raw.trim().replace(/^['"]+|['"]+$/g, "").replace(/\/+$/, "");
 }
 
-const BASE_URL = normalizeBaseUrl(import.meta.env.VITE_API_URL ?? "http://127.0.0.1:8001");
+const BASE_URL = normalizeBaseUrl(import.meta.env.VITE_API_URL ?? "http://127.0.0.1:8000");
 const REQUEST_TIMEOUT_MS = Number(import.meta.env.VITE_API_TIMEOUT_MS ?? "15000");
 const RUNTIME_BASE_URL_KEY = "comercia.runtime_api_url";
+const DEV_LOCAL_BASE_URLS = [
+  "http://127.0.0.1:8000",
+  "http://localhost:8000",
+  "http://127.0.0.1:8001",
+  "http://localhost:8001",
+];
+
+function isLocalBaseUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === "http:" && (parsed.hostname === "127.0.0.1" || parsed.hostname === "localhost");
+  } catch {
+    return false;
+  }
+}
 
 let runtimeBaseUrl: string | null = (() => {
   if (typeof window === "undefined") return null;
   try {
     const stored = window.sessionStorage.getItem(RUNTIME_BASE_URL_KEY);
-    return stored ? normalizeBaseUrl(stored) : null;
+    if (!stored) return null;
+    const normalized = normalizeBaseUrl(stored);
+    // Evita quedar pegado a puertos efimeros que luego rompen login/modulos.
+    if (isLocalBaseUrl(normalized) && !DEV_LOCAL_BASE_URLS.includes(normalized) && normalized !== BASE_URL) {
+      return null;
+    }
+    return normalized;
   } catch {
     return null;
   }
@@ -111,36 +132,29 @@ function setApiBaseUrl(url: string): void {
 }
 
 function getCandidateBaseUrls(): string[] {
-  const first = normalizeBaseUrl(getApiBaseUrl());
-  const ordered = [first, BASE_URL];
-  ordered.push("http://127.0.0.1:8001", "http://localhost:8001", "http://127.0.0.1:8000", "http://localhost:8000");
+  const configured = normalizeBaseUrl(BASE_URL);
+  const ordered = [configured, ...DEV_LOCAL_BASE_URLS];
+  if (runtimeBaseUrl) {
+    ordered.push(runtimeBaseUrl);
+  }
 
   if (typeof window !== "undefined") {
     const host = window.location.hostname;
     if (host) {
-      ordered.push(`http://${host}:8001`, `http://${host}:8000`);
+      ordered.push(`http://${host}:8000`, `http://${host}:8001`);
     }
   }
 
   try {
-    const parsed = new URL(first);
+    const parsed = new URL(configured);
     const isLocalHost = parsed.hostname === "127.0.0.1" || parsed.hostname === "localhost";
     if (isLocalHost && parsed.protocol === "http:") {
-      ordered.push(`http://${parsed.hostname}:8001`, `http://${parsed.hostname}:8000`);
+      ordered.push(`http://${parsed.hostname}:8000`, `http://${parsed.hostname}:8001`);
     }
   } catch {
-    // Si first no es una URL valida, seguimos con los defaults.
+    // Si configured no es una URL valida, seguimos con los defaults.
   }
 
-  try {
-    const parsed = new URL(BASE_URL);
-    const isLocalHost = parsed.hostname === "127.0.0.1" || parsed.hostname === "localhost";
-    if (isLocalHost && parsed.protocol === "http:") {
-      ordered.push(`http://127.0.0.1:8001`, `http://localhost:8001`, `http://127.0.0.1:8000`, `http://localhost:8000`);
-    }
-  } catch {
-    // Si BASE_URL no es una URL valida, mantenemos solo la configurada.
-  }
   return [...new Set(ordered)];
 }
 
@@ -159,10 +173,11 @@ async function request<T>(path: string, init: RequestInit = {}, token?: string):
   if (token) headers.set("Authorization", `Bearer ${token}`);
 
   const candidateBaseUrls = getCandidateBaseUrls();
-  let lastNetworkEndpoint = `${getApiBaseUrl()}${path}`;
+  let lastNetworkEndpoint = `${BASE_URL}${path}`;
   let sawTimeout = false;
 
-  for (const candidateBaseUrl of candidateBaseUrls) {
+  for (let index = 0; index < candidateBaseUrls.length; index += 1) {
+    const candidateBaseUrl = candidateBaseUrls[index];
     const endpoint = `${candidateBaseUrl}${path}`;
     const controller = new AbortController();
     const timeoutId = window.setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
@@ -170,6 +185,13 @@ async function request<T>(path: string, init: RequestInit = {}, token?: string):
       const response = await fetch(endpoint, { ...init, headers, signal: controller.signal });
       window.clearTimeout(timeoutId);
       if (!response.ok) {
+        if (
+          response.status === 404 &&
+          isLocalBaseUrl(candidateBaseUrl) &&
+          index < candidateBaseUrls.length - 1
+        ) {
+          continue;
+        }
         const errorText = await response.text();
         throw new ApiError(`Error ${response.status} en ${endpoint}: ${errorText || response.statusText}`, response.status);
       }
@@ -198,6 +220,7 @@ async function request<T>(path: string, init: RequestInit = {}, token?: string):
 }
 
 export const api = {
+  getBaseUrl: () => getApiBaseUrl(),
   login: (email: string, password: string) =>
     request<LoginResponse>("/api/v1/auth/login", {
       method: "POST",

@@ -1,4 +1,4 @@
-# Modulos ComerCia - Estado
+Ôªø# Modulos ComerCia - Estado
 
 | Modulo | Estado | Notas |
 |---|---|---|
@@ -124,7 +124,7 @@ Nuevos componentes y capacidades:
 - Paginas legales publicas de privacidad, cookies y proteccion de datos.
 - Seccion de video YouTube configurable por entorno (`VITE_COMERCIA_YOUTUBE_URL`).
 - Formulario de atencion al cliente separado del diagnostico comercial.
-- LÌa evolucionada a experiencia conversacional comercial (diagnostico + recomendacion + CTA de cierre).
+- L√≠a evolucionada a experiencia conversacional comercial (diagnostico + recomendacion + CTA de cierre).
 - Footer de landing reforzado con enlaces legales y de contacto.
 
 Nuevos endpoints:
@@ -132,13 +132,13 @@ Nuevos endpoints:
 - `GET /api/v1/reinpia/customer-contact-leads`
 
 ## Actualizacion UX comercial
-- LÌa migrada a widget flotante conversacional con acciones de cierre.
+- L√≠a migrada a widget flotante conversacional con acciones de cierre.
 - Diagnostico comercial presentado como modal/subflujo.
-- Seccion "Cont·ctanos" separada y orientada a conversion.
+- Seccion "Cont√°ctanos" separada y orientada a conversion.
 - Copy de retos comerciales ajustado (se elimina etiqueta "Dolor").
 
 ## Modulo interno de seguimiento
-- `ReinpiaCommercialInboxPage` centraliza contacto, leads de LÌa, diagnosticos y solicitudes de asesoria.
+- `ReinpiaCommercialInboxPage` centraliza contacto, leads de L√≠a, diagnosticos y solicitudes de asesoria.
 - Filtros por canal y estatus + edicion de estatus desde detalle.
 
 ## Actualizacion navegacion por contexto (Ejecucion 33)
@@ -149,4 +149,18 @@ Nuevos endpoints:
 - `tenant_admin` y `tenant_staff` solo ven el menu de marca.
 - Monedas se ubica por contexto:
   - Global: "Monedas y tipos de cambio"
-  - Marca: "Moneda de operaciÛn"
+  - Marca: "Moneda de operaci√≥n"
+
+## Actualizacion conectividad API y Monedas (Ejecucion 36)
+- URL base de API centralizada y endurecida para entorno local:
+  - `VITE_API_URL` por defecto en `http://127.0.0.1:8000`
+  - fallback local controlado a `8001`
+  - descarte de runtime URL efimera fuera de lista (evita errores con puertos como `8002`)
+- Modulo Monedas reforzado:
+  - carga inicial con `loading`
+  - mensaje de error util + accion `Reintentar conexion`
+  - estado inicial editable cuando backend no responde (sin pantalla vacia)
+  - vista previa con mensaje amigable cuando no hay tasas
+- Reuso del helper central de API en modulos que armaban URL manual:
+  - wizard de marca (assets)
+  - reportes REINPIA (export CSV)

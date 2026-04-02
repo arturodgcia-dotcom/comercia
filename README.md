@@ -70,6 +70,9 @@ Mensajes de arranque y troubleshooting:
 - `start_all` imprime URLs utiles reales para backend/frontend.
 - `start_all` pasa automaticamente la URL real del backend al frontend (`VITE_API_URL`) para evitar `Failed to fetch` cuando el backend usa puerto alterno.
 - CORS backend acepta puertos locales dinamicos (`localhost` / `127.0.0.1`) para desarrollo estable.
+- Puerto por defecto recomendado en local:
+  - backend: `8000`
+  - frontend (`VITE_API_URL`): `http://127.0.0.1:8000`
 
 ### Backend
 ```bash
@@ -328,6 +331,21 @@ npm run dev
   - `POST /api/v1/exchange-rates/preview`
 - soporte de modo manual y automatico (fallback local adapter)
 - storefront con selector de moneda y aviso de fallback de checkout
+- pantalla admin de monedas robusta:
+  - loading visible
+  - estado vacio util si aun no hay tasas
+  - error claro con boton de reintento
+  - evita pantalla en blanco cuando backend no responde
+
+### Conectividad API local (actualizado)
+- Base URL frontend centralizada en `frontend/src/services/api.ts`.
+- Se evita quedar atrapado en puertos efimeros guardados en runtime (ej. `8002`) que causaban errores de conexion en login y Monedas.
+- Fallback local controlado:
+  - prioridad `8000`
+  - fallback `8001`
+- Modulos que antes construian URL directa ahora usan helper central:
+  - `BrandSetupWizard` (assets)
+  - `ReinpiaReportsPage` (exportes)
 
 ### POS / WebApp base (actual)
 - modelos:

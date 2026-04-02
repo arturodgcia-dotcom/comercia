@@ -5,22 +5,52 @@ import { PageHeader } from "../components/PageHeader";
 import { api } from "../services/api";
 import { CurrencySettings, ExchangeRate } from "../types/domain";
 
+function buildEmptySettings(tenantId: number): CurrencySettings {
+  return {
+    id: 0,
+    tenant_id: tenantId,
+    base_currency: "MXN",
+    enabled_currencies: ["MXN", "USD"],
+    display_mode: "base_only",
+    exchange_mode: "manual",
+    auto_update_enabled: false,
+    rounding_mode: "none",
+  };
+}
+
 export function CurrencyAdminPage() {
   const { token, user } = useAuth();
   const tenantId = user?.tenant_id ?? 1;
-  const [settings, setSettings] = useState<CurrencySettings | null>(null);
+  const [settings, setSettings] = useState<CurrencySettings>(buildEmptySettings(tenantId));
   const [rates, setRates] = useState<ExchangeRate[]>([]);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [usingFallbackState, setUsingFallbackState] = useState(false);
+  const [savingSettings, setSavingSettings] = useState(false);
+  const [savingRate, setSavingRate] = useState(false);
   const [manualRate, setManualRate] = useState({ base_currency: "MXN", target_currency: "USD", rate: "0.058" });
+
+  const loadCurrencyState = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const [settingsData, ratesData] = await Promise.all([api.getCurrencySettings(tenantId), api.getExchangeRates()]);
+      setSettings(settingsData);
+      setRates(ratesData);
+      setUsingFallbackState(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "No fue posible cargar configuracion monetaria.");
+      setSettings(buildEmptySettings(tenantId));
+      setRates([]);
+      setUsingFallbackState(true);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (!token) return;
-    Promise.all([api.getCurrencySettings(tenantId), api.getExchangeRates()])
-      .then(([settingsData, ratesData]) => {
-        setSettings(settingsData);
-        setRates(ratesData);
-      })
-      .catch((err) => setError(err instanceof Error ? err.message : "No fue posible cargar configuracion monetaria"));
+    void loadCurrencyState();
   }, [token, tenantId]);
 
   const applyRegionalPreset = (preset: "espana" | "europa" | "latam" | "brasil") => {
@@ -38,7 +68,7 @@ export function CurrencyAdminPage() {
             enabled_currencies: next.enabled,
             display_mode: "converted_display",
           }
-        : previous
+        : buildEmptySettings(tenantId)
     );
   };
 
@@ -46,30 +76,40 @@ export function CurrencyAdminPage() {
     () =>
       rates.find(
         (r) =>
-          r.base_currency === (settings?.base_currency ?? "MXN") &&
-          r.target_currency === ((settings?.enabled_currencies ?? ["MXN"])[1] ?? "USD")
+          r.base_currency === (settings.base_currency ?? "MXN") &&
+          r.target_currency === ((settings.enabled_currencies ?? ["MXN"])[1] ?? "USD")
       ),
     [rates, settings]
   );
 
-  if (!settings) return <p>{error ? `Error: ${error}` : "Cargando configuracion de moneda..."}</p>;
-
   const handleSettingsSubmit = async (event: FormEvent) => {
     event.preventDefault();
-    if (!token) return;
+    if (!token) {
+      setError("Tu sesion expiro. Inicia sesion nuevamente para guardar cambios.");
+      return;
+    }
     try {
+      setSavingSettings(true);
       setError("");
       const updated = await api.upsertCurrencySettings(token, tenantId, { ...settings });
       setSettings(updated);
+      setUsingFallbackState(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : "No fue posible actualizar");
+    } finally {
+      setSavingSettings(false);
     }
   };
 
   const handleManualRate = async (event: FormEvent) => {
     event.preventDefault();
-    if (!token) return;
+    if (!token) {
+      setError("Tu sesion expiro. Inicia sesion nuevamente para guardar tipos de cambio.");
+      return;
+    }
     try {
+      setSavingRate(true);
+      setError("");
       await api.createManualExchangeRate(token, {
         base_currency: manualRate.base_currency,
         target_currency: manualRate.target_currency,
@@ -77,8 +117,11 @@ export function CurrencyAdminPage() {
         source_name: "manual_admin"
       });
       setRates(await api.getExchangeRates());
+      setUsingFallbackState(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : "No fue posible registrar tipo de cambio");
+    } finally {
+      setSavingRate(false);
     }
   };
 
@@ -93,13 +136,32 @@ export function CurrencyAdminPage() {
         whatToCapture={["Moneda base", "Monedas habilitadas", "Modo de conversion", "Tasa manual cuando aplique"]}
         impact="Mejora claridad de precios para cliente y consistencia en reportes."
       />
-      {error ? <p className="error">{error}</p> : null}
+      {loading ? <p className="muted">Cargando configuracion monetaria...</p> : null}
+      {error ? (
+        <section className="card">
+          <p className="error">{error}</p>
+          <p className="muted">
+            Puedes revisar la configuracion base y volver a intentar la conexion cuando el backend este disponible.
+          </p>
+          <button className="button button-outline" type="button" onClick={() => void loadCurrencyState()}>
+            Reintentar conexion
+          </button>
+        </section>
+      ) : null}
+      {usingFallbackState ? (
+        <section className="card">
+          <h3>Estado inicial de moneda</h3>
+          <p className="muted">
+            No se pudieron cargar datos del backend. Se muestra una configuracion inicial editable para que no se quede la pantalla en blanco.
+          </p>
+        </section>
+      ) : null}
       <form className="detail-form" onSubmit={handleSettingsSubmit}>
         <label>
           Moneda base
           <select
             value={settings.base_currency}
-            onChange={(e) => setSettings((prev) => (prev ? { ...prev, base_currency: e.target.value } : prev))}
+            onChange={(e) => setSettings((prev) => ({ ...prev, base_currency: e.target.value }))}
           >
             <option value="MXN">MXN</option>
             <option value="USD">USD</option>
@@ -112,9 +174,10 @@ export function CurrencyAdminPage() {
             value={settings.enabled_currencies.join(",")}
             onChange={(e) =>
               setSettings((prev) =>
-                prev
-                  ? { ...prev, enabled_currencies: e.target.value.split(",").map((value) => value.trim().toUpperCase()).filter(Boolean) }
-                  : prev
+                ({
+                  ...prev,
+                  enabled_currencies: e.target.value.split(",").map((value) => value.trim().toUpperCase()).filter(Boolean)
+                })
               )
             }
           />
@@ -123,7 +186,7 @@ export function CurrencyAdminPage() {
           Modo de visualizacion
           <select
             value={settings.display_mode}
-            onChange={(e) => setSettings((prev) => (prev ? { ...prev, display_mode: e.target.value } : prev))}
+            onChange={(e) => setSettings((prev) => ({ ...prev, display_mode: e.target.value }))}
           >
             <option value="base_only">Solo moneda base</option>
             <option value="converted_display">Mostrar conversion</option>
@@ -134,7 +197,7 @@ export function CurrencyAdminPage() {
           Modo de tipo de cambio
           <select
             value={settings.exchange_mode}
-            onChange={(e) => setSettings((prev) => (prev ? { ...prev, exchange_mode: e.target.value } : prev))}
+            onChange={(e) => setSettings((prev) => ({ ...prev, exchange_mode: e.target.value }))}
           >
             <option value="manual">Manual</option>
             <option value="automatic">Automatico</option>
@@ -144,7 +207,7 @@ export function CurrencyAdminPage() {
           Rounding
           <select
             value={settings.rounding_mode}
-            onChange={(e) => setSettings((prev) => (prev ? { ...prev, rounding_mode: e.target.value } : prev))}
+            onChange={(e) => setSettings((prev) => ({ ...prev, rounding_mode: e.target.value }))}
           >
             <option value="none">Sin redondeo</option>
             <option value=".99">.99</option>
@@ -155,12 +218,12 @@ export function CurrencyAdminPage() {
           <input
             type="checkbox"
             checked={settings.auto_update_enabled}
-            onChange={(e) => setSettings((prev) => (prev ? { ...prev, auto_update_enabled: e.target.checked } : prev))}
+            onChange={(e) => setSettings((prev) => ({ ...prev, auto_update_enabled: e.target.checked }))}
           />
           Actualizacion automatica habilitada
         </label>
-        <button className="button" type="submit">
-          Guardar configuracion de moneda
+        <button className="button" type="submit" disabled={savingSettings}>
+          {savingSettings ? "Guardando..." : "Guardar configuracion de moneda"}
         </button>
       </form>
 
@@ -187,10 +250,26 @@ export function CurrencyAdminPage() {
           <option>MXN</option>
         </select>
         <input value={manualRate.rate} onChange={(e) => setManualRate((p) => ({ ...p, rate: e.target.value }))} />
-        <button className="button" type="submit">
-          Guardar tipo manual
+        <button className="button" type="submit" disabled={savingRate}>
+          {savingRate ? "Guardando..." : "Guardar tipo manual"}
         </button>
-        <button className="button button-outline" type="button" onClick={() => token && api.refreshExchangeRates(token).then(setRates)}>
+        <button
+          className="button button-outline"
+          type="button"
+          onClick={async () => {
+            if (!token) {
+              setError("Tu sesion expiro. Inicia sesion nuevamente para refrescar tipos.");
+              return;
+            }
+            try {
+              setError("");
+              setRates(await api.refreshExchangeRates(token));
+              setUsingFallbackState(false);
+            } catch (err) {
+              setError(err instanceof Error ? err.message : "No fue posible refrescar tipos de cambio.");
+            }
+          }}
+        >
           Refrescar automatico (fallback local)
         </button>
       </form>
@@ -207,6 +286,7 @@ export function CurrencyAdminPage() {
             ? "Intentara cobrar en moneda local cuando el flujo de pago lo soporte."
             : "Checkout permanece en moneda base y solo muestra conversion."}
         </p>
+        {!rates.length ? <p className="muted">Aun no hay tipos de cambio cargados para esta marca.</p> : null}
       </section>
     </section>
   );
