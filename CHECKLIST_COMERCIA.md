@@ -355,3 +355,16 @@
 - [x] Se agrego mensaje de expansion internacional (operacion desde Mexico con pesos, dolares y euros)
 - [x] Footer actualizado con derechos y propiedad intelectual REINPIA
 - [x] Validacion ejecutada: frontend build OK
+
+## Entregables ejecucion 33 (Separacion panel Global vs Marca + selector de contexto)
+- [x] Layout admin separado por contexto: "Administración General de ComerCia" vs "Panel de Operación de Marca"
+- [x] Indicador persistente de contexto y marca activa en sidebar y topbar
+- [x] Selector de contexto para `reinpia_admin` (Global ComerCia / Marca activa) con persistencia en sesion
+- [x] Selector de marca activa para `reinpia_admin` (usa lista real de tenants)
+- [x] Navegacion Global reorganizada por bloques: inicio, comercial, marcas/activacion, operacion, finanzas, configuracion y reportes
+- [x] Navegacion de Marca reorganizada por bloques: inicio, comercial, catalogo, clientes, operacion, POS/WebApp, configuracion y reportes
+- [x] Monedas reubicado por contexto en menu:
+  - [x] Global: "Monedas y tipos de cambio"
+  - [x] Marca: "Moneda de operación"
+- [x] Limpieza de duplicados de menu (ej. ventas POS repetidas) y consolidacion de accesos
+- [x] Ocultamiento por contexto y rol: usuario de marca no ve menu global

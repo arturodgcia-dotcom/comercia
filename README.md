@@ -472,6 +472,26 @@ npm run dev
 
 ## Frontend agregado (actual)
 
+### Navegacion por contexto (nuevo)
+- El panel administrativo se separa en dos contextos visibles:
+  - `Administración General de ComerCia` (global plataforma)
+  - `Panel de Operación de Marca` (operacion de una marca activa)
+- `reinpia_admin` puede cambiar entre ambos contextos desde selector en sidebar:
+  - contexto: `Global ComerCia` / `Marca activa`
+  - marca activa: selector de tenant persistido en sesion
+- `tenant_admin` y `tenant_staff` solo ven contexto de marca (sin menu global).
+- Indicadores persistentes en interfaz:
+  - `Modo actual: ...`
+  - `Marca activa: ...`
+
+### Monedas por contexto (actualizado)
+- Global (`Administración General de ComerCia`):
+  - menu: `Monedas y tipos de cambio`
+  - enfoque: control global de monedas habilitadas y tipos de cambio.
+- Marca (`Panel de Operación de Marca`):
+  - menu: `Moneda de operación`
+  - enfoque: moneda base y visualizacion de monedas por tienda/marca.
+
 ### Admin
 - `/admin/services`
 - `/admin/appointments`

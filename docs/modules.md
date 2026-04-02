@@ -140,3 +140,13 @@ Nuevos endpoints:
 ## Modulo interno de seguimiento
 - `ReinpiaCommercialInboxPage` centraliza contacto, leads de Lía, diagnosticos y solicitudes de asesoria.
 - Filtros por canal y estatus + edicion de estatus desde detalle.
+
+## Actualizacion navegacion por contexto (Ejecucion 33)
+- El panel admin se divide en dos contextos:
+  - Administracion General de ComerCia (global)
+  - Panel de Operacion de Marca (marca activa)
+- `reinpia_admin` puede alternar contexto y marca activa desde selector persistente.
+- `tenant_admin` y `tenant_staff` solo ven el menu de marca.
+- Monedas se ubica por contexto:
+  - Global: "Monedas y tipos de cambio"
+  - Marca: "Moneda de operación"

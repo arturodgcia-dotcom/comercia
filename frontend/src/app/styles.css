@@ -60,6 +60,42 @@ body.public-landing #root {
   font-size: 12px;
 }
 
+.context-panel {
+  margin: 0 0 14px;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid #2d4872;
+  background: #122744;
+  display: grid;
+  gap: 6px;
+}
+
+.context-badge {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: #d2e4ff;
+}
+
+.context-brand {
+  margin: 0;
+  font-size: 12px;
+  color: #a9c4eb;
+}
+
+.context-label {
+  font-size: 11px;
+  color: #9bb4da;
+}
+
+.context-panel select {
+  background: #0f2a4d;
+  color: #fff;
+  border: 1px solid #355585;
+  border-radius: 8px;
+  padding: 6px 8px;
+}
+
 .nav-link {
   display: block;
   margin-bottom: 10px;
@@ -100,6 +136,17 @@ body.public-landing #root {
   gap: 12px;
   margin-bottom: 12px;
   flex-wrap: wrap;
+}
+
+.context-top-indicator {
+  display: grid;
+  gap: 2px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: #fff;
+  font-size: 12px;
+  color: #355177;
 }
 
 .breadcrumbs {

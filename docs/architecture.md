@@ -469,3 +469,15 @@ Se incorpora actualizacion de estatus desde REINPIA:
 - `PUT /api/v1/reinpia/customer-contact-leads/{id}`
 
 Esto habilita un flujo de seguimiento comercial end-to-end sin depender de formularios aislados en frontend.
+
+## Contextos de panel y navegacion (Ejecucion 33)
+- Se implementa separacion explicita entre:
+  - Administracion General de ComerCia (global)
+  - Panel de Operacion de Marca (por tenant)
+- Selector de contexto y marca activa para `reinpia_admin` con persistencia en sesion.
+- Restriccion visual por rol/contexto:
+  - roles de marca no ven menu global
+  - contexto global no muestra modulos internos de marca como menu primario
+- Reubicacion de monedas en navegacion:
+  - Global: Monedas y tipos de cambio
+  - Marca: Moneda de operación
