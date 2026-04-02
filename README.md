@@ -660,3 +660,21 @@ Variables backend (`backend/.env`):
 - `ENVIRONMENT=development`
 - `FORCE_SUPERADMIN_AUTH=1` (solo no-produccion)
 - `FORCE_SUPERADMIN_EMAIL=superadmin@comercia.demo`
+
+## Actualizacion ejecucion 37 (Separacion real Global vs Marca + modulos funcionales)
+- Se reforzo la separacion de paneles:
+  - Global ComerCia (`/reinpia/*`) para administracion de plataforma.
+  - Operacion de marca (`/admin/*`) para gestion de una marca activa.
+- Monedas ya funciona por contexto:
+  - Global: `/reinpia/currency` (moneda base global, monedas habilitadas, modo manual/automatico futuro, tipos manuales).
+  - Marca: `/admin/currency` (moneda de operacion, heredar global o personalizar por marca).
+- Usuarios funcional por contexto:
+  - Global: `/reinpia/users` (usuarios internos de plataforma).
+  - Marca: `/admin/users` (usuarios de la marca activa, sin exponer usuarios globales).
+- Idioma funcional por contexto:
+  - Global: `/reinpia/language` (idiomas de plataforma e idioma por defecto del panel).
+  - Marca: `/admin/language` (idioma principal de tienda, idiomas visibles, perfil regional).
+- Seguridad de arquitectura reforzada en backend:
+  - Solo `reinpia_admin` puede crear/actualizar marcas.
+  - Usuarios de marca no pueden administrar marcas hermanas.
+  - Endpoints de branding/tenant restringidos por scope de tenant.

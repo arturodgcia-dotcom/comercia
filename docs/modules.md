@@ -164,3 +164,19 @@ Nuevos endpoints:
 - Reuso del helper central de API en modulos que armaban URL manual:
   - wizard de marca (assets)
   - reportes REINPIA (export CSV)
+
+## Actualizacion panel por contexto (Ejecucion 37)
+- Monedas
+  - Global: modulo funcional `Monedas y tipos de cambio`.
+  - Marca: modulo funcional `Moneda de operación`.
+- Usuarios
+  - Global: `Usuarios internos de plataforma` con listado/alta/edicion minima.
+  - Marca: `Usuarios de la marca` con listado/alta/edicion segun rol.
+- Idioma
+  - Global: `Idiomas de plataforma` con idioma por defecto y habilitados.
+  - Marca: `Idioma de tienda` con idioma principal, visibles y perfil regional.
+- Marcas globales
+  - Vista `Global: Marcas` limpiada con tabla priorizada y acciones por fila.
+- Permisos
+  - Crear marca solo para `reinpia_admin` y solo en contexto global.
+  - Usuarios de marca sin acceso a modulos globales por ruta/rol.

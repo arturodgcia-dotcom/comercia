@@ -395,3 +395,14 @@
 - [x] Reuso de helper API base en wizard de marca y exportes REINPIA
 - [x] Modulo Monedas reforzado con loading, error util, reintento y estado vacio editable
 - [x] Validacion ejecutada: backend compile + frontend build
+
+## Entregables ejecucion 37 (Panel global vs marca + modulos vivos)
+- [x] Monedas funcional por contexto (global y marca)
+- [x] Usuarios funcional por contexto (global y marca)
+- [x] Idioma funcional por contexto (global y marca)
+- [x] Vista Global: Marcas ordenada con acciones claras por fila
+- [x] Restriccion real: crear marca solo en panel global y solo `reinpia_admin`
+- [x] Restriccion real: usuarios de marca sin acceso a modulos globales
+- [x] Navegacion limpiada para evitar modulos vacios o rutas confusas
+- [x] Validacion backend compile OK
+- [x] Validacion frontend build OK

@@ -495,3 +495,18 @@ Esto habilita un flujo de seguimiento comercial end-to-end sin depender de formu
 - Se unificaron consumos de URL absoluta en frontend:
   - assets del wizard de marca
   - exportes CSV de reportes REINPIA
+
+## Ejecucion 37: permisos y paneles por contexto
+- Se formalizo la arquitectura de dos contextos de administracion:
+  - Global ComerCia (`reinpia_admin`).
+  - Panel de operacion de marca (`tenant_admin`, `tenant_staff`, y `reinpia_admin` cuando opera una marca).
+- Endpoints de tenant y branding ahora validan scope real por usuario.
+- Se incorporaron endpoints administrativos:
+  - `GET/PUT /api/v1/admin/platform-settings`
+  - `GET/PUT /api/v1/admin/brand-settings/{tenant_id}`
+  - `GET/POST/PUT /api/v1/admin/users`
+- Se agrego entidad `PlatformSettings` para configuracion global de moneda e idioma.
+- Monedas se divide en:
+  - configuracion global de plataforma
+  - configuracion de moneda por marca con herencia global opcional.
+- Se evita que cuentas de marca creen o administren otras marcas desde backend y frontend.
