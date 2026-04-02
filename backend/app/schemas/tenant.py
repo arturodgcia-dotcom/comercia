@@ -10,6 +10,9 @@ class TenantCreate(BaseModel):
     business_type: str
     is_active: bool = True
     plan_id: int | None = None
+    plan_type: str | None = None
+    commission_rules_json: str | None = None
+    subscription_plan_json: str | None = None
 
 
 class TenantUpdate(BaseModel):
@@ -19,6 +22,9 @@ class TenantUpdate(BaseModel):
     business_type: str | None = None
     is_active: bool | None = None
     plan_id: int | None = None
+    plan_type: str | None = None
+    commission_rules_json: str | None = None
+    subscription_plan_json: str | None = None
 
 
 class TenantRead(TimestampSchema):
@@ -29,3 +35,6 @@ class TenantRead(TimestampSchema):
     business_type: str
     is_active: bool
     plan_id: int | None
+    plan_type: str
+    commission_rules_json: str | None
+    subscription_plan_json: str | None

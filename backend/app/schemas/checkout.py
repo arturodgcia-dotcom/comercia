@@ -41,6 +41,7 @@ class CheckoutSessionResponse(BaseModel):
     commission_amount: Decimal
     net_amount: Decimal
     payment_mode: str
+    plan_type: str
 
 
 class OrderItemRead(BaseModel):

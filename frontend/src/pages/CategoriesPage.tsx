@@ -1,4 +1,5 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "../app/AuthContext";
 import { PageHeader } from "../components/PageHeader";
 import { api } from "../services/api";
@@ -6,6 +7,7 @@ import { Category, Tenant } from "../types/domain";
 
 export function CategoriesPage() {
   const { token } = useAuth();
+  const { t } = useTranslation();
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [tenantId, setTenantId] = useState<number | null>(null);
   const [items, setItems] = useState<Category[]>([]);
@@ -57,7 +59,7 @@ export function CategoriesPage() {
 
   return (
     <section>
-      <PageHeader title="Categories" subtitle="CRUD base de categorias por tenant." />
+      <PageHeader title={t("nav.categories")} subtitle="Administración de categorías por marca." />
       {error ? <p className="error">{error}</p> : null}
       <div className="row-gap">
         <select value={tenantId ?? ""} onChange={(e) => setTenantId(Number(e.target.value))}>
@@ -67,18 +69,18 @@ export function CategoriesPage() {
             </option>
           ))}
         </select>
-        <span>Tenant activo: {selectedTenant?.name ?? "N/A"}</span>
+        <span>{t("filter.brand")} activa: {selectedTenant?.name ?? "N/A"}</span>
       </div>
       <form className="inline-form" onSubmit={handleCreate}>
-        <input value={form.name} placeholder="Name" onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))} required />
-        <input value={form.slug} placeholder="Slug" onChange={(e) => setForm((prev) => ({ ...prev, slug: e.target.value }))} required />
+        <input value={form.name} placeholder={t("common.name")} onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))} required />
+        <input value={form.slug} placeholder={t("common.slug")} onChange={(e) => setForm((prev) => ({ ...prev, slug: e.target.value }))} required />
         <input
           value={form.description}
-          placeholder="Description"
+          placeholder={t("common.description")}
           onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))}
         />
         <button className="button" type="submit">
-          Crear categoria
+          {t("common.create")} {t("nav.categories").toLowerCase()}
         </button>
       </form>
 
@@ -86,10 +88,10 @@ export function CategoriesPage() {
         <thead>
           <tr>
             <th>ID</th>
-            <th>Name</th>
-            <th>Slug</th>
-            <th>Description</th>
-            <th>Active</th>
+            <th>{t("common.name")}</th>
+            <th>{t("common.slug")}</th>
+            <th>{t("common.description")}</th>
+            <th>{t("common.active")}</th>
           </tr>
         </thead>
         <tbody>
@@ -101,7 +103,7 @@ export function CategoriesPage() {
               <td>{category.description}</td>
               <td>
                 <button className="button button-outline" type="button" onClick={() => toggleActive(category)}>
-                  {category.is_active ? "Desactivar" : "Activar"}
+                  {category.is_active ? t("security.deactivate") : t("security.activate")}
                 </button>
               </td>
             </tr>

@@ -2,6 +2,29 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import { ProtectedRoute } from "../components/ProtectedRoute";
 import { RoleRoute } from "../components/RoleRoute";
 import { AdminLayout } from "../layouts/AdminLayout";
+import { MpProvider } from "../demo/mercaplus/MpContext";
+import { MpLayout, MpDistLayout, MpPosLayout } from "../demo/mercaplus/MpLayout";
+import { MpHome } from "../demo/mercaplus/pages/MpHome";
+import { MpCatalog } from "../demo/mercaplus/pages/MpCatalog";
+import { MpProduct } from "../demo/mercaplus/pages/MpProduct";
+import { MpCart } from "../demo/mercaplus/pages/MpCart";
+import { MpCheckout } from "../demo/mercaplus/pages/MpCheckout";
+import { MpOrderConfirm } from "../demo/mercaplus/pages/MpOrderConfirm";
+import { MpCategories } from "../demo/mercaplus/pages/MpCategories";
+import { MpPromos } from "../demo/mercaplus/pages/MpPromos";
+import { MpDistHome } from "../demo/mercaplus/pages/MpDistHome";
+import { MpDistCatalog } from "../demo/mercaplus/pages/MpDistCatalog";
+import { MpDistDashboard } from "../demo/mercaplus/pages/MpDistDashboard";
+import { MpDistOrders } from "../demo/mercaplus/pages/MpDistOrders";
+import { MpDistProduct } from "../demo/mercaplus/pages/MpDistProduct";
+import { MpPOS } from "../demo/mercaplus/pages/MpPOS";
+import { MpContact } from "../demo/mercaplus/pages/MpContact";
+import { MpFAQ } from "../demo/mercaplus/pages/MpFAQ";
+import { MpPolicies } from "../demo/mercaplus/pages/MpPolicies";
+import { StorePublicTemplate } from "../pages/templates/StorePublicTemplate";
+import { StoreDistributorsTemplate } from "../pages/templates/StoreDistributorsTemplate";
+import { StorePOSTemplate } from "../pages/templates/StorePOSTemplate";
+import { TemplateFamilyDemoPage } from "../pages/templates/TemplateFamilyDemoPage";
 import { AppointmentsAdminPage } from "../pages/AppointmentsAdminPage";
 import { BrandingEditorPage } from "../pages/BrandingEditorPage";
 import { BannersAdminPage } from "../pages/BannersAdminPage";
@@ -94,6 +117,37 @@ export function AppRouter() {
       <Route path="/store/:tenantSlug/distribuidores/registro" element={<DistributorRegistrationPage />} />
       <Route path="/store/:tenantSlug/distribuidores/login-placeholder" element={<DistributorLoginPlaceholderPage />} />
       <Route path="/pos/login-placeholder" element={<PosLoginPlaceholderPage />} />
+
+      {/* ── Plantillas de muestra (preview sin autenticación) ── */}
+      <Route path="/templates/tienda-publica" element={<StorePublicTemplate />} />
+      <Route path="/templates/distribuidores" element={<StoreDistributorsTemplate />} />
+      <Route path="/templates/pos" element={<StorePOSTemplate />} />
+      <Route path="/templates/familia" element={<TemplateFamilyDemoPage />} />
+
+      {/* ── MercaPlus Demo — Ecommerce multicanal premium ── */}
+      <Route path="/demo/mercaplus" element={<MpProvider><MpLayout /></MpProvider>}>
+        <Route index element={<MpHome />} />
+        <Route path="catalogo" element={<MpCatalog />} />
+        <Route path="producto/:id" element={<MpProduct />} />
+        <Route path="carrito" element={<MpCart />} />
+        <Route path="checkout" element={<MpCheckout />} />
+        <Route path="confirmacion" element={<MpOrderConfirm />} />
+        <Route path="categorias" element={<MpCategories />} />
+        <Route path="promos" element={<MpPromos />} />
+        <Route path="contacto" element={<MpContact />} />
+        <Route path="faq" element={<MpFAQ />} />
+        <Route path="politicas" element={<MpPolicies />} />
+      </Route>
+      <Route path="/demo/mercaplus/dist" element={<MpProvider><MpDistLayout /></MpProvider>}>
+        <Route index element={<MpDistHome />} />
+        <Route path="catalogo" element={<MpDistCatalog />} />
+        <Route path="producto/:id" element={<MpDistProduct />} />
+        <Route path="dashboard" element={<MpDistDashboard />} />
+        <Route path="pedidos" element={<MpDistOrders />} />
+      </Route>
+      <Route path="/demo/mercaplus/pos" element={<MpProvider><MpPosLayout /></MpProvider>}>
+        <Route index element={<MpPOS />} />
+      </Route>
 
       <Route element={<ProtectedRoute />}>
         <Route path="/" element={<AdminLayout />}>

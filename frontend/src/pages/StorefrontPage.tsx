@@ -3,7 +3,9 @@ import { Link, useParams } from "react-router-dom";
 import { LanguageSelector } from "../components/LanguageSelector";
 import { ReinpiaStorefrontLanding } from "./ReinpiaStorefrontLanding";
 import { ApiError, api } from "../services/api";
-import { CurrencySettings, ExchangeRate, Product, StorefrontHomePayload, WishlistItem } from "../types/domain";
+import { buildBrandTheme, tokensToCssVars } from "../branding/multibrandTemplates";
+import { CurrencySettings, ExchangeRate, Product, StorefrontHomePayload, TenantConfig, WishlistItem } from "../types/domain";
+import { calculatePlanTotals } from "../utils/monetization";
 
 type CartMap = Record<number, number>;
 const DEMO_CUSTOMER_ID = 1;
@@ -25,6 +27,7 @@ export function StorefrontPage() {
   const [currencySettings, setCurrencySettings] = useState<CurrencySettings | null>(null);
   const [rates, setRates] = useState<ExchangeRate[]>([]);
   const [selectedCurrency, setSelectedCurrency] = useState("MXN");
+  const [tenantConfig, setTenantConfig] = useState<TenantConfig | null>(null);
 
   useEffect(() => {
     if (!tenantSlug) return;
@@ -41,6 +44,8 @@ export function StorefrontPage() {
           setSelectedCurrency(settings.base_currency);
         }
         setRates(exchangeRates);
+        const config = await api.getTenantConfig({ tenantSlug }).catch(() => null);
+        setTenantConfig(config);
         try {
           setWishlist(await api.getWishlist(homeData.tenant.id, DEMO_CUSTOMER_ID));
         } catch {
@@ -72,6 +77,38 @@ export function StorefrontPage() {
       unique.set(product.id, product)
     );
     return Array.from(unique.values());
+  }, [data, tenantConfig]);
+
+  const channelThemeStyle = useMemo(() => {
+    if (!data) return undefined;
+    const theme = buildBrandTheme(
+      {
+        key: data.tenant.slug,
+        name: data.tenant.name,
+        slug: data.tenant.slug,
+        logoText: data.tenant.name,
+        logoAccent: "",
+        primaryColor: data.branding?.primary_color ?? "#0d3e86",
+        secondaryColor: data.branding?.secondary_color ?? "#80b8f5",
+        supportColor: "#3a8bf2",
+        bgSoft: "#eef4ff",
+        promptMaster: "",
+        businessType: (data.tenant.business_type === "services" || data.tenant.business_type === "mixed" ? data.tenant.business_type : "products"),
+        tone: "premium",
+        baseImages: [],
+        hasExistingLanding: true,
+        monetizationPlan: tenantConfig?.plan_type === "commission" ? "commission" : "subscription",
+        copy: {
+          headline: data.branding?.hero_title ?? data.tenant.name,
+          subtitle: data.branding?.hero_subtitle ?? "Ecommerce publico con identidad de marca sincronizada.",
+          ctaPrimary: "Comprar ahora",
+          ctaSecondary: "Canal distribuidores",
+          valueProp: "Misma base visual en landing, ecommerce y POS."
+        }
+      },
+      "public_store"
+    );
+    return tokensToCssVars(theme);
   }, [data]);
 
   const cartItems = useMemo(
@@ -106,6 +143,11 @@ export function StorefrontPage() {
     () => cartItems.reduce((acc, item) => acc + getDisplayPrice(Number(item.product.price_public), selectedCurrency) * item.quantity, 0),
     [cartItems, selectedCurrency, rates, currencySettings]
   );
+
+  const financialSummary = useMemo(() => {
+    if (!tenantConfig) return calculatePlanTotals({ subtotal }, "subscription");
+    return calculatePlanTotals({ subtotal }, tenantConfig.plan_type, tenantConfig.commission_rules);
+  }, [subtotal, tenantConfig]);
 
   const addToWishlist = async (productId: number) => {
     if (!data) return;
@@ -160,7 +202,7 @@ export function StorefrontPage() {
   const secondary = data.branding?.secondary_color ?? "#8dc4ff";
 
   return (
-    <main className="storefront premium-store">
+    <main className="storefront premium-store" style={channelThemeStyle}>
       <section className="store-hero premium-hero" style={{ background: `linear-gradient(130deg, ${primary}, ${secondary})` }}>
         <div className="row-gap" style={{ justifyContent: "space-between" }}>
           <LanguageSelector />
@@ -173,6 +215,7 @@ export function StorefrontPage() {
           ) : null}
         </div>
         <p className="marketing-eyebrow">Marca cliente en ComerCia</p>
+        {tenantConfig ? <p className="chip">{tenantConfig.checkout_badge}</p> : null}
         <h1>{data.branding?.hero_title ?? data.tenant.name}</h1>
         <p>{data.branding?.hero_subtitle ?? "Experiencia comercial premium con ecommerce y canal distribuidor separados."}</p>
         <div className="store-actions">
@@ -290,7 +333,18 @@ export function StorefrontPage() {
 
         <aside className="store-banner">
           <h2>Carrito y checkout</h2>
-          <p>Subtotal: {selectedCurrency} {subtotal.toLocaleString("es-MX")}</p>
+          <p>Subtotal: {selectedCurrency} {financialSummary.subtotal.toLocaleString("es-MX")}</p>
+          {tenantConfig?.plan_type === "commission" ? (
+            <>
+              <p>Comision COMERCIA: {selectedCurrency} {financialSummary.commission.toLocaleString("es-MX")}</p>
+              <p className="muted">
+                Comision por uso de plataforma ({(financialSummary.commissionRate * 100).toFixed(2)}% - {financialSummary.commissionRule})
+              </p>
+              <p>Total: {selectedCurrency} {financialSummary.total.toLocaleString("es-MX")}</p>
+            </>
+          ) : (
+            <p className="chip">Sin comision - incluido en tu plan</p>
+          )}
           {currencySettings?.display_mode === "localized_checkout" ? (
             <p>El checkout intentará cobrar en moneda local cuando el flujo lo soporte. Fallback: moneda base.</p>
           ) : (

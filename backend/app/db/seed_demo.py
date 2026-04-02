@@ -74,11 +74,11 @@ def seed_demo_data(db: Session) -> None:
     seed_app_base(db)
     plans = {p.code: p for p in db.scalars(select(Plan)).all()}
     tenants = [
-        _tenant(db, "REINPIA", "reinpia", "services", True, plans["PLAN_1"].id),
-        _tenant(db, "NATURA VIDA", "natura-vida", "mixed", True, plans["PLAN_2"].id),
-        _tenant(db, "CAFE MONTE ALTO", "cafe-monte-alto", "products", True, plans["PLAN_1"].id),
-        _tenant(db, "Instituto Zaro Latino", "instituto-zaro-latino", "services", True, plans["PLAN_1"].id),
-        _tenant(db, "TENANT DEMO INACTIVO", "demo-inactivo", "mixed", False, plans["PLAN_1"].id),
+        _tenant(db, "REINPIA", "reinpia", "services", True, plans["PLAN_1"].id, "subscription"),
+        _tenant(db, "NATURA VIDA", "natura-vida", "mixed", True, plans["PLAN_2"].id, "commission"),
+        _tenant(db, "CAFE MONTE ALTO", "cafe-monte-alto", "products", True, plans["PLAN_1"].id, "subscription"),
+        _tenant(db, "Instituto Tulipanes Rojos", "instituto-tulipanes-rojos", "services", True, plans["PLAN_1"].id, "subscription"),
+        _tenant(db, "TENANT DEMO INACTIVO", "demo-inactivo", "mixed", False, plans["PLAN_1"].id, "commission"),
     ]
     db.commit()
     for t in tenants:
@@ -105,14 +105,37 @@ def seed_demo_data(db: Session) -> None:
     db.commit()
 
 
-def _tenant(db: Session, name: str, slug: str, business_type: str, is_active: bool, plan_id: int) -> Tenant:
+def _tenant(
+    db: Session,
+    name: str,
+    slug: str,
+    business_type: str,
+    is_active: bool,
+    plan_id: int,
+    plan_type: str = "subscription",
+) -> Tenant:
     t = db.scalar(select(Tenant).where(Tenant.slug == slug))
     if not t:
-        t = Tenant(name=name, slug=slug, subdomain=slug, business_type=business_type, is_active=is_active, plan_id=plan_id)
+        t = Tenant(
+            name=name,
+            slug=slug,
+            subdomain=slug,
+            business_type=business_type,
+            is_active=is_active,
+            plan_id=plan_id,
+            plan_type=plan_type,
+        )
         db.add(t)
         db.flush()
         return t
-    t.name, t.subdomain, t.business_type, t.is_active, t.plan_id = name, slug, business_type, is_active, plan_id
+    t.name, t.subdomain, t.business_type, t.is_active, t.plan_id, t.plan_type = (
+        name,
+        slug,
+        business_type,
+        is_active,
+        plan_id,
+        plan_type,
+    )
     return t
 
 
@@ -261,7 +284,7 @@ def _seed_instituto_zaro_latino(db: Session, tenant: Tenant) -> None:
         business_description="Servicios educativos en cosmetologia, podologia y diplomados profesionales.",
         business_type="services",
         has_existing_landing=True,
-        existing_landing_url="https://instituto-zaro-latino.demo",
+        existing_landing_url="https://instituto-tulipanes-rojos.demo",
         primary_color="#6E2EB8",
         secondary_color="#F3E9FF",
         brand_tone="premium",
@@ -361,7 +384,7 @@ def _seed_subscriptions(db: Session, tenants: list[Tenant], plans: dict[str, Pla
         ("reinpia", "PLAN_1", "active"),
         ("natura-vida", "PLAN_2", "active"),
         ("cafe-monte-alto", "PLAN_1", "trial"),
-        ("instituto-zaro-latino", "PLAN_1", "active"),
+        ("instituto-tulipanes-rojos", "PLAN_1", "active"),
         ("demo-inactivo", "PLAN_1", "cancelled"),
     ]:
         t = next(x for x in tenants if x.slug == slug)
@@ -387,7 +410,7 @@ def _seed_users(db: Session, tenants: list[Tenant]) -> None:
         ("pos.marca@reinpia.demo", "REINPIA Operador POS", "tenant_staff", tenant_map["reinpia"]),
         ("admin@natura.demo", "NATURA VIDA Admin", "tenant_admin", tenant_map["natura-vida"]),
         ("admin@cafe.demo", "CAFE MONTE ALTO Admin", "tenant_admin", tenant_map["cafe-monte-alto"]),
-        ("admin@zaro.demo", "Instituto Zaro Latino Admin", "tenant_admin", tenant_map["instituto-zaro-latino"]),
+        ("admin@tulipanes.demo", "Instituto Tulipanes Rojos Admin", "tenant_admin", tenant_map["instituto-tulipanes-rojos"]),
         ("distributor1@natura.demo", "Distribuidor NATURA", "distributor_user", tenant_map["natura-vida"]),
         ("distributor2@cafe.demo", "Distribuidor CAFE", "distributor_user", tenant_map["cafe-monte-alto"]),
         ("admin@distribuidor.demo", "Admin Distribuidor Demo", "distributor_user", tenant_map["natura-vida"]),

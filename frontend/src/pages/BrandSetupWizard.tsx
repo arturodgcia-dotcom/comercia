@@ -13,6 +13,7 @@ import {
   BrandSetupAsset,
   BrandSetupStepState,
   BrandSetupWorkflow,
+  CatalogImportErrorRow,
 } from "../types/domain";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL ?? "http://127.0.0.1:8000";
@@ -87,6 +88,29 @@ const defaultPosSetup: BrandPosSetupData = {
   notes: "",
 };
 
+type ImportRow = Record<string, string>;
+
+const REQUIRED_COLUMNS = [
+  "nombre",
+  "descripcion",
+  "categoria",
+  "sku",
+  "precio_publico",
+  "precio_menudeo",
+  "precio_mayoreo",
+  "stock_general",
+  "visible_publico",
+  "visible_distribuidor",
+  "disponible_en_linea",
+  "disponible_fisico",
+  "minimo_menudeo",
+  "minimo_mayoreo",
+  "stripe_product_id",
+  "stripe_price_id_publico",
+  "stripe_price_id_menudeo",
+  "stripe_price_id_mayoreo",
+];
+
 function isStepCode(value: string): value is StepCode {
   return ["brand_identity", "landing_setup", "ecommerce_setup", "distributors_setup", "pos_setup", "final_review"].includes(value);
 }
@@ -121,6 +145,11 @@ export function BrandSetupWizard() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+  const [csvRows, setCsvRows] = useState<ImportRow[]>([]);
+  const [csvColumnErrors, setCsvColumnErrors] = useState<string[]>([]);
+  const [csvRowErrors, setCsvRowErrors] = useState<Array<{ index: number; reason: string }>>([]);
+  const [csvBackendErrors, setCsvBackendErrors] = useState<CatalogImportErrorRow[]>([]);
+  const [csvImporting, setCsvImporting] = useState(false);
 
   const load = async () => {
     if (!token || Number.isNaN(tenantNumericId)) return;
@@ -223,6 +252,16 @@ export function BrandSetupWizard() {
     setMessage(text);
   };
 
+  const csvValidation = useMemo(
+    () => ({
+      total: csvRows.length,
+      ok: csvRows.length - csvRowErrors.length,
+      errors: csvRowErrors.length,
+      validPercent: csvRows.length === 0 ? 0 : Math.round(((csvRows.length - csvRowErrors.length) / csvRows.length) * 100),
+    }),
+    [csvRows, csvRowErrors]
+  );
+
   const uploadAsset = async (event: ChangeEvent<HTMLInputElement>, assetType: "logo" | "base_image") => {
     if (!token || !workflow) return;
     const file = event.target.files?.[0];
@@ -247,6 +286,150 @@ export function BrandSetupWizard() {
     } finally {
       setSaving(false);
       event.target.value = "";
+    }
+  };
+
+  const downloadBulkTemplate = () => {
+    const header = REQUIRED_COLUMNS.join(",");
+    const demoRow = [
+      "Kit Inicio ComerCia",
+      "Paquete inicial para ventas",
+      "Kits",
+      "KIT-001",
+      "1299",
+      "1199",
+      "1099",
+      "120",
+      "si",
+      "si",
+      "si",
+      "si",
+      "1",
+      "6",
+      "prod_demo_kit001",
+      "price_demo_public_kit001",
+      "price_demo_retail_kit001",
+      "price_demo_wholesale_kit001",
+    ].join(",");
+    const blob = new Blob([`${header}\n${demoRow}\n`], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "plantilla_catalogo_comercia.csv";
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const loadBulkCsvInWizard = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setError("");
+    setMessage("");
+    setCsvBackendErrors([]);
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const content = String(reader.result ?? "");
+      const lines = content.split(/\r?\n/).filter(Boolean);
+      if (lines.length === 0) {
+        setCsvRows([]);
+        setCsvColumnErrors(["El archivo CSV esta vacio."]);
+        setCsvRowErrors([]);
+        return;
+      }
+      const [headerLine, ...dataLines] = lines;
+      const headers = headerLine.split(",").map((item) => item.trim().toLowerCase());
+      const missingColumns = REQUIRED_COLUMNS.filter((column) => !headers.includes(column));
+      setCsvColumnErrors(missingColumns.map((column) => `Falta columna obligatoria: ${column}`));
+
+      const parsedRows = dataLines.map((line) => {
+        const values = line.split(",");
+        return headers.reduce<ImportRow>((acc, header, index) => {
+          acc[header] = (values[index] ?? "").trim();
+          return acc;
+        }, {});
+      });
+
+      const detectedRowErrors = parsedRows
+        .map((row, index) => {
+          if (!row.nombre) return { index: index + 1, reason: "Falta nombre" };
+          if (!row.sku) return { index: index + 1, reason: "Falta SKU" };
+          if (!row.precio_publico || Number.isNaN(Number(row.precio_publico))) {
+            return { index: index + 1, reason: "precio_publico invalido" };
+          }
+          if (!row.visible_publico || !["si", "no"].includes(row.visible_publico.toLowerCase())) {
+            return { index: index + 1, reason: "visible_publico debe ser si/no" };
+          }
+          if (!row.visible_distribuidor || !["si", "no"].includes(row.visible_distribuidor.toLowerCase())) {
+            return { index: index + 1, reason: "visible_distribuidor debe ser si/no" };
+          }
+          return null;
+        })
+        .filter((item): item is { index: number; reason: string } => Boolean(item));
+
+      setCsvRows(parsedRows);
+      setCsvRowErrors(detectedRowErrors);
+    };
+    reader.readAsText(file, "utf-8");
+    event.target.value = "";
+  };
+
+  const importBulkInWizard = async () => {
+    if (!token || !workflow) return;
+    if (!csvRows.length) {
+      setError("Primero carga un archivo CSV en este paso.");
+      return;
+    }
+    if (csvColumnErrors.length) {
+      setError("Corrige las columnas faltantes antes de importar.");
+      return;
+    }
+    try {
+      setCsvImporting(true);
+      setError("");
+      setMessage("");
+      const result = await api.bulkImportCatalog(token, {
+        tenant_id: workflow.tenant_id,
+        rows: csvRows,
+      });
+      setCsvBackendErrors(result.errors);
+      setMessage(
+        `Importacion completada para ${workflow.tenant_name}: ${result.job.valid_rows} validas, ` +
+        `${result.job.error_rows} con error, ${result.job.products_created} creados y ${result.job.products_updated} actualizados.`
+      );
+      await load();
+      setSelectedStep("ecommerce_setup");
+    } catch (err) {
+      setError(toUiError(err, "No fue posible importar catalogo en este paso."));
+    } finally {
+      setCsvImporting(false);
+    }
+  };
+
+  const generateEcommerceTemplate = async () => {
+    if (!token || !workflow) return;
+    try {
+      setSaving(true);
+      setError("");
+      setMessage("");
+      const updated = await api.applyBrandEcommerceTemplate(token, workflow.tenant_id);
+      setWorkflow(updated);
+      setEcommerceData((prev) => ({
+        ...prev,
+        catalog_mode: "bulk",
+        categories_ready: true,
+        products_ready: true,
+        distributor_catalog_ready: true,
+        volume_rules_ready: true,
+        massive_upload_enabled: true,
+      }));
+      setMessage(
+        `Plantilla ecommerce creada para ${updated.tenant_name}. Ya tienes base para publico y distribuidores; ahora la ajustamos juntos.`
+      );
+    } catch (err) {
+      setError(toUiError(err, "No fue posible generar la plantilla ecommerce."));
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -342,14 +525,28 @@ export function BrandSetupWizard() {
   };
 
   const saveEcommercePublic = async () => {
-    if (!token || !workflow || !ecommerceSummary) return;
-    if (!ecommerceSummary.ready_for_approval) {
-      setError("Aun no hay suficiente catalogo para activar ecommerce publico. Carga categorias y productos/servicios.");
+    if (!token || !workflow) {
+      setError("Sesion invalida para activar ecommerce publico. Cierra sesion y vuelve a entrar.");
       return;
     }
     try {
       setSaving(true);
       setError("");
+      setMessage("");
+      const refreshed = await api.getBrandSetupWorkflow(token, workflow.tenant_id);
+      setWorkflow(refreshed);
+      const refreshedSummary = refreshed.ecommerce_public_summary;
+      if (!refreshedSummary || !refreshedSummary.ready_for_approval) {
+        const categories = refreshedSummary?.categories_count ?? 0;
+        const products = refreshedSummary?.products_count ?? 0;
+        const services = refreshedSummary?.services_count ?? 0;
+        const validRows = refreshedSummary?.last_import_valid_rows ?? 0;
+        setError(
+          `Aun no se puede activar ecommerce publico para ${workflow.tenant_name}. ` +
+          `Estado actual: categorias=${categories}, productos=${products}, servicios=${services}, filas validas importadas=${validRows}.`
+        );
+        return;
+      }
       await api.updateBrandSetupWorkflow(token, workflow.tenant_id, {
         ecommerce_data: ecommerceData,
       });
@@ -451,6 +648,8 @@ export function BrandSetupWizard() {
   }
 
   const currentMeta = stepStatus(selectedStep);
+  const wizardReturnTo = `/reinpia/brands/${workflow.tenant_id}/setup`;
+  const scopedCatalogQuery = `?tenant_id=${workflow.tenant_id}&return_to=${encodeURIComponent(wizardReturnTo)}`;
 
   return (
     <section>
@@ -731,23 +930,101 @@ export function BrandSetupWizard() {
           <p className="muted">
             Este estado se calcula automaticamente con el catalogo real de la marca (categorias, productos/servicios e importacion).
           </p>
+          <article className="card">
+            <h4>Carga masiva desde este paso</h4>
+            <p>
+              Esta importacion se ejecuta directamente para <strong>{workflow.tenant_name}</strong> y al finalizar se
+              actualiza el resumen del wizard.
+            </p>
+            <div className="row-gap">
+              <button className="button button-outline" type="button" onClick={downloadBulkTemplate}>
+                Descargar plantilla CSV
+              </button>
+              <label className="button button-outline">
+                Cargar archivo CSV
+                <input type="file" accept=".csv" style={{ display: "none" }} onChange={loadBulkCsvInWizard} />
+              </label>
+              <button className="button" type="button" onClick={importBulkInWizard} disabled={csvImporting || !csvRows.length}>
+                {csvImporting ? "Importando..." : "Importar catalogo aqui"}
+              </button>
+            </div>
+            <p className="muted">
+              Validacion local: {csvValidation.ok}/{csvValidation.total} filas validas ({csvValidation.validPercent}%)
+            </p>
+            {csvColumnErrors.length ? (
+              <ul className="marketing-list">
+                {csvColumnErrors.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            ) : null}
+            {csvRowErrors.length ? (
+              <div className="table-wrapper">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Fila</th>
+                      <th>Error local</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {csvRowErrors.map((item) => (
+                      <tr key={`${item.index}-${item.reason}`}>
+                        <td>{item.index}</td>
+                        <td>{item.reason}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : null}
+            {csvBackendErrors.length ? (
+              <div className="table-wrapper">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Fila</th>
+                      <th>Error backend</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {csvBackendErrors.map((item) => (
+                      <tr key={`${item.index}-${item.reason}`}>
+                        <td>{item.index}</td>
+                        <td>{item.reason}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : null}
+          </article>
           <label>
             Notas
             <textarea value={ecommerceData.notes ?? ""} onChange={(event) => setEcommerceData((prev) => ({ ...prev, notes: event.target.value }))} />
           </label>
           <div className="row-gap">
-            <Link className="button button-outline" to="/products">Productos</Link>
-            <Link className="button button-outline" to="/categories">Categorias</Link>
-            <Link className="button button-outline" to="/admin/catalog/bulk-upload">Carga masiva</Link>
+            <Link className="button button-outline" to={`/products?tenant_id=${workflow.tenant_id}`}>Productos</Link>
+            <Link className="button button-outline" to={`/categories?tenant_id=${workflow.tenant_id}`}>Categorias</Link>
+            <Link className="button button-outline" to={`/admin/catalog/bulk-upload${scopedCatalogQuery}`}>Carga masiva</Link>
+            <button className="button button-outline" type="button" onClick={generateEcommerceTemplate} disabled={saving || csvImporting}>
+              Generar plantilla ecommerce
+            </button>
+            <button className="button button-outline" type="button" onClick={() => load()} disabled={saving || csvImporting}>
+              Refrescar resumen
+            </button>
             <button
               className="button"
               type="button"
               onClick={saveEcommercePublic}
-              disabled={saving || !ecommerceSummary?.ready_for_approval}
+              disabled={saving || csvImporting}
             >
               {ecommerceSummary?.ready_for_approval ? "Aprobar y activar ecommerce publico" : "Generar ecommerce publico"}
             </button>
           </div>
+          <p className="muted">
+            Si el boton no activa, usa "Refrescar resumen": ahora muestra el motivo exacto (categorias/productos/importacion).
+          </p>
         </article>
       ) : null}
 

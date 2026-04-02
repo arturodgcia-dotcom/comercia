@@ -1,4 +1,5 @@
 import { ChangeEvent, useEffect, useMemo, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { useAuth } from "../app/AuthContext";
 import { ModuleOnboardingCard } from "../components/ModuleOnboardingCard";
 import { PageHeader } from "../components/PageHeader";
@@ -30,6 +31,7 @@ const REQUIRED_COLUMNS = [
 
 export function CatalogBulkUploadPage() {
   const { token } = useAuth();
+  const [searchParams] = useSearchParams();
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [tenantId, setTenantId] = useState<number | null>(null);
 
@@ -41,16 +43,26 @@ export function CatalogBulkUploadPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+  const requestedTenantId = Number(searchParams.get("tenant_id"));
+  const hasRequestedTenant = Number.isFinite(requestedTenantId) && requestedTenantId > 0;
+  const returnToRaw = searchParams.get("return_to") ?? "";
+  const returnTo = returnToRaw.startsWith("/") ? returnToRaw : "";
 
   useEffect(() => {
     if (!token) return;
     api.getTenants(token)
       .then((list) => {
         setTenants(list);
-        setTenantId((previous) => previous ?? list[0]?.id ?? null);
+        setTenantId((previous) => {
+          if (previous) return previous;
+          if (hasRequestedTenant && list.some((tenant) => tenant.id === requestedTenantId)) {
+            return requestedTenantId;
+          }
+          return list[0]?.id ?? null;
+        });
       })
       .catch((err) => setError(err instanceof Error ? err.message : "No fue posible cargar marcas"));
-  }, [token]);
+  }, [token, hasRequestedTenant, requestedTenantId]);
 
   useEffect(() => {
     if (!token || !tenantId) return;
@@ -159,11 +171,6 @@ export function CatalogBulkUploadPage() {
       setError("Corrige las columnas faltantes antes de importar.");
       return;
     }
-    if (errorRows.length) {
-      setError("El CSV tiene errores por fila. Corrige el archivo antes de importar.");
-      return;
-    }
-
     try {
       setLoading(true);
       setError("");
@@ -209,6 +216,13 @@ export function CatalogBulkUploadPage() {
             </option>
           ))}
         </select>
+        {returnTo ? (
+          <div className="row-gap" style={{ marginTop: "12px" }}>
+            <Link className="button button-outline" to={returnTo}>
+              Regresar al wizard de esta marca
+            </Link>
+          </div>
+        ) : null}
       </section>
 
       <section className="store-banner">

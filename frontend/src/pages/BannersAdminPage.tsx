@@ -1,4 +1,5 @@
 import { FormEvent, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "../app/AuthContext";
 import { PageHeader } from "../components/PageHeader";
 import { api } from "../services/api";
@@ -6,6 +7,7 @@ import { Banner, Tenant } from "../types/domain";
 
 export function BannersAdminPage() {
   const { token } = useAuth();
+  const { t } = useTranslation();
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [tenantId, setTenantId] = useState<number | null>(null);
   const [items, setItems] = useState<Banner[]>([]);
@@ -46,7 +48,7 @@ export function BannersAdminPage() {
 
   return (
     <section>
-      <PageHeader title="Banners" subtitle="Banners dinamicos por posicion, prioridad y target." />
+      <PageHeader title="Banners" subtitle={t("nav.banners")} />
       <select value={tenantId ?? ""} onChange={(e) => setTenantId(Number(e.target.value))}>
         {tenants.map((tenant) => (
           <option key={tenant.id} value={tenant.id}>
@@ -55,34 +57,34 @@ export function BannersAdminPage() {
         ))}
       </select>
       <form className="inline-form" onSubmit={create}>
-        <input required placeholder="Titulo" value={form.title} onChange={(e) => setForm((p) => ({ ...p, title: e.target.value }))} />
-        <input placeholder="Image URL" value={form.image_url} onChange={(e) => setForm((p) => ({ ...p, image_url: e.target.value }))} />
+        <input required placeholder={t("common.name")} value={form.title} onChange={(e) => setForm((p) => ({ ...p, title: e.target.value }))} />
+        <input placeholder={t("banners.imageUrl")} value={form.image_url} onChange={(e) => setForm((p) => ({ ...p, image_url: e.target.value }))} />
         <select value={form.target_type} onChange={(e) => setForm((p) => ({ ...p, target_type: e.target.value }))}>
-          <option value="promotion">promotion</option>
-          <option value="product">product</option>
-          <option value="category">category</option>
-          <option value="url">url</option>
+          <option value="promotion">{t("banners.typePromotion")}</option>
+          <option value="product">{t("banners.typeProduct")}</option>
+          <option value="category">{t("banners.typeCategory")}</option>
+          <option value="url">{t("banners.typeUrl")}</option>
         </select>
-        <input placeholder="Target value" value={form.target_value} onChange={(e) => setForm((p) => ({ ...p, target_value: e.target.value }))} />
+        <input placeholder={t("banners.targetValue")} value={form.target_value} onChange={(e) => setForm((p) => ({ ...p, target_value: e.target.value }))} />
         <select value={form.position} onChange={(e) => setForm((p) => ({ ...p, position: e.target.value }))}>
-          <option value="hero">hero</option>
-          <option value="store_top">store_top</option>
-          <option value="distributors_top">distributors_top</option>
-          <option value="checkout_upsell">checkout_upsell</option>
+          <option value="hero">{t("banners.posHero")}</option>
+          <option value="store_top">{t("banners.posStoreTop")}</option>
+          <option value="distributors_top">{t("banners.posDistributorsTop")}</option>
+          <option value="checkout_upsell">{t("banners.posCheckoutUpsell")}</option>
         </select>
         <input type="number" value={form.priority} onChange={(e) => setForm((p) => ({ ...p, priority: Number(e.target.value) }))} />
         <button className="button" type="submit">
-          Crear banner
+          {t("banners.createBanner")}
         </button>
       </form>
       <table className="table">
         <thead>
           <tr>
             <th>ID</th>
-            <th>Titulo</th>
-            <th>Position</th>
+            <th>{t("common.name")}</th>
+            <th>{t("security.action")}</th>
             <th>Target</th>
-            <th>Priority</th>
+            <th>Prioridad</th>
           </tr>
         </thead>
         <tbody>

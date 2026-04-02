@@ -1,15 +1,11 @@
-﻿import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { LanguageSelector } from "../components/LanguageSelector";
 import { CookieConsentBanner } from "../components/marketing/CookieConsentBanner";
 import { LiaSalesAssistant } from "../components/marketing/LiaSalesAssistant";
-import { CTASection } from "../components/marketing/CTASection";
-import { HeroSection } from "../components/marketing/HeroSection";
-import { PackageCard } from "../components/marketing/PackageCard";
-import { SolutionCard } from "../components/marketing/SolutionCard";
+import { buildBrandTheme, getDemoBrandInput, tokensToCssVars } from "../branding/multibrandTemplates";
 import { api } from "../services/api";
-
-const YOUTUBE_URL = import.meta.env.VITE_COMERCIA_YOUTUBE_URL as string | undefined;
+import "./ComerciaLandingPage.css";
 
 type CustomerServiceForm = {
   name: string;
@@ -20,32 +16,250 @@ type CustomerServiceForm = {
   message: string;
 };
 
-function getYoutubeEmbedUrl(rawUrl?: string): string | null {
-  if (!rawUrl) return null;
-  const trimmed = rawUrl.trim();
-  if (!trimmed) return null;
-  try {
-    const parsed = new URL(trimmed);
-    if (parsed.hostname.includes("youtube.com")) {
-      const id = parsed.searchParams.get("v");
-      if (id) return `https://www.youtube.com/embed/${id}`;
-      if (parsed.pathname.startsWith("/embed/")) return trimmed;
-    }
-    if (parsed.hostname.includes("youtu.be")) {
-      const id = parsed.pathname.replace("/", "");
-      if (id) return `https://www.youtube.com/embed/${id}`;
-    }
-  } catch {
-    return null;
+type DemoView = {
+  code: "home" | "product" | "distributor" | "pos";
+  title: string;
+  subtitle: string;
+  metrics: string[];
+  bullets: string[];
+  gradient: string;
+};
+
+const DEMO_VIEWS: DemoView[] = [
+  {
+    code: "home",
+    title: "Home ecommerce premium",
+    subtitle: "Experiencia de compra moderna con conversion optimizada y recomendaciones inteligentes.",
+    metrics: ["Conversion +32%", "Ticket promedio +18%", "Carga < 2s"],
+    bullets: [
+      "Catalogo visual con categorias dinamicas",
+      "Promociones y banners por segmento",
+      "SEO on-page listo para captacion organica"
+    ],
+    gradient: "linear-gradient(140deg, #0f2857, #1d4fa3 55%, #3386f0)"
+  },
+  {
+    code: "product",
+    title: "Detalle de producto orientado a cierre",
+    subtitle: "Ficha comercial con argumentos de valor, prueba social y upsell inteligente.",
+    metrics: ["CTR a checkout +27%", "Resenas activas", "Cross-sell IA"],
+    bullets: [
+      "Contenido de producto optimizado para IA y buscadores",
+      "Variantes, precios y stock por canal",
+      "Bloques de confianza: envios, garantias y pagos"
+    ],
+    gradient: "linear-gradient(140deg, #152b5d, #284da9 52%, #5f53d4)"
+  },
+  {
+    code: "distributor",
+    title: "Portal distribuidor B2B",
+    subtitle: "Canal mayorista con precios escalonados, reglas comerciales y seguimiento de pedidos.",
+    metrics: ["Pedidos recurrentes", "Margen controlado", "Portal privado"],
+    bullets: [
+      "Registro y aprobacion comercial por perfil",
+      "Precios menudeo/mayoreo con minimos configurables",
+      "Dashboard para distribuidores y fuerza de ventas"
+    ],
+    gradient: "linear-gradient(140deg, #102447, #18417f 50%, #2d6cc0)"
+  },
+  {
+    code: "pos",
+    title: "POS WebApp omnicanal",
+    subtitle: "Operacion en punto de venta conectada al ecommerce, inventario y CRM.",
+    metrics: ["Cobro QR y link", "Inventario en tiempo real", "Sincronizacion total"],
+    bullets: [
+      "Venta presencial desde tablet o celular",
+      "Clientes, cupones y fidelizacion en la misma vista",
+      "Reportes de caja y desempeno comercial"
+    ],
+    gradient: "linear-gradient(140deg, #10203d, #1a3569 50%, #1f6ab8)"
   }
-  return null;
+];
+
+const BENEFITS = [
+  {
+    icon: "OMNI",
+    title: "Venta omnicanal real",
+    description: "Vende en web, POS y canal distribuidor con una sola operacion integrada."
+  },
+  {
+    icon: "PRC",
+    title: "Precios diferenciados",
+    description: "Configura precio publico, mayoreo y promociones segmentadas por tipo de cliente."
+  },
+  {
+    icon: "IA",
+    title: "Automatizacion con IA",
+    description: "Activa agentes para seguimiento, recomendaciones y acciones comerciales automaticas."
+  },
+  {
+    icon: "CRM",
+    title: "Gestion de clientes y distribuidores",
+    description: "Centraliza leads, compradores y aliados con trazabilidad completa por etapa."
+  },
+  {
+    icon: "PAY",
+    title: "Pagos integrados",
+    description: "Checkout digital, links de pago y cobro presencial listos para operar sin friccion."
+  },
+  {
+    icon: "SCL",
+    title: "Escalabilidad por marca",
+    description: "Modelo multiindustria y multi-sucursal listo para crecer sin rehacer plataforma."
+  }
+];
+
+const USE_CASES = [
+  {
+    industry: "Retail",
+    challenge: "Catalogos amplios y alta rotacion",
+    result: "Sincroniza inventario, promociones y puntos de venta para vender mas sin quiebres."
+  },
+  {
+    industry: "Belleza",
+    challenge: "Citas, membresias y recompra",
+    result: "Combina servicios, productos y fidelizacion en una experiencia premium."
+  },
+  {
+    industry: "Servicios",
+    challenge: "Captacion de leads y seguimiento",
+    result: "Automatiza contacto comercial y convierte solicitudes en ventas medibles."
+  },
+  {
+    industry: "Educacion",
+    challenge: "Programas, pagos y renovaciones",
+    result: "Gestiona planes, pagos recurrentes y comunicacion por cohortes."
+  },
+  {
+    industry: "Distribuidores",
+    challenge: "Precios y pedidos por volumen",
+    result: "Activa canal B2B con reglas de negocio y control de margen por segmento."
+  }
+];
+
+const PLANS = [
+  {
+    name: "Basico",
+    price: "Ideal para validar tu canal digital",
+    features: [
+      "Landing de conversion + ecommerce base",
+      "Catalogo, checkout y panel operativo",
+      "Onboarding guiado para salir a vender"
+    ],
+    cta: "Comenzar con Basico"
+  },
+  {
+    name: "Crecimiento",
+    price: "Para marcas que ya venden y quieren escalar",
+    features: [
+      "Canal distribuidor + precios escalonados",
+      "Automatizacion comercial con IA",
+      "Reportes ejecutivos y embudos por canal"
+    ],
+    cta: "Escalar con Crecimiento",
+    highlight: true
+  },
+  {
+    name: "Empresarial",
+    price: "Para operaciones multi-equipo y alto volumen",
+    features: [
+      "Arquitectura modular por industria y unidades",
+      "Integraciones avanzadas y soporte prioritario",
+      "Acompanamiento estrategico REINPIA"
+    ],
+    cta: "Hablar con equipo empresarial"
+  }
+];
+
+const TESTIMONIALS = [
+  {
+    quote:
+      "En 6 semanas pasamos de vender por mensajes sueltos a operar ecommerce + distribuidores con trazabilidad total.",
+    name: "Laura Martinez",
+    role: "Directora Comercial, marca retail"
+  },
+  {
+    quote:
+      "El canal distribuidor nos dio orden en precios y volumen. Ahora cerramos pedidos con mas margen y menos friccion.",
+    name: "Carlos Rivera",
+    role: "Distribuidor autorizado"
+  },
+  {
+    quote:
+      "COMERCIA nos dio plataforma de nivel empresarial sin meses de desarrollo. Hoy tomamos decisiones con datos reales.",
+    name: "Daniela Soto",
+    role: "CEO, empresa de servicios"
+  }
+];
+
+const FAQS = [
+  {
+    question: "Como vender en linea con una plataforma profesional?",
+    answer:
+      "Con COMERCIA by REINPIA activas una landing de conversion, ecommerce y procesos comerciales en un solo flujo para empezar a vender en dias."
+  },
+  {
+    question: "Como crear un ecommerce escalable para mi negocio?",
+    answer:
+      "La plataforma integra catalogo, checkout, POS, automatizacion con IA y reportes, por lo que puedes crecer por etapas sin rehacer tu sistema."
+  },
+  {
+    question: "Como vender tambien a distribuidores o mayoreo?",
+    answer:
+      "COMERCIA incluye un canal distribuidor con registro, precios por volumen y reglas comerciales para atender B2B y B2C al mismo tiempo."
+  },
+  {
+    question: "Que hace la IA dentro de COMERCIA?",
+    answer:
+      "La IA ayuda a captar, calificar y seguir leads, recomendar acciones de venta y mejorar la conversion de forma continua."
+  }
+];
+
+function createFaqSchema() {
+  return {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: FAQS.map((faq) => ({
+      "@type": "Question",
+      name: faq.question,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: faq.answer
+      }
+    }))
+  };
 }
 
 export function ComerciaLandingPage() {
   const [searchParams] = useSearchParams();
   const refQuery = searchParams.get("ref") ?? "";
+  const requestedPlan = searchParams.get("plan");
+  const brandInput = getDemoBrandInput(searchParams.get("brand"));
+  const brandTheme = useMemo(() => buildBrandTheme(brandInput, "landing"), [brandInput]);
+  const brandStyle = useMemo(() => tokensToCssVars(brandTheme), [brandTheme]);
+  const planType =
+    requestedPlan === "commission" || requestedPlan === "subscription"
+      ? requestedPlan
+      : brandTheme.monetizationPlan;
+  const planVariant =
+    planType === "commission"
+      ? {
+          headline: "Empieza sin invertir fijo y paga solo cuando vendes",
+          subtitle: "Modelo accesible para crecer con bajo riesgo y transparencia total en cada venta.",
+          ctaPrimary: "Empieza sin costo fijo",
+          ctaSecondary: "Quiero vender / ser distribuidor",
+          badge: "PLAN A - Comision por venta",
+        }
+      : {
+          headline: "Escala tu operacion con control total y sin comisiones",
+          subtitle: "Modelo de suscripcion para rentabilidad estable y herramientas premium sin cargos por venta.",
+          ctaPrimary: "Activa tu plan",
+          ctaSecondary: "Conocer beneficios premium",
+          badge: "PLAN B - Suscripcion sin comision",
+        };
   const [refStatus, setRefStatus] = useState<"unknown" | "valid" | "invalid">("unknown");
 
+  const [activeDemo, setActiveDemo] = useState<DemoView["code"]>("home");
   const [diagnosticOpen, setDiagnosticOpen] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
@@ -73,7 +287,10 @@ export function ComerciaLandingPage() {
   const [serviceSubmitted, setServiceSubmitted] = useState(false);
   const [serviceError, setServiceError] = useState("");
 
-  const youtubeEmbed = useMemo(() => getYoutubeEmbedUrl(YOUTUBE_URL), []);
+  const activeDemoView = useMemo(
+    () => DEMO_VIEWS.find((view) => view.code === activeDemo) ?? DEMO_VIEWS[0],
+    [activeDemo]
+  );
 
   useEffect(() => {
     if (!refQuery) return;
@@ -84,13 +301,35 @@ export function ComerciaLandingPage() {
   }, [refQuery]);
 
   useEffect(() => {
-    document.body.classList.add("public-landing");
+    document.body.classList.add("public-landing", "comercia-premium-body");
     document.body.classList.remove("modal-open");
     document.body.style.overflow = "";
+
+    const oldTitle = document.title;
+    document.title = `${brandTheme.name} | Ecosistema multicanal COMERCIA by REINPIA`;
+
+    const metaDescription = document.querySelector('meta[name="description"]') ?? document.createElement("meta");
+    metaDescription.setAttribute("name", "description");
+    metaDescription.setAttribute(
+      "content",
+      `${brandTheme.name}: landing, ecommerce publico, canal distribuidores y POS con branding unificado y personalizacion por marca.`
+    );
+    if (!metaDescription.parentElement) {
+      document.head.appendChild(metaDescription);
+    }
+
+    const canonical = document.querySelector('link[rel="canonical"]') ?? document.createElement("link");
+    canonical.setAttribute("rel", "canonical");
+    canonical.setAttribute("href", `${window.location.origin}/comercia?brand=${brandTheme.key}`);
+    if (!canonical.parentElement) {
+      document.head.appendChild(canonical);
+    }
+
     return () => {
-      document.body.classList.remove("public-landing");
+      document.body.classList.remove("public-landing", "comercia-premium-body");
+      document.title = oldTitle;
     };
-  }, []);
+  }, [brandTheme.key, brandTheme.name]);
 
   const openLia = () => window.dispatchEvent(new Event("lia:open"));
 
@@ -101,14 +340,14 @@ export function ComerciaLandingPage() {
   };
 
   const openContact = () => {
-    const section = document.getElementById("contactanos");
+    const section = document.getElementById("contacto");
     if (section) {
       section.scrollIntoView({ behavior: "smooth", block: "start" });
     }
   };
 
-  const openPackages = () => {
-    const section = document.getElementById("paquetes");
+  const openPlans = () => {
+    const section = document.getElementById("planes");
     if (section) {
       section.scrollIntoView({ behavior: "smooth", block: "start" });
     }
@@ -123,7 +362,7 @@ export function ComerciaLandingPage() {
         purchase_status: "pending_contact",
         source_type: refQuery ? "query_param" : leadForm.referral_code ? "manual_code" : "direct",
         referral_code: leadForm.referral_code || undefined,
-        notes: `${leadForm.notes} | channel=diagnostico_modal`.trim(),
+        notes: `${leadForm.notes} | channel=diagnostico_modal | page=comercia_premium_landing`.trim(),
       };
       await api.createComerciaPlanPurchaseLead(payload);
       await api.createComerciaCustomerContactLead({
@@ -139,7 +378,7 @@ export function ComerciaLandingPage() {
       });
       setSubmitted(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "No fue posible registrar el lead comercial");
+      setError(err instanceof Error ? err.message : "No fue posible registrar el lead comercial.");
     }
   };
 
@@ -163,158 +402,468 @@ export function ComerciaLandingPage() {
     }
   };
 
+  const organizationSchema = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: `${brandTheme.name} en COMERCIA by REINPIA`,
+    url: `${window.location.origin}/comercia?brand=${brandTheme.key}`,
+    description:
+      `Ecosistema multicanal de ${brandTheme.name}: landing, ecommerce, distribuidores y POS con automatizacion IA.`,
+  };
+
+  const softwareSchema = {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    name: `${brandTheme.name} by COMERCIA`,
+    applicationCategory: "BusinessApplication",
+    operatingSystem: "Web",
+    description:
+      `Plataforma SaaS para ${brandTheme.name} con ecommerce, canal distribuidor, POS y automatizacion inteligente.`,
+  };
+
+  const businessSpecificText =
+    brandTheme.businessType === "services"
+      ? "Enfoque principal: agenda, servicios, atencion y conversion consultiva."
+      : brandTheme.businessType === "products"
+        ? "Enfoque principal: catalogo, promocion y compra recurrente."
+        : "Enfoque principal: mezcla de catalogo, servicios y operacion omnicanal.";
+
   return (
-    <main className="marketing-shell">
+    <main className="comercia-premium" style={brandStyle}>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(createFaqSchema()) }} />
+
       <CookieConsentBanner />
-      <LiaSalesAssistant referralCode={refQuery} onOpenDiagnostic={openDiagnostic} onOpenContact={openContact} onOpenPackages={openPackages} />
-
-      <div className="row-gap" style={{ justifyContent: "space-between" }}>
-        <p className="marketing-eyebrow" style={{ margin: 0 }}>ComerCia by REINPIA</p>
-        <LanguageSelector />
-      </div>
-
-      <HeroSection
-        eyebrow="Ecosistema comercial para marcas en crecimiento"
-        title="Convierte tu negocio en una maquina de ventas con ComerCia"
-        subtitle="Landing premium, ecommerce por canal, automatizacion comercial y operacion conectada para que tu marca venda mas con control total."
-        primaryLabel="Quiero mi diagnostico"
-        primaryTo="#abrir-diagnostico"
-        secondaryLabel="Ver paquetes"
-        secondaryTo="#paquetes"
+      <LiaSalesAssistant
+        referralCode={refQuery}
+        onOpenDiagnostic={openDiagnostic}
+        onOpenContact={openContact}
+        onOpenPackages={openPlans}
       />
 
-      <div className="row-gap">
-        <button type="button" className="button" id="abrir-diagnostico" onClick={openDiagnostic}>Abrir diagnostico comercial</button>
-        <button type="button" className="button button-outline" onClick={openLia}>Abrir Lía</button>
-        <button type="button" className="button button-outline" onClick={openContact}>Contáctanos</button>
-      </div>
-
-      <section className="hero-mockup-grid">
-        <article className="hero-mockup-card">
-          <p className="marketing-tag">Vista ejecutiva</p>
-          <h3>Ventas, operacion y seguimiento en un solo tablero</h3>
-          <p>Controla ecommerce, distribuidores, POS, logistica y reportes sin perder foco comercial.</p>
-        </article>
-        <article className="hero-mockup-card hero-mockup-strong">
-          <p className="marketing-tag">Activacion rapida</p>
-          <h3>De idea a ecosistema comercial en semanas</h3>
-          <p>Te guiamos paso a paso para publicar, vender y escalar con estructura real.</p>
-        </article>
-      </section>
-
-      <section className="marketing-section" id="retos">
-        <h2>Retos que ComerCia resuelve para acelerar tu crecimiento</h2>
-        <div className="card-grid">
-          <SolutionCard title="No tienes ecommerce funcional" description="Sin canal digital estable, pierdes ventas todos los dias." tag="Reto actual" />
-          <SolutionCard title="No controlas distribuidores" description="Precios, volumen y seguimiento se vuelven un caos comercial." tag="Reto actual" />
-          <SolutionCard title="No automatizas seguimiento" description="Leads y prospectos se enfrien por falta de procesos claros." tag="Reto actual" />
-          <SolutionCard title="No tienes trazabilidad" description="Sin reportes accionables no sabes donde invertir para crecer." tag="Reto actual" />
+      <header className="cp-nav cp-animate-up" id="top">
+        <div>
+          <p className="cp-kicker">{brandTheme.channelBadge} · COMERCIA by REINPIA · {planVariant.badge}</p>
+          <h1>{planVariant.headline}</h1>
+          <p className="cp-brand-context">{businessSpecificText}</p>
         </div>
-      </section>
-
-      <section className="marketing-section" id="solucion">
-        <h2>ComerCia resuelve tu operacion comercial de punta a punta</h2>
-        <div className="card-grid">
-          <SolutionCard title="Landing premium" description="Capta prospectos con narrativa comercial clara y CTA de cierre." tag="Captacion" />
-          <SolutionCard title="Ecommerce publico" description="Tienda retail profesional con promociones, resenas y recompra." tag="Ventas" />
-          <SolutionCard title="Ecommerce distribuidores" description="Canal B2B separado con reglas de volumen y beneficios comerciales." tag="Canal" />
-          <SolutionCard title="POS / WebApp" description="Vende en punto fisico, registra cliente y conecta fidelizacion." tag="Operacion" />
-          <SolutionCard title="Logistica" description="Control de entregas y servicio logistico adicional cuando lo necesites." tag="Fulfillment" />
-          <SolutionCard title="Automatizacion" description="Seguimiento comercial, recordatorios y mensajes operativos." tag="Automatizacion" />
-          <SolutionCard title="Fidelizacion" description="Puntos, cupones y membresias para elevar ticket y recompra." tag="Crecimiento" />
-          <SolutionCard title="Reportes" description="KPIs claros para decidir con datos y escalar con confianza." tag="Inteligencia" />
+        <div className="cp-nav-actions">
+          <LanguageSelector />
+          <button type="button" className="button" onClick={openDiagnostic}>
+            {planVariant.ctaPrimary}
+          </button>
         </div>
-      </section>
+      </header>
 
-      <section className="marketing-section" id="video-demo">
-        <h2>Video demo de ComerCia</h2>
-        <p>Conoce en minutos como se ve y opera el ecosistema comercial completo en una marca real.</p>
-        {youtubeEmbed ? (
-          <div className="video-embed-wrap">
-            <iframe className="video-embed" src={youtubeEmbed} title="Video demo de ComerCia" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
+      <section className="cp-hero cp-animate-up" aria-label="Hero principal">
+        <div className="cp-hero-copy">
+          <p className="cp-eyebrow">{brandTheme.name} · {brandTheme.tone}</p>
+          <h2>{planVariant.subtitle}</h2>
+          <p>{brandTheme.valueProp}</p>
+          <div className="cp-cta-row">
+            <button type="button" className="button" onClick={openDiagnostic}>
+              {planVariant.ctaPrimary}
+            </button>
+            <button type="button" className="button button-outline" onClick={openPlans}>
+              {planVariant.ctaSecondary}
+            </button>
+            <button type="button" className="button button-outline" onClick={openLia}>
+              Hablar con Lia IA
+            </button>
           </div>
-        ) : (
-          <article className="card marketing-card video-placeholder">
-            <h3>Demo en video disponible para este bloque</h3>
-            <p>Pega la URL de YouTube en la variable `VITE_COMERCIA_YOUTUBE_URL` para mostrar el embed automatico.</p>
-            <button type="button" className="button" onClick={openDiagnostic}>Solicitar demo guiada</button>
+          <div className="cp-proof-row">
+            <span>Implementacion acelerada</span>
+            <span>Arquitectura modular por industria</span>
+            <span>Escalable para inversion y expansion</span>
+          </div>
+        </div>
+
+        <aside className="cp-hero-ecosystem" aria-label="Mockups de ecosistema">
+          <article className="cp-mock-card cp-main-mock">
+            <p>Dashboard ejecutivo</p>
+            <h3>Ventas + IA + Operacion</h3>
+            <ul>
+              <li>Embudo comercial en vivo</li>
+              <li>Alertas de conversion y recompra</li>
+              <li>Control omnicanal por marca</li>
+            </ul>
           </article>
-        )}
+          <article className="cp-mock-card">
+            <p>Ecommerce premium</p>
+            <h3>Checkout optimizado</h3>
+          </article>
+          <article className="cp-mock-card">
+            <p>POS WebApp</p>
+            <h3>Venta fisica conectada</h3>
+          </article>
+          <article className="cp-mock-card">
+            <p>Canal distribuidor</p>
+            <h3>B2B con reglas de negocio</h3>
+          </article>
+        </aside>
       </section>
 
-      <section className="marketing-section" id="como-funciona">
-        <h2>Como funciona</h2>
-        <div className="workflow-steps">
-          <article className="workflow-step"><span>1</span><h3>Analizamos tu marca</h3><p>Entendemos tu etapa, oferta y objetivos de crecimiento.</p></article>
-          <article className="workflow-step"><span>2</span><h3>Definimos ruta comercial</h3><p>Priorizamos canales, procesos y enfoque de conversion.</p></article>
-          <article className="workflow-step"><span>3</span><h3>Generamos tu ecosistema</h3><p>Landing, ecommerce, distribuidores y operacion listos para venta.</p></article>
-          <article className="workflow-step"><span>4</span><h3>Validas y aprobamos</h3><p>Revisas, ajustas y dejas todo alineado a tu marca.</p></article>
-          <article className="workflow-step"><span>5</span><h3>Publicamos y escalamos</h3><p>Activamos ventas y seguimiento continuo para crecer con orden.</p></article>
+      {brandTheme.hasExistingLanding ? (
+        <section className="cp-section cp-existing-landing">
+          <header className="cp-section-head">
+            <p className="cp-kicker">Landing existente detectada</p>
+            <h2>Esta marca ya cuenta con landing externa</h2>
+          </header>
+          <p>
+            COMERCIA adaptara automaticamente ecommerce publico, canal distribuidores y POS conservando la identidad de
+            marca y conectando con su landing actual.
+          </p>
+          {brandTheme.existingLandingUrl ? (
+            <a href={brandTheme.existingLandingUrl} target="_blank" rel="noreferrer">
+              Visitar landing existente
+            </a>
+          ) : null}
+        </section>
+      ) : null}
+
+      <section className="cp-section cp-entry" id="entrada">
+        <header className="cp-section-head">
+          <p className="cp-kicker">2. Doble entrada de usuario</p>
+          <h2>Elige tu ruta de crecimiento</h2>
+        </header>
+        <div className="cp-entry-grid">
+          <article className="cp-entry-card">
+            <p className="cp-entry-tag">A. Quiero vender</p>
+            <h3>Para empresas, marcas y comercios</h3>
+            <p>Activa tu ecosistema comercial con ecommerce, canal distribuidor, POS y automatizacion IA.</p>
+            <ul>
+              <li>Salida rapida al mercado</li>
+              <li>Control de ventas e inventario</li>
+              <li>Escalamiento por etapas</li>
+            </ul>
+            <button type="button" className="button" onClick={openDiagnostic}>
+              Quiero vender con COMERCIA
+            </button>
+          </article>
+          <article className="cp-entry-card cp-entry-card-alt">
+            <p className="cp-entry-tag">B. Quiero comprar o distribuir</p>
+            <h3>Para distribuidores y compradores profesionales</h3>
+            <p>Accede a catalogos por volumen, precios diferenciados y beneficios comerciales exclusivos.</p>
+            <ul>
+              <li>Portal distribuidor dedicado</li>
+              <li>Condiciones por mayoreo</li>
+              <li>Seguimiento y atencion comercial</li>
+            </ul>
+            <button type="button" className="button" onClick={openContact}>
+              Quiero distribuir
+            </button>
+          </article>
         </div>
       </section>
 
-      <section id="paquetes" className="marketing-section">
-        <h2>Paquetes ComerCia</h2>
-        <div className="card-grid package-grid-strong">
-          <PackageCard
-            name="ComerCia IMPULSA"
-            subtitle="Para iniciar, ordenar y acelerar tu negocio"
-            focus="Ideal para micro, pequenas y medianas empresas que necesitan traccion rapida con base comercial."
-            includes={["Landing premium + ecommerce base", "Marketing de arranque", "Flujo comercial con diagnostico guiado"]}
-            primaryTo="#abrir-diagnostico"
-            secondaryTo="#contactanos"
-          />
-          <PackageCard
-            name="ComerCia ESCALA"
-            subtitle="Para crecer, automatizar y expandir tu marca con mas fuerza"
-            focus="Pensado para empresas en crecimiento que necesitan operacion robusta para vender mas y mejor."
-            includes={["Automatizacion comercial avanzada", "Canal distribuidor con control por reglas", "Panel de operacion y reportes ejecutivos"]}
-            primaryTo="#abrir-diagnostico"
-            secondaryTo="#contactanos"
-          />
-        </div>
-        <div className="row-gap">
-          <button type="button" className="button" onClick={openLia}>Hablar con Lía</button>
-          <button type="button" className="button button-outline" onClick={openDiagnostic}>Solicitar diagnostico</button>
-        </div>
-      </section>
-
-      <section className="marketing-section">
-        <h2>Servicios adicionales activables</h2>
-        <div className="card-grid">
-          <SolutionCard title="Logistica personalizada" description="Recoleccion, entrega y resguardo para marcas que no cuentan con estructura propia." tag="Servicio adicional" />
-          <SolutionCard title="Membresias y credenciales" description="Credenciales digitales/fisicas con QR y NFC opcional para clientes y equipos." tag="Identificacion" />
-          <SolutionCard title="Cobros digitales POS" description="Links de pago y QR para ventas desde celular con flujo listo para Mercado Pago." tag="Cobros" />
-        </div>
-        <div className="card-grid">
-          <article className="card marketing-card"><h3>Activacion NFC opcional</h3><p>Activacion inicial: 500 MXN</p></article>
-          <article className="card marketing-card"><h3>Activacion cobros digitales POS</h3><p>Activacion inicial: 500 MXN</p></article>
+      <section className="cp-section">
+        <header className="cp-section-head">
+          <p className="cp-kicker">3. Que es COMERCIA?</p>
+          <h2>Una plataforma todo en uno para vender, operar y escalar con inteligencia</h2>
+          <p>
+            COMERCIA by REINPIA conecta ecommerce inteligente, canal publico y distribuidores, POS WebApp y
+            automatizacion con IA para que tu equipo trabaje con una sola fuente de verdad.
+          </p>
+        </header>
+        <div className="cp-pillars">
+          <article>
+            <h3>Ecommerce inteligente</h3>
+            <p>Catalogo, checkout y conversion optimizados para clientes finales y busqueda organica.</p>
+          </article>
+          <article>
+            <h3>Canal publico + distribuidores</h3>
+            <p>Atiende B2C y B2B con reglas de precios, volumen y seguimiento por segmento.</p>
+          </article>
+          <article>
+            <h3>POS + WebApp</h3>
+            <p>Opera ventas presenciales con sincronizacion en tiempo real contra inventario y CRM.</p>
+          </article>
+          <article>
+            <h3>Automatizacion con IA</h3>
+            <p>Acelera captura, seguimiento y cierre con asistencia automatizada y recomendaciones.</p>
+          </article>
         </div>
       </section>
 
-      <section id="contactanos" className="contact-section-premium marketing-section">
-        <h2>Contáctanos</h2>
-        <p>Cuéntanos en qué etapa estás y te compartimos una ruta comercial clara para vender más rápido con operación ordenada.</p>
-        <form className="detail-form contact-form-premium" onSubmit={handleCustomerServiceSubmit}>
+      <section className="cp-section" id="beneficios">
+        <header className="cp-section-head">
+          <p className="cp-kicker">4. Beneficios clave</p>
+          <h2>Todo lo que necesitas para crecimiento comercial medible</h2>
+        </header>
+        <div className="cp-benefits-grid">
+          {BENEFITS.map((benefit) => (
+            <article key={benefit.title} className="cp-benefit-card">
+              <span className="cp-benefit-icon" aria-hidden="true">
+                {benefit.icon}
+              </span>
+              <h3>{benefit.title}</h3>
+              <p>{benefit.description}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="cp-section" id="demo-visual">
+        <header className="cp-section-head">
+          <p className="cp-kicker">5. Demo visual del sistema</p>
+          <h2>Visualiza cada modulo antes de implementar</h2>
+        </header>
+        <div className="cp-demo-tabs" role="tablist" aria-label="Vistas demo de plataforma">
+          {DEMO_VIEWS.map((view) => (
+            <button
+              key={view.code}
+              type="button"
+              className={`cp-demo-tab ${activeDemo === view.code ? "is-active" : ""}`}
+              onClick={() => setActiveDemo(view.code)}
+            >
+              {view.title}
+            </button>
+          ))}
+        </div>
+        <article className="cp-demo-panel" style={{ background: activeDemoView.gradient }}>
+          <div>
+            <p className="cp-eyebrow">Vista activa</p>
+            <h3>{activeDemoView.title}</h3>
+            <p>{activeDemoView.subtitle}</p>
+            <ul>
+              {activeDemoView.bullets.map((bullet) => (
+                <li key={bullet}>{bullet}</li>
+              ))}
+            </ul>
+          </div>
+          <div className="cp-demo-metrics">
+            {activeDemoView.metrics.map((metric) => (
+              <span key={metric}>{metric}</span>
+            ))}
+          </div>
+        </article>
+      </section>
+
+      <section className="cp-section" id="flujo">
+        <header className="cp-section-head">
+          <p className="cp-kicker">6. Flujo de funcionamiento</p>
+          <h2>De activacion a escalamiento en 5 pasos</h2>
+        </header>
+        <ol className="cp-timeline">
+          <li>
+            <h3>1. Cargas tus productos</h3>
+            <p>Estructuras catalogo, categorias y precios por segmento desde un panel central.</p>
+          </li>
+          <li>
+            <h3>2. Activas tu tienda</h3>
+            <p>Publicas una experiencia premium lista para conversion en web y mobile.</p>
+          </li>
+          <li>
+            <h3>3. Vendes a publico y distribuidores</h3>
+            <p>Operas B2C y B2B sin duplicar procesos ni perder control comercial.</p>
+          </li>
+          <li>
+            <h3>4. Automatizas con IA</h3>
+            <p>Delegas seguimiento de leads, recomendaciones y tareas repetitivas de alto impacto.</p>
+          </li>
+          <li>
+            <h3>5. Escalas tu negocio</h3>
+            <p>Tomas decisiones con datos, reportes y alertas para crecer con rentabilidad.</p>
+          </li>
+        </ol>
+      </section>
+
+      <section className="cp-section cp-ai" id="ia">
+        <header className="cp-section-head">
+          <p className="cp-kicker">7. Inteligencia artificial aplicada a ventas</p>
+          <h2>Tu negocio no solo vende, aprende y mejora automaticamente.</h2>
+        </header>
+        <div className="cp-ai-grid">
+          <article>
+            <h3>Agentes de IA para crecimiento comercial</h3>
+            <p>
+              Lia te ayuda a captar demanda, recomendar planes y convertir conversaciones en leads accionables para tu
+              equipo de ventas.
+            </p>
+          </article>
+          <article>
+            <h3>Automatizacion de atencion y seguimiento</h3>
+            <p>
+              Dispara secuencias de contacto, recordatorios y respuestas guiadas para no perder oportunidades por falta
+              de seguimiento.
+            </p>
+          </article>
+          <article>
+            <h3>Recomendaciones y optimizacion continua</h3>
+            <p>
+              Detecta patrones de compra, sugiere acciones de conversion y prioriza cuentas de alto potencial.
+            </p>
+          </article>
+        </div>
+        <div className="cp-cta-row">
+          <button type="button" className="button" onClick={openLia}>
+            Probar Lia IA ahora
+          </button>
+          <button type="button" className="button button-outline" onClick={openDiagnostic}>
+            Activar automatizacion
+          </button>
+        </div>
+      </section>
+
+      <section className="cp-section" id="casos-uso">
+        <header className="cp-section-head">
+          <p className="cp-kicker">8. Casos de uso</p>
+          <h2>Diseno de landing y ecommerce para multiples empresas e industrias</h2>
+          <p>
+            Arquitectura comercial pensada para adaptarse a distintos giros, con SEO, AEO y prompts integrados para
+            mejorar visibilidad, posicionamiento y conversion.
+          </p>
+          <p>
+            Disenado para que tu marca sea mas facil de encontrar, entender y convertir en buscadores, asistentes de
+            IA y canales digitales.
+          </p>
+          <p>
+            Preparado para operar desde Mexico y escalar a otros mercados con estructura comercial lista para trabajar
+            en pesos, dolares y euros.
+          </p>
+        </header>
+        <div className="cp-usecases-grid">
+          {USE_CASES.map((item) => (
+            <article key={item.industry} className="cp-usecase">
+              <h3>{item.industry}</h3>
+              <p>
+                <strong>Reto:</strong> {item.challenge}
+              </p>
+              <p>
+                <strong>Resultado:</strong> {item.result}
+              </p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="cp-section" id="planes">
+        <header className="cp-section-head">
+          <p className="cp-kicker">9. Planes</p>
+          <h2>Selecciona el modelo de crecimiento para tu negocio</h2>
+        </header>
+        <div className="cp-plans-grid">
+          {PLANS.map((plan) => (
+            <article key={plan.name} className={`cp-plan-card ${plan.highlight ? "is-highlight" : ""}`}>
+              <p className="cp-plan-name">{plan.name}</p>
+              <p className="cp-plan-price">{plan.price}</p>
+              <ul>
+                {plan.features.map((feature) => (
+                  <li key={feature}>{feature}</li>
+                ))}
+              </ul>
+              <button type="button" className="button" onClick={openDiagnostic}>
+                {plan.cta}
+              </button>
+            </article>
+          ))}
+        </div>
+        <div className="cp-plan-contact">
+          <p>
+            Necesitas una configuracion especial? Disenamos arquitectura a la medida para corporativos, redes de
+            distribuidores y operaciones multi-sucursal.
+          </p>
+          <button type="button" className="button button-outline" onClick={openContact}>
+            Hablar con consultor
+          </button>
+        </div>
+      </section>
+
+      <section className="cp-section" id="testimonios">
+        <header className="cp-section-head">
+          <p className="cp-kicker">10. Testimonios (demo)</p>
+          <h2>Resultados que una plataforma comercial bien ejecutada puede habilitar</h2>
+        </header>
+        <div className="cp-testimonial-grid">
+          {TESTIMONIALS.map((testimonial) => (
+            <blockquote key={testimonial.name} className="cp-testimonial">
+              <p>"{testimonial.quote}"</p>
+              <footer>
+                <strong>{testimonial.name}</strong>
+                <span>{testimonial.role}</span>
+              </footer>
+            </blockquote>
+          ))}
+        </div>
+      </section>
+
+      <section className="cp-section cp-final-cta" id="cta-final">
+        <p className="cp-kicker">11. CTA final</p>
+        <h2>{planType === "commission" ? "Empieza a vender hoy mismo sin costo fijo." : "Activa tu plan y escala con tecnologia empresarial sin comisiones."}</h2>
+        <p>
+          Acelera tu salida al mercado, profesionaliza tu operacion y escala con una plataforma preparada para inversion,
+          expansion y decisiones basadas en datos.
+        </p>
+        <div className="cp-cta-row">
+          <button type="button" className="button" onClick={openDiagnostic}>
+            {planVariant.ctaPrimary}
+          </button>
+          <button type="button" className="button button-outline" onClick={openContact}>
+            Quiero hablar con un asesor
+          </button>
+        </div>
+      </section>
+
+      <section className="cp-section cp-faq" id="faq">
+        <header className="cp-section-head">
+          <p className="cp-kicker">SEO + AEO</p>
+          <h2>Preguntas frecuentes sobre ecommerce y crecimiento comercial</h2>
+        </header>
+        <div className="cp-faq-grid">
+          {FAQS.map((faq) => (
+            <article key={faq.question}>
+              <h3>{faq.question}</h3>
+              <p>{faq.answer}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="cp-section cp-contact" id="contacto">
+        <header className="cp-section-head">
+          <p className="cp-kicker">Contacto</p>
+          <h2>Cuentanos tu objetivo y te proponemos una ruta clara de implementacion</h2>
+        </header>
+        <form className="detail-form" onSubmit={handleCustomerServiceSubmit}>
           <label>
             Nombre
-            <input required value={serviceForm.name} onChange={(event) => setServiceForm((prev) => ({ ...prev, name: event.target.value }))} />
+            <input
+              required
+              value={serviceForm.name}
+              onChange={(event) => setServiceForm((prev) => ({ ...prev, name: event.target.value }))}
+            />
           </label>
           <label>
             Correo
-            <input required type="email" value={serviceForm.email} onChange={(event) => setServiceForm((prev) => ({ ...prev, email: event.target.value }))} />
+            <input
+              required
+              type="email"
+              value={serviceForm.email}
+              onChange={(event) => setServiceForm((prev) => ({ ...prev, email: event.target.value }))}
+            />
           </label>
           <label>
             Telefono o WhatsApp
-            <input required value={serviceForm.phone_whatsapp} onChange={(event) => setServiceForm((prev) => ({ ...prev, phone_whatsapp: event.target.value }))} />
+            <input
+              required
+              value={serviceForm.phone_whatsapp}
+              onChange={(event) => setServiceForm((prev) => ({ ...prev, phone_whatsapp: event.target.value }))}
+            />
           </label>
           <label>
             Empresa
-            <input value={serviceForm.company} onChange={(event) => setServiceForm((prev) => ({ ...prev, company: event.target.value }))} />
+            <input
+              value={serviceForm.company}
+              onChange={(event) => setServiceForm((prev) => ({ ...prev, company: event.target.value }))}
+            />
           </label>
           <label>
             Motivo de contacto
-            <select value={serviceForm.contact_reason} onChange={(event) => setServiceForm((prev) => ({ ...prev, contact_reason: event.target.value }))}>
+            <select
+              value={serviceForm.contact_reason}
+              onChange={(event) => setServiceForm((prev) => ({ ...prev, contact_reason: event.target.value }))}
+            >
               <option value="planes">Informacion de planes</option>
               <option value="soporte">Soporte / dudas</option>
               <option value="ecommerce">Ecommerce</option>
@@ -326,115 +875,181 @@ export function ComerciaLandingPage() {
           </label>
           <label>
             Mensaje
-            <textarea required value={serviceForm.message} onChange={(event) => setServiceForm((prev) => ({ ...prev, message: event.target.value }))} />
+            <textarea
+              required
+              value={serviceForm.message}
+              onChange={(event) => setServiceForm((prev) => ({ ...prev, message: event.target.value }))}
+            />
           </label>
-          <div className="row-gap">
-            <button className="button" type="submit">Enviar mensaje</button>
-            <button className="button button-outline" type="button" onClick={openDiagnostic}>Solicitar diagnostico</button>
-            <button className="button button-outline" type="button" onClick={openLia}>Abrir Lía</button>
+          <div className="cp-cta-row">
+            <button className="button" type="submit">
+              Enviar mensaje
+            </button>
+            <button className="button button-outline" type="button" onClick={openLia}>
+              Hablar con Lia
+            </button>
           </div>
         </form>
         {serviceError ? <p className="error">{serviceError}</p> : null}
-        {serviceSubmitted ? <p>Tu mensaje fue registrado. Te contactaremos con seguimiento personalizado.</p> : null}
+        {serviceSubmitted ? <p className="cp-success">Tu solicitud fue registrada. Te contactaremos pronto.</p> : null}
       </section>
 
-      <CTASection
-        title="Tu marca puede vender mejor, crecer mas rapido y operar con mas inteligencia"
-        subtitle="Activa tu ruta comercial en ComerCia y agenda una sesion de diagnostico con nuestro equipo."
-        primaryLabel="Solicitar diagnostico"
-        primaryTo="#abrir-diagnostico"
-        secondaryLabel="Contáctanos"
-        secondaryTo="#contactanos"
-      />
-
-      <footer className="marketing-footer">
-        <div className="marketing-footer-grid">
+      <footer className="cp-footer">
+        <div className="cp-footer-grid">
           <div>
-            <h4>ComerCia by REINPIA</h4>
-            <p>Plataforma comercial para marcas que necesitan vender mejor con control operativo.</p>
+            <h3>{brandTheme.name}</h3>
+            <p>
+              Plataforma comercial premium para ecommerce, distribuidores, automatizacion IA y operacion empresarial
+              escalable.
+            </p>
           </div>
           <div>
-            <h5>Legal</h5>
+            <h4>Producto</h4>
+            <a href="#beneficios">Beneficios</a>
+            <a href="#demo-visual">Demo visual</a>
+            <a href="#planes">Planes</a>
+          </div>
+          <div>
+            <h4>Recursos</h4>
+            <a href="#faq">FAQ SEO/AEO</a>
+            <Link to="/templates/familia">Demo sistema multimarcas</Link>
+            <Link to={`/templates/tienda-publica?brand=${brandTheme.key}`}>Preview ecommerce publico</Link>
+            <Link to={`/templates/distribuidores?brand=${brandTheme.key}`}>Preview distribuidores</Link>
+            <Link to={`/templates/pos?brand=${brandTheme.key}`}>Preview POS</Link>
+            <button type="button" className="cp-footer-link" onClick={openLia}>
+              Chatbot IA Lia
+            </button>
+            <button type="button" className="cp-footer-link" onClick={openDiagnostic}>
+              Diagnostico comercial
+            </button>
+          </div>
+          <div>
+            <h4>Legal</h4>
             <Link to="/legal/privacidad">Politica de privacidad</Link>
             <Link to="/legal/cookies">Politica de cookies</Link>
             <Link to="/legal/proteccion-datos">Proteccion de datos</Link>
           </div>
-          <div>
-            <h5>Contacto</h5>
-            <a href="#contactanos">Contáctanos</a>
-            <button type="button" className="link-button" onClick={openDiagnostic}>Diagnostico comercial</button>
-            <button type="button" className="link-button" onClick={openLia}>Abrir Lía</button>
-          </div>
-          <div>
-            <h5>Redes</h5>
-            <a href="#" onClick={(event) => event.preventDefault()}>LinkedIn (proximamente)</a>
-            <a href="#" onClick={(event) => event.preventDefault()}>YouTube (proximamente)</a>
-            <a href="#" onClick={(event) => event.preventDefault()}>WhatsApp Business (proximamente)</a>
-          </div>
+        </div>
+        <div className="cp-footer-bottom">
+          <span>COMERCIA es una plataforma desarrollada por REINPIA. Todos los derechos reservados.</span>
+          <span>© REINPIA. Todos los derechos reservados.</span>
+          <a href="#top">Volver arriba</a>
         </div>
       </footer>
 
       {diagnosticOpen ? (
         <div className="cookie-modal-backdrop" role="presentation" onClick={() => setDiagnosticOpen(false)}>
-          <section className="cookie-modal diagnostic-modal" role="dialog" aria-modal="true" onClick={(event) => event.stopPropagation()}>
-            <h3>Diagnostico comercial</h3>
-            <p>Completa este subformulario para que nuestro equipo te proponga un plan de activacion comercial.</p>
+          <section
+            className="cookie-modal diagnostic-modal"
+            role="dialog"
+            aria-modal="true"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <h3>Diagnostico comercial COMERCIA</h3>
+            <p>
+              Comparte tus datos y objetivos para recomendarte la arquitectura ideal de ecommerce, canal distribuidor e
+              IA.
+            </p>
             <form className="detail-form" onSubmit={handleLeadSubmit}>
               <label>
                 Empresa
-                <input required value={leadForm.company_name} onChange={(e) => setLeadForm((p) => ({ ...p, company_name: e.target.value }))} />
+                <input
+                  required
+                  value={leadForm.company_name}
+                  onChange={(e) => setLeadForm((p) => ({ ...p, company_name: e.target.value }))}
+                />
               </label>
               <label>
                 Nombre
-                <input required value={leadForm.buyer_name} onChange={(e) => setLeadForm((p) => ({ ...p, buyer_name: e.target.value }))} />
+                <input
+                  required
+                  value={leadForm.buyer_name}
+                  onChange={(e) => setLeadForm((p) => ({ ...p, buyer_name: e.target.value }))}
+                />
               </label>
               <label>
                 Correo
-                <input required type="email" value={leadForm.buyer_email} onChange={(e) => setLeadForm((p) => ({ ...p, buyer_email: e.target.value }))} />
+                <input
+                  required
+                  type="email"
+                  value={leadForm.buyer_email}
+                  onChange={(e) => setLeadForm((p) => ({ ...p, buyer_email: e.target.value }))}
+                />
               </label>
               <label>
                 WhatsApp
-                <input required value={leadForm.buyer_phone} onChange={(e) => setLeadForm((p) => ({ ...p, buyer_phone: e.target.value }))} />
+                <input
+                  required
+                  value={leadForm.buyer_phone}
+                  onChange={(e) => setLeadForm((p) => ({ ...p, buyer_phone: e.target.value }))}
+                />
               </label>
               <label>
                 Plan de interes
-                <select value={leadForm.selected_plan_code} onChange={(e) => setLeadForm((p) => ({ ...p, selected_plan_code: e.target.value }))}>
-                  <option value="COMERCIA_IMPULSA">ComerCia IMPULSA</option>
-                  <option value="COMERCIA_ESCALA">ComerCia ESCALA</option>
+                <select
+                  value={leadForm.selected_plan_code}
+                  onChange={(e) => setLeadForm((p) => ({ ...p, selected_plan_code: e.target.value }))}
+                >
+                  <option value="COMERCIA_IMPULSA">Basico / IMPULSA</option>
+                  <option value="COMERCIA_ESCALA">Crecimiento / ESCALA</option>
+                  <option value="COMERCIA_EMPRESARIAL">Empresarial</option>
                 </select>
               </label>
               <label>
                 Clave de comisionista (opcional)
-                <input value={leadForm.referral_code} onChange={(e) => setLeadForm((p) => ({ ...p, referral_code: e.target.value.toUpperCase() }))} />
+                <input
+                  value={leadForm.referral_code}
+                  onChange={(e) => setLeadForm((p) => ({ ...p, referral_code: e.target.value.toUpperCase() }))}
+                />
               </label>
               <label>
                 Perfil legal
-                <select value={leadForm.legal_type} onChange={(e) => setLeadForm((p) => ({ ...p, legal_type: e.target.value }))}>
+                <select
+                  value={leadForm.legal_type}
+                  onChange={(e) => setLeadForm((p) => ({ ...p, legal_type: e.target.value }))}
+                >
                   <option value="constituted_company">Empresa constituida</option>
                   <option value="actividad_empresarial">Actividad empresarial</option>
                   <option value="other">Otro</option>
                 </select>
               </label>
               <label className="checkbox">
-                <input type="checkbox" checked={leadForm.needs_followup} onChange={(e) => setLeadForm((p) => ({ ...p, needs_followup: e.target.checked }))} />
+                <input
+                  type="checkbox"
+                  checked={leadForm.needs_followup}
+                  onChange={(e) => setLeadForm((p) => ({ ...p, needs_followup: e.target.checked }))}
+                />
                 Solicito seguimiento comercial
               </label>
               <label className="checkbox">
-                <input type="checkbox" checked={leadForm.needs_appointment} onChange={(e) => setLeadForm((p) => ({ ...p, needs_appointment: e.target.checked }))} />
+                <input
+                  type="checkbox"
+                  checked={leadForm.needs_appointment}
+                  onChange={(e) => setLeadForm((p) => ({ ...p, needs_appointment: e.target.checked }))}
+                />
                 Solicito reunion de diagnostico
               </label>
               <label>
                 Notas
                 <textarea value={leadForm.notes} onChange={(e) => setLeadForm((p) => ({ ...p, notes: e.target.value }))} />
               </label>
-              <div className="row-gap">
-                <button className="button" type="submit">Enviar diagnostico</button>
-                <button className="button button-outline" type="button" onClick={() => setDiagnosticOpen(false)}>Cerrar</button>
+              <div className="cp-cta-row">
+                <button className="button" type="submit">
+                  Enviar diagnostico
+                </button>
+                <button className="button button-outline" type="button" onClick={() => setDiagnosticOpen(false)}>
+                  Cerrar
+                </button>
               </div>
             </form>
-            {refQuery ? <p>Referencia detectada: {refQuery} ({refStatus === "valid" ? "valida" : refStatus === "invalid" ? "invalida" : "verificando"})</p> : null}
+            {refQuery ? (
+              <p>
+                Referencia detectada: {refQuery} (
+                {refStatus === "valid" ? "valida" : refStatus === "invalid" ? "invalida" : "verificando"})
+              </p>
+            ) : null}
             {error ? <p className="error">{error}</p> : null}
-            {submitted ? <p>Solicitud registrada. Nuestro equipo comercial te contactara con propuesta y siguiente paso.</p> : null}
+            {submitted ? <p className="cp-success">Solicitud registrada. Te contactaremos con la propuesta ideal.</p> : null}
           </section>
         </div>
       ) : null}

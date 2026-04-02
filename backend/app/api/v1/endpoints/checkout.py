@@ -9,10 +9,11 @@ from app.core.config import get_settings
 from app.db.session import get_db
 from app.models.models import CommissionDetail, Order, OrderItem, Plan, Product, ServiceOffering, StripeConfig, Tenant
 from app.schemas.checkout import CheckoutSessionRequest, CheckoutSessionResponse
-from app.services.commission_service import compute_order_commission
 from app.services.coupon_service import apply_coupon
 from app.services.loyalty_service import compute_discount_from_points
+from app.services.pricing_service import calculate_totals
 from app.services.stripe_service import create_checkout_session_plan1, create_checkout_session_plan2
+from app.services.tenant_config_service import build_tenant_config_payload
 
 router = APIRouter()
 settings = get_settings()
@@ -115,15 +116,34 @@ def create_checkout_session(payload: CheckoutSessionRequest, db: Session = Depen
     if total_amount < Decimal("0"):
         total_amount = Decimal("0.00")
 
-    payment_mode = "plan2" if plan.code == "PLAN_2" and plan.commission_enabled else "plan1"
-    commission_amount = Decimal("0")
-    if payment_mode == "plan2":
-        product_rows = [row for row in order_items_data if row["product_id"] is not None]
-        if product_rows:
-            result = compute_order_commission(product_rows)
-            commission_amount = Decimal(result["total_commission"]).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
-            commission_rows = result["details"]
-    net_amount = (total_amount - commission_amount).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+    tenant_config = build_tenant_config_payload(
+        tenant_id=tenant.id,
+        tenant_slug=tenant.slug,
+        tenant_name=tenant.name,
+        business_type=tenant.business_type,
+        tenant_plan_type=tenant.plan_type,
+        commission_rules_json=tenant.commission_rules_json,
+        subscription_plan_json=tenant.subscription_plan_json,
+        plan_commission_enabled=bool(plan.commission_enabled),
+    )
+    plan_type = tenant_config["plan_type"]
+    totals = calculate_totals(
+        {"subtotal": subtotal_amount, "discount": discount_amount, "shipping": Decimal("0")},
+        plan_type=plan_type,
+        commission_rules=tenant_config["commission_rules"],
+    )
+    payment_mode = "plan2" if plan_type == "commission" else "plan1"
+    commission_amount = Decimal(totals["commission"]).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+    total_amount = Decimal(totals["total"]).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+    net_amount = Decimal(totals["net"]).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+    if commission_amount > Decimal("0"):
+        commission_rows = [
+            {
+                "rule_applied": str(totals["commission_rule"])[:20],
+                "percentage": Decimal(totals["commission_rate"]),
+                "amount": commission_amount,
+            }
+        ]
 
     order = Order(
         tenant_id=tenant.id,
@@ -206,6 +226,7 @@ def create_checkout_session(payload: CheckoutSessionRequest, db: Session = Depen
         commission_amount=order.commission_amount,
         net_amount=order.net_amount,
         payment_mode=order.payment_mode,
+        plan_type=plan_type,
     )
 
 

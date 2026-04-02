@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { SecurityRule } from "../types/domain";
 
 interface RuleEditorCardProps {
@@ -8,6 +9,7 @@ interface RuleEditorCardProps {
 }
 
 export function RuleEditorCard({ rule, onSave, onToggle }: RuleEditorCardProps) {
+  const { t } = useTranslation();
   const [thresholdCount, setThresholdCount] = useState(String(rule.threshold_count ?? ""));
   const [thresholdWindow, setThresholdWindow] = useState(String(rule.threshold_window_minutes ?? ""));
   const [actionType, setActionType] = useState(rule.action_type);
@@ -21,24 +23,24 @@ export function RuleEditorCard({ rule, onSave, onToggle }: RuleEditorCardProps) 
       <p>{rule.description}</p>
       <div className="inline-form">
         <label>
-          Umbral
+          {t("security.threshold")}
           <input value={thresholdCount} onChange={(e) => setThresholdCount(e.target.value)} />
         </label>
         <label>
-          Ventana (min)
+          {t("security.windowMin")}
           <input value={thresholdWindow} onChange={(e) => setThresholdWindow(e.target.value)} />
         </label>
         <label>
-          Accion
+          {t("security.action")}
           <input value={actionType} onChange={(e) => setActionType(e.target.value)} />
         </label>
         <label>
-          Severidad
+          {t("security.severity")}
           <select value={severity} onChange={(e) => setSeverity(e.target.value)}>
-            <option value="low">low</option>
-            <option value="medium">medium</option>
-            <option value="high">high</option>
-            <option value="critical">critical</option>
+            <option value="low">{t("security.low")}</option>
+            <option value="medium">{t("security.medium")}</option>
+            <option value="high">{t("security.high")}</option>
+            <option value="critical">{t("security.critical")}</option>
           </select>
         </label>
       </div>
@@ -51,17 +53,16 @@ export function RuleEditorCard({ rule, onSave, onToggle }: RuleEditorCardProps) 
               threshold_count: thresholdCount ? Number(thresholdCount) : null,
               threshold_window_minutes: thresholdWindow ? Number(thresholdWindow) : null,
               action_type: actionType,
-              severity
+              severity,
             })
           }
         >
-          Guardar regla
+          {t("security.saveRule")}
         </button>
         <button type="button" className="button button-outline" onClick={() => onToggle(rule.id)}>
-          {rule.is_active ? "Desactivar" : "Activar"}
+          {rule.is_active ? t("security.deactivate") : t("security.activate")}
         </button>
       </div>
     </article>
   );
 }
-

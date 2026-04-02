@@ -6,6 +6,9 @@ export interface Tenant {
   business_type: "products" | "services" | "mixed" | string;
   is_active: boolean;
   plan_id?: number | null;
+  plan_type?: "commission" | "subscription" | string;
+  commission_rules_json?: string | null;
+  subscription_plan_json?: string | null;
 }
 
 export interface User {
@@ -567,6 +570,40 @@ export interface CheckoutSessionResponse {
   commission_amount: number;
   net_amount: number;
   payment_mode: "plan1" | "plan2" | string;
+  plan_type: "commission" | "subscription" | string;
+}
+
+export interface TenantCommissionTier {
+  up_to?: string | null;
+  rate: string;
+  label: string;
+}
+
+export interface TenantCommissionRules {
+  tiers: TenantCommissionTier[];
+  minimum_per_operation?: string | null;
+}
+
+export interface TenantSubscriptionPlan {
+  cycle: "monthly" | "yearly" | string;
+  price: string;
+  benefits: string[];
+}
+
+export interface TenantConfig {
+  tenant_id: number;
+  tenant_slug: string;
+  tenant_name: string;
+  business_type: string;
+  plan_type: "commission" | "subscription" | string;
+  commission_rules: TenantCommissionRules;
+  subscription_plan: TenantSubscriptionPlan;
+  checkout_badge: string;
+  landing_variant: {
+    headline: string;
+    subtitle: string;
+    cta: string;
+  };
 }
 
 export interface Order {
@@ -868,7 +905,10 @@ export interface PosSale {
   employee_id?: number | null;
   subtotal_amount: number;
   discount_amount: number;
+  commission_amount: number;
+  net_amount: number;
   total_amount: number;
+  payment_mode: string;
   currency: string;
   payment_method: string;
   notes?: string | null;

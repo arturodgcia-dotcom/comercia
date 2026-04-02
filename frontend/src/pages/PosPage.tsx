@@ -1,12 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../app/AuthContext";
+import { buildBrandTheme, tokensToCssVars } from "../branding/multibrandTemplates";
 import { AppInstallHelp } from "../components/AppInstallHelp";
 import { InstallAppPrompt } from "../components/InstallAppPrompt";
 import { ModuleOnboardingCard } from "../components/ModuleOnboardingCard";
 import { PageHeader } from "../components/PageHeader";
 import { api } from "../services/api";
-import { PosCustomer, PosLocation, PosPaymentTransaction, PosSale, Product } from "../types/domain";
+import { PosCustomer, PosLocation, PosPaymentTransaction, PosSale, Product, TenantBranding, TenantConfig } from "../types/domain";
+import { calculatePlanTotals } from "../utils/monetization";
 
 interface TicketItem {
   product_id: number;
@@ -32,6 +34,8 @@ export function PosPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [sales, setSales] = useState<PosSale[]>([]);
   const [payments, setPayments] = useState<PosPaymentTransaction[]>([]);
+  const [branding, setBranding] = useState<TenantBranding | null>(null);
+  const [tenantConfig, setTenantConfig] = useState<TenantConfig | null>(null);
   const [customerId, setCustomerId] = useState<number>(0);
   const [paymentMethod, setPaymentMethod] = useState("mercado_pago_qr");
   const [pendingPayment, setPendingPayment] = useState<PosPaymentTransaction | null>(null);
@@ -55,6 +59,8 @@ export function PosPage() {
         setProducts(productsData);
         setSales(salesData);
         setPayments(paymentsData);
+        api.getTenantBranding(token, tenantId).then(setBranding).catch(() => setBranding(null));
+        api.getTenantConfig({ tenantId }).then(setTenantConfig).catch(() => setTenantConfig(null));
       })
       .catch((err) => setError(err instanceof Error ? err.message : "No fue posible cargar POS"));
   }, [token, tenantId]);
@@ -63,6 +69,41 @@ export function PosPage() {
     () => ticket.reduce((acc, item) => acc + item.quantity * item.unit_price, 0),
     [ticket]
   );
+  const posTotals = useMemo(
+    () => calculatePlanTotals({ subtotal: total }, tenantConfig?.plan_type ?? "subscription", tenantConfig?.commission_rules),
+    [total, tenantConfig]
+  );
+
+  const posThemeStyle = useMemo(() => {
+    const theme = buildBrandTheme(
+      {
+        key: `tenant-${tenantId}`,
+        name: "POS de marca",
+        slug: `tenant-${tenantId}`,
+        logoText: "POS",
+        logoAccent: "COMERCIA",
+        primaryColor: branding?.primary_color ?? "#0d3e86",
+        secondaryColor: branding?.secondary_color ?? "#5f97e3",
+        supportColor: "#7fb8ff",
+        bgSoft: "#eff4ff",
+        promptMaster: "",
+        businessType: "mixed",
+        tone: "corporativo",
+        baseImages: [],
+        hasExistingLanding: true,
+        monetizationPlan: tenantConfig?.plan_type === "commission" ? "commission" : "subscription",
+        copy: {
+          headline: "POS WebApp",
+          subtitle: "Opera caja fisica con identidad de marca unificada.",
+          ctaPrimary: "Cobrar",
+          ctaSecondary: "Ver historial",
+          valueProp: "POS integrado con ecommerce y distribuidores."
+        }
+      },
+      "pos"
+    );
+    return tokensToCssVars(theme);
+  }, [branding, tenantId, tenantConfig]);
 
   const addItem = (product: Product) => {
     setTicket((prev) => {
@@ -85,7 +126,7 @@ export function PosPage() {
           tenant_id: tenantId,
           pos_location_id: selectedLocationId,
           customer_id: customerId || undefined,
-          amount: total,
+          amount: posTotals.total,
           currency: "MXN",
           sale_payload: {
             pos_location_id: selectedLocationId,
@@ -146,7 +187,7 @@ export function PosPage() {
   };
 
   return (
-    <section>
+    <section style={posThemeStyle}>
       <PageHeader title="POS WebApp" subtitle="Venta en punto de venta con fidelizacion y control por ubicacion." />
       <ModuleOnboardingCard
         moduleKey="pos"
@@ -163,6 +204,7 @@ export function PosPage() {
         <Link to="/pos/customers" className="button button-outline">Clientes POS</Link>
         <Link to="/pos/sales" className="button button-outline">Historial POS</Link>
       </div>
+      <p className="chip">{tenantConfig?.plan_type === "commission" ? "Modelo comision" : "Sin comision"}</p>
       {error ? <p className="error">{error}</p> : null}
       <div className="card-grid">
         <article className="card">
@@ -199,7 +241,15 @@ export function PosPage() {
               <li key={item.product_id}>Producto #{item.product_id} x {item.quantity}</li>
             ))}
           </ul>
-          <p>Total: ${total.toLocaleString("es-MX")}</p>
+          <p>Subtotal: ${posTotals.subtotal.toLocaleString("es-MX")}</p>
+          {tenantConfig?.plan_type === "commission" ? (
+            <>
+              <p>Comision estimada: ${posTotals.commission.toLocaleString("es-MX")}</p>
+              <p>Total: ${posTotals.total.toLocaleString("es-MX")}</p>
+            </>
+          ) : (
+            <p className="muted">Precio final directo. Sin comision por venta.</p>
+          )}
           <button className="button" onClick={closeSale} type="button">Cerrar venta POS</button>
           {pendingPayment ? (
             <article className="card" style={{ marginTop: "1rem" }}>
@@ -239,6 +289,8 @@ export function PosPage() {
               <th>ID</th>
               <th>Ubicacion</th>
               <th>Total</th>
+              <th>Comision</th>
+              <th>Neto</th>
               <th>Metodo</th>
             </tr>
           </thead>
@@ -248,6 +300,8 @@ export function PosPage() {
                 <td>{sale.id}</td>
                 <td>{sale.pos_location_id}</td>
                 <td>${Number(sale.total_amount).toLocaleString("es-MX")}</td>
+                <td>${Number(sale.commission_amount ?? 0).toLocaleString("es-MX")}</td>
+                <td>${Number(sale.net_amount ?? sale.total_amount).toLocaleString("es-MX")}</td>
                 <td>{sale.payment_method}</td>
               </tr>
             ))}

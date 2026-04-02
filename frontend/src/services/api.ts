@@ -72,12 +72,77 @@ import {
   TenantReportUsers,
   Tenant,
   TenantBranding,
+  TenantConfig,
   User,
   WishlistItem
 } from "../types/domain";
 
-const BASE_URL = import.meta.env.VITE_API_URL ?? "http://127.0.0.1:8000";
+function normalizeBaseUrl(raw: string): string {
+  return raw.trim().replace(/^['"]+|['"]+$/g, "").replace(/\/+$/, "");
+}
+
+const BASE_URL = normalizeBaseUrl(import.meta.env.VITE_API_URL ?? "http://127.0.0.1:8000");
 const REQUEST_TIMEOUT_MS = Number(import.meta.env.VITE_API_TIMEOUT_MS ?? "15000");
+const RUNTIME_BASE_URL_KEY = "comercia.runtime_api_url";
+
+let runtimeBaseUrl: string | null = (() => {
+  if (typeof window === "undefined") return null;
+  try {
+    const stored = window.sessionStorage.getItem(RUNTIME_BASE_URL_KEY);
+    return stored ? normalizeBaseUrl(stored) : null;
+  } catch {
+    return null;
+  }
+})();
+
+function getApiBaseUrl(): string {
+  return runtimeBaseUrl ?? BASE_URL;
+}
+
+function setApiBaseUrl(url: string): void {
+  const normalized = normalizeBaseUrl(url);
+  runtimeBaseUrl = normalized;
+  if (typeof window === "undefined") return;
+  try {
+    window.sessionStorage.setItem(RUNTIME_BASE_URL_KEY, normalized);
+  } catch {
+    // Ignorar storage failures en entornos restringidos.
+  }
+}
+
+function getCandidateBaseUrls(): string[] {
+  const first = normalizeBaseUrl(getApiBaseUrl());
+  const ordered = [first, BASE_URL];
+  ordered.push("http://127.0.0.1:8000", "http://localhost:8000");
+
+  if (typeof window !== "undefined") {
+    const host = window.location.hostname;
+    if (host) {
+      ordered.push(`http://${host}:8000`);
+    }
+  }
+
+  try {
+    const parsed = new URL(first);
+    const isLocalHost = parsed.hostname === "127.0.0.1" || parsed.hostname === "localhost";
+    if (isLocalHost && parsed.protocol === "http:") {
+      ordered.push(`http://${parsed.hostname}:8000`);
+    }
+  } catch {
+    // Si first no es una URL valida, seguimos con los defaults.
+  }
+
+  try {
+    const parsed = new URL(BASE_URL);
+    const isLocalHost = parsed.hostname === "127.0.0.1" || parsed.hostname === "localhost";
+    if (isLocalHost && parsed.protocol === "http:") {
+      ordered.push(`http://127.0.0.1:8000`, `http://localhost:8000`);
+    }
+  } catch {
+    // Si BASE_URL no es una URL valida, mantenemos solo la configurada.
+  }
+  return [...new Set(ordered)];
+}
 
 class ApiError extends Error {
   status: number;
@@ -89,35 +154,47 @@ class ApiError extends Error {
 }
 
 async function request<T>(path: string, init: RequestInit = {}, token?: string): Promise<T> {
-  const endpoint = `${BASE_URL}${path}`;
   const headers = new Headers(init.headers ?? {});
   headers.set("Content-Type", "application/json");
   if (token) headers.set("Authorization", `Bearer ${token}`);
 
-  const controller = new AbortController();
-  const timeoutId = window.setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  const candidateBaseUrls = getCandidateBaseUrls();
+  let lastNetworkEndpoint = `${getApiBaseUrl()}${path}`;
+  let sawTimeout = false;
 
-  let response: Response;
-  try {
-    response = await fetch(endpoint, { ...init, headers, signal: controller.signal });
-  } catch (error) {
-    window.clearTimeout(timeoutId);
-    if (error instanceof DOMException && error.name === "AbortError") {
-      throw new ApiError(`La solicitud excedio el tiempo de espera en ${endpoint}. Verifica backend y red local.`, 0);
+  for (const candidateBaseUrl of candidateBaseUrls) {
+    const endpoint = `${candidateBaseUrl}${path}`;
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+    try {
+      const response = await fetch(endpoint, { ...init, headers, signal: controller.signal });
+      window.clearTimeout(timeoutId);
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new ApiError(`Error ${response.status} en ${endpoint}: ${errorText || response.statusText}`, response.status);
+      }
+      setApiBaseUrl(candidateBaseUrl);
+      if (response.status === 204) return undefined as T;
+      return (await response.json()) as T;
+    } catch (error) {
+      window.clearTimeout(timeoutId);
+      if (error instanceof ApiError) {
+        throw error;
+      }
+      lastNetworkEndpoint = endpoint;
+      if (error instanceof DOMException && error.name === "AbortError") {
+        sawTimeout = true;
+      }
     }
-    const message =
-      `No fue posible conectar con el backend en ${endpoint}. ` +
-      "Verifica que la API este arriba y que VITE_API_URL apunte al puerto correcto.";
-    throw new ApiError(message, 0);
   }
 
-  window.clearTimeout(timeoutId);
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new ApiError(`Error ${response.status} en ${endpoint}: ${errorText || response.statusText}`, response.status);
+  if (sawTimeout) {
+    throw new ApiError(`La solicitud excedio el tiempo de espera en ${lastNetworkEndpoint}. Verifica backend y red local.`, 0);
   }
-  if (response.status === 204) return undefined as T;
-  return (await response.json()) as T;
+  const message =
+    `No fue posible conectar con el backend en ${lastNetworkEndpoint}. ` +
+    "Verifica que la API este arriba y que VITE_API_URL apunte al puerto correcto.";
+  throw new ApiError(message, 0);
 }
 
 export const api = {
@@ -171,12 +248,14 @@ export const api = {
     request<BrandSetupWorkflow>(`/api/v1/brand-setup/${tenantId}/steps/${stepCode}/approve`, { method: "POST" }, token),
   activateBrandSetupEcommercePublic: (token: string, tenantId: number) =>
     request<BrandSetupWorkflow>(`/api/v1/brand-setup/${tenantId}/ecommerce-public/activate`, { method: "POST" }, token),
+  applyBrandEcommerceTemplate: (token: string, tenantId: number) =>
+    request<BrandSetupWorkflow>(`/api/v1/brand-setup/${tenantId}/ecommerce-template/apply`, { method: "POST" }, token),
   uploadBrandAsset: async (token: string, tenantId: number, stepCode: string, assetType: string, file: File) => {
     const formData = new FormData();
     formData.set("step_code", stepCode);
     formData.set("asset_type", assetType);
     formData.set("file", file);
-    const endpoint = `${BASE_URL}/api/v1/brand-setup/${tenantId}/assets`;
+    const endpoint = `${getApiBaseUrl()}/api/v1/brand-setup/${tenantId}/assets`;
     let response: Response;
     try {
       response = await fetch(endpoint, {
@@ -290,6 +369,10 @@ export const api = {
     request<{ tenant: Tenant; services: ServiceOffering[] }>(`/api/v1/storefront/${tenantSlug}/services`),
   getStorefrontDistributors: (tenantSlug: string) =>
     request<StorefrontDistributorsPayload>(`/api/v1/storefront/${tenantSlug}/distribuidores`),
+  getTenantConfig: (params: { tenantId?: number; tenantSlug?: string }) => {
+    const query = params.tenantId ? `tenant_id=${params.tenantId}` : `tenant_slug=${encodeURIComponent(params.tenantSlug ?? "")}`;
+    return request<TenantConfig>(`/api/v1/tenant/config?${query}`);
+  },
   getCheckoutUpsell: (tenantSlug: string, cartProductIds: number[]) =>
     request<{ upsell_products: Product[] }>(
       `/api/v1/storefront/${tenantSlug}/checkout-upsell?cart_product_ids=${cartProductIds.join(",")}`
@@ -429,7 +512,7 @@ export const api = {
     type: "sales" | "commissions" | "tenants" | "orders" | "commission-agents" | "plan-purchase-leads",
     query = ""
   ) => {
-    const url = `${BASE_URL}/api/v1/reinpia/exports/${type}.csv${query ? `?${query}` : ""}`;
+    const url = `${getApiBaseUrl()}/api/v1/reinpia/exports/${type}.csv${query ? `?${query}` : ""}`;
     return { url, token };
   },
   getTenantReportOverview: (token: string, tenantId: number, query = "") =>
@@ -464,7 +547,7 @@ export const api = {
     tenantId: number,
     type: "users" | "sales" | "products" | "loyalty" | "distributors" | "logistics" | "services" | "marketing-insights",
     query = ""
-  ) => `${BASE_URL}/api/v1/reports/tenant/${tenantId}/export/${type}.csv${query ? `?${query}` : ""}`,
+  ) => `${getApiBaseUrl()}/api/v1/reports/tenant/${tenantId}/export/${type}.csv${query ? `?${query}` : ""}`,
   getReinpiaReportsOverview: (token: string, query = "") =>
     request<Record<string, unknown>>(`/api/v1/reinpia/reports/overview${query ? `?${query}` : ""}`, {}, token),
   getReinpiaReportsGrowth: (token: string, query = "") =>

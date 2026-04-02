@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>;
@@ -10,6 +11,7 @@ function isStandaloneMode(): boolean {
 }
 
 export function InstallAppPrompt({ compact = false }: { compact?: boolean }) {
+  const { t } = useTranslation();
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [installed, setInstalled] = useState<boolean>(isStandaloneMode());
   const [dismissed, setDismissed] = useState<boolean>(localStorage.getItem("comercia_install_dismissed") === "1");
@@ -46,7 +48,7 @@ export function InstallAppPrompt({ compact = false }: { compact?: boolean }) {
   };
 
   if (installed) {
-    return <p className="install-note">WebApp instalada en este dispositivo.</p>;
+    return <p className="install-note">{t("install.installed")}</p>;
   }
   if (!deferredPrompt || dismissed) {
     return null;
@@ -54,10 +56,10 @@ export function InstallAppPrompt({ compact = false }: { compact?: boolean }) {
 
   return (
     <div className={compact ? "install-card compact" : "install-card"}>
-      <p>Instala la WebApp para abrir POS como app en tu celular.</p>
+      <p>{t("install.prompt")}</p>
       <div className="row-gap">
         <button type="button" className="button" onClick={install}>
-          Instalar WebApp
+          {t("install.installBtn")}
         </button>
         <button
           type="button"
@@ -67,7 +69,7 @@ export function InstallAppPrompt({ compact = false }: { compact?: boolean }) {
             localStorage.setItem("comercia_install_dismissed", "1");
           }}
         >
-          Ahora no
+          {t("install.notNow")}
         </button>
       </div>
     </div>

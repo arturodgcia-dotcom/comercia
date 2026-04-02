@@ -347,3 +347,11 @@
 - [x] Persistencia del progreso del wizard tras importacion (sin reset de checkboxes/manual)
 - [x] Frontend en `Carga masiva` ahora importa al tenant activo y muestra ultima corrida
 - [x] Validacion ejecutada: backend compile, frontend build, import CSV por tenant, lectura de wizard con resumen y progreso restaurado
+
+## Entregables ejecucion 32 (Copy comercial landing + posicionamiento REINPIA)
+- [x] Se elimino copy debil "Plantilla clonable para multiples industrias" de landing COMERCIA
+- [x] Se agrego copy premium: "Diseno de landing y ecommerce para multiples empresas e industrias"
+- [x] Se incorporo mensaje comercial de SEO/AEO/prompts integrados y estructura orientada a busqueda
+- [x] Se agrego mensaje de expansion internacional (operacion desde Mexico con pesos, dolares y euros)
+- [x] Footer actualizado con derechos y propiedad intelectual REINPIA
+- [x] Validacion ejecutada: frontend build OK

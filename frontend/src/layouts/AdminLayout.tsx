@@ -23,51 +23,51 @@ export function AdminLayout() {
 
   const platformSubtitle =
     userRole === "reinpia_admin"
-      ? "Panel global de ComerCia"
+      ? t("nav.globalPanel")
       : ADMIN_ROLES.includes(userRole ?? "")
-        ? "Panel de marca"
-        : "Acceso comercial";
+        ? t("nav.brandPanel")
+        : t("nav.commercialAccess");
 
   const brandSections: NavSection[] = [
     {
-      title: "Inicio",
+      title: t("nav.sectionStart"),
       roles: ADMIN_ROLES,
-      items: [{ label: "Dashboard", to: "/" }],
+      items: [{ label: t("nav.dashboard"), to: "/" }],
     },
     {
-      title: "Comercial",
+      title: t("nav.sectionCommercial"),
       roles: ADMIN_ROLES,
       items: [
-        { label: "Landing", to: userRole === "reinpia_admin" ? "/reinpia/brands/new" : tenantId ? `/tenants/${tenantId}/branding` : "/tenants" },
-        { label: "Ecommerce publico", to: "/admin/reports/sales" },
-        { label: "Ecommerce distribuidores", to: "/admin/reports/distributors" },
+        { label: t("nav.landing"), to: userRole === "reinpia_admin" ? "/reinpia/brands/new" : tenantId ? `/tenants/${tenantId}/branding` : "/tenants" },
+        { label: t("nav.publicEcommerce"), to: "/admin/reports/sales" },
+        { label: t("nav.distributorsEcommerce"), to: "/admin/reports/distributors" },
         { label: t("nav.banners"), to: "/admin/banners", roles: ["tenant_admin", "reinpia_admin"] },
         { label: t("nav.coupons"), to: "/admin/coupons", roles: ["tenant_admin", "reinpia_admin"] },
       ],
     },
     {
-      title: "Catalogo",
+      title: t("nav.sectionCatalog"),
       roles: ADMIN_ROLES,
       items: [
         { label: t("nav.products"), to: "/products" },
         { label: t("nav.bulkUpload"), to: "/admin/catalog/bulk-upload" },
         { label: t("nav.categories"), to: "/categories" },
-        { label: "Precios", to: "/admin/payments", roles: ["tenant_admin", "reinpia_admin"] },
-        { label: "Stock", to: "/admin/inventory" },
+        { label: t("nav.prices"), to: "/admin/payments", roles: ["tenant_admin", "reinpia_admin"] },
+        { label: t("nav.stock"), to: "/admin/inventory" },
       ],
     },
     {
-      title: "Clientes",
+      title: t("nav.sectionClients"),
       roles: ADMIN_ROLES,
       items: [
-        { label: "Publico", to: "/pos/customers", roles: ["tenant_admin", "reinpia_admin"] },
+        { label: t("nav.publicClients"), to: "/pos/customers", roles: ["tenant_admin", "reinpia_admin"] },
         { label: t("nav.distributors"), to: "/admin/distributors" },
         { label: t("nav.memberships"), to: "/admin/memberships", roles: ["tenant_admin", "reinpia_admin"] },
-        { label: "Retroalimentacion", to: "/admin/feedback" },
+        { label: t("nav.feedback"), to: "/admin/feedback" },
       ],
     },
     {
-      title: "Operacion",
+      title: t("nav.sectionOperation"),
       roles: ADMIN_ROLES,
       items: [
         { label: t("nav.logistics"), to: "/admin/logistics" },
@@ -77,45 +77,45 @@ export function AdminLayout() {
       ],
     },
     {
-      title: "POS",
+      title: t("nav.sectionPOS"),
       roles: ADMIN_ROLES,
       items: [
-        { label: "Puntos de venta", to: "/pos/locations" },
-        { label: "Empleados", to: "/pos/locations", roles: ["tenant_admin", "reinpia_admin"] },
-        { label: "Credenciales", to: "/admin/loyalty", roles: ["tenant_admin", "reinpia_admin"] },
-        { label: "Ventas POS", to: "/pos/sales" },
-        { label: "Caja POS", to: "/pos" },
+        { label: t("nav.posSales"), to: "/pos/locations" },
+        { label: t("nav.employees"), to: "/pos/locations", roles: ["tenant_admin", "reinpia_admin"] },
+        { label: t("nav.credentials"), to: "/admin/loyalty", roles: ["tenant_admin", "reinpia_admin"] },
+        { label: t("nav.posSales"), to: "/pos/sales" },
+        { label: t("nav.posRegister"), to: "/pos" },
       ],
     },
     {
-      title: "Reportes",
+      title: t("nav.sectionReports"),
       roles: ADMIN_ROLES,
       items: [
-        { label: "Ventas", to: "/admin/reports/sales" },
-        { label: "Marketing", to: "/admin/reports/marketing" },
-        { label: "Fidelizacion", to: "/admin/reports/loyalty", roles: ["tenant_admin", "reinpia_admin"] },
-        { label: "Distribuidores", to: "/admin/reports/distributors" },
-        { label: "Operacion", to: "/admin/reports/logistics" },
+        { label: t("nav.salesReport"), to: "/admin/reports/sales" },
+        { label: t("nav.marketingReport"), to: "/admin/reports/marketing" },
+        { label: t("nav.loyaltyReport"), to: "/admin/reports/loyalty", roles: ["tenant_admin", "reinpia_admin"] },
+        { label: t("nav.distributorsReport"), to: "/admin/reports/distributors" },
+        { label: t("nav.operationReport"), to: "/admin/reports/logistics" },
       ],
     },
     {
-      title: "Configuracion",
+      title: t("nav.sectionSettings"),
       roles: ADMIN_ROLES,
       items: [
-        { label: "Branding", to: tenantId ? `/tenants/${tenantId}/branding` : "/tenants", roles: ["tenant_admin", "reinpia_admin"] },
-        { label: "Usuarios", to: "/tenants", roles: ["tenant_admin", "reinpia_admin"] },
-        { label: "Pagos online (Stripe)", to: "/admin/settings/payments/stripe", roles: ["tenant_admin", "reinpia_admin"] },
-        { label: "Pagos POS (Mercado Pago)", to: "/admin/settings/payments/mercadopago", roles: ["tenant_admin", "reinpia_admin"] },
+        { label: t("nav.branding"), to: tenantId ? `/tenants/${tenantId}/branding` : "/tenants", roles: ["tenant_admin", "reinpia_admin"] },
+        { label: t("nav.users"), to: "/tenants", roles: ["tenant_admin", "reinpia_admin"] },
+        { label: t("nav.paymentsStripe"), to: "/admin/settings/payments/stripe", roles: ["tenant_admin", "reinpia_admin"] },
+        { label: t("nav.paymentsMercadoPago"), to: "/admin/settings/payments/mercadopago", roles: ["tenant_admin", "reinpia_admin"] },
         { label: t("nav.currency"), to: "/admin/currency", roles: ["tenant_admin", "reinpia_admin"] },
-        { label: "Idioma", to: "/" },
-        { label: "Seguimiento comercial y Bot WhatsApp", to: "/admin/automation", roles: ["tenant_admin", "reinpia_admin"] },
+        { label: t("nav.language"), to: "/" },
+        { label: t("nav.automation"), to: "/admin/automation", roles: ["tenant_admin", "reinpia_admin"] },
       ],
     },
   ];
 
   const reinpiaSections: NavSection[] = [
     {
-      title: "ComerCia global",
+      title: t("nav.sectionReinpiaGlobal"),
       roles: ["reinpia_admin"],
       items: [
         { label: t("nav.globalDashboard"), to: "/reinpia/dashboard" },
@@ -123,11 +123,11 @@ export function AdminLayout() {
         { label: t("nav.globalBrands"), to: "/reinpia/tenants" },
         { label: t("nav.globalPayments"), to: "/reinpia/payments" },
         { label: t("nav.globalOperations"), to: "/reinpia/operations" },
-        { label: "Servicios logisticos", to: "/reinpia/logistics-services" },
+        { label: t("nav.logisticsServices"), to: "/reinpia/logistics-services" },
       ],
     },
     {
-      title: "Comercial global",
+      title: t("nav.sectionCommercialGlobal"),
       roles: ["reinpia_admin"],
       items: [
         { label: t("nav.globalReports"), to: "/reinpia/reports" },
@@ -136,12 +136,12 @@ export function AdminLayout() {
         { label: t("nav.globalLeads"), to: "/reinpia/reports/leads" },
         { label: t("nav.globalMarketing"), to: "/reinpia/reports/marketing-opportunities" },
         { label: t("nav.globalAgents"), to: "/reinpia/commission-agents" },
-        { label: "Inbox comercial", to: "/reinpia/commercial-inbox" },
+        { label: t("nav.commercialInbox"), to: "/reinpia/commercial-inbox" },
         { label: t("nav.globalAlerts"), to: "/reinpia/alerts" },
       ],
     },
     {
-      title: "Seguridad",
+      title: t("nav.sectionSecurity"),
       roles: ["reinpia_admin"],
       items: [
         { label: t("nav.globalSecurity"), to: "/reinpia/security" },
@@ -170,7 +170,7 @@ export function AdminLayout() {
         <p className="sidebar-role">{user?.role}</p>
         <LanguageSelector />
         <p className="muted" style={{ color: "#b8cae9", fontSize: "12px", margin: "8px 0 12px" }}>
-          Idioma: cambia todo el panel al idioma seleccionado para operar con mayor claridad.
+          {t("nav.languageHint")}
         </p>
         <nav className="nav-sections">
           {brandSections
@@ -212,8 +212,10 @@ export function AdminLayout() {
 
           {!ADMIN_ROLES.includes(userRole ?? "") ? (
             <section>
-              <p className="nav-section-title">Acceso limitado</p>
-              <NavLink to="/comercia" className={({ isActive }) => (isActive ? "nav-link active" : "nav-link")}>Landing ComerCia</NavLink>
+              <p className="nav-section-title">{t("nav.limitedAccess")}</p>
+              <NavLink to="/comercia" className={({ isActive }) => (isActive ? "nav-link active" : "nav-link")}>
+                {t("nav.landingComercia")}
+              </NavLink>
             </section>
           ) : null}
         </nav>
@@ -224,10 +226,10 @@ export function AdminLayout() {
       <main className="content">
         <div className="content-topbar">
           <button className="button button-outline" type="button" onClick={() => navigate(-1)}>
-            Volver
+            {t("nav.back")}
           </button>
           <div className="breadcrumbs">
-            <NavLink to="/" className="crumb-link">inicio</NavLink>
+            <NavLink to="/" className="crumb-link">{t("nav.home")}</NavLink>
             {breadcrumbs.map((crumb) => (
               <NavLink key={crumb.path} to={crumb.path} className="crumb-link">
                 / {crumb.label}

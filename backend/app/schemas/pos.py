@@ -94,7 +94,10 @@ class PosSaleRead(ORMBase):
     employee_id: int | None
     subtotal_amount: Decimal
     discount_amount: Decimal
+    commission_amount: Decimal
+    net_amount: Decimal
     total_amount: Decimal
+    payment_mode: str
     currency: str
     payment_method: str
     notes: str | None

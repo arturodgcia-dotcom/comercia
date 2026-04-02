@@ -1,3 +1,5 @@
+import json
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -7,6 +9,11 @@ from app.models.models import Banner, Plan, StorefrontConfig, Tenant, TenantBran
 from app.schemas.storefront import StorefrontSnapshot
 from app.schemas.tenant import TenantCreate, TenantRead, TenantUpdate
 from app.services.storefront_initializer import initialize_storefront
+from app.services.tenant_config_service import (
+    normalize_commission_rules,
+    normalize_subscription_plan,
+    resolve_plan_type,
+)
 
 router = APIRouter()
 
@@ -20,9 +27,14 @@ def list_tenants(db: Session = Depends(get_db)) -> list[Tenant]:
 def create_tenant(payload: TenantCreate, db: Session = Depends(get_db)) -> Tenant:
     _validate_slug_and_subdomain_uniqueness(db, payload.slug, payload.subdomain)
     values = payload.model_dump()
+    default_plan: Plan | None = None
     if values.get("plan_id") is None:
         default_plan = db.scalar(select(Plan).where(Plan.code == "PLAN_1"))
         values["plan_id"] = default_plan.id if default_plan else None
+    plan = db.get(Plan, values["plan_id"]) if values.get("plan_id") else default_plan
+    values["plan_type"] = resolve_plan_type(values.get("plan_type"), bool(plan and plan.commission_enabled))
+    values["commission_rules_json"] = json.dumps(normalize_commission_rules(values.get("commission_rules_json")))
+    values["subscription_plan_json"] = json.dumps(normalize_subscription_plan(values.get("subscription_plan_json")))
     tenant = Tenant(**values)
     db.add(tenant)
     db.flush()
@@ -53,6 +65,13 @@ def update_tenant(tenant_id: int, payload: TenantUpdate, db: Session = Depends(g
 
     for key, value in changes.items():
         setattr(tenant, key, value)
+    target_plan_id = changes.get("plan_id", tenant.plan_id)
+    plan = db.get(Plan, target_plan_id) if target_plan_id else None
+    tenant.plan_type = resolve_plan_type(changes.get("plan_type", tenant.plan_type), bool(plan and plan.commission_enabled))
+    if "commission_rules_json" in changes:
+        tenant.commission_rules_json = json.dumps(normalize_commission_rules(changes.get("commission_rules_json")))
+    if "subscription_plan_json" in changes:
+        tenant.subscription_plan_json = json.dumps(normalize_subscription_plan(changes.get("subscription_plan_json")))
     db.commit()
     db.refresh(tenant)
     return tenant

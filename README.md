@@ -429,6 +429,8 @@ npm run dev
 - Landing corporativa ComerCia:
   - ruta: `/comercia`
   - enfoque: captacion de leads, paquetes IMPULSA / ESCALA y narrativa 100% comercial (sin copy tecnico interno)
+  - posicionamiento digital reforzado: SEO + AEO + prompts integrados para mejorar descubrimiento y conversion
+  - expansion comercial internacional: operacion desde Mexico con estructura para precios en pesos, dolares y euros
   - Lia funciona como agente comercial conversacional para recomendar plan y llevar al diagnostico
   - formulario de lead comercial con:
     - `company_name`, `legal_type`, `buyer_name`, `buyer_email`, `buyer_phone`

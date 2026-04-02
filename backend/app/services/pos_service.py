@@ -8,11 +8,15 @@ from sqlalchemy.orm import Session
 from app.models.models import (
     CustomerLoyaltyAccount,
     LoyaltyProgram,
+    Plan,
     PosMembershipRegistration,
     PosSale,
     PosSaleItem,
     Product,
+    Tenant,
 )
+from app.services.pricing_service import calculate_totals
+from app.services.tenant_config_service import build_tenant_config_payload
 
 SUPPORTED_POS_PAYMENT_METHODS = {
     "cash",
@@ -64,11 +68,37 @@ def create_pos_sale(
         employee_id=employee_id,
         subtotal_amount=subtotal.quantize(Decimal("0.01")),
         discount_amount=discount.quantize(Decimal("0.01")),
+        commission_amount=Decimal("0.00"),
+        net_amount=Decimal("0.00"),
         total_amount=(subtotal - discount).quantize(Decimal("0.01")),
+        payment_mode="subscription",
         currency=currency.upper(),
         payment_method=normalized_payment_method,
         notes=notes,
     )
+    tenant = db.get(Tenant, tenant_id)
+    if tenant:
+        plan = db.get(Plan, tenant.plan_id) if tenant.plan_id else None
+        config = build_tenant_config_payload(
+            tenant_id=tenant.id,
+            tenant_slug=tenant.slug,
+            tenant_name=tenant.name,
+            business_type=tenant.business_type,
+            tenant_plan_type=tenant.plan_type,
+            commission_rules_json=tenant.commission_rules_json,
+            subscription_plan_json=tenant.subscription_plan_json,
+            plan_commission_enabled=bool(plan and plan.commission_enabled),
+        )
+        totals = calculate_totals(
+            {"subtotal": sale.subtotal_amount, "discount": sale.discount_amount, "shipping": Decimal("0")},
+            plan_type=config["plan_type"],
+            commission_rules=config["commission_rules"],
+        )
+        sale.commission_amount = totals["commission"]
+        sale.total_amount = totals["total"]
+        sale.net_amount = totals["net"]
+        sale.payment_mode = config["plan_type"]
+
     db.add(sale)
     db.flush()
 

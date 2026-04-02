@@ -1,7 +1,9 @@
 import json
 import uuid
 from datetime import datetime
+from decimal import Decimal
 from pathlib import Path
+import re
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from fastapi.encoders import jsonable_encoder
@@ -310,6 +312,175 @@ def activate_brand_setup_ecommerce_public(
     workflow["steps"] = [step.model_dump() for step in _normalize_steps(steps, flow_type=flow_type)]
     workflow["current_step"] = _next_step_code([BrandSetupStepState(**step) for step in workflow["steps"]])
     _save_brand_payload(config, raw_payload, db)
+    return get_brand_setup_workflow(tenant.id, db)
+
+
+@router.post("/{tenant_id}/ecommerce-template/apply", response_model=BrandSetupWorkflowRead, dependencies=[Depends(get_reinpia_admin)])
+def apply_ecommerce_template(
+    tenant_id: int,
+    db: Session = Depends(get_db),
+) -> BrandSetupWorkflowRead:
+    tenant = _get_tenant_or_404(db, tenant_id)
+
+    category_specs = [
+        {"name": "Paquetes destacados", "description": "Ofertas base para venta publica y distribuidores."},
+        {"name": "Catalogo general", "description": "Productos clave listos para operar."},
+        {"name": "Mayoreo", "description": "Productos con enfoque de distribucion."},
+    ]
+    categories_by_slug: dict[str, Category] = {
+        row.slug: row for row in db.scalars(select(Category).where(Category.tenant_id == tenant.id)).all()
+    }
+    created_categories = 0
+    for spec in category_specs:
+        base_slug = _slugify(spec["name"])
+        category = categories_by_slug.get(base_slug)
+        if category:
+            continue
+        category = Category(
+            tenant_id=tenant.id,
+            name=spec["name"],
+            slug=_next_available_slug(
+                db=db,
+                tenant_id=tenant.id,
+                model=Category,
+                base_slug=base_slug,
+            ),
+            description=spec["description"],
+            is_active=True,
+        )
+        db.add(category)
+        db.flush()
+        categories_by_slug[category.slug] = category
+        created_categories += 1
+
+    products_by_slug: dict[str, Product] = {
+        row.slug: row for row in db.scalars(select(Product).where(Product.tenant_id == tenant.id)).all()
+    }
+    created_products = 0
+    updated_products = 0
+    product_specs = [
+        {
+            "name": "Kit Inicio Ecommerce",
+            "category": "Paquetes destacados",
+            "description": "Pack inicial para activar catalogo publico.",
+            "price_public": Decimal("1299.00"),
+            "price_retail": Decimal("1199.00"),
+            "price_wholesale": Decimal("1099.00"),
+        },
+        {
+            "name": "Producto Demostracion Publico",
+            "category": "Catalogo general",
+            "description": "Producto muestra para validar flujo storefront.",
+            "price_public": Decimal("399.00"),
+            "price_retail": Decimal("359.00"),
+            "price_wholesale": Decimal("319.00"),
+        },
+        {
+            "name": "Producto Demostracion Distribuidor",
+            "category": "Mayoreo",
+            "description": "Producto muestra para simulacion de mayoreo.",
+            "price_public": Decimal("699.00"),
+            "price_retail": Decimal("649.00"),
+            "price_wholesale": Decimal("599.00"),
+        },
+    ]
+    for spec in product_specs:
+        base_slug = _slugify(spec["name"])
+        category_slug = _slugify(spec["category"])
+        category = categories_by_slug.get(category_slug)
+        if not category:
+            continue
+        product = products_by_slug.get(base_slug)
+        if product:
+            product.category_id = category.id
+            product.description = spec["description"]
+            product.price_public = spec["price_public"]
+            product.price_retail = spec["price_retail"]
+            product.price_wholesale = spec["price_wholesale"]
+            product.is_active = True
+            updated_products += 1
+            continue
+        product = Product(
+            tenant_id=tenant.id,
+            category_id=category.id,
+            name=spec["name"],
+            slug=_next_available_slug(
+                db=db,
+                tenant_id=tenant.id,
+                model=Product,
+                base_slug=base_slug,
+            ),
+            description=spec["description"],
+            price_public=spec["price_public"],
+            price_retail=spec["price_retail"],
+            price_wholesale=spec["price_wholesale"],
+            is_featured=True,
+            is_active=True,
+        )
+        db.add(product)
+        db.flush()
+        products_by_slug[product.slug] = product
+        created_products += 1
+
+    services_by_slug: dict[str, ServiceOffering] = {
+        row.slug: row for row in db.scalars(select(ServiceOffering).where(ServiceOffering.tenant_id == tenant.id)).all()
+    }
+    service_base_slug = _slugify("Servicio Demo Ecommerce")
+    if service_base_slug not in services_by_slug:
+        category = categories_by_slug.get(_slugify("Catalogo general"))
+        service = ServiceOffering(
+            tenant_id=tenant.id,
+            category_id=category.id if category else None,
+            name="Servicio Demo Ecommerce",
+            slug=_next_available_slug(
+                db=db,
+                tenant_id=tenant.id,
+                model=ServiceOffering,
+                base_slug=service_base_slug,
+            ),
+            description="Servicio base para pruebas de agenda/checkout.",
+            duration_minutes=60,
+            price=Decimal("490.00"),
+            is_active=True,
+            is_featured=True,
+            requires_schedule=True,
+        )
+        db.add(service)
+
+    config, payload = _load_brand_payload(db, tenant_id)
+    ecommerce_data = _parse_ecommerce_data(payload) or BrandEcommerceData()
+    ecommerce_data.catalog_mode = "bulk"
+    ecommerce_data.categories_ready = True
+    ecommerce_data.products_ready = True
+    ecommerce_data.massive_upload_enabled = True
+    ecommerce_data.distributor_catalog_ready = True
+    ecommerce_data.volume_rules_ready = True
+    payload["ecommerce_data"] = ecommerce_data.model_dump()
+
+    workflow = payload.setdefault("workflow", {})
+    flow_type = workflow.get("flow_type", "without_landing")
+    steps = _normalize_steps([BrandSetupStepState(**step) for step in workflow.get("steps", _build_default_steps(flow_type))], flow_type=flow_type)
+    _mark_step_in_progress(steps, "ecommerce_setup")
+    workflow["steps"] = [step.model_dump() for step in steps]
+    workflow["current_step"] = _next_step_code(steps)
+
+    template_job = CatalogImportJob(
+        tenant_id=tenant.id,
+        source="wizard_template",
+        total_rows=created_products + updated_products,
+        valid_rows=created_products + updated_products,
+        error_rows=0,
+        categories_created=created_categories,
+        products_created=created_products,
+        products_updated=updated_products,
+        status="completed",
+        notes=f"Plantilla ecommerce aplicada desde wizard ({datetime.utcnow().isoformat()})",
+    )
+    db.add(template_job)
+
+    config.config_json = json.dumps(jsonable_encoder(payload), ensure_ascii=False)
+    db.add(config)
+    db.commit()
     return get_brand_setup_workflow(tenant.id, db)
 
 
@@ -661,3 +832,16 @@ def _merge_steps_with_flow(existing_steps: list[BrandSetupStepState], flow_type:
             merged.append(BrandSetupStepState(**default))
     normalized = _normalize_steps(merged, flow_type=flow_type)
     return [step.model_dump() for step in normalized]
+
+
+def _slugify(value: str) -> str:
+    return re.sub(r"[^a-zA-Z0-9]+", "-", value.strip().lower()).strip("-")
+
+
+def _next_available_slug(*, db: Session, tenant_id: int, model: type[Category | Product | ServiceOffering], base_slug: str) -> str:
+    slug = base_slug
+    suffix = 2
+    while db.scalar(select(model).where(model.tenant_id == tenant_id, model.slug == slug)):
+        slug = f"{base_slug}-{suffix}"
+        suffix += 1
+    return slug
