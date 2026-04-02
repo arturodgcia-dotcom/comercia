@@ -368,3 +368,14 @@
   - [x] Marca: "Moneda de operación"
 - [x] Limpieza de duplicados de menu (ej. ventas POS repetidas) y consolidacion de accesos
 - [x] Ocultamiento por contexto y rol: usuario de marca no ve menu global
+
+## Entregables ejecucion 34 (Landing SaaS multitenant premium orientada a conversion + SEO/AEO)
+- [x] Hero comercial reforzado para captar empresas, comercios y distribuidores
+- [x] Seccion explicita de problema de negocio (digitalizacion, escalabilidad y descubrimiento)
+- [x] Seccion de solucion SaaS (landing + ecommerce + webapp + IA)
+- [x] Beneficios clave para conversion: escalabilidad, automatizacion, multimoneda, multiempresa
+- [x] Seccion IA integrada con prompts embebidos orientados a AEO
+- [x] Modelos de negocio actualizados: plan sin comision y plan con comision por venta
+- [x] Bloque de casos de uso actualizado con copy exacto requerido (SEO/AEO + expansion MXN/USD/EUR)
+- [x] Segmentacion visible por tipo de usuario (publico general, distribuidores, comercios)
+- [x] Compatibilidad declarada para ecommerce, webapp, multi-tenant y personalizacion por marca
