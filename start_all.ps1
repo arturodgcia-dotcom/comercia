@@ -68,7 +68,7 @@ if (!(Test-Path $backendRequirements)) {
   exit 1
 }
 
-$backendPort = 8000
+$backendPort = 8001
 $frontendPort = 5175
 
 if (Test-PortInUse -Port $backendPort) {

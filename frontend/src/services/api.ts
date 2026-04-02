@@ -81,7 +81,7 @@ function normalizeBaseUrl(raw: string): string {
   return raw.trim().replace(/^['"]+|['"]+$/g, "").replace(/\/+$/, "");
 }
 
-const BASE_URL = normalizeBaseUrl(import.meta.env.VITE_API_URL ?? "http://127.0.0.1:8000");
+const BASE_URL = normalizeBaseUrl(import.meta.env.VITE_API_URL ?? "http://127.0.0.1:8001");
 const REQUEST_TIMEOUT_MS = Number(import.meta.env.VITE_API_TIMEOUT_MS ?? "15000");
 const RUNTIME_BASE_URL_KEY = "comercia.runtime_api_url";
 
@@ -113,12 +113,12 @@ function setApiBaseUrl(url: string): void {
 function getCandidateBaseUrls(): string[] {
   const first = normalizeBaseUrl(getApiBaseUrl());
   const ordered = [first, BASE_URL];
-  ordered.push("http://127.0.0.1:8000", "http://localhost:8000");
+  ordered.push("http://127.0.0.1:8001", "http://localhost:8001", "http://127.0.0.1:8000", "http://localhost:8000");
 
   if (typeof window !== "undefined") {
     const host = window.location.hostname;
     if (host) {
-      ordered.push(`http://${host}:8000`);
+      ordered.push(`http://${host}:8001`, `http://${host}:8000`);
     }
   }
 
@@ -126,7 +126,7 @@ function getCandidateBaseUrls(): string[] {
     const parsed = new URL(first);
     const isLocalHost = parsed.hostname === "127.0.0.1" || parsed.hostname === "localhost";
     if (isLocalHost && parsed.protocol === "http:") {
-      ordered.push(`http://${parsed.hostname}:8000`);
+      ordered.push(`http://${parsed.hostname}:8001`, `http://${parsed.hostname}:8000`);
     }
   } catch {
     // Si first no es una URL valida, seguimos con los defaults.
@@ -136,7 +136,7 @@ function getCandidateBaseUrls(): string[] {
     const parsed = new URL(BASE_URL);
     const isLocalHost = parsed.hostname === "127.0.0.1" || parsed.hostname === "localhost";
     if (isLocalHost && parsed.protocol === "http:") {
-      ordered.push(`http://127.0.0.1:8000`, `http://localhost:8000`);
+      ordered.push(`http://127.0.0.1:8001`, `http://localhost:8001`, `http://127.0.0.1:8000`, `http://localhost:8000`);
     }
   } catch {
     // Si BASE_URL no es una URL valida, mantenemos solo la configurada.

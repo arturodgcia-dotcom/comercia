@@ -379,3 +379,10 @@
 - [x] Bloque de casos de uso actualizado con copy exacto requerido (SEO/AEO + expansion MXN/USD/EUR)
 - [x] Segmentacion visible por tipo de usuario (publico general, distribuidores, comercios)
 - [x] Compatibilidad declarada para ecommerce, webapp, multi-tenant y personalizacion por marca
+
+## Entregables ejecucion 35 (Estabilizacion de arranque backend local)
+- [x] Compatibilidad de esquema en startup (`init_db`) para columnas nuevas sin depender de migracion previa
+- [x] Reconciliacion automatica de columnas en SQLite local: `tenants.plan_type`, `commission_rules_json`, `subscription_plan_json`, `pos_sales.commission_amount`, `net_amount`, `payment_mode`
+- [x] Ajuste de puertos por defecto frontend/scripts a `8001` para evitar bloqueo recurrente en `8000`
+- [x] Frontend API client actualizado con fallback local `8001` y `8000`
+- [x] Validacion de build frontend + compile backend

@@ -1,3 +1,5 @@
+from sqlalchemy import text
+
 from app.core.config import get_settings
 from app.db.reset_demo import reset_demo_data
 from app.db.seed_app_base import seed_app_base
@@ -8,6 +10,7 @@ from app.models.models import Base
 
 def init_db() -> None:
     Base.metadata.create_all(bind=engine)
+    _ensure_runtime_compat_schema()
     settings = get_settings()
     mode = (settings.data_mode or "demo").strip().lower()
 
@@ -21,3 +24,34 @@ def init_db() -> None:
             pass
         else:
             seed_demo_data(db)
+
+
+def _ensure_runtime_compat_schema() -> None:
+    """
+    Mantiene compatibilidad de esquema para entornos locales donde la BD SQLite
+    puede quedar atras respecto a modelos nuevos y evita que startup falle.
+    """
+
+    table_columns: dict[str, set[str]] = {}
+    with engine.begin() as conn:
+        for table in ("tenants", "pos_sales"):
+            rows = conn.execute(text(f"PRAGMA table_info('{table}')")).mappings().all()
+            table_columns[table] = {str(row["name"]) for row in rows}
+
+        if "plan_type" not in table_columns["tenants"]:
+            conn.execute(text("ALTER TABLE tenants ADD COLUMN plan_type VARCHAR(20)"))
+            conn.execute(text("UPDATE tenants SET plan_type = 'subscription' WHERE plan_type IS NULL"))
+        if "commission_rules_json" not in table_columns["tenants"]:
+            conn.execute(text("ALTER TABLE tenants ADD COLUMN commission_rules_json TEXT"))
+        if "subscription_plan_json" not in table_columns["tenants"]:
+            conn.execute(text("ALTER TABLE tenants ADD COLUMN subscription_plan_json TEXT"))
+
+        if "commission_amount" not in table_columns["pos_sales"]:
+            conn.execute(text("ALTER TABLE pos_sales ADD COLUMN commission_amount NUMERIC(12,2)"))
+            conn.execute(text("UPDATE pos_sales SET commission_amount = 0 WHERE commission_amount IS NULL"))
+        if "net_amount" not in table_columns["pos_sales"]:
+            conn.execute(text("ALTER TABLE pos_sales ADD COLUMN net_amount NUMERIC(12,2)"))
+            conn.execute(text("UPDATE pos_sales SET net_amount = total_amount WHERE net_amount IS NULL"))
+        if "payment_mode" not in table_columns["pos_sales"]:
+            conn.execute(text("ALTER TABLE pos_sales ADD COLUMN payment_mode VARCHAR(20)"))
+            conn.execute(text("UPDATE pos_sales SET payment_mode = 'subscription' WHERE payment_mode IS NULL"))
