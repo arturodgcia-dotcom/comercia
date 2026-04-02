@@ -3,15 +3,21 @@ import { Link } from "react-router-dom";
 import { useAuth } from "../app/AuthContext";
 import { FilterBar } from "../components/FilterBar";
 import { PageHeader } from "../components/PageHeader";
-import { SummaryTable } from "../components/SummaryTable";
 import { api } from "../services/api";
 import { ReinpiaTenantSummaryRow } from "../types/domain";
+
+function describeActivity(row: ReinpiaTenantSummaryRow): string {
+  if (row.paid_orders > 0) return `${row.paid_orders} ventas pagadas`;
+  if (row.revenue > 0) return "Actividad comercial registrada";
+  return "Sin actividad reciente";
+}
 
 export function ReinpiaTenantsPage() {
   const { token } = useAuth();
   const [filters, setFilters] = useState({ tenantId: "", dateFrom: "", dateTo: "", status: "" });
   const [rows, setRows] = useState<ReinpiaTenantSummaryRow[]>([]);
   const [error, setError] = useState("");
+  const [tenantNames, setTenantNames] = useState<Record<number, string>>({});
 
   const query = useMemo(() => {
     const params = new URLSearchParams();
@@ -24,6 +30,20 @@ export function ReinpiaTenantsPage() {
   useEffect(() => {
     if (!token) return;
     api
+      .getTenants(token)
+      .then((data) => {
+        const next: Record<number, string> = {};
+        data.forEach((item) => {
+          next[item.id] = item.name;
+        });
+        setTenantNames(next);
+      })
+      .catch(() => setTenantNames({}));
+  }, [token]);
+
+  useEffect(() => {
+    if (!token) return;
+    api
       .getReinpiaTenantsSummary(token, query)
       .then((data) => {
         if (filters.tenantId) {
@@ -32,42 +52,72 @@ export function ReinpiaTenantsPage() {
           setRows(data);
         }
       })
-      .catch((err) => setError(err instanceof Error ? err.message : "No fue posible cargar tenants globales"));
+      .catch((err) => setError(err instanceof Error ? err.message : "No fue posible cargar marcas globales"));
   }, [token, query, filters.tenantId]);
 
   return (
     <section>
-      <PageHeader title="Marcas clientes" subtitle="ComerCia (plataforma madre) administra estas marcas hijas." />
+      <PageHeader
+        title="Marcas clientes"
+        subtitle="ComerCia administra marcas activas, su plan, estado operativo y avance comercial."
+      />
       <FilterBar tenantId={filters.tenantId} dateFrom={filters.dateFrom} dateTo={filters.dateTo} status={filters.status} onChange={setFilters} />
       {error ? <p className="error">{error}</p> : null}
-      <SummaryTable
-        headers={["ID", "Marca", "Activa", "Plan", "Tipo de negocio", "Revenue", "Comisiones", "Neto", "Detalle"]}
-        rows={rows.map((row) => [
-          row.tenant_id,
-          row.tenant_name,
-          row.is_active ? "Si" : "No",
-          row.plan_id ?? "-",
-          row.business_type,
-          `$${row.revenue.toLocaleString("es-MX")}`,
-          `$${row.commissions.toLocaleString("es-MX")}`,
-          `$${row.net_amount.toLocaleString("es-MX")}`,
-          `Ver: /reinpia/tenants/${row.tenant_id}`
-        ])}
-      />
-      <div className="row-gap">
+
+      <div className="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Marca</th>
+              <th>Estado</th>
+              <th>Plan</th>
+              <th>Tipo de negocio</th>
+              <th>Revenue</th>
+              <th>Comisiones</th>
+              <th>Neto</th>
+              <th>Última actividad</th>
+              <th>Acción principal</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row) => (
+              <tr key={row.tenant_id}>
+                <td>{row.tenant_id}</td>
+                <td>{tenantNames[row.tenant_id] ?? row.tenant_name}</td>
+                <td>{row.is_active ? "Activa" : "Inactiva"}</td>
+                <td>{row.plan_id ?? "-"}</td>
+                <td>{row.business_type}</td>
+                <td>${row.revenue.toLocaleString("es-MX")}</td>
+                <td>${row.commissions.toLocaleString("es-MX")}</td>
+                <td>${row.net_amount.toLocaleString("es-MX")}</td>
+                <td>{describeActivity(row)}</td>
+                <td>
+                  <Link className="button" to={`/reinpia/tenants/${row.tenant_id}`}>
+                    Ver detalle
+                  </Link>
+                </td>
+                <td>
+                  <div className="row-gap">
+                    <Link className="button button-outline" to={`/reinpia/brands/${row.tenant_id}/setup`}>
+                      Workflow
+                    </Link>
+                    <Link className="button button-outline" to={`/tenants/${row.tenant_id}`}>
+                      Editar
+                    </Link>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="row-gap" style={{ marginTop: "12px" }}>
         <Link className="button" to="/reinpia/brands/new">
           Crear nueva marca
         </Link>
-        {rows.map((row) => (
-          <div key={row.tenant_id} className="row-gap">
-            <Link className="button button-outline" to={`/reinpia/tenants/${row.tenant_id}`}>
-              Ver marca: {row.tenant_name}
-            </Link>
-            <Link className="button button-outline" to={`/reinpia/brands/${row.tenant_id}/setup`}>
-              Workflow setup: {row.tenant_name}
-            </Link>
-          </div>
-        ))}
       </div>
     </section>
   );

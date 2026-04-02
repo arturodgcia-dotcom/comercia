@@ -2,15 +2,21 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.api.deps import get_current_user
 from app.db.session import get_db
-from app.models.models import Tenant, TenantBranding
+from app.models.models import Tenant, TenantBranding, User
 from app.schemas.tenant_branding import TenantBrandingRead, TenantBrandingUpsert
 
 router = APIRouter()
 
 
 @router.get("/{tenant_id}", response_model=TenantBrandingRead)
-def get_branding(tenant_id: int, db: Session = Depends(get_db)) -> TenantBranding:
+def get_branding(
+    tenant_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> TenantBranding:
+    _assert_tenant_scope(current_user, tenant_id)
     branding = db.scalar(select(TenantBranding).where(TenantBranding.tenant_id == tenant_id))
     if not branding:
         raise HTTPException(status_code=404, detail="branding no encontrado")
@@ -18,7 +24,13 @@ def get_branding(tenant_id: int, db: Session = Depends(get_db)) -> TenantBrandin
 
 
 @router.post("/{tenant_id}", response_model=TenantBrandingRead, status_code=status.HTTP_201_CREATED)
-def create_branding(tenant_id: int, payload: TenantBrandingUpsert, db: Session = Depends(get_db)) -> TenantBranding:
+def create_branding(
+    tenant_id: int,
+    payload: TenantBrandingUpsert,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> TenantBranding:
+    _assert_tenant_scope(current_user, tenant_id)
     tenant = db.get(Tenant, tenant_id)
     if not tenant:
         raise HTTPException(status_code=404, detail="tenant no encontrado")
@@ -35,7 +47,13 @@ def create_branding(tenant_id: int, payload: TenantBrandingUpsert, db: Session =
 
 
 @router.put("/{tenant_id}", response_model=TenantBrandingRead)
-def update_branding(tenant_id: int, payload: TenantBrandingUpsert, db: Session = Depends(get_db)) -> TenantBranding:
+def update_branding(
+    tenant_id: int,
+    payload: TenantBrandingUpsert,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> TenantBranding:
+    _assert_tenant_scope(current_user, tenant_id)
     tenant = db.get(Tenant, tenant_id)
     if not tenant:
         raise HTTPException(status_code=404, detail="tenant no encontrado")
@@ -51,3 +69,10 @@ def update_branding(tenant_id: int, payload: TenantBrandingUpsert, db: Session =
     db.commit()
     db.refresh(branding)
     return branding
+
+
+def _assert_tenant_scope(current_user: User, tenant_id: int) -> None:
+    if current_user.role == "reinpia_admin":
+        return
+    if current_user.tenant_id != tenant_id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="sin acceso a esta marca")

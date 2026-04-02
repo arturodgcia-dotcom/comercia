@@ -2,6 +2,7 @@ import { FormEvent, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useAuth } from "../app/AuthContext";
 import { ModuleOnboardingCard } from "../components/ModuleOnboardingCard";
+import { useAdminContextScope } from "../hooks/useAdminContextScope";
 import { PageHeader } from "../components/PageHeader";
 import { api } from "../services/api";
 import { TenantBranding } from "../types/domain";
@@ -14,25 +15,27 @@ const emptyBranding: Partial<TenantBranding> = {
 export function BrandingEditorPage() {
   const { tenantId } = useParams();
   const { token } = useAuth();
+  const { tenantId: scopedTenantId } = useAdminContextScope();
+  const resolvedTenantId = Number(tenantId ?? scopedTenantId ?? 0);
   const [branding, setBranding] = useState<Partial<TenantBranding>>(emptyBranding);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (!tenantId || !token) return;
+    if (!resolvedTenantId || !token) return;
     api
-      .getTenantBranding(token, Number(tenantId))
+      .getTenantBranding(token, resolvedTenantId)
       .then((result) => setBranding(result))
       .catch(() => setBranding(emptyBranding));
-  }, [tenantId, token]);
+  }, [resolvedTenantId, token]);
 
   const handleSave = async (event: FormEvent) => {
     event.preventDefault();
-    if (!token || !tenantId) return;
+    if (!token || !resolvedTenantId) return;
     try {
       setSaving(true);
       setError("");
-      const result = await api.upsertTenantBranding(token, Number(tenantId), branding);
+      const result = await api.upsertTenantBranding(token, resolvedTenantId, branding);
       setBranding(result);
     } catch (err) {
       setError(err instanceof Error ? err.message : "No fue posible guardar branding");
@@ -44,6 +47,7 @@ export function BrandingEditorPage() {
   return (
     <section>
       <PageHeader title="Editor de branding" subtitle="Configuracion visual y de contacto por marca." />
+      {!resolvedTenantId ? <p className="error">No hay marca activa para editar branding.</p> : null}
       <ModuleOnboardingCard
         moduleKey="landing_branding"
         title="Landing de marca"

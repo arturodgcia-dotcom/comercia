@@ -32,6 +32,7 @@ import { CatalogBulkUploadPage } from "../pages/CatalogBulkUploadPage";
 import { CategoriesPage } from "../pages/CategoriesPage";
 import { ComerciaLandingPage } from "../pages/ComerciaLandingPage";
 import { CurrencyAdminPage } from "../pages/CurrencyAdminPage";
+import { LanguageAdminPage } from "../pages/LanguageAdminPage";
 import { ContractsAdminPage } from "../pages/ContractsAdminPage";
 import { CookiesPolicyPage } from "../pages/CookiesPolicyPage";
 import { CouponsAdminPage } from "../pages/CouponsAdminPage";
@@ -100,6 +101,7 @@ import { TenantLogisticsReportPage } from "../pages/TenantLogisticsReportPage";
 import { TenantServicesReportPage } from "../pages/TenantServicesReportPage";
 import { TenantMarketingInsightsPage } from "../pages/TenantMarketingInsightsPage";
 import { TenantsPage } from "../pages/TenantsPage";
+import { UsersAdminPage } from "../pages/UsersAdminPage";
 
 export function AppRouter() {
   return (
@@ -171,9 +173,10 @@ export function AppRouter() {
           </Route>
 
           <Route element={<RoleRoute allowedRoles={["tenant_admin", "reinpia_admin"]} />}>
-            <Route path="tenants" element={<TenantsPage />} />
-            <Route path="tenants/:tenantId" element={<TenantDetailPage />} />
-            <Route path="tenants/:tenantId/branding" element={<BrandingEditorPage />} />
+            <Route path="admin/users" element={<UsersAdminPage />} />
+            <Route path="admin/language" element={<LanguageAdminPage />} />
+            <Route path="admin/currency" element={<CurrencyAdminPage />} />
+            <Route path="admin/branding" element={<BrandingEditorPage />} />
             <Route path="plans" element={<PlansPage />} />
             <Route path="admin/payments" element={<PaymentsAdminPage />} />
             <Route path="admin/loyalty" element={<LoyaltyProgramAdminPage />} />
@@ -182,7 +185,6 @@ export function AppRouter() {
             <Route path="admin/banners" element={<BannersAdminPage />} />
             <Route path="admin/reviews" element={<ReviewsAdminPage />} />
             <Route path="admin/contracts" element={<ContractsAdminPage />} />
-            <Route path="admin/currency" element={<CurrencyAdminPage />} />
             <Route path="admin/settings/payments/stripe" element={<StripeSettingsPage />} />
             <Route path="admin/settings/payments/mercadopago" element={<MercadoPagoSettingsPage />} />
             <Route path="admin/reports" element={<TenantReportsOverviewPage />} />
@@ -197,10 +199,16 @@ export function AppRouter() {
             <Route path="onboarding/client" element={<OnboardingClientPage />} />
             <Route path="admin/automation" element={<AutomationAdminPage />} />
             <Route element={<RoleRoute allowedRoles={["reinpia_admin"]} />}>
+              <Route path="tenants" element={<TenantsPage />} />
+              <Route path="tenants/:tenantId" element={<TenantDetailPage />} />
+              <Route path="tenants/:tenantId/branding" element={<BrandingEditorPage />} />
               <Route path="reinpia/dashboard" element={<ReinpiaDashboardPage />} />
               <Route path="reinpia/brands/new" element={<ReinpiaBrandsNewPage />} />
               <Route path="reinpia/brands/:tenantId/setup" element={<BrandSetupWizard />} />
               <Route path="reinpia/tenants" element={<ReinpiaTenantsPage />} />
+              <Route path="reinpia/users" element={<UsersAdminPage />} />
+              <Route path="reinpia/language" element={<LanguageAdminPage />} />
+              <Route path="reinpia/currency" element={<CurrencyAdminPage />} />
               <Route path="reinpia/tenants/:tenantId" element={<ReinpiaTenantDetailPage />} />
               <Route path="reinpia/payments" element={<ReinpiaPaymentsPage />} />
               <Route path="reinpia/operations" element={<ReinpiaOperationsPage />} />

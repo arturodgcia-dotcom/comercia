@@ -20,6 +20,8 @@ import {
   ContractTemplate,
   Coupon,
   CurrencySettings,
+  PlatformSettings,
+  BrandAdminSettings,
   CustomerContactLead,
   DistributorApplication,
   DistributorEmployee,
@@ -45,6 +47,7 @@ import {
   PaymentsDashboard,
   Plan,
   Product,
+  AdminUser,
   ProductReview,
   SalesCommissionAgent,
   SalesReferral,
@@ -629,6 +632,13 @@ export const api = {
   getCurrencySettings: (tenantId: number) => request<CurrencySettings>(`/api/v1/currency-settings/${tenantId}`),
   upsertCurrencySettings: (token: string, tenantId: number, payload: Record<string, unknown>) =>
     request<CurrencySettings>(`/api/v1/currency-settings/${tenantId}`, { method: "PUT", body: JSON.stringify(payload) }, token),
+  getPlatformSettings: (token: string) => request<PlatformSettings>("/api/v1/admin/platform-settings", {}, token),
+  updatePlatformSettings: (token: string, payload: Record<string, unknown>) =>
+    request<PlatformSettings>("/api/v1/admin/platform-settings", { method: "PUT", body: JSON.stringify(payload) }, token),
+  getBrandAdminSettings: (token: string, tenantId: number) =>
+    request<BrandAdminSettings>(`/api/v1/admin/brand-settings/${tenantId}`, {}, token),
+  updateBrandAdminSettings: (token: string, tenantId: number, payload: Record<string, unknown>) =>
+    request<BrandAdminSettings>(`/api/v1/admin/brand-settings/${tenantId}`, { method: "PUT", body: JSON.stringify(payload) }, token),
   getExchangeRates: (query = "") =>
     request<ExchangeRate[]>(`/api/v1/exchange-rates${query ? `?${query}` : ""}`),
   createManualExchangeRate: (token: string, payload: Record<string, unknown>) =>
@@ -644,6 +654,37 @@ export const api = {
       method: "POST",
       body: JSON.stringify(payload)
     }),
+  getAdminUsers: (token: string, params: { scope: "global" | "brand"; tenant_id?: number }) => {
+    const query = new URLSearchParams();
+    query.set("scope", params.scope);
+    if (params.tenant_id) query.set("tenant_id", String(params.tenant_id));
+    return request<AdminUser[]>(`/api/v1/admin/users?${query.toString()}`, {}, token);
+  },
+  createAdminUser: (
+    token: string,
+    params: { scope: "global" | "brand"; tenant_id?: number },
+    payload: Record<string, unknown>
+  ) => {
+    const query = new URLSearchParams();
+    query.set("scope", params.scope);
+    if (params.tenant_id) query.set("tenant_id", String(params.tenant_id));
+    return request<AdminUser>(`/api/v1/admin/users?${query.toString()}`, { method: "POST", body: JSON.stringify(payload) }, token);
+  },
+  updateAdminUser: (
+    token: string,
+    userId: number,
+    params: { scope: "global" | "brand"; tenant_id?: number },
+    payload: Record<string, unknown>
+  ) => {
+    const query = new URLSearchParams();
+    query.set("scope", params.scope);
+    if (params.tenant_id) query.set("tenant_id", String(params.tenant_id));
+    return request<AdminUser>(
+      `/api/v1/admin/users/${userId}?${query.toString()}`,
+      { method: "PUT", body: JSON.stringify(payload) },
+      token
+    );
+  },
 
   getPosLocations: (token: string, tenantId: number) =>
     request<PosLocation[]>(`/api/v1/pos/locations/by-tenant/${tenantId}`, {}, token),

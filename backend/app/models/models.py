@@ -853,6 +853,18 @@ class CurrencySettings(Base, TimestampMixin):
     rounding_mode: Mapped[str] = mapped_column(String(20), default="none", nullable=False)
 
 
+class PlatformSettings(Base, TimestampMixin):
+    __tablename__ = "platform_settings"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    global_base_currency: Mapped[str] = mapped_column(String(10), default="MXN", nullable=False)
+    global_enabled_currencies_json: Mapped[str] = mapped_column(Text, default='["MXN","USD","EUR"]', nullable=False)
+    global_exchange_mode: Mapped[str] = mapped_column(String(20), default="manual", nullable=False)
+    global_auto_update_enabled: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    platform_default_language: Mapped[str] = mapped_column(String(10), default="es", nullable=False)
+    platform_enabled_languages_json: Mapped[str] = mapped_column(Text, default='["es","en"]', nullable=False)
+
+
 class ExchangeRate(Base):
     __tablename__ = "exchange_rates"
 

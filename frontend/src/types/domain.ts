@@ -860,6 +860,40 @@ export interface CurrencySettings {
   rounding_mode: string;
 }
 
+export interface PlatformSettings {
+  id: number;
+  global_base_currency: string;
+  global_enabled_currencies: string[];
+  global_exchange_mode: string;
+  global_auto_update_enabled: boolean;
+  platform_default_language: string;
+  platform_enabled_languages: string[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BrandAdminSettings {
+  tenant_id: number;
+  currency_inherit_global: boolean;
+  currency_base_currency: string;
+  currency_visible_currencies: string[];
+  language_primary: string;
+  language_visible: string[];
+  market_profile: string;
+}
+
+export interface AdminUser {
+  id: number;
+  email: string;
+  full_name: string;
+  role: string;
+  is_active: boolean;
+  tenant_id: number | null;
+  preferred_language: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface ExchangeRate {
   id: number;
   base_currency: string;

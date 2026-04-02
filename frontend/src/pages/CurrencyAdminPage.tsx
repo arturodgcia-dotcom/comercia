@@ -1,11 +1,11 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useAuth } from "../app/AuthContext";
-import { ModuleOnboardingCard } from "../components/ModuleOnboardingCard";
 import { PageHeader } from "../components/PageHeader";
+import { useAdminContextScope } from "../hooks/useAdminContextScope";
 import { api } from "../services/api";
-import { CurrencySettings, ExchangeRate } from "../types/domain";
+import { BrandAdminSettings, CurrencySettings, ExchangeRate, PlatformSettings } from "../types/domain";
 
-function buildEmptySettings(tenantId: number): CurrencySettings {
+function emptyCurrency(tenantId: number): CurrencySettings {
   return {
     id: 0,
     tenant_id: tenantId,
@@ -19,274 +19,320 @@ function buildEmptySettings(tenantId: number): CurrencySettings {
 }
 
 export function CurrencyAdminPage() {
-  const { token, user } = useAuth();
-  const tenantId = user?.tenant_id ?? 1;
-  const [settings, setSettings] = useState<CurrencySettings>(buildEmptySettings(tenantId));
-  const [rates, setRates] = useState<ExchangeRate[]>([]);
-  const [error, setError] = useState("");
+  const { token } = useAuth();
+  const { mode, isGlobalAdmin, tenantId } = useAdminContextScope();
   const [loading, setLoading] = useState(true);
-  const [usingFallbackState, setUsingFallbackState] = useState(false);
-  const [savingSettings, setSavingSettings] = useState(false);
-  const [savingRate, setSavingRate] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const [platform, setPlatform] = useState<PlatformSettings | null>(null);
+  const [brandAdmin, setBrandAdmin] = useState<BrandAdminSettings | null>(null);
+  const [currency, setCurrency] = useState<CurrencySettings | null>(null);
+  const [rates, setRates] = useState<ExchangeRate[]>([]);
   const [manualRate, setManualRate] = useState({ base_currency: "MXN", target_currency: "USD", rate: "0.058" });
 
-  const loadCurrencyState = async () => {
+  const isGlobalView = mode === "global" && isGlobalAdmin;
+
+  const load = async () => {
+    if (!token) return;
     setLoading(true);
     setError("");
     try {
-      const [settingsData, ratesData] = await Promise.all([api.getCurrencySettings(tenantId), api.getExchangeRates()]);
-      setSettings(settingsData);
+      if (isGlobalView) {
+        const [platformData, ratesData] = await Promise.all([api.getPlatformSettings(token), api.getExchangeRates()]);
+        setPlatform(platformData);
+        setRates(ratesData);
+        setBrandAdmin(null);
+        setCurrency(null);
+        return;
+      }
+      if (!tenantId) {
+        setError("No hay marca activa seleccionada para configurar moneda.");
+        return;
+      }
+      const [platformData, brandData, currencyData, ratesData] = await Promise.all([
+        api.getPlatformSettings(token).catch(() => null),
+        api.getBrandAdminSettings(token, tenantId).catch(() => null),
+        api.getCurrencySettings(tenantId).catch(() => emptyCurrency(tenantId)),
+        api.getExchangeRates(),
+      ]);
+      setPlatform(platformData);
+      setBrandAdmin(brandData);
+      setCurrency(currencyData);
       setRates(ratesData);
-      setUsingFallbackState(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "No fue posible cargar configuracion monetaria.");
-      setSettings(buildEmptySettings(tenantId));
-      setRates([]);
-      setUsingFallbackState(true);
+      setError(err instanceof Error ? err.message : "No fue posible cargar configuracion de monedas.");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    if (!token) return;
-    void loadCurrencyState();
-  }, [token, tenantId]);
+    void load();
+  }, [token, isGlobalView, tenantId]);
 
-  const applyRegionalPreset = (preset: "espana" | "europa" | "latam" | "brasil") => {
-    const next = {
-      espana: { base: "EUR", enabled: ["EUR"], localeHint: "es" },
-      europa: { base: "EUR", enabled: ["EUR", "USD"], localeHint: "en" },
-      latam: { base: "USD", enabled: ["USD", "MXN"], localeHint: "es" },
-      brasil: { base: "USD", enabled: ["USD", "BRL"], localeHint: "pt" },
-    }[preset];
-    setSettings((previous) =>
-      previous
-        ? {
-            ...previous,
-            base_currency: next.base,
-            enabled_currencies: next.enabled,
-            display_mode: "converted_display",
-          }
-        : buildEmptySettings(tenantId)
-    );
-  };
+  const preview = useMemo(() => {
+    const base = isGlobalView ? platform?.global_base_currency : currency?.base_currency;
+    const enabled = isGlobalView ? platform?.global_enabled_currencies : currency?.enabled_currencies;
+    if (!base || !enabled?.length) return null;
+    const target = enabled.find((code) => code !== base) ?? base;
+    const rate = rates.find((row) => row.base_currency === base && row.target_currency === target);
+    return { base, target, rate: rate ? Number(rate.rate) : null };
+  }, [isGlobalView, platform, currency, rates]);
 
-  const previewRate = useMemo(
-    () =>
-      rates.find(
-        (r) =>
-          r.base_currency === (settings.base_currency ?? "MXN") &&
-          r.target_currency === ((settings.enabled_currencies ?? ["MXN"])[1] ?? "USD")
-      ),
-    [rates, settings]
-  );
-
-  const handleSettingsSubmit = async (event: FormEvent) => {
+  const saveGlobal = async (event: FormEvent) => {
     event.preventDefault();
-    if (!token) {
-      setError("Tu sesion expiro. Inicia sesion nuevamente para guardar cambios.");
-      return;
-    }
+    if (!token || !platform) return;
     try {
-      setSavingSettings(true);
+      setSaving(true);
       setError("");
-      const updated = await api.upsertCurrencySettings(token, tenantId, { ...settings });
-      setSettings(updated);
-      setUsingFallbackState(false);
+      const updated = await api.updatePlatformSettings(token, {
+        global_base_currency: platform.global_base_currency,
+        global_enabled_currencies: platform.global_enabled_currencies,
+        global_exchange_mode: platform.global_exchange_mode,
+        global_auto_update_enabled: platform.global_auto_update_enabled,
+      });
+      setPlatform(updated);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "No fue posible actualizar");
+      setError(err instanceof Error ? err.message : "No fue posible guardar configuración global.");
     } finally {
-      setSavingSettings(false);
+      setSaving(false);
     }
   };
 
-  const handleManualRate = async (event: FormEvent) => {
+  const saveBrand = async (event: FormEvent) => {
     event.preventDefault();
-    if (!token) {
-      setError("Tu sesion expiro. Inicia sesion nuevamente para guardar tipos de cambio.");
-      return;
-    }
+    if (!token || !tenantId || !currency || !brandAdmin) return;
     try {
-      setSavingRate(true);
+      setSaving(true);
+      setError("");
+      const inherit = brandAdmin.currency_inherit_global;
+      const baseCurrency = inherit ? (platform?.global_base_currency ?? "MXN") : currency.base_currency;
+      const visibleCurrencies = inherit ? (platform?.global_enabled_currencies ?? ["MXN", "USD"]) : currency.enabled_currencies;
+
+      const updatedBrand = await api.updateBrandAdminSettings(token, tenantId, {
+        currency_inherit_global: inherit,
+        currency_base_currency: baseCurrency,
+        currency_visible_currencies: visibleCurrencies,
+        language_primary: brandAdmin.language_primary,
+        language_visible: brandAdmin.language_visible,
+        market_profile: brandAdmin.market_profile,
+      });
+      setBrandAdmin(updatedBrand);
+
+      const updatedCurrency = await api.upsertCurrencySettings(token, tenantId, {
+        ...currency,
+        base_currency: baseCurrency,
+        enabled_currencies: visibleCurrencies,
+      });
+      setCurrency(updatedCurrency);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "No fue posible guardar moneda de operación.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const saveManualRate = async (event: FormEvent) => {
+    event.preventDefault();
+    if (!token) return;
+    try {
+      setSaving(true);
       setError("");
       await api.createManualExchangeRate(token, {
         base_currency: manualRate.base_currency,
         target_currency: manualRate.target_currency,
         rate: Number(manualRate.rate),
-        source_name: "manual_admin"
+        source_name: isGlobalView ? "manual_global_admin" : "manual_brand_admin",
       });
       setRates(await api.getExchangeRates());
-      setUsingFallbackState(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "No fue posible registrar tipo de cambio");
+      setError(err instanceof Error ? err.message : "No fue posible registrar tipo de cambio manual.");
     } finally {
-      setSavingRate(false);
+      setSaving(false);
     }
   };
 
+  const canEditBrandCurrency = !brandAdmin?.currency_inherit_global;
+
   return (
     <section>
-      <PageHeader title="Monedas y Tipo de Cambio" subtitle="Configura moneda base, conversion y modo de checkout por tenant." />
-      <ModuleOnboardingCard
-        moduleKey="currency"
-        title="Monedas"
-        whatItDoes="Configura moneda base, monedas visibles y tipo de cambio manual o automatico."
-        whyItMatters="Permite vender en distintos mercados sin perder control financiero."
-        whatToCapture={["Moneda base", "Monedas habilitadas", "Modo de conversion", "Tasa manual cuando aplique"]}
-        impact="Mejora claridad de precios para cliente y consistencia en reportes."
+      <PageHeader
+        title={isGlobalView ? "Monedas y tipos de cambio" : "Moneda de operación"}
+        subtitle={
+          isGlobalView
+            ? "Configuración global de monedas disponibles y tipo de cambio para toda la plataforma."
+            : "Configuración monetaria de la marca activa, con opción de heredar valores globales."
+        }
       />
-      {loading ? <p className="muted">Cargando configuracion monetaria...</p> : null}
+
+      {loading ? <p className="muted">Cargando configuración monetaria...</p> : null}
       {error ? (
-        <section className="card">
+        <div className="card">
           <p className="error">{error}</p>
-          <p className="muted">
-            Puedes revisar la configuracion base y volver a intentar la conexion cuando el backend este disponible.
-          </p>
-          <button className="button button-outline" type="button" onClick={() => void loadCurrencyState()}>
-            Reintentar conexion
+          <button className="button button-outline" type="button" onClick={() => void load()}>
+            Reintentar conexión
           </button>
-        </section>
-      ) : null}
-      {usingFallbackState ? (
-        <section className="card">
-          <h3>Estado inicial de moneda</h3>
-          <p className="muted">
-            No se pudieron cargar datos del backend. Se muestra una configuracion inicial editable para que no se quede la pantalla en blanco.
-          </p>
-        </section>
-      ) : null}
-      <form className="detail-form" onSubmit={handleSettingsSubmit}>
-        <label>
-          Moneda base
-          <select
-            value={settings.base_currency}
-            onChange={(e) => setSettings((prev) => ({ ...prev, base_currency: e.target.value }))}
-          >
-            <option value="MXN">MXN</option>
-            <option value="USD">USD</option>
-            <option value="EUR">EUR</option>
-          </select>
-        </label>
-        <label>
-          Monedas habilitadas (coma separada)
-          <input
-            value={settings.enabled_currencies.join(",")}
-            onChange={(e) =>
-              setSettings((prev) =>
-                ({
-                  ...prev,
-                  enabled_currencies: e.target.value.split(",").map((value) => value.trim().toUpperCase()).filter(Boolean)
-                })
-              )
-            }
-          />
-        </label>
-        <label>
-          Modo de visualizacion
-          <select
-            value={settings.display_mode}
-            onChange={(e) => setSettings((prev) => ({ ...prev, display_mode: e.target.value }))}
-          >
-            <option value="base_only">Solo moneda base</option>
-            <option value="converted_display">Mostrar conversion</option>
-            <option value="localized_checkout">Checkout localizado</option>
-          </select>
-        </label>
-        <label>
-          Modo de tipo de cambio
-          <select
-            value={settings.exchange_mode}
-            onChange={(e) => setSettings((prev) => ({ ...prev, exchange_mode: e.target.value }))}
-          >
-            <option value="manual">Manual</option>
-            <option value="automatic">Automatico</option>
-          </select>
-        </label>
-        <label>
-          Rounding
-          <select
-            value={settings.rounding_mode}
-            onChange={(e) => setSettings((prev) => ({ ...prev, rounding_mode: e.target.value }))}
-          >
-            <option value="none">Sin redondeo</option>
-            <option value=".99">.99</option>
-            <option value="whole">Entero</option>
-          </select>
-        </label>
-        <label className="checkbox">
-          <input
-            type="checkbox"
-            checked={settings.auto_update_enabled}
-            onChange={(e) => setSettings((prev) => ({ ...prev, auto_update_enabled: e.target.checked }))}
-          />
-          Actualizacion automatica habilitada
-        </label>
-        <button className="button" type="submit" disabled={savingSettings}>
-          {savingSettings ? "Guardando..." : "Guardar configuracion de moneda"}
-        </button>
-      </form>
-
-      <section className="card">
-        <h3>Preconfiguracion regional</h3>
-        <div className="row-gap">
-          <button className="button button-outline" type="button" onClick={() => applyRegionalPreset("espana")}>Espana (es + EUR)</button>
-          <button className="button button-outline" type="button" onClick={() => applyRegionalPreset("europa")}>Europa general (en + EUR)</button>
-          <button className="button button-outline" type="button" onClick={() => applyRegionalPreset("latam")}>Latam (es + USD)</button>
-          <button className="button button-outline" type="button" onClick={() => applyRegionalPreset("brasil")}>Brasil (pt + USD)</button>
         </div>
-        <p className="muted">Estas reglas quedan listas para automatizacion futura por region.</p>
-      </section>
+      ) : null}
 
-      <form className="inline-form" onSubmit={handleManualRate}>
-        <select value={manualRate.base_currency} onChange={(e) => setManualRate((p) => ({ ...p, base_currency: e.target.value }))}>
-          <option>MXN</option>
-          <option>USD</option>
-          <option>EUR</option>
+      {!loading && isGlobalView && platform ? (
+        <form className="detail-form card" onSubmit={saveGlobal}>
+          <h3>Configuración global de monedas</h3>
+          <label>
+            Moneda base global
+            <select
+              value={platform.global_base_currency}
+              onChange={(event) => setPlatform((prev) => (prev ? { ...prev, global_base_currency: event.target.value } : prev))}
+            >
+              <option value="MXN">MXN</option>
+              <option value="USD">USD</option>
+              <option value="EUR">EUR</option>
+            </select>
+          </label>
+          <label>
+            Monedas habilitadas (coma separada)
+            <input
+              value={platform.global_enabled_currencies.join(",")}
+              onChange={(event) =>
+                setPlatform((prev) =>
+                  prev
+                    ? {
+                        ...prev,
+                        global_enabled_currencies: event.target.value
+                          .split(",")
+                          .map((item) => item.trim().toUpperCase())
+                          .filter(Boolean),
+                      }
+                    : prev
+                )
+              }
+            />
+          </label>
+          <label>
+            Modo de actualización
+            <select
+              value={platform.global_exchange_mode}
+              onChange={(event) => setPlatform((prev) => (prev ? { ...prev, global_exchange_mode: event.target.value } : prev))}
+            >
+              <option value="manual">Manual</option>
+              <option value="automatic">Automático (próximo)</option>
+            </select>
+          </label>
+          <label className="checkbox">
+            <input
+              type="checkbox"
+              checked={platform.global_auto_update_enabled}
+              onChange={(event) =>
+                setPlatform((prev) => (prev ? { ...prev, global_auto_update_enabled: event.target.checked } : prev))
+              }
+            />
+            Activar actualización automática cuando esté disponible
+          </label>
+          <button className="button" type="submit" disabled={saving}>
+            {saving ? "Guardando..." : "Guardar configuración global"}
+          </button>
+        </form>
+      ) : null}
+
+      {!loading && !isGlobalView && brandAdmin && currency ? (
+        <form className="detail-form card" onSubmit={saveBrand}>
+          <h3>Moneda de operación por marca</h3>
+          <label className="checkbox">
+            <input
+              type="checkbox"
+              checked={brandAdmin.currency_inherit_global}
+              onChange={(event) =>
+                setBrandAdmin((prev) => (prev ? { ...prev, currency_inherit_global: event.target.checked } : prev))
+              }
+            />
+            Heredar configuración global de ComerCia
+          </label>
+          <label>
+            Moneda base de la marca
+            <select
+              value={canEditBrandCurrency ? currency.base_currency : platform?.global_base_currency ?? currency.base_currency}
+              disabled={!canEditBrandCurrency}
+              onChange={(event) => setCurrency((prev) => (prev ? { ...prev, base_currency: event.target.value } : prev))}
+            >
+              <option value="MXN">MXN</option>
+              <option value="USD">USD</option>
+              <option value="EUR">EUR</option>
+            </select>
+          </label>
+          <label>
+            Monedas visibles en tienda
+            <input
+              value={(canEditBrandCurrency ? currency.enabled_currencies : platform?.global_enabled_currencies ?? []).join(",")}
+              disabled={!canEditBrandCurrency}
+              onChange={(event) =>
+                setCurrency((prev) =>
+                  prev
+                    ? {
+                        ...prev,
+                        enabled_currencies: event.target.value
+                          .split(",")
+                          .map((item) => item.trim().toUpperCase())
+                          .filter(Boolean),
+                      }
+                    : prev
+                )
+              }
+            />
+          </label>
+          {!canEditBrandCurrency ? (
+            <p className="muted">Esta marca usa monedas globales. Desactiva “Heredar” para personalizar.</p>
+          ) : null}
+          <button className="button" type="submit" disabled={saving}>
+            {saving ? "Guardando..." : "Guardar moneda de operación"}
+          </button>
+        </form>
+      ) : null}
+
+      {!loading && !isGlobalView && (!brandAdmin || !currency) ? (
+        <div className="card">
+          <h3>Configuración inicial pendiente</h3>
+          <p className="muted">
+            Aún no hay configuración de moneda para esta marca. Usa “Reintentar conexión” o guarda una configuración inicial.
+          </p>
+        </div>
+      ) : null}
+
+      <form className="inline-form card" onSubmit={saveManualRate}>
+        <h3>Tipo de cambio manual</h3>
+        <select value={manualRate.base_currency} onChange={(event) => setManualRate((prev) => ({ ...prev, base_currency: event.target.value }))}>
+          <option value="MXN">MXN</option>
+          <option value="USD">USD</option>
+          <option value="EUR">EUR</option>
         </select>
-        <select value={manualRate.target_currency} onChange={(e) => setManualRate((p) => ({ ...p, target_currency: e.target.value }))}>
-          <option>USD</option>
-          <option>EUR</option>
-          <option>MXN</option>
-        </select>
-        <input value={manualRate.rate} onChange={(e) => setManualRate((p) => ({ ...p, rate: e.target.value }))} />
-        <button className="button" type="submit" disabled={savingRate}>
-          {savingRate ? "Guardando..." : "Guardar tipo manual"}
-        </button>
-        <button
-          className="button button-outline"
-          type="button"
-          onClick={async () => {
-            if (!token) {
-              setError("Tu sesion expiro. Inicia sesion nuevamente para refrescar tipos.");
-              return;
-            }
-            try {
-              setError("");
-              setRates(await api.refreshExchangeRates(token));
-              setUsingFallbackState(false);
-            } catch (err) {
-              setError(err instanceof Error ? err.message : "No fue posible refrescar tipos de cambio.");
-            }
-          }}
+        <select
+          value={manualRate.target_currency}
+          onChange={(event) => setManualRate((prev) => ({ ...prev, target_currency: event.target.value }))}
         >
-          Refrescar automatico (fallback local)
+          <option value="USD">USD</option>
+          <option value="EUR">EUR</option>
+          <option value="MXN">MXN</option>
+        </select>
+        <input value={manualRate.rate} onChange={(event) => setManualRate((prev) => ({ ...prev, rate: event.target.value }))} />
+        <button className="button" type="submit" disabled={saving}>
+          Guardar tipo manual
         </button>
       </form>
 
       <section className="card">
-        <h3>Vista previa</h3>
-        <p>
-          100 {settings.base_currency} ={" "}
-          {previewRate ? `${(100 * Number(previewRate.rate)).toFixed(2)} ${previewRate.target_currency}` : "sin conversion disponible"}
-        </p>
-        <p>
-          Modo checkout:{" "}
-          {settings.display_mode === "localized_checkout"
-            ? "Intentara cobrar en moneda local cuando el flujo de pago lo soporte."
-            : "Checkout permanece en moneda base y solo muestra conversion."}
-        </p>
-        {!rates.length ? <p className="muted">Aun no hay tipos de cambio cargados para esta marca.</p> : null}
+        <h3>Resumen de moneda activa</h3>
+        {preview ? (
+          <>
+            <p>
+              100 {preview.base} = {preview.rate ? `${(100 * preview.rate).toFixed(2)} ${preview.target}` : `sin tasa disponible a ${preview.target}`}
+            </p>
+            <p className="muted">
+              Tipos disponibles: {rates.length}. Modo actual:{" "}
+              {isGlobalView ? platform?.global_exchange_mode ?? "manual" : currency?.exchange_mode ?? "manual"}.
+            </p>
+          </>
+        ) : (
+          <p className="muted">Sin datos para vista previa.</p>
+        )}
       </section>
     </section>
   );

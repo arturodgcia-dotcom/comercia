@@ -4,8 +4,10 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.api.deps import get_current_user
 from app.db.session import get_db
 from app.models.models import Banner, Plan, StorefrontConfig, Tenant, TenantBranding
+from app.models.models import User
 from app.schemas.storefront import StorefrontSnapshot
 from app.schemas.tenant import TenantCreate, TenantRead, TenantUpdate
 from app.services.storefront_initializer import initialize_storefront
@@ -19,12 +21,23 @@ router = APIRouter()
 
 
 @router.get("", response_model=list[TenantRead])
-def list_tenants(db: Session = Depends(get_db)) -> list[Tenant]:
-    return db.scalars(select(Tenant).order_by(Tenant.id.desc())).all()
+def list_tenants(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)) -> list[Tenant]:
+    if current_user.role == "reinpia_admin":
+        return db.scalars(select(Tenant).order_by(Tenant.id.desc())).all()
+    if current_user.tenant_id is None:
+        return []
+    tenant = db.get(Tenant, current_user.tenant_id)
+    return [tenant] if tenant else []
 
 
 @router.post("", response_model=TenantRead, status_code=status.HTTP_201_CREATED)
-def create_tenant(payload: TenantCreate, db: Session = Depends(get_db)) -> Tenant:
+def create_tenant(
+    payload: TenantCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> Tenant:
+    if current_user.role != "reinpia_admin":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="solo admin global puede crear marcas")
     _validate_slug_and_subdomain_uniqueness(db, payload.slug, payload.subdomain)
     values = payload.model_dump()
     default_plan: Plan | None = None
@@ -44,15 +57,23 @@ def create_tenant(payload: TenantCreate, db: Session = Depends(get_db)) -> Tenan
 
 
 @router.get("/{tenant_id}", response_model=TenantRead)
-def get_tenant(tenant_id: int, db: Session = Depends(get_db)) -> Tenant:
+def get_tenant(tenant_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)) -> Tenant:
     tenant = db.get(Tenant, tenant_id)
     if not tenant:
         raise HTTPException(status_code=404, detail="tenant no encontrado")
+    _assert_tenant_scope(current_user, tenant_id)
     return tenant
 
 
 @router.put("/{tenant_id}", response_model=TenantRead)
-def update_tenant(tenant_id: int, payload: TenantUpdate, db: Session = Depends(get_db)) -> Tenant:
+def update_tenant(
+    tenant_id: int,
+    payload: TenantUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> Tenant:
+    if current_user.role != "reinpia_admin":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="solo admin global puede actualizar marcas")
     tenant = db.get(Tenant, tenant_id)
     if not tenant:
         raise HTTPException(status_code=404, detail="tenant no encontrado")
@@ -78,7 +99,13 @@ def update_tenant(tenant_id: int, payload: TenantUpdate, db: Session = Depends(g
 
 
 @router.post("/{tenant_id}/initialize-storefront")
-def initialize_tenant_storefront(tenant_id: int, db: Session = Depends(get_db)) -> dict:
+def initialize_tenant_storefront(
+    tenant_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> dict:
+    if current_user.role != "reinpia_admin":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="solo admin global puede inicializar storefront")
     tenant = db.get(Tenant, tenant_id)
     if not tenant:
         raise HTTPException(status_code=404, detail="tenant no encontrado")
@@ -87,10 +114,15 @@ def initialize_tenant_storefront(tenant_id: int, db: Session = Depends(get_db)) 
 
 
 @router.get("/{tenant_id}/storefront-config", response_model=StorefrontSnapshot)
-def get_tenant_storefront_config(tenant_id: int, db: Session = Depends(get_db)) -> StorefrontSnapshot:
+def get_tenant_storefront_config(
+    tenant_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> StorefrontSnapshot:
     tenant = db.get(Tenant, tenant_id)
     if not tenant:
         raise HTTPException(status_code=404, detail="tenant no encontrado")
+    _assert_tenant_scope(current_user, tenant_id)
 
     branding = db.scalar(select(TenantBranding).where(TenantBranding.tenant_id == tenant_id))
     config = db.scalar(select(StorefrontConfig).where(StorefrontConfig.tenant_id == tenant_id))
@@ -102,3 +134,10 @@ def _validate_slug_and_subdomain_uniqueness(db: Session, slug: str, subdomain: s
     exists = db.scalar(select(Tenant).where((Tenant.slug == slug) | (Tenant.subdomain == subdomain)))
     if exists:
         raise HTTPException(status_code=400, detail="slug o subdomain ya existen")
+
+
+def _assert_tenant_scope(current_user: User, tenant_id: int) -> None:
+    if current_user.role == "reinpia_admin":
+        return
+    if current_user.tenant_id != tenant_id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="sin acceso a esta marca")

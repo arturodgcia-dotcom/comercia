@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 
 from app.api.v1.endpoints import (
+    admin_settings,
     automation,
     appointments,
     auth,
@@ -34,6 +35,7 @@ from app.api.v1.endpoints import (
     tenant_branding,
     tenant_config,
     tenants,
+    users_admin,
     wishlist,
 )
 
@@ -72,3 +74,5 @@ api_router.include_router(automation.router, prefix="/automation", tags=["automa
 api_router.include_router(reinpia_admin.router, prefix="/reinpia", tags=["reinpia-admin"])
 api_router.include_router(comercia_public.router, prefix="/comercia", tags=["comercia-public"])
 api_router.include_router(brand_setup.router, prefix="/brand-setup", tags=["brand-setup"])
+api_router.include_router(admin_settings.router, prefix="/admin", tags=["admin-settings"])
+api_router.include_router(users_admin.router, prefix="/admin", tags=["users-admin"])

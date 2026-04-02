@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+锘縤mport { useEffect, useMemo, useState } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../app/AuthContext";
 import { LanguageSelector } from "../components/LanguageSelector";
@@ -98,8 +98,8 @@ export function AdminLayout() {
   const brandId = isSuperAdmin ? (selectedBrandId ?? 0) : (user?.tenant_id ?? 0);
   const brandSlug = activeBrand?.slug ?? "reinpia";
 
-  const modeTitle = mode === "global" ? "Administraci髇 General de ComerCia" : "Panel de Operaci髇 de Marca";
-  const modeHint = mode === "global" ? "Modo actual: Global ComerCia" : "Modo actual: Operaci髇 de Marca";
+  const modeTitle = mode === "global" ? "Administraci贸n General de ComerCia" : "Panel de Operaci贸n de Marca";
+  const modeHint = mode === "global" ? "Modo actual: Global ComerCia" : "Modo actual: Operaci贸n de Marca";
   const brandHint = activeBrand
     ? `Marca activa: ${activeBrand.name}`
     : brandId
@@ -118,9 +118,9 @@ export function AdminLayout() {
       items: [
         { label: "Landing principal ComerCia", to: "/comercia" },
         { label: "Planes comerciales", to: "/plans" },
-        { label: "L韆 / asistente comercial", to: "/comercia" },
+        { label: "L铆a / asistente comercial", to: "/comercia" },
         { label: "Leads", to: "/reinpia/reports/leads" },
-        { label: "Diagn髎ticos", to: "/reinpia/commercial-inbox" },
+        { label: "Diagn贸sticos", to: "/reinpia/commercial-inbox" },
         { label: "Contactos", to: "/reinpia/commercial-inbox" },
         { label: "Marketing global", to: "/reinpia/reports/marketing-opportunities" },
         { label: "Comisionistas", to: "/reinpia/commission-agents" },
@@ -128,22 +128,22 @@ export function AdminLayout() {
       ],
     },
     {
-      title: "MARCAS Y ACTIVACI覰",
+      title: "MARCAS Y ACTIVACI脫N",
       roles: ["reinpia_admin"],
       items: [
         { label: "Nueva marca", to: "/reinpia/brands/new" },
         { label: "Marcas", to: "/reinpia/tenants" },
-        { label: "Workflow de activaci髇", to: "/reinpia/brands/new" },
+        { label: "Workflow de activaci贸n", to: "/reinpia/tenants" },
         { label: "Global pagos", to: "/reinpia/payments" },
-        { label: "Global operaci髇", to: "/reinpia/operations" },
+        { label: "Global operaci贸n", to: "/reinpia/operations" },
       ],
     },
     {
-      title: "OPERACI覰 GLOBAL",
+      title: "OPERACI脫N GLOBAL",
       roles: ["reinpia_admin"],
       items: [
-        { label: "Servicios log韘ticos", to: "/reinpia/logistics-services" },
-        { label: "Operaci髇 global", to: "/reinpia/operations" },
+        { label: "Servicios log铆sticos", to: "/reinpia/logistics-services" },
+        { label: "Operaci贸n global", to: "/reinpia/operations" },
         { label: "Citas globales", to: "/reinpia/operations" },
         { label: "Recurrencia global", to: "/reinpia/operations" },
       ],
@@ -154,20 +154,20 @@ export function AdminLayout() {
       items: [
         { label: "Global pagos", to: "/reinpia/payments" },
         { label: "Comisiones", to: "/reinpia/reports/commissions" },
-        { label: "Monedas y tipos de cambio", to: "/admin/currency" },
-        { label: "Facturaci髇 servicios adicionales", to: "/reinpia/logistics-services" },
+        { label: "Monedas y tipos de cambio", to: "/reinpia/currency" },
+        { label: "Facturaci贸n servicios adicionales", to: "/reinpia/logistics-services" },
       ],
     },
     {
-      title: "CONFIGURACI覰 GENERAL",
+      title: "CONFIGURACI脫N GENERAL",
       roles: ["reinpia_admin"],
       items: [
         { label: "Branding base", to: "/reinpia/brands/new" },
-        { label: "Idiomas", to: "/reinpia/dashboard" },
-        { label: "Automatizaci髇", to: "/admin/automation" },
-        { label: "Usuarios internos", to: "/tenants" },
+        { label: "Idiomas", to: "/reinpia/language" },
+        { label: "Automatizaci贸n", to: "/admin/automation" },
+        { label: "Usuarios internos", to: "/reinpia/users" },
         { label: "Roles y permisos", to: "/reinpia/security/rules" },
-        { label: "Pol韙icas y legales", to: "/legal/privacidad" },
+        { label: "Pol铆ticas y legales", to: "/legal/privacidad" },
         { label: "Integraciones globales", to: "/admin/settings/payments/stripe" },
       ],
     },
@@ -179,9 +179,9 @@ export function AdminLayout() {
         { label: "Crecimiento", to: "/reinpia/reports/growth" },
         { label: "Ventas globales", to: "/reinpia/payments" },
         { label: "Marketing global", to: "/reinpia/reports/marketing-opportunities" },
-        { label: "Fidelizaci髇 global", to: "/reinpia/reports/overview" },
+        { label: "Fidelizaci贸n global", to: "/reinpia/reports/overview" },
         { label: "Distribuidores global", to: "/reinpia/operations" },
-        { label: "Operaci髇 global", to: "/reinpia/operations" },
+        { label: "Operaci贸n global", to: "/reinpia/operations" },
       ],
     },
   ];
@@ -196,46 +196,43 @@ export function AdminLayout() {
       title: "COMERCIAL",
       roles: ADMIN_ROLES,
       items: [
-        { label: "Landing de la marca", to: brandId ? `/tenants/${brandId}/branding` : "/tenants" },
-        { label: "Ecommerce p鷅lico", to: `/store/${brandSlug}` },
+        { label: "Landing de la marca", to: "/admin/branding" },
+        { label: "Ecommerce p煤blico", to: `/store/${brandSlug}` },
         { label: "Ecommerce distribuidores", to: `/store/${brandSlug}/distribuidores` },
         { label: "Banners", to: "/admin/banners", roles: ["tenant_admin", "reinpia_admin"] },
         { label: "Cupones", to: "/admin/coupons", roles: ["tenant_admin", "reinpia_admin"] },
         { label: "Promociones", to: "/admin/banners", roles: ["tenant_admin", "reinpia_admin"] },
-        { label: "Retroalimentaci髇", to: "/admin/feedback" },
-        { label: "Contactos recibidos", to: "/reinpia/commercial-inbox", roles: ["reinpia_admin"] },
-        { label: "Diagn髎ticos recibidos", to: "/reinpia/commercial-inbox", roles: ["reinpia_admin"] },
-      ],
+        { label: "Retroalimentaci贸n", to: "/admin/feedback" },      ],
     },
     {
-      title: "CAT罫OGO",
+      title: "CAT脕LOGO",
       roles: ADMIN_ROLES,
       items: [
         { label: "Productos", to: "/products" },
         { label: "Servicios", to: "/admin/services" },
-        { label: "Categor韆s", to: "/categories" },
+        { label: "Categor铆as", to: "/categories" },
         { label: "Precios", to: "/admin/payments", roles: ["tenant_admin", "reinpia_admin"] },
         { label: "Carga masiva", to: "/admin/catalog/bulk-upload" },
         { label: "Stock", to: "/admin/inventory" },
-        { label: "Sincronizaci髇 Stripe", to: "/admin/settings/payments/stripe", roles: ["tenant_admin", "reinpia_admin"] },
+        { label: "Sincronizaci贸n Stripe", to: "/admin/settings/payments/stripe", roles: ["tenant_admin", "reinpia_admin"] },
       ],
     },
     {
       title: "CLIENTES",
       roles: ADMIN_ROLES,
       items: [
-        { label: "P鷅lico", to: "/pos/customers" },
+        { label: "P煤blico", to: "/pos/customers" },
         { label: "Distribuidores", to: "/admin/distributors" },
-        { label: "Membres韆s", to: "/admin/memberships", roles: ["tenant_admin", "reinpia_admin"] },
+        { label: "Membres铆as", to: "/admin/memberships", roles: ["tenant_admin", "reinpia_admin"] },
         { label: "Credenciales", to: "/admin/loyalty", roles: ["tenant_admin", "reinpia_admin"] },
         { label: "Historial / solicitudes", to: "/admin/distributor-applications" },
       ],
     },
     {
-      title: "OPERACI覰",
+      title: "OPERACI脫N",
       roles: ADMIN_ROLES,
       items: [
-        { label: "Log韘tica", to: "/admin/logistics" },
+        { label: "Log铆stica", to: "/admin/logistics" },
         { label: "Almacenes", to: "/admin/logistics" },
         { label: "Citas", to: "/admin/appointments" },
         { label: "Recurrencia", to: "/admin/recurring-orders" },
@@ -253,16 +250,16 @@ export function AdminLayout() {
       ],
     },
     {
-      title: "CONFIGURACI覰 DE MARCA",
+      title: "CONFIGURACI脫N DE MARCA",
       roles: ADMIN_ROLES,
       items: [
-        { label: "Branding", to: brandId ? `/tenants/${brandId}/branding` : "/tenants", roles: ["tenant_admin", "reinpia_admin"] },
-        { label: "Usuarios", to: "/tenants", roles: ["tenant_admin", "reinpia_admin"] },
+        { label: "Branding", to: "/admin/branding", roles: ["tenant_admin", "reinpia_admin"] },
+        { label: "Usuarios", to: "/admin/users", roles: ["tenant_admin", "reinpia_admin", "tenant_staff"] },
         { label: "Pagos online (Stripe)", to: "/admin/settings/payments/stripe", roles: ["tenant_admin", "reinpia_admin"] },
         { label: "Pagos POS (Mercado Pago)", to: "/admin/settings/payments/mercadopago", roles: ["tenant_admin", "reinpia_admin"] },
-        { label: "Moneda de operaci髇", to: "/admin/currency", roles: ["tenant_admin", "reinpia_admin"] },
-        { label: "Idioma de la tienda", to: "/" },
-        { label: "Automatizaci髇 de marca", to: "/admin/automation", roles: ["tenant_admin", "reinpia_admin"] },
+        { label: "Moneda de operaci贸n", to: "/admin/currency", roles: ["tenant_admin", "reinpia_admin"] },
+        { label: "Idioma de la tienda", to: "/admin/language", roles: ["tenant_admin", "reinpia_admin", "tenant_staff"] },
+        { label: "Automatizaci贸n de marca", to: "/admin/automation", roles: ["tenant_admin", "reinpia_admin"] },
       ],
     },
     {
@@ -271,9 +268,9 @@ export function AdminLayout() {
       items: [
         { label: "Ventas", to: "/admin/reports/sales", roles: ["tenant_admin", "reinpia_admin"] },
         { label: "Marketing", to: "/admin/reports/marketing", roles: ["tenant_admin", "reinpia_admin"] },
-        { label: "Fidelizaci髇", to: "/admin/reports/loyalty", roles: ["tenant_admin", "reinpia_admin"] },
+        { label: "Fidelizaci贸n", to: "/admin/reports/loyalty", roles: ["tenant_admin", "reinpia_admin"] },
         { label: "Distribuidores", to: "/admin/reports/distributors", roles: ["tenant_admin", "reinpia_admin"] },
-        { label: "Operaci髇", to: "/admin/reports/logistics", roles: ["tenant_admin", "reinpia_admin"] },
+        { label: "Operaci贸n", to: "/admin/reports/logistics", roles: ["tenant_admin", "reinpia_admin"] },
         { label: "POS", to: "/pos/sales" },
       ],
     },
@@ -377,7 +374,7 @@ export function AdminLayout() {
           ) : null}
         </nav>
         <button className="button button-outline" onClick={logout} type="button">
-          Cerrar sesi髇
+          Cerrar sesi贸n
         </button>
       </aside>
       <main className="content">
@@ -394,7 +391,7 @@ export function AdminLayout() {
             ))}
           </div>
           <div className="context-top-indicator">
-            <span>{mode === "global" ? "Administraci髇 General de ComerCia" : "Panel de Operaci髇 de Marca"}</span>
+            <span>{mode === "global" ? "Administraci贸n General de ComerCia" : "Panel de Operaci贸n de Marca"}</span>
             <span>{brandHint}</span>
           </div>
         </div>
@@ -403,3 +400,5 @@ export function AdminLayout() {
     </div>
   );
 }
+
+
