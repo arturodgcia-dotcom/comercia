@@ -330,6 +330,7 @@ function BrandChannelShell({ channel }: { channel: ChannelKey }) {
   const landingUrl = useExternalLandingAsPrimary ? landingExternalUrl! : landingInternalUrl;
   const landingPreviewUrl = landingPreviewInternalUrl;
   const publicUrl = urls.publicUrl;
+  const publicPreviewUrl = urls.publicPreviewUrl;
   const distributorsUrl = urls.distributorsUrl;
   const posPreviewUrl = urls.posPreviewUrl;
   const posUrl = posPreviewUrl;
@@ -360,6 +361,16 @@ function BrandChannelShell({ channel }: { channel: ChannelKey }) {
             hero_title: fallbackHeroTitle,
             hero_subtitle: fallbackHeroSubtitle,
           });
+        } else if (kind === "public" && channelSettings) {
+          await api.updateBrandChannelSettings(token, tenantId, {
+            nfc_enabled: channelSettings.nfc_enabled,
+            mercadopago_enabled: channelSettings.mercadopago_enabled,
+          });
+          const now = new Date().toISOString();
+          setLastRegenerated((prev) => ({ ...prev, [kind]: now }));
+          setMessage("Plantilla pública recalculada para la marca activa.");
+          await load();
+          return;
         } else if (channelSettings) {
           await api.updateBrandChannelSettings(token, tenantId, {
             nfc_enabled: channelSettings.nfc_enabled,
@@ -402,6 +413,12 @@ function BrandChannelShell({ channel }: { channel: ChannelKey }) {
           await api.generateBrandSetupLanding(token, tenantId, true);
           setMessage("Landing regenerada correctamente para la marca activa.");
         }
+      } else if (kind === "public") {
+        await api.updateBrandChannelSettings(token, tenantId, {
+          nfc_enabled: channelSettings?.nfc_enabled ?? false,
+          mercadopago_enabled: channelSettings?.mercadopago_enabled ?? false,
+        });
+        setMessage("Plantilla pública recalculada con branding y catálogo del tenant activo.");
       } else {
         await api.applyBrandEcommerceTemplate(token, tenantId);
         setMessage("Plantilla de ecommerce regenerada correctamente para la marca activa.");
@@ -527,6 +544,7 @@ function BrandChannelShell({ channel }: { channel: ChannelKey }) {
             <ChannelStateLabel label="Moneda" value={brandAdminSettings?.currency_base_currency ?? "Pendiente"} />
             <ChannelStateLabel label="Idioma" value={brandAdminSettings?.language_primary ?? "Pendiente"} />
             <ChannelStateLabel label="Ruta ecommerce publico" value={`${window.location.origin}${publicUrl}`} />
+            <ChannelStateLabel label="Ruta preview ecommerce" value={`${window.location.origin}${publicPreviewUrl}`} />
             <ChannelStateLabel
               label="Ultima regeneracion"
               value={formatDateLabel(lastRegenerated.public ?? ecommerceStep?.updated_at ?? null)}
@@ -553,7 +571,7 @@ function BrandChannelShell({ channel }: { channel: ChannelKey }) {
             <button className="button" type="button" onClick={() => openInNewTab(publicUrl)}>
               Ver ecommerce publico
             </button>
-            <button className="button button-outline" type="button" onClick={() => openInNewTab(publicUrl)}>
+            <button className="button button-outline" type="button" onClick={() => openInNewTab(publicPreviewUrl)}>
               Ver preview
             </button>
             <Link className="button button-outline" to="/products">

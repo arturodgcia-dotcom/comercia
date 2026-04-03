@@ -1,17 +1,153 @@
-import { useEffect, useMemo, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+﻿import { useEffect, useMemo, useState } from "react";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 import { LanguageSelector } from "../components/LanguageSelector";
-import { ReinpiaStorefrontLanding } from "./ReinpiaStorefrontLanding";
 import { ApiError, api } from "../services/api";
 import { buildBrandTheme, tokensToCssVars } from "../branding/multibrandTemplates";
-import { CurrencySettings, ExchangeRate, Product, StorefrontHomePayload, TenantConfig, WishlistItem } from "../types/domain";
+import {
+  Banner,
+  Category,
+  CurrencySettings,
+  ExchangeRate,
+  MembershipPlan,
+  Product,
+  StorefrontHomePayload,
+  TenantConfig,
+  WishlistItem,
+} from "../types/domain";
 import { calculatePlanTotals } from "../utils/monetization";
 
 type CartMap = Record<number, number>;
 const DEMO_CUSTOMER_ID = 1;
 
+function isTulipanesTenant(data: StorefrontHomePayload): boolean {
+  const name = data.tenant.name.toLowerCase();
+  const slug = data.tenant.slug.toLowerCase();
+  return name.includes("tulipanes") || slug.includes("tulipanes");
+}
+
+function buildTenantAwareDemoCategories(data: StorefrontHomePayload): Category[] {
+  const base = isTulipanesTenant(data)
+    ? ["Cosmetologia", "Podologia", "Diplomados", "Cursos", "Talleres", "Kits y materiales"]
+    : ["Destacados", "Promociones", "Nuevos", "Servicios", "Especialidades", "Recomendados"];
+
+  return base.map((name, index) => ({
+    id: -100 - index,
+    tenant_id: data.tenant.id,
+    name,
+    slug: name.toLowerCase().replace(/\s+/g, "-"),
+    description: `Categoria sugerida para ${data.tenant.name}.`,
+    is_active: true,
+  }));
+}
+
+function buildTenantAwareDemoProducts(data: StorefrontHomePayload, categories: Category[]): Product[] {
+  if (isTulipanesTenant(data)) {
+    const drafts = [
+      ["Diplomado Integral en Cosmetologia", "Formacion profesional con enfoque practico y certificacion.", 4850],
+      ["Diplomado Profesional en Podologia", "Programa avanzado para atencion clinica y comercial.", 5200],
+      ["Curso Intensivo de Manicure Avanzado", "Curso corto orientado a salida laboral inmediata.", 1890],
+      ["Taller de Tecnicas de Colorimetria", "Especializacion para estilismo y asesoria de imagen.", 1450],
+      ["Kit de Practica Profesional", "Material base para iniciar practicas en laboratorio.", 1190],
+      ["Paquete de Inscripcion + Materiales", "Beneficio de temporada para nuevas inscripciones.", 2590],
+    ] as const;
+    return drafts.map((row, index) => ({
+      id: -1000 - index,
+      tenant_id: data.tenant.id,
+      category_id: categories[index % categories.length]?.id,
+      name: row[0],
+      slug: row[0].toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+      description: row[1],
+      price_public: row[2],
+      price_wholesale: undefined,
+      price_retail: undefined,
+      stripe_product_id: null,
+      stripe_price_id_public: null,
+      stripe_price_id_retail: null,
+      stripe_price_id_wholesale: null,
+      is_featured: index < 3,
+      is_active: true,
+    }));
+  }
+
+  const generic = [
+    ["Programa destacado de temporada", "Oferta principal para captacion y conversion comercial.", 1990],
+    ["Paquete premium de lanzamiento", "Incluye beneficios clave para nuevos clientes.", 2490],
+    ["Servicio especializado", "Atencion profesional con seguimiento personalizado.", 1390],
+    ["Bundle promocional", "Combinacion de servicios/productos con descuento.", 1590],
+    ["Curso o taller recomendado", "Contenido de alto valor para crecimiento del cliente.", 1290],
+    ["Kit de apoyo", "Material complementario para mejorar experiencia.", 890],
+  ] as const;
+  return generic.map((row, index) => ({
+    id: -2000 - index,
+    tenant_id: data.tenant.id,
+    category_id: categories[index % categories.length]?.id,
+    name: row[0],
+    slug: row[0].toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+    description: row[1],
+    price_public: row[2],
+    price_wholesale: undefined,
+    price_retail: undefined,
+    stripe_product_id: null,
+    stripe_price_id_public: null,
+    stripe_price_id_retail: null,
+    stripe_price_id_wholesale: null,
+    is_featured: index < 3,
+    is_active: true,
+  }));
+}
+
+function buildTenantAwareDemoBanners(data: StorefrontHomePayload): Banner[] {
+  const isTulipanes = isTulipanesTenant(data);
+  const rows = isTulipanes
+    ? [
+        ["Inscripciones abiertas", "Cupos disponibles para la nueva generacion.", "hero"],
+        ["Diplomado en cosmetologia", "Inicia este mes con plan academico profesional.", "store_top"],
+        ["Formacion profesional en podologia", "Programa con practica guiada y certificacion.", "store_top"],
+        ["Paquetes de inscripcion y materiales", "Aprovecha promociones por temporada.", "checkout_upsell"],
+      ]
+    : [
+        ["Oferta principal activa", "Promocion comercial destacada para nuevos clientes.", "hero"],
+        ["Coleccion recomendada", "Productos y servicios con mayor conversion.", "store_top"],
+      ];
+  return rows.map((row, index) => ({
+    id: -3000 - index,
+    tenant_id: data.tenant.id,
+    storefront_config_id: undefined,
+    title: row[0],
+    subtitle: row[1],
+    image_url: undefined,
+    target_type: "promotion",
+    target_value: undefined,
+    position: row[2],
+    priority: index + 1,
+    starts_at: undefined,
+    ends_at: undefined,
+    is_active: true,
+  }));
+}
+
+function buildTenantAwareDemoMemberships(data: StorefrontHomePayload): MembershipPlan[] {
+  if (isTulipanesTenant(data)) {
+    return [
+      {
+        id: -4001,
+        tenant_id: data.tenant.id,
+        name: "Membresia Alumno Activo",
+        description: "Acceso a beneficios en talleres y materiales durante 90 dias.",
+        duration_days: 90,
+        price: 690,
+        points_multiplier: 1,
+        benefits_json: undefined,
+        is_active: true,
+      },
+    ];
+  }
+  return [];
+}
+
 export function StorefrontPage() {
   const { tenantSlug } = useParams();
+  const [searchParams] = useSearchParams();
   const [data, setData] = useState<StorefrontHomePayload | null>(null);
   const [error, setError] = useState("");
   const [errorDetail, setErrorDetail] = useState("");
@@ -28,6 +164,7 @@ export function StorefrontPage() {
   const [rates, setRates] = useState<ExchangeRate[]>([]);
   const [selectedCurrency, setSelectedCurrency] = useState("MXN");
   const [tenantConfig, setTenantConfig] = useState<TenantConfig | null>(null);
+  const isPreviewMode = searchParams.get("preview") === "1";
 
   useEffect(() => {
     if (!tenantSlug) return;
@@ -70,14 +207,72 @@ export function StorefrontPage() {
       });
   }, [tenantSlug, retryTick]);
 
+  const effectiveCategories = useMemo(() => {
+    if (!data) return [];
+    return data.categories.length > 0 ? data.categories : buildTenantAwareDemoCategories(data);
+  }, [data, tenantConfig]);
+
+  const effectiveBanners = useMemo(() => {
+    if (!data) return [];
+    const banners = data.banners ?? [];
+    return banners.length > 0 ? banners : buildTenantAwareDemoBanners(data);
+  }, [data]);
+
+  const hasRealProducts = useMemo(() => {
+    if (!data) return false;
+    return (
+      data.featured_products.length > 0 ||
+      data.promo_products.length > 0 ||
+      data.recent_products.length > 0 ||
+      data.best_sellers.length > 0
+    );
+  }, [data]);
+
+  const effectiveFeaturedProducts = useMemo(() => {
+    if (!data) return [];
+    if (data.featured_products.length > 0) return data.featured_products;
+    return buildTenantAwareDemoProducts(data, effectiveCategories).slice(0, 6);
+  }, [data, effectiveCategories]);
+
+  const effectivePromoProducts = useMemo(() => {
+    if (!data) return [];
+    if (data.promo_products.length > 0) return data.promo_products;
+    const demo = buildTenantAwareDemoProducts(data, effectiveCategories);
+    return demo.slice(2, 8);
+  }, [data, effectiveCategories]);
+
+  const effectiveRecentProducts = useMemo(() => {
+    if (!data) return [];
+    if (data.recent_products.length > 0) return data.recent_products;
+    const demo = buildTenantAwareDemoProducts(data, effectiveCategories);
+    return demo.slice(1, 7);
+  }, [data, effectiveCategories]);
+
+  const effectiveBestSellerProducts = useMemo(() => {
+    if (!data) return [];
+    if (data.best_sellers.length > 0) return data.best_sellers;
+    const demo = buildTenantAwareDemoProducts(data, effectiveCategories);
+    return demo.slice(0, 6);
+  }, [data, effectiveCategories]);
+
+  const effectiveMembershipPlans = useMemo(() => {
+    if (!data) return [];
+    return data.membership_plans.length > 0 ? data.membership_plans : buildTenantAwareDemoMemberships(data);
+  }, [data]);
+
   const allProducts = useMemo(() => {
     if (!data) return [];
     const unique = new Map<number, Product>();
-    [...data.featured_products, ...data.recent_products, ...data.promo_products, ...data.best_sellers].forEach((product) =>
+    [
+      ...effectiveFeaturedProducts,
+      ...effectiveRecentProducts,
+      ...effectivePromoProducts,
+      ...effectiveBestSellerProducts,
+    ].forEach((product) =>
       unique.set(product.id, product)
     );
     return Array.from(unique.values());
-  }, [data, tenantConfig]);
+  }, [data, effectiveFeaturedProducts, effectiveRecentProducts, effectivePromoProducts, effectiveBestSellerProducts]);
 
   const channelThemeStyle = useMemo(() => {
     if (!data) return undefined;
@@ -196,7 +391,6 @@ export function StorefrontPage() {
     );
   }
   if (!data) return <p>Cargando storefront...</p>;
-  if (data.tenant.slug.toLowerCase() === "reinpia") return <ReinpiaStorefrontLanding data={data} />;
 
   const primary = data.branding?.primary_color ?? "#0d3e86";
   const secondary = data.branding?.secondary_color ?? "#8dc4ff";
@@ -215,6 +409,8 @@ export function StorefrontPage() {
           ) : null}
         </div>
         <p className="marketing-eyebrow">Marca cliente en ComerCia</p>
+        {isPreviewMode ? <p className="chip chip-neutral">Modo preview de ecommerce publico</p> : null}
+        {!hasRealProducts ? <p className="chip chip-warning">Mostrando catalogo demo tenant-aware</p> : null}
         {tenantConfig ? <p className="chip">{tenantConfig.checkout_badge}</p> : null}
         <h1>{data.branding?.hero_title ?? data.tenant.name}</h1>
         <p>{data.branding?.hero_subtitle ?? "Experiencia comercial premium con ecommerce y canal distribuidor separados."}</p>
@@ -236,22 +432,22 @@ export function StorefrontPage() {
       <section className="card-grid">
         <article className="card">
           <h3>Venta directa</h3>
-          <p>Catálogo público con promociones, favoritos y checkout online.</p>
+          <p>Catalogo publico con promociones, favoritos y checkout online.</p>
         </article>
         <article className="card">
           <h3>Canal comercial</h3>
           <p>Ruta separada para distribuidores con reglas de negocio por volumen.</p>
         </article>
         <article className="card">
-          <h3>Operación inteligente</h3>
-          <p>Preparado para fidelización, recurrencia, logística y reportes de crecimiento.</p>
+          <h3>Operacion inteligente</h3>
+          <p>Preparado para fidelizacion, recurrencia, logistica y reportes de crecimiento.</p>
         </article>
       </section>
 
       <section className="store-banner">
-        <h2>Categorías</h2>
+        <h2>Categorias</h2>
         <div className="chip-row">
-          {data.categories.map((category) => (
+          {effectiveCategories.map((category) => (
             <span key={category.id} className="chip">{category.name}</span>
           ))}
         </div>
@@ -260,12 +456,12 @@ export function StorefrontPage() {
       <section className="store-banner">
         <h2>Banners</h2>
         <div className="card-grid">
-          {(data.banners ?? []).map((banner) => (
+          {effectiveBanners.map((banner) => (
             <article key={banner.id} className="card">
               <h3>{banner.title}</h3>
               {banner.subtitle ? <p>{banner.subtitle}</p> : null}
               {banner.image_url ? <img src={banner.image_url} alt={banner.title} className="store-banner-image" /> : null}
-              <p className="muted">Posición: {banner.position}</p>
+              <p className="muted">Posicion: {banner.position}</p>
             </article>
           ))}
         </div>
@@ -273,7 +469,7 @@ export function StorefrontPage() {
 
       <ProductRail
         title="Destacados"
-        products={data.featured_products}
+        products={effectiveFeaturedProducts}
         tenantSlug={data.tenant.slug}
         cart={cart}
         onAdd={updateCart}
@@ -284,7 +480,7 @@ export function StorefrontPage() {
       />
       <ProductRail
         title="Promociones"
-        products={data.promo_products}
+        products={effectivePromoProducts}
         tenantSlug={data.tenant.slug}
         cart={cart}
         onAdd={updateCart}
@@ -295,7 +491,7 @@ export function StorefrontPage() {
       />
       <ProductRail
         title="Nuevos ingresos"
-        products={data.recent_products}
+        products={effectiveRecentProducts}
         tenantSlug={data.tenant.slug}
         cart={cart}
         onAdd={updateCart}
@@ -305,8 +501,8 @@ export function StorefrontPage() {
         getDisplayPrice={getDisplayPrice}
       />
       <ProductRail
-        title="Más vendidos"
-        products={data.best_sellers}
+        title="Mas vendidos"
+        products={effectiveBestSellerProducts}
         tenantSlug={data.tenant.slug}
         cart={cart}
         onAdd={updateCart}
@@ -318,13 +514,13 @@ export function StorefrontPage() {
 
       <section className="store-layout">
         <article className="store-banner">
-          <h2>Membresías y recompra</h2>
+          <h2>Membresias y recompra</h2>
           <div className="card-grid">
-            {data.membership_plans.map((plan) => (
+            {effectiveMembershipPlans.map((plan) => (
               <article key={plan.id} className="card">
                 <h3>{plan.name}</h3>
                 <p>{plan.description}</p>
-                <p>Duración: {plan.duration_days} días</p>
+                <p>Duracion: {plan.duration_days} dias</p>
                 <p>Precio: ${Number(plan.price).toLocaleString("es-MX")}</p>
               </article>
             ))}
@@ -346,14 +542,14 @@ export function StorefrontPage() {
             <p className="chip">Sin comision - incluido en tu plan</p>
           )}
           {currencySettings?.display_mode === "localized_checkout" ? (
-            <p>El checkout intentará cobrar en moneda local cuando el flujo lo soporte. Fallback: moneda base.</p>
+            <p>El checkout intentara cobrar en moneda local cuando el flujo lo soporte. Fallback: moneda base.</p>
           ) : (
-            <p>El checkout cobra en moneda base. La moneda elegida solo se usa para visualización.</p>
+            <p>El checkout cobra en moneda base. La moneda elegida solo se usa para visualizacion.</p>
           )}
-          <input placeholder="Código de cupón" value={couponCode} onChange={(e) => setCouponCode(e.target.value)} />
+          <input placeholder="Codigo de cupon" value={couponCode} onChange={(e) => setCouponCode(e.target.value)} />
           <label className="checkbox">
             <input type="checkbox" checked={usePoints} onChange={(e) => setUsePoints(e.target.checked)} />
-            Aplicar puntos de fidelización
+            Aplicar puntos de fidelizacion
           </label>
           <label className="checkbox">
             <input type="checkbox" checked={wantsRecurring} onChange={(e) => setWantsRecurring(e.target.checked)} />
