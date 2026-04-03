@@ -486,7 +486,7 @@ Esto habilita un flujo de seguimiento comercial end-to-end sin depender de formu
 - Se centralizo la URL base del frontend en `frontend/src/services/api.ts` para evitar desalineacion entre modulos.
 - En local, el esquema recomendado queda:
   - backend `8000` como base
-  - fallback automatico a `8001`
+  - fallback historico a `8001` (eliminado en Ejecucion 39)
 - Se evitan puertos runtime efimeros almacenados previamente (ej. `8002`) cuando no forman parte de la configuracion local esperada.
 - El modulo de Monedas deja de depender de un backend perfecto para renderizar:
   - siempre muestra UI util
@@ -527,3 +527,17 @@ Esto habilita un flujo de seguimiento comercial end-to-end sin depender de formu
   - editar modulo relacionado
   - regenerar plantilla (restringido a `reinpia_admin`)
 - POS se alinea a esta arquitectura: ya no usa fallback hardcodeado de tenant; opera con tenant activo real.
+
+## Ejecucion 39: correccion de rutas reales y consistencia de canal
+- Se elimina fallback hardcodeado al puerto `8001` en cliente API frontend para evitar desalineacion de endpoint.
+- Se agrega landing interna tenant-aware publica:
+  - `/store/:tenantSlug/landing`
+  - separa claramente landing de marca vs ecommerce publico.
+- Politica de URL externa de landing:
+  - URL externa valida y resoluble: se abre directa.
+  - URL demo/no desplegada (`.demo`, `.local`, `.invalid`): se informa y se usa fallback interno.
+- Acciones de regeneracion por canal:
+  - global admin: flujo real de regeneracion.
+  - usuario de marca: stub operativo con timestamp y confirmacion visible.
+- POS principal de canal se normaliza a ruta tenant-aware:
+  - `/pos?tenant_id={tenantId}`

@@ -154,7 +154,7 @@ Nuevos endpoints:
 ## Actualizacion conectividad API y Monedas (Ejecucion 36)
 - URL base de API centralizada y endurecida para entorno local:
   - `VITE_API_URL` por defecto en `http://127.0.0.1:8000`
-  - fallback local controlado a `8001`
+  - fallback local historico a `8001` (retirado en Ejecucion 39)
   - descarte de runtime URL efimera fuera de lista (evita errores con puertos como `8002`)
 - Modulo Monedas reforzado:
   - carga inicial con `loading`
@@ -203,3 +203,21 @@ Nuevos endpoints:
   - abrir preview
   - editar modulo relacionado
   - regenerar plantilla (solo `reinpia_admin`)
+
+## Ajuste de comportamiento real de canales (Ejecucion 39)
+- Landing de marca:
+  - `Ver landing` y `Ver preview` respetan URL externa valida.
+  - Si la URL externa es demo/no resoluble (`.demo`, `.local`, `.invalid`), se usa landing interna tenant-aware.
+  - Ruta interna de landing: `/store/:tenantSlug/landing`.
+  - `Regenerar landing` deja de ser boton muerto:
+    - `reinpia_admin`: accion real de regeneracion.
+    - marca: stub funcional con confirmacion y timestamp visible.
+- Ecommerce publico:
+  - `Ver ecommerce publico` y `Ver preview` abren `/store/:tenantSlug`.
+  - `Regenerar plantilla publica` ejecuta accion de regeneracion sin redirigir a landing.
+- Ecommerce distribuidores:
+  - `Ver ecommerce distribuidores` y `Ver preview` abren `/store/:tenantSlug/distribuidores`.
+  - `Regenerar plantilla distribuidor` deja de ser boton muerto.
+- POS / WebApp:
+  - `Abrir WebApp / POS` abre ruta tenant-aware `/pos?tenant_id={tenantId}`.
+  - `Ver preview POS` mantiene plantilla de preview.

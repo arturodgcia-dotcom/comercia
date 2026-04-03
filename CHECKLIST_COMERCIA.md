@@ -416,3 +416,15 @@
 - [x] POS ajustado para usar tenant activo del selector de contexto (incluye modo marca para `reinpia_admin`)
 - [x] Build frontend OK
 - [x] Compile backend OK
+
+## Entregables ejecucion 39 (Correccion fina de canales + landing principal)
+- [x] Landing principal ComerCia recodificada en UTF-8 valida (sin texto corrupto)
+- [x] Copy del modelo comision ajustado para evitar mensajes ambiguos de cobro
+- [x] Landing de marca separada en ruta interna tenant-aware (`/store/:tenantSlug/landing`)
+- [x] Botones de canal alineados a comportamiento real por tenant (ver/preview/regenerar)
+- [x] Regeneracion de canales sin boton muerto (accion real para global admin y stub operativo para marca)
+- [x] Validacion de URL externa de landing (dominios demo/no resolubles usan fallback interno)
+- [x] Ecommerce publico y distribuidores conservan rutas propias (sin mezclar landing)
+- [x] Eliminado hardcode de puerto `8001` en cliente API frontend
+- [x] `Abrir WebApp / POS` usa ruta valida tenant-aware (`/pos?tenant_id=...`)
+- [x] Validacion ejecutada: frontend build + backend compile

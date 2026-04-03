@@ -347,7 +347,6 @@ npm run dev
 - Se evita quedar atrapado en puertos efimeros guardados en runtime (ej. `8002`) que causaban errores de conexion en login y Monedas.
 - Fallback local controlado:
   - prioridad `8000`
-  - fallback `8001`
 - Modulos que antes construian URL directa ahora usan helper central:
   - `BrandSetupWizard` (assets)
   - `ReinpiaReportsPage` (exportes)
@@ -512,6 +511,9 @@ npm run dev
 - Cada canal muestra estado de publicacion (`borrador`, `en revision`, `publicado`, `requiere ajustes`) y datos reales de la marca activa.
 - Las acciones por canal permiten abrir vista real, preview, editar modulo relacionado y regenerar plantilla cuando el usuario es `reinpia_admin`.
 - Cuando una marca tiene landing externa, se respeta la URL externa y se evita forzar una landing interna innecesaria.
+- Si la URL externa es de demo/no desplegada (`.demo`, `.local`, `.invalid`), el panel muestra aviso y usa fallback interno.
+- Ruta de landing interna tenant-aware:
+  - `/store/:tenantSlug/landing`
 
 ### Monedas por contexto (actualizado)
 - Global (`Administración General de ComerCia`):
