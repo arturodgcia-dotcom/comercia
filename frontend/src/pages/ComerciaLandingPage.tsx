@@ -446,13 +446,6 @@ export function ComerciaLandingPage() {
       `Plataforma SaaS para ${brandTheme.name} con ecommerce, canal distribuidor, POS y automatizacion inteligente.`,
   };
 
-  const businessSpecificText =
-    brandTheme.businessType === "services"
-      ? "Enfoque principal: agenda, servicios, atencion y conversion consultiva."
-      : brandTheme.businessType === "products"
-        ? "Enfoque principal: catalogo, promocion y compra recurrente."
-        : "Enfoque principal: mezcla de catalogo, servicios y operacion omnicanal.";
-
   return (
     <main className="comercia-premium" style={brandStyle}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }} />
@@ -469,9 +462,9 @@ export function ComerciaLandingPage() {
 
       <header className="cp-nav cp-animate-up" id="top">
         <div>
-          <p className="cp-kicker">LANDING COMERCIAL Â· COMERCIA BY REINPIA</p>
+          <p className="cp-kicker">LANDING COMERCIAL · COMERCIA BY REINPIA</p>
           <h1>Activa tu ecommerce y comienza a vender con una estructura profesional desde el primer día</h1>
-          <p className="cp-brand-context">{businessSpecificText}</p>
+          <p className="cp-brand-context">Enfoque principal: mezcla de catálogo, servicios y operación omnicanal.</p>
         </div>
         <div className="cp-nav-actions">
           <LanguageSelector />
@@ -483,9 +476,9 @@ export function ComerciaLandingPage() {
 
       <section className="cp-hero cp-animate-up" aria-label="Hero principal">
         <div className="cp-hero-copy">
-          <p className="cp-eyebrow">{brandTheme.name} Â· {brandTheme.tone}</p>
+          <p className="cp-eyebrow">REINPIA · TECNOLÓGICO</p>
           <h2>Elige el modelo que mejor se adapte a tu negocio: inversión fija o esquema por comisión. Tecnología, operación e inteligencia artificial en una sola plataforma.</h2>
-          <p>Sin ambiguedades: puedes iniciar con inversion definida o con esquema por resultados, siempre con control total de tu operacion y tus ventas.</p>
+          <p>Sin ambigüedades: puedes iniciar con inversión definida o con esquema por resultados, siempre con control total de tu operación y tus ventas.</p>
           <div className="cp-cta-row">
             <button type="button" className="button" onClick={openDiagnostic}>
               Solicitar demo
@@ -494,20 +487,20 @@ export function ComerciaLandingPage() {
               Ver modelos de negocio
             </button>
             <button type="button" className="button button-outline" onClick={openLia}>
-              Hablar con Lia IA
+              Hablar con Lía IA
             </button>
           </div>
           <div className="cp-proof-row">
-            <span>Implementacion acelerada</span>
+            <span>Implementación acelerada</span>
             <span>Arquitectura modular por industria</span>
-            <span>Escalable para inversion y expansion</span>
+            <span>Escalable para inversión y expansión</span>
           </div>
         </div>
 
         <aside className="cp-hero-ecosystem" aria-label="Mockups de ecosistema">
           <article className="cp-mock-card cp-main-mock">
             <p>Dashboard ejecutivo</p>
-            <h3>Ventas + IA + Operacion</h3>
+            <h3>Ventas + IA + Operación</h3>
             <ul>
               <li>Embudo comercial en tiempo real</li>
               <li>Alertas de conversión y recompra</li>
