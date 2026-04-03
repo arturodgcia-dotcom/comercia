@@ -524,18 +524,24 @@ npm run dev
   - SEO
   - AEO
   - Identidad de marca
+- Capacidades en una sola pantalla:
+  - `Analizar marca activa` (interno por tenant)
+  - `Analizar URL externa` (auditoria de landing/sitio externo con URL)
 - Ruta de marca:
   - `/admin/diagnostico-inteligente`
 - Ruta global base (listado):
   - `/reinpia/diagnosticos`
 - Endpoints:
   - `POST /api/v1/brand-diagnostics/{tenant_id}/analyze`
+  - `POST /api/v1/brand-diagnostics/analyze-external-url`
   - `GET /api/v1/brand-diagnostics/{tenant_id}/latest`
+  - `GET /api/v1/brand-diagnostics/{tenant_id}/latest-external`
   - `GET /api/v1/brand-diagnostics/{tenant_id}`
   - `POST /api/v1/brand-diagnostics/{tenant_id}/improvement-plan`
   - `GET /api/v1/reinpia/diagnostics`
 - Persistencia:
-  - nueva entidad `BrandDiagnostic` con scores, hallazgos, recomendaciones, resumen, plan de mejora y contexto analizado.
+  - entidad `BrandDiagnostic` con scores, hallazgos, recomendaciones, resumen, plan de mejora y contexto analizado.
+  - el contexto guarda `analysis_type` (`internal_brand` o `external_url`) y `source_url` cuando aplica.
 
 ### Monedas por contexto (actualizado)
 - Global (`Administración General de ComerCia`):

@@ -121,7 +121,9 @@
 
 ## Endpoints diagnóstico inteligente
 - `POST /api/v1/brand-diagnostics/{tenant_id}/analyze`
+- `POST /api/v1/brand-diagnostics/analyze-external-url`
 - `GET /api/v1/brand-diagnostics/{tenant_id}/latest`
+- `GET /api/v1/brand-diagnostics/{tenant_id}/latest-external`
 - `GET /api/v1/brand-diagnostics/{tenant_id}`
 - `POST /api/v1/brand-diagnostics/{tenant_id}/improvement-plan`
 - `GET /api/v1/reinpia/diagnostics`
@@ -144,6 +146,14 @@
   - siguientes acciones
   - contexto usado y datos faltantes
   - plan de mejora guardable
+  - tipo de analisis (`internal_brand` / `external_url`) y URL origen cuando aplica
+
+## Actualizacion diagnostico externo por URL
+- En la misma ruta `/admin/diagnostico-inteligente` se agregan dos modos:
+  - Marca activa
+  - URL externa
+- El analisis externo permite pegar una URL `http/https`, leer HTML base (title, meta description, headings, texto, CTA y contacto) y calcular scores SEO/AEO/identidad.
+- El resultado externo se muestra separado del interno y queda persistido en historial del tenant.
 
 ## Actualizacion: trust/compliance y conversion en landing
 Nuevos componentes y capacidades:

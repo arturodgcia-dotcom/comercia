@@ -574,7 +574,9 @@ Persistencia por analisis:
 
 Endpoints:
 - `POST /api/v1/brand-diagnostics/{tenant_id}/analyze`
+- `POST /api/v1/brand-diagnostics/analyze-external-url`
 - `GET /api/v1/brand-diagnostics/{tenant_id}/latest`
+- `GET /api/v1/brand-diagnostics/{tenant_id}/latest-external`
 - `GET /api/v1/brand-diagnostics/{tenant_id}`
 - `POST /api/v1/brand-diagnostics/{tenant_id}/improvement-plan`
 - `GET /api/v1/reinpia/diagnostics`
@@ -582,3 +584,18 @@ Endpoints:
 Regla de diseño:
 - no modifica wizard ni onboarding.
 - opera como modulo paralelo de evaluacion comercial y de visibilidad.
+
+## Ejecucion 41: extension a auditoria de URL externa
+- El modulo mantiene analisis interno de tenant y suma un flujo externo en la misma pantalla:
+  - `Analizar marca activa`
+  - `Analizar URL externa`
+- Backend agrega lectura HTML basica con timeout y parser sin navegador headless:
+  - title
+  - meta description
+  - headings (H1/H2/H3)
+  - texto principal
+  - CTA detectables
+  - senales de contacto/formulario
+- Persistencia compartida en `brand_diagnostics` con separacion logica por contexto:
+  - `analysis_type`: `internal_brand` o `external_url`
+  - `source_url`: URL auditada para casos externos

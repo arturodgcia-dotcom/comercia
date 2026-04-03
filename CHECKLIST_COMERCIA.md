@@ -440,3 +440,13 @@
 - [x] Frontend: plan de mejora editable y guardable
 - [x] Navegacion: acceso desde bloque Comercial de marca
 - [x] Validacion ejecutada: backend compile + frontend build
+
+## Entregables ejecucion 41 (Diagnóstico inteligente: URL externa)
+- [x] Se mantiene analisis interno de marca activa sin romper flujo actual
+- [x] Se agrega modo "Analizar URL externa" dentro de `/admin/diagnostico-inteligente`
+- [x] Nuevo endpoint: `POST /api/v1/brand-diagnostics/analyze-external-url`
+- [x] Nuevo endpoint: `GET /api/v1/brand-diagnostics/{tenant_id}/latest-external`
+- [x] Extraccion HTML basica implementada (title/meta/headings/texto/CTA/contacto/formularios)
+- [x] Persistencia de analisis externo en historial con `analysis_type=external_url` y `source_url`
+- [x] Historial muestra tipo de analisis y origen
+- [x] Validacion ejecutada: backend compile + frontend build
