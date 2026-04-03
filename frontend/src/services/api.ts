@@ -69,6 +69,7 @@ import {
   StorefrontDistributorsPayload,
   StorefrontHomePayload,
   StorefrontPayload,
+  StorefrontSnapshot,
   StripeConfig,
   TenantReportOverview,
   TenantReportSales,
@@ -239,6 +240,8 @@ export const api = {
   getTenantById: (token: string, tenantId: number) => request<Tenant>(`/api/v1/tenants/${tenantId}`, {}, token),
   updateTenant: (token: string, tenantId: number, payload: Partial<Tenant>) =>
     request<Tenant>(`/api/v1/tenants/${tenantId}`, { method: "PUT", body: JSON.stringify(payload) }, token),
+  getTenantStorefrontConfig: (token: string, tenantId: number) =>
+    request<StorefrontSnapshot>(`/api/v1/tenants/${tenantId}/storefront-config`, {}, token),
   getBrandSetupWorkflow: (token: string, tenantId: number) =>
     request<BrandSetupWorkflow>(`/api/v1/brand-setup/${tenantId}`, {}, token),
   updateBrandSetupWorkflow: (

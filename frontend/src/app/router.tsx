@@ -102,6 +102,12 @@ import { TenantServicesReportPage } from "../pages/TenantServicesReportPage";
 import { TenantMarketingInsightsPage } from "../pages/TenantMarketingInsightsPage";
 import { TenantsPage } from "../pages/TenantsPage";
 import { UsersAdminPage } from "../pages/UsersAdminPage";
+import {
+  BrandDistributorsChannelPage,
+  BrandLandingChannelPage,
+  BrandPosChannelPage,
+  BrandPublicEcommerceChannelPage,
+} from "../pages/BrandChannelPages";
 
 export function AppRouter() {
   return (
@@ -173,6 +179,10 @@ export function AppRouter() {
           </Route>
 
           <Route element={<RoleRoute allowedRoles={["tenant_admin", "reinpia_admin"]} />}>
+            <Route path="admin/channels/landing" element={<BrandLandingChannelPage />} />
+            <Route path="admin/channels/public" element={<BrandPublicEcommerceChannelPage />} />
+            <Route path="admin/channels/distributors" element={<BrandDistributorsChannelPage />} />
+            <Route path="admin/channels/pos" element={<BrandPosChannelPage />} />
             <Route path="admin/users" element={<UsersAdminPage />} />
             <Route path="admin/language" element={<LanguageAdminPage />} />
             <Route path="admin/currency" element={<CurrencyAdminPage />} />

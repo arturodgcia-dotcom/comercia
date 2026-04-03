@@ -129,6 +129,14 @@ export interface StorefrontConfig {
   config_json?: string;
 }
 
+export interface StorefrontSnapshot {
+  tenant_id: number;
+  tenant_slug: string;
+  branding?: TenantBranding | null;
+  config?: StorefrontConfig | null;
+  banners: Banner[];
+}
+
 export interface BrandSetupStepState {
   code: string;
   title: string;

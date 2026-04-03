@@ -418,6 +418,24 @@ textarea {
   padding: 7px 12px;
 }
 
+.chip-warning {
+  background: #fff8e6;
+  border-color: #facc15;
+  color: #854d0e;
+}
+
+.chip-neutral {
+  background: #f2f6fc;
+  border-color: #cbd5e1;
+  color: #334155;
+}
+
+.chip-danger {
+  background: #fef2f2;
+  border-color: #fca5a5;
+  color: #991b1b;
+}
+
 .marketing-shell {
   max-width: 1120px;
   margin: 0 auto;

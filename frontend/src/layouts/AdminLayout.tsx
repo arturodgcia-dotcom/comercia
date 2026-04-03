@@ -96,7 +96,6 @@ export function AdminLayout() {
 
   const activeBrand = useMemo(() => tenants.find((item) => item.id === selectedBrandId) ?? null, [tenants, selectedBrandId]);
   const brandId = isSuperAdmin ? (selectedBrandId ?? 0) : (user?.tenant_id ?? 0);
-  const brandSlug = activeBrand?.slug ?? "reinpia";
 
   const modeTitle = mode === "global" ? "Administración General de ComerCia" : "Panel de Operación de Marca";
   const modeHint = mode === "global" ? "Modo actual: Global ComerCia" : "Modo actual: Operación de Marca";
@@ -196,9 +195,9 @@ export function AdminLayout() {
       title: "COMERCIAL",
       roles: ADMIN_ROLES,
       items: [
-        { label: "Landing de la marca", to: "/admin/branding" },
-        { label: "Ecommerce público", to: `/store/${brandSlug}` },
-        { label: "Ecommerce distribuidores", to: `/store/${brandSlug}/distribuidores` },
+        { label: "Landing de la marca", to: "/admin/channels/landing", roles: ["tenant_admin", "reinpia_admin"] },
+        { label: "Ecommerce público", to: "/admin/channels/public", roles: ["tenant_admin", "reinpia_admin"] },
+        { label: "Ecommerce distribuidores", to: "/admin/channels/distributors", roles: ["tenant_admin", "reinpia_admin"] },
         { label: "Banners", to: "/admin/banners", roles: ["tenant_admin", "reinpia_admin"] },
         { label: "Cupones", to: "/admin/coupons", roles: ["tenant_admin", "reinpia_admin"] },
         { label: "Promociones", to: "/admin/banners", roles: ["tenant_admin", "reinpia_admin"] },
@@ -243,6 +242,7 @@ export function AdminLayout() {
       title: "POS / WEBAPP",
       roles: ADMIN_ROLES,
       items: [
+        { label: "POS / WebApp", to: "/admin/channels/pos", roles: ["tenant_admin", "reinpia_admin"] },
         { label: "Puntos de venta", to: "/pos/locations" },
         { label: "Caja POS", to: "/pos" },
         { label: "Empleados", to: "/pos/locations" },

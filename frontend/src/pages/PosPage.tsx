@@ -6,6 +6,7 @@ import { AppInstallHelp } from "../components/AppInstallHelp";
 import { InstallAppPrompt } from "../components/InstallAppPrompt";
 import { ModuleOnboardingCard } from "../components/ModuleOnboardingCard";
 import { PageHeader } from "../components/PageHeader";
+import { useAdminContextScope } from "../hooks/useAdminContextScope";
 import { api } from "../services/api";
 import { PosCustomer, PosLocation, PosPaymentTransaction, PosSale, Product, TenantBranding, TenantConfig } from "../types/domain";
 import { calculatePlanTotals } from "../utils/monetization";
@@ -27,7 +28,8 @@ const PAYMENT_LABELS: Record<string, string> = {
 
 export function PosPage() {
   const { token, user } = useAuth();
-  const tenantId = user?.tenant_id ?? 1;
+  const { tenantId: scopedTenantId } = useAdminContextScope();
+  const tenantId = scopedTenantId ?? user?.tenant_id ?? 0;
   const [locations, setLocations] = useState<PosLocation[]>([]);
   const [selectedLocationId, setSelectedLocationId] = useState<number>(0);
   const [customers, setCustomers] = useState<PosCustomer[]>([]);
@@ -44,6 +46,10 @@ export function PosPage() {
 
   useEffect(() => {
     if (!token) return;
+    if (!tenantId) {
+      setError("No hay marca activa seleccionada para operar POS.");
+      return;
+    }
     Promise.all([
       api.getPosLocations(token, tenantId),
       api.getPosCustomersByTenant(token, tenantId),
