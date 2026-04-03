@@ -4,6 +4,7 @@ import { useAuth } from "../app/AuthContext";
 import { PageHeader } from "../components/PageHeader";
 import { useAdminContextScope } from "../hooks/useAdminContextScope";
 import { api } from "../services/api";
+import { buildBrandChannelUrls } from "../utils/brandChannelUrls";
 import {
   BrandAdminSettings,
   BrandChannelSettings,
@@ -238,14 +239,15 @@ function BrandChannelShell({ channel }: { channel: ChannelKey }) {
       channelSettings?.mercadopago_enabled === true
   );
 
-  const landingInternalUrl = `/store/${tenantSlug}/landing`;
-  const landingPreviewInternalUrl = `${landingInternalUrl}?preview=1`;
+  const urls = buildBrandChannelUrls(tenantSlug);
+  const landingInternalUrl = urls.landingInternalUrl;
+  const landingPreviewInternalUrl = urls.landingPreviewInternalUrl;
   const landingUrl = canUseExternalLanding ? landingExternalUrl! : landingInternalUrl;
-  const landingPreviewUrl = canUseExternalLanding ? landingExternalUrl! : landingPreviewInternalUrl;
-  const publicUrl = `/store/${tenantSlug}`;
-  const distributorsUrl = `/store/${tenantSlug}/distribuidores`;
-  const posUrl = tenantId ? `/pos?tenant_id=${tenantId}` : "/pos";
-  const posPreviewUrl = `/templates/pos?tenant_slug=${encodeURIComponent(tenantSlug)}`;
+  const landingPreviewUrl = landingPreviewInternalUrl;
+  const publicUrl = urls.publicUrl;
+  const distributorsUrl = urls.distributorsUrl;
+  const posPreviewUrl = urls.posPreviewUrl;
+  const posUrl = posPreviewUrl;
 
   const runRegenerate = async (kind: "landing" | "public" | "distributors") => {
     if (!token || !tenantId) return;
@@ -254,9 +256,21 @@ function BrandChannelShell({ channel }: { channel: ChannelKey }) {
     setMessage("");
     try {
       if (!isGlobalAdmin) {
+        if (kind === "landing" && branding) {
+          await api.upsertTenantBranding(token, tenantId, {
+            hero_title: branding.hero_title ?? tenant?.name ?? "",
+            hero_subtitle: branding.hero_subtitle ?? "",
+          });
+        } else if (channelSettings) {
+          await api.updateBrandChannelSettings(token, tenantId, {
+            nfc_enabled: channelSettings.nfc_enabled,
+            mercadopago_enabled: channelSettings.mercadopago_enabled,
+          });
+        }
         const now = new Date().toISOString();
         setLastRegenerated((prev) => ({ ...prev, [kind]: now }));
-        setMessage("Solicitud de regeneracion registrada. Se actualizo el estado visual del canal.");
+        setMessage("Regeneracion registrada correctamente para la marca activa.");
+        await load();
         return;
       }
 
@@ -326,7 +340,7 @@ function BrandChannelShell({ channel }: { channel: ChannelKey }) {
             />
             <ChannelStateLabel
               label="URL que abrira Ver preview"
-              value={canUseExternalLanding ? landingPreviewUrl : `${window.location.origin}${landingPreviewUrl}`}
+              value={`${window.location.origin}${landingPreviewUrl}`}
             />
             <ChannelStateLabel label="Branding aplicado" value={branding ? "Si" : "Pendiente"} />
             <ChannelStateLabel
@@ -336,6 +350,11 @@ function BrandChannelShell({ channel }: { channel: ChannelKey }) {
             {landingExternal && landingExternalDemo ? (
               <p className="muted">
                 URL externa de demo/no desplegada. Se usa preview interno para evitar enlaces sin resolucion real.
+              </p>
+            ) : null}
+            {canUseExternalLanding ? (
+              <p className="muted">
+                Landing externa valida detectada. El preview abre la version interna tenant-aware para validacion operativa.
               </p>
             ) : null}
           </article>
