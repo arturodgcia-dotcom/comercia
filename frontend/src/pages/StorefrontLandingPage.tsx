@@ -32,6 +32,15 @@ type ParsedLandingConfig = {
   identity: IdentityPayload;
 };
 
+type DemoLandingContent = {
+  heroTitle: string;
+  heroSubtitle: string;
+  ctaPrimary: string;
+  ctaSecondary: string;
+  contactCta: string;
+  sections: Array<{ title: string; body: string }>;
+};
+
 function parseConfig(raw?: string | null): Record<string, unknown> {
   if (!raw) return {};
   try {
@@ -85,6 +94,63 @@ function resolveLandingConfig(payload: StorefrontHomePayload | null): ParsedLand
   };
 }
 
+function buildDemoLandingContent(payload: StorefrontHomePayload): DemoLandingContent {
+  const tenantName = payload.tenant.name;
+  const businessType = payload.tenant.business_type;
+  const isTulipanes = tenantName.toLowerCase().includes("tulipanes");
+  if (isTulipanes) {
+    return {
+      heroTitle: payload.branding?.hero_title ?? `${tenantName}: formación profesional con enfoque práctico`,
+      heroSubtitle:
+        payload.branding?.hero_subtitle ??
+        "Especialízate en cosmetología, podología, cursos y diplomados con una experiencia educativa clara y orientada a resultados.",
+      ctaPrimary: "Solicitar diagnóstico académico",
+      ctaSecondary: "Ver programas disponibles",
+      contactCta: "Agenda una asesoría personalizada para construir tu ruta de formación profesional.",
+      sections: [
+        {
+          title: "Propuesta de valor",
+          body: "Formación profesional con metodología práctica, docentes especializados y seguimiento individual."
+        },
+        {
+          title: "Beneficios principales",
+          body: "Programas actualizados, enfoque en empleabilidad, acompañamiento comercial y crecimiento profesional."
+        },
+        {
+          title: "Oferta formativa",
+          body: "Cosmetología integral, podología clínica, cursos intensivos y diplomados para especialización."
+        }
+      ]
+    };
+  }
+
+  return {
+    heroTitle: payload.branding?.hero_title ?? `${tenantName}: landing comercial tenant-aware`,
+    heroSubtitle:
+      payload.branding?.hero_subtitle ??
+      (businessType === "services"
+        ? "Presenta servicios y convierte oportunidades con estructura comercial clara."
+        : "Muestra catálogo y propuesta de valor con una experiencia de marca coherente."),
+    ctaPrimary: "Solicitar diagnóstico comercial",
+    ctaSecondary: "Conocer propuesta completa",
+    contactCta: "Comparte tu objetivo y te mostramos una ruta comercial lista para ejecución.",
+    sections: [
+      {
+        title: "Propuesta de valor",
+        body: "Landing interna de revisión conectada al branding de la marca activa."
+      },
+      {
+        title: "Beneficios",
+        body: "Mensajes claros, jerarquía comercial y estructura lista para evaluación."
+      },
+      {
+        title: "Oferta principal",
+        body: "Bloques de contenido listos para validar antes de publicación definitiva."
+      }
+    ]
+  };
+}
+
 export function StorefrontLandingPage() {
   const { tenantSlug } = useParams();
   const [searchParams] = useSearchParams();
@@ -117,21 +183,28 @@ export function StorefrontLandingPage() {
 
   const isPreview = searchParams.get("preview") === "1";
   const landingConfig = resolveLandingConfig(data);
+  const demoContent = buildDemoLandingContent(data);
   const landingDraft = landingConfig.landingDraft;
   const hasInternalLanding =
-    Boolean(landingDraft?.hero_title || landingDraft?.hero_subtitle || data.branding?.hero_title || data.storefront_config?.landing_enabled) &&
-    landingConfig.flowType !== "with_existing_landing";
+    Boolean(
+      landingDraft?.hero_title ||
+        landingDraft?.hero_subtitle ||
+        (landingDraft?.sections?.length ?? 0) > 0 ||
+        data.branding?.hero_title ||
+        data.storefront_config?.landing_enabled
+    );
   const externalLandingUrl = normalizeExternalUrl(landingConfig.identity.existing_landing_url);
   const externalLandingAvailable = Boolean(landingConfig.identity.has_existing_landing && isUsableExternalUrl(externalLandingUrl));
   const landingSections =
-    landingDraft?.sections?.filter((section) => section.title || section.body) ?? [];
-  const heroTitle = landingDraft?.hero_title ?? data.branding?.hero_title ?? `${data.tenant.name} en COMERCIA`;
+    landingDraft?.sections?.filter((section) => section.title || section.body) ??
+    demoContent.sections;
+  const heroTitle = landingDraft?.hero_title ?? data.branding?.hero_title ?? demoContent.heroTitle;
   const heroSubtitle =
     landingDraft?.hero_subtitle ??
     data.branding?.hero_subtitle ??
-    "Landing comercial tenant-aware conectada con ecommerce publico, canal distribuidores y operacion POS.";
-  const ctaPrimary = landingDraft?.cta_primary?.trim() || "Ir al ecommerce publico";
-  const ctaSecondary = landingDraft?.cta_secondary?.trim() || "Ir al canal distribuidores";
+    demoContent.heroSubtitle;
+  const ctaPrimary = landingDraft?.cta_primary?.trim() || demoContent.ctaPrimary;
+  const ctaSecondary = landingDraft?.cta_secondary?.trim() || demoContent.ctaSecondary;
   const publicationState = landingConfig.isPublished ? "publicado" : isPreview ? "en revision" : "borrador";
 
   return (
@@ -200,10 +273,10 @@ export function StorefrontLandingPage() {
         </section>
       )}
 
-      {landingDraft?.contact_cta ? (
+      {landingDraft?.contact_cta || demoContent.contactCta ? (
         <section className="store-banner">
           <h2>Llamado comercial</h2>
-          <p>{landingDraft.contact_cta}</p>
+          <p>{landingDraft?.contact_cta ?? demoContent.contactCta}</p>
         </section>
       ) : null}
     </main>

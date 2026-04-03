@@ -22,15 +22,19 @@ import {
 type ChannelKey = "landing" | "public" | "distributors" | "pos";
 type PublishState = "borrador" | "en revision" | "publicado" | "requiere ajustes";
 
-type LandingDraftPayload = {
-  hero_title?: string;
-  hero_subtitle?: string;
-};
-
 type WorkflowPayload = {
   flow_type?: string;
   selected_template?: string;
   is_published?: boolean;
+};
+
+type LandingDraftPayload = {
+  hero_title?: string;
+  hero_subtitle?: string;
+  cta_primary?: string;
+  cta_secondary?: string;
+  contact_cta?: string;
+  sections?: Array<{ title?: string; body?: string }>;
 };
 
 function parseConfig(raw?: string | null): Record<string, unknown> {
@@ -111,6 +115,62 @@ function isDemoOrUnusableExternalUrl(url: string | null): boolean {
 
 function openInNewTab(url: string) {
   window.open(url, "_blank", "noopener,noreferrer");
+}
+
+function buildFallbackLandingDraft(tenantName: string, businessType: string, branding?: TenantBranding | null): LandingDraftPayload {
+  const isTulipanes = tenantName.toLowerCase().includes("tulipanes");
+  if (isTulipanes) {
+    return {
+      hero_title: branding?.hero_title ?? `${tenantName}: formación profesional para transformar tu futuro`,
+      hero_subtitle:
+        branding?.hero_subtitle ??
+        "Programas en cosmetología, podología, cursos y diplomados con enfoque práctico y visión comercial.",
+      cta_primary: "Solicitar diagnóstico académico",
+      cta_secondary: "Ver programas disponibles",
+      contact_cta: "Agenda una asesoría y recibe una ruta recomendada según tu perfil profesional.",
+      sections: [
+        {
+          title: "Propuesta de valor",
+          body: "Integramos formación técnica, práctica real y acompañamiento para que avances con estructura profesional."
+        },
+        {
+          title: "¿Por qué elegirnos?",
+          body: "Docentes especializados, enfoque en empleabilidad, horarios flexibles y seguimiento personalizado."
+        },
+        {
+          title: "Oferta principal",
+          body: "Cosmetología integral, podología profesional, cursos intensivos y diplomados para especialización."
+        }
+      ]
+    };
+  }
+
+  const isServices = businessType === "services";
+  return {
+    hero_title: branding?.hero_title ?? `${tenantName}: landing comercial lista para conversión`,
+    hero_subtitle:
+      branding?.hero_subtitle ??
+      (isServices
+        ? "Presenta servicios, beneficios y llamados a la acción con estructura comercial clara."
+        : "Muestra catálogo, propuesta de valor y llamados a la acción para acelerar ventas."),
+    cta_primary: "Solicitar diagnóstico comercial",
+    cta_secondary: "Conocer programas y soluciones",
+    contact_cta: "Comparte tu objetivo y diseñamos una ruta comercial clara para tu marca.",
+    sections: [
+      {
+        title: "Propuesta de valor",
+        body: "Landing tenant-aware conectada al branding, diseñada para captar, explicar y convertir."
+      },
+      {
+        title: "Beneficios clave",
+        body: "Claridad comercial, mensajes consistentes y estructura optimizada para revisión interna."
+      },
+      {
+        title: "Oferta principal",
+        body: "Bloques de servicios o productos listos para validación antes de publicación final."
+      }
+    ]
+  };
 }
 
 function ChannelStateLabel({ label, value }: { label: string; value: string | number }) {
@@ -230,6 +290,7 @@ function BrandChannelShell({ channel }: { channel: ChannelKey }) {
   const landingExternalUrl = normalizeExternalUrl(landingExternalRaw);
   const landingExternalDemo = isDemoOrUnusableExternalUrl(landingExternalUrl);
   const canUseExternalLanding = Boolean(landingExternal && landingExternalUrl && !landingExternalDemo);
+  const isExistingLandingFlow = workflowPayload.flow_type === "with_existing_landing" || landingExternal;
   const hasApprovedTemplateInternal =
     Boolean(landingDraft.hero_title || landingDraft.hero_subtitle || branding?.hero_title || snapshot?.config?.landing_enabled) &&
     workflowPayload.flow_type !== "with_existing_landing";
@@ -265,7 +326,7 @@ function BrandChannelShell({ channel }: { channel: ChannelKey }) {
   const urls = buildBrandChannelUrls(tenantSlug);
   const landingInternalUrl = urls.landingInternalUrl;
   const landingPreviewInternalUrl = urls.landingPreviewInternalUrl;
-  const useExternalLandingAsPrimary = canUseExternalLanding && !hasApprovedTemplateInternal;
+  const useExternalLandingAsPrimary = !isExistingLandingFlow && canUseExternalLanding && !hasApprovedTemplateInternal;
   const landingUrl = useExternalLandingAsPrimary ? landingExternalUrl! : landingInternalUrl;
   const landingPreviewUrl = landingPreviewInternalUrl;
   const publicUrl = urls.publicUrl;
@@ -281,12 +342,15 @@ function BrandChannelShell({ channel }: { channel: ChannelKey }) {
     try {
       if (!isGlobalAdmin) {
         if (kind === "landing") {
+          const demoDraft = buildFallbackLandingDraft(tenant?.name ?? "Marca", tenant?.business_type ?? "mixed", branding);
           const fallbackHeroTitle =
+            demoDraft.hero_title ??
             landingDraft.hero_title ??
             branding?.hero_title ??
             tenant?.name ??
             "Landing de marca";
           const fallbackHeroSubtitle =
+            demoDraft.hero_subtitle ??
             landingDraft.hero_subtitle ??
             branding?.hero_subtitle ??
             "Landing tenant-aware sincronizada con branding activo.";
@@ -310,8 +374,34 @@ function BrandChannelShell({ channel }: { channel: ChannelKey }) {
       }
 
       if (kind === "landing") {
-        await api.generateBrandSetupLanding(token, tenantId, true);
-        setMessage("Landing regenerada correctamente para la marca activa.");
+        const demoDraft = buildFallbackLandingDraft(tenant?.name ?? "Marca", tenant?.business_type ?? "mixed", branding);
+        const normalizedDraft = {
+          hero_title: demoDraft.hero_title ?? tenant?.name ?? "Landing de marca",
+          hero_subtitle: demoDraft.hero_subtitle ?? "Preview interno tenant-aware actualizado.",
+          cta_primary: demoDraft.cta_primary ?? "Solicitar diagnostico",
+          cta_secondary: demoDraft.cta_secondary ?? "Ver propuesta",
+          sections:
+            demoDraft.sections?.map((section, index) => ({
+              title: section.title ?? `Seccion ${index + 1}`,
+              body: section.body ?? "Contenido en preparacion.",
+            })) ?? [],
+          contact_cta: demoDraft.contact_cta ?? "Contactanos para definir la siguiente fase.",
+        };
+        if (isExistingLandingFlow) {
+          await api.updateBrandSetupWorkflow(token, tenantId, {
+            landing_draft: normalizedDraft,
+          });
+          await api.upsertTenantBranding(token, tenantId, {
+            primary_color: branding?.primary_color ?? "#0d3e86",
+            secondary_color: branding?.secondary_color ?? "#5f97e3",
+            hero_title: normalizedDraft.hero_title,
+            hero_subtitle: normalizedDraft.hero_subtitle,
+          });
+          setMessage("Preview interno de landing regenerado correctamente para la marca activa.");
+        } else {
+          await api.generateBrandSetupLanding(token, tenantId, true);
+          setMessage("Landing regenerada correctamente para la marca activa.");
+        }
       } else {
         await api.applyBrandEcommerceTemplate(token, tenantId);
         setMessage("Plantilla de ecommerce regenerada correctamente para la marca activa.");
@@ -371,7 +461,11 @@ function BrandChannelShell({ channel }: { channel: ChannelKey }) {
             <ChannelStateLabel label="Template de landing" value={landingTemplateKey} />
             <ChannelStateLabel
               label="Modo"
-              value={useExternalLandingAsPrimary ? "Externa publicada" : "Interna tenant-aware aprobada"}
+              value={isExistingLandingFlow ? "Interna de revision (ComerCia)" : useExternalLandingAsPrimary ? "Externa publicada" : "Interna tenant-aware aprobada"}
+            />
+            <ChannelStateLabel
+              label="Preview interno ComerCia"
+              value="Disponible"
             />
             <ChannelStateLabel
               label="Estado de template"
@@ -401,7 +495,7 @@ function BrandChannelShell({ channel }: { channel: ChannelKey }) {
             ) : null}
             {canUseExternalLanding ? (
               <p className="muted">
-                Landing externa valida detectada. El preview abre la version interna tenant-aware para validacion operativa.
+                Landing externa valida detectada. Para revision comercial en ComerCia se prioriza la vista interna tenant-aware.
               </p>
             ) : null}
           </article>
