@@ -9,12 +9,14 @@ from app.api.deps import get_current_user, get_reinpia_admin
 from app.db.session import get_db
 from app.models.models import BrandDiagnostic, Tenant, User
 from app.schemas.brand_diagnostics import (
+    BrandDiagnosticExternalUrlRequest,
     BrandDiagnosticImprovementPlanRequest,
     BrandDiagnosticRead,
     BrandDiagnosticSummaryRead,
 )
 from app.services.brand_diagnostics_service import (
     collect_diagnostic_context,
+    collect_external_url_context,
     parse_diagnostic_row,
     persist_diagnostic_result,
     run_diagnostic,
@@ -63,6 +65,33 @@ def analyze_brand(
     return _as_read_payload(row)
 
 
+@router.post("/brand-diagnostics/analyze-external-url", response_model=BrandDiagnosticRead)
+def analyze_external_url(
+    body: BrandDiagnosticExternalUrlRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> BrandDiagnosticRead:
+    requested_tenant_id = body.tenant_id
+    if current_user.role in {"tenant_admin", "tenant_staff"}:
+        tenant_id = current_user.tenant_id
+    else:
+        tenant_id = requested_tenant_id
+    if not tenant_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Debes indicar tenant_id para analizar URL externa en contexto global.",
+        )
+    _tenant_or_404(db, tenant_id)
+    _ensure_tenant_scope(current_user, tenant_id)
+    try:
+        context = collect_external_url_context(db, tenant_id, str(body.url))
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    result = run_diagnostic(context)
+    row = persist_diagnostic_result(db, result)
+    return _as_read_payload(row)
+
+
 @router.get("/brand-diagnostics/{tenant_id}/latest", response_model=BrandDiagnosticRead)
 def get_latest_brand_diagnostic(
     tenant_id: int,
@@ -71,13 +100,47 @@ def get_latest_brand_diagnostic(
 ) -> BrandDiagnosticRead:
     _tenant_or_404(db, tenant_id)
     _ensure_tenant_scope(current_user, tenant_id)
-    row = db.scalar(
+    rows = db.scalars(
         select(BrandDiagnostic)
         .where(BrandDiagnostic.tenant_id == tenant_id)
         .order_by(BrandDiagnostic.analyzed_at.desc(), BrandDiagnostic.id.desc())
-    )
+        .limit(50)
+    ).all()
+    row = None
+    for candidate in rows:
+        parsed = parse_diagnostic_row(candidate)
+        if parsed.get("analysis_type") == "internal_brand":
+            row = candidate
+            break
+    if row is None and rows:
+        row = rows[0]
     if not row:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Aún no hay diagnósticos para esta marca.")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Aun no hay diagnosticos para esta marca.")
+    return _as_read_payload(row)
+
+
+@router.get("/brand-diagnostics/{tenant_id}/latest-external", response_model=BrandDiagnosticRead)
+def get_latest_external_brand_diagnostic(
+    tenant_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> BrandDiagnosticRead:
+    _tenant_or_404(db, tenant_id)
+    _ensure_tenant_scope(current_user, tenant_id)
+    rows = db.scalars(
+        select(BrandDiagnostic)
+        .where(BrandDiagnostic.tenant_id == tenant_id)
+        .order_by(BrandDiagnostic.analyzed_at.desc(), BrandDiagnostic.id.desc())
+        .limit(50)
+    ).all()
+    row = None
+    for candidate in rows:
+        parsed = parse_diagnostic_row(candidate)
+        if parsed.get("analysis_type") == "external_url":
+            row = candidate
+            break
+    if not row:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Aun no hay diagnostico externo para esta marca.")
     return _as_read_payload(row)
 
 
@@ -103,6 +166,8 @@ def list_brand_diagnostics(
                 id=row.id,
                 tenant_id=row.tenant_id,
                 brand_name=parsed["brand_name"],
+                analysis_type=str(parsed.get("analysis_type") or "internal_brand"),
+                source_url=parsed.get("source_url"),
                 analyzed_at=row.analyzed_at,
                 status=row.status,
                 global_score=row.global_score,
@@ -120,15 +185,22 @@ def save_brand_diagnostic_improvement_plan(
 ) -> BrandDiagnosticRead:
     _tenant_or_404(db, tenant_id)
     _ensure_tenant_scope(current_user, tenant_id)
-    row = db.scalar(
+    rows = db.scalars(
         select(BrandDiagnostic)
         .where(BrandDiagnostic.tenant_id == tenant_id)
         .order_by(BrandDiagnostic.analyzed_at.desc(), BrandDiagnostic.id.desc())
-    )
+        .limit(50)
+    ).all()
+    row = None
+    for candidate in rows:
+        parsed = parse_diagnostic_row(candidate)
+        if parsed.get("analysis_type") == "internal_brand":
+            row = candidate
+            break
     if not row:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="No hay diagnóstico previo para guardar un plan de mejora.",
+            detail="No hay diagnostico interno previo para guardar un plan de mejora.",
         )
     improvement_payload = body.model_dump()
     improvement_payload["updated_at"] = datetime.utcnow().isoformat()
@@ -154,10 +226,11 @@ def list_global_diagnostics(
                 id=row.id,
                 tenant_id=row.tenant_id,
                 brand_name=parsed["brand_name"],
+                analysis_type=str(parsed.get("analysis_type") or "internal_brand"),
+                source_url=parsed.get("source_url"),
                 analyzed_at=row.analyzed_at,
                 status=row.status,
                 global_score=row.global_score,
             )
         )
     return payload
-

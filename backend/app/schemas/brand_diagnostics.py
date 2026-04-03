@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import AnyHttpUrl, BaseModel, ConfigDict, Field
 
 from app.schemas.common import TimestampSchema
 
@@ -36,6 +36,8 @@ class BrandDiagnosticRead(TimestampSchema):
     id: int
     tenant_id: int
     brand_name: str
+    analysis_type: str = "internal_brand"
+    source_url: str | None = None
     analyzed_at: datetime
     status: str
     scores: DiagnosticScores
@@ -52,6 +54,8 @@ class BrandDiagnosticSummaryRead(BaseModel):
     id: int
     tenant_id: int
     brand_name: str
+    analysis_type: str = "internal_brand"
+    source_url: str | None = None
     analyzed_at: datetime
     status: str
     global_score: int
@@ -63,3 +67,8 @@ class BrandDiagnosticImprovementPlanRequest(BaseModel):
     accepted_low_priority: list[str] = Field(default_factory=list)
     notes: str = ""
     owner: str = "equipo-marca"
+
+
+class BrandDiagnosticExternalUrlRequest(BaseModel):
+    url: AnyHttpUrl
+    tenant_id: int | None = None

@@ -644,8 +644,16 @@ export const api = {
     request<BrandAdminSettings>(`/api/v1/admin/brand-settings/${tenantId}`, { method: "PUT", body: JSON.stringify(payload) }, token),
   analyzeBrandDiagnostics: (token: string, tenantId: number) =>
     request<BrandDiagnostic>(`/api/v1/brand-diagnostics/${tenantId}/analyze`, { method: "POST" }, token),
+  analyzeExternalUrlDiagnostics: (token: string, payload: { url: string; tenant_id?: number }) =>
+    request<BrandDiagnostic>(
+      "/api/v1/brand-diagnostics/analyze-external-url",
+      { method: "POST", body: JSON.stringify(payload) },
+      token
+    ),
   getBrandDiagnosticsLatest: (token: string, tenantId: number) =>
     request<BrandDiagnostic>(`/api/v1/brand-diagnostics/${tenantId}/latest`, {}, token),
+  getBrandDiagnosticsLatestExternal: (token: string, tenantId: number) =>
+    request<BrandDiagnostic>(`/api/v1/brand-diagnostics/${tenantId}/latest-external`, {}, token),
   getBrandDiagnosticsHistory: (token: string, tenantId: number) =>
     request<BrandDiagnosticSummary[]>(`/api/v1/brand-diagnostics/${tenantId}`, {}, token),
   saveBrandDiagnosticsImprovementPlan: (

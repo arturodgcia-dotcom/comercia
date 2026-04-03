@@ -931,6 +931,8 @@ export interface BrandDiagnostic {
   id: number;
   tenant_id: number;
   brand_name: string;
+  analysis_type: "internal_brand" | "external_url" | string;
+  source_url?: string | null;
   analyzed_at: string;
   status: string;
   scores: BrandDiagnosticScores;
@@ -949,6 +951,8 @@ export interface BrandDiagnosticSummary {
   id: number;
   tenant_id: number;
   brand_name: string;
+  analysis_type?: "internal_brand" | "external_url" | string;
+  source_url?: string | null;
   analyzed_at: string;
   status: string;
   global_score: number;

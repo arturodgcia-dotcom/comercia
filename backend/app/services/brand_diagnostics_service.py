@@ -1,6 +1,12 @@
 import json
+import re
 from dataclasses import dataclass
 from datetime import datetime
+from html import unescape
+from html.parser import HTMLParser
+from urllib.error import HTTPError, URLError
+from urllib.parse import urlparse
+from urllib.request import Request, urlopen
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -37,6 +43,74 @@ class DiagnosticContext:
     has_existing_landing: bool
     missing_data: list[str]
     source: dict[str, object]
+    analysis_type: str = "internal_brand"
+    source_url: str | None = None
+
+
+class _ExternalHtmlParser(HTMLParser):
+    def __init__(self) -> None:
+        super().__init__()
+        self.in_title = False
+        self.current_heading: str | None = None
+        self.current_anchor = False
+        self.current_button = False
+        self.title_parts: list[str] = []
+        self.meta_description = ""
+        self.headings: list[str] = []
+        self.paragraphs: list[str] = []
+        self.ctas: list[str] = []
+        self.forms_count = 0
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        attrs_map = {k.lower(): (v or "") for k, v in attrs}
+        tag_lower = tag.lower()
+        if tag_lower == "title":
+            self.in_title = True
+        if tag_lower in {"h1", "h2", "h3"}:
+            self.current_heading = tag_lower
+        if tag_lower == "a":
+            self.current_anchor = True
+            label = attrs_map.get("aria-label", "").strip()
+            if label:
+                self.ctas.append(label)
+        if tag_lower == "button":
+            self.current_button = True
+        if tag_lower == "input":
+            input_type = attrs_map.get("type", "").lower()
+            if input_type in {"submit", "button"}:
+                value = attrs_map.get("value", "").strip()
+                if value:
+                    self.ctas.append(value)
+        if tag_lower == "meta":
+            name = attrs_map.get("name", "").lower()
+            if name == "description":
+                self.meta_description = attrs_map.get("content", "").strip()
+        if tag_lower == "form":
+            self.forms_count += 1
+
+    def handle_endtag(self, tag: str) -> None:
+        tag_lower = tag.lower()
+        if tag_lower == "title":
+            self.in_title = False
+        if tag_lower in {"h1", "h2", "h3"}:
+            self.current_heading = None
+        if tag_lower == "a":
+            self.current_anchor = False
+        if tag_lower == "button":
+            self.current_button = False
+
+    def handle_data(self, data: str) -> None:
+        value = unescape(data or "").strip()
+        if not value:
+            return
+        if self.in_title:
+            self.title_parts.append(value)
+        if self.current_heading:
+            self.headings.append(value)
+        if self.current_anchor or self.current_button:
+            self.ctas.append(value)
+        if len(value.split()) >= 4:
+            self.paragraphs.append(value)
 
 
 def _safe_json_load(raw: str | None) -> dict:
@@ -51,6 +125,67 @@ def _safe_json_load(raw: str | None) -> dict:
 
 def _normalize_text(value: str | None) -> str:
     return (value or "").strip()
+
+
+def _validate_external_url(url: str) -> str:
+    parsed = urlparse((url or "").strip())
+    if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+        raise ValueError("La URL debe iniciar con http:// o https:// y ser valida.")
+    return parsed.geturl()
+
+
+def _extract_external_page_content(url: str, timeout_seconds: int = 12) -> dict[str, object]:
+    normalized_url = _validate_external_url(url)
+    req = Request(
+        normalized_url,
+        headers={
+            "User-Agent": "COMERCIA-Diagnostics/1.0 (+https://reinpia.com)",
+            "Accept": "text/html,application/xhtml+xml",
+        },
+    )
+    try:
+        with urlopen(req, timeout=timeout_seconds) as response:  # noqa: S310
+            content_type = response.headers.get("Content-Type", "")
+            if "text/html" not in content_type and "application/xhtml+xml" not in content_type:
+                raise ValueError("La URL no devolvio contenido HTML legible para diagnostico.")
+            raw = response.read()
+    except HTTPError as exc:
+        raise ValueError(f"La URL devolvio error HTTP {exc.code}.") from exc
+    except URLError as exc:
+        raise ValueError("No fue posible conectar con la URL externa.") from exc
+    except TimeoutError as exc:
+        raise ValueError("La URL tardo demasiado en responder (timeout).") from exc
+    except Exception as exc:  # noqa: BLE001
+        raise ValueError("No se pudo leer la URL externa con exito.") from exc
+
+    html = raw.decode("utf-8", errors="ignore")
+    if not html.strip():
+        raise ValueError("La URL respondio, pero el HTML esta vacio.")
+
+    parser = _ExternalHtmlParser()
+    parser.feed(html)
+    parser.close()
+
+    title = " ".join(parser.title_parts).strip()
+    headings = [h.strip() for h in parser.headings if h.strip()]
+    text_chunks = [chunk.strip() for chunk in parser.paragraphs if chunk.strip()]
+    ctas = [cta.strip() for cta in parser.ctas if cta.strip()]
+
+    combined_text = " ".join([title, parser.meta_description, *headings, *text_chunks, *ctas]).strip()
+    contact_email_match = re.search(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}", combined_text)
+    contact_whatsapp_match = re.search(r"(whatsapp|wa\.me|\+?\d[\d\s\-]{7,}\d)", combined_text, flags=re.IGNORECASE)
+
+    return {
+        "url": normalized_url,
+        "title": title,
+        "meta_description": parser.meta_description.strip(),
+        "headings": headings[:20],
+        "text_chunks": text_chunks[:60],
+        "ctas": ctas[:25],
+        "forms_count": parser.forms_count,
+        "contact_email": contact_email_match.group(0) if contact_email_match else "",
+        "contact_whatsapp": contact_whatsapp_match.group(0) if contact_whatsapp_match else "",
+    }
 
 
 def collect_diagnostic_context(db: Session, tenant_id: int) -> DiagnosticContext:
@@ -89,21 +224,20 @@ def collect_diagnostic_context(db: Session, tenant_id: int) -> DiagnosticContext
     if not hero_subtitle:
         hero_subtitle = _normalize_text(branding.hero_subtitle if branding else None)
     if not cta_primary:
-        cta_primary = "Solicitar diagnóstico"
+        cta_primary = "Solicitar diagnostico"
     if not cta_secondary:
-        cta_secondary = "Conocer más"
+        cta_secondary = "Conocer mas"
 
     missing_data: list[str] = []
     if not hero_title:
         missing_data.append("Falta titular principal de la landing.")
     if not hero_subtitle:
-        missing_data.append("Falta subtítulo comercial de la landing.")
+        missing_data.append("Falta subtitulo comercial de la landing.")
     if not sections:
         missing_data.append("Faltan secciones estructuradas de contenido en la landing.")
     if not (branding and (branding.contact_email or branding.contact_whatsapp)) and not contact_cta:
-        missing_data.append("No se detectó bloque claro de contacto o diagnóstico.")
+        missing_data.append("No se detecto bloque claro de contacto o diagnostico.")
 
-    # Evita dependencia a count() con adapters locales y mantiene simplicidad en MVP.
     categories = db.scalars(select(Category).where(Category.tenant_id == tenant_id)).all()
     products = db.scalars(select(Product).where(Product.tenant_id == tenant_id, Product.is_active.is_(True))).all()
     services = db.scalars(
@@ -115,6 +249,8 @@ def collect_diagnostic_context(db: Session, tenant_id: int) -> DiagnosticContext
     service_count = len(services)
 
     context_source = {
+        "analysis_type": "internal_brand",
+        "source_url": None,
         "tenant": {"id": tenant.id, "name": tenant.name, "slug": tenant.slug, "business_type": tenant.business_type},
         "branding": {
             "primary_color": branding.primary_color if branding else None,
@@ -149,6 +285,82 @@ def collect_diagnostic_context(db: Session, tenant_id: int) -> DiagnosticContext
         has_existing_landing=bool(identity_data.get("has_existing_landing", False)),
         missing_data=missing_data,
         source=context_source,
+        analysis_type="internal_brand",
+        source_url=None,
+    )
+
+
+def collect_external_url_context(db: Session, tenant_id: int, url: str) -> DiagnosticContext:
+    tenant = db.get(Tenant, tenant_id)
+    if not tenant:
+        raise ValueError("Marca no encontrada")
+
+    extracted = _extract_external_page_content(url)
+    headings: list[str] = extracted.get("headings", []) if isinstance(extracted.get("headings"), list) else []
+    text_chunks: list[str] = extracted.get("text_chunks", []) if isinstance(extracted.get("text_chunks"), list) else []
+    ctas: list[str] = extracted.get("ctas", []) if isinstance(extracted.get("ctas"), list) else []
+
+    hero_title = _normalize_text(str(extracted.get("title", "")))
+    hero_subtitle = _normalize_text(str(extracted.get("meta_description", "")))
+    cta_primary = _normalize_text(ctas[0] if ctas else "")
+    cta_secondary = _normalize_text(ctas[1] if len(ctas) > 1 else "")
+
+    sections: list[dict[str, str]] = []
+    for idx, heading in enumerate(headings[:6]):
+        body = text_chunks[idx] if idx < len(text_chunks) else ""
+        sections.append({"title": _normalize_text(heading), "body": _normalize_text(body)})
+
+    if not sections and text_chunks:
+        sections.append({"title": "Contenido principal", "body": _normalize_text(" ".join(text_chunks[:3]))})
+
+    missing_data: list[str] = []
+    if not hero_title:
+        missing_data.append("No se detecto title o titular principal en la URL externa.")
+    if not hero_subtitle:
+        missing_data.append("No se detecto meta description en la URL externa.")
+    if not cta_primary:
+        missing_data.append("No se detectaron CTA claros en la URL externa.")
+    if not sections:
+        missing_data.append("No se detectaron secciones semanticas suficientes en la URL externa.")
+    if not extracted.get("contact_email") and not extracted.get("contact_whatsapp") and int(extracted.get("forms_count", 0)) <= 0:
+        missing_data.append("No se detecto contacto directo o formulario visible.")
+
+    categories = db.scalars(select(Category).where(Category.tenant_id == tenant_id)).all()
+    products = db.scalars(select(Product).where(Product.tenant_id == tenant_id, Product.is_active.is_(True))).all()
+    services = db.scalars(
+        select(ServiceOffering).where(ServiceOffering.tenant_id == tenant_id, ServiceOffering.is_active.is_(True))
+    ).all()
+
+    context_source = {
+        "analysis_type": "external_url",
+        "source_url": extracted.get("url"),
+        "tenant": {"id": tenant.id, "name": tenant.name, "slug": tenant.slug, "business_type": tenant.business_type},
+        "extracted": extracted,
+        "catalog": {"categories": len(categories), "products": len(products), "services": len(services)},
+    }
+
+    return DiagnosticContext(
+        tenant_id=tenant.id,
+        brand_name=tenant.name,
+        slug=tenant.slug,
+        business_type=tenant.business_type,
+        language="es",
+        hero_title=hero_title,
+        hero_subtitle=hero_subtitle,
+        cta_primary=cta_primary,
+        cta_secondary=cta_secondary,
+        sections=sections,
+        contact_whatsapp=_normalize_text(str(extracted.get("contact_whatsapp", ""))),
+        contact_email=_normalize_text(str(extracted.get("contact_email", ""))),
+        product_count=len(products),
+        service_count=len(services),
+        category_count=len(categories),
+        landing_enabled=True,
+        has_existing_landing=False,
+        missing_data=missing_data,
+        source=context_source,
+        analysis_type="external_url",
+        source_url=str(extracted.get("url") or ""),
     )
 
 
@@ -173,7 +385,6 @@ def run_diagnostic(context: DiagnosticContext) -> dict:
     ).strip()
     text_lower = full_text.lower()
 
-    # SEO rules
     seo_findings: list[dict[str, str]] = []
     seo_score = 0.0
 
@@ -181,63 +392,62 @@ def run_diagnostic(context: DiagnosticContext) -> dict:
         seo_score += 16
         seo_findings.append(_criterion("ok", "Titular principal", "La landing tiene titular principal con enfoque comercial."))
     else:
-        seo_findings.append(_criterion("warning", "Titular principal", "El titular principal es corto o no está definido claramente."))
+        seo_findings.append(_criterion("warning", "Titular principal", "El titular principal es corto o no esta definido claramente."))
 
     if len(context.hero_subtitle) >= 24:
         seo_score += 14
-        seo_findings.append(_criterion("ok", "Subtítulo", "Existe subtítulo con contexto de propuesta de valor."))
+        seo_findings.append(_criterion("ok", "Subtitulo", "Existe subtitulo con contexto de propuesta de valor."))
     else:
-        seo_findings.append(_criterion("warning", "Subtítulo", "Falta subtítulo descriptivo o es muy breve."))
+        seo_findings.append(_criterion("warning", "Subtitulo", "Falta subtitulo descriptivo o es muy breve."))
 
     if context.cta_primary:
         seo_score += 12
-        seo_findings.append(_criterion("ok", "CTA principal", "Se detecta llamado principal a la acción."))
+        seo_findings.append(_criterion("ok", "CTA principal", "Se detecta llamado principal a la accion."))
     else:
         seo_findings.append(_criterion("warning", "CTA principal", "No se detecta CTA principal claro."))
 
     if len(context.sections) >= 3:
         seo_score += 14
-        seo_findings.append(_criterion("ok", "Estructura de secciones", "La landing contiene bloques suficientes para posicionamiento semántico."))
+        seo_findings.append(_criterion("ok", "Estructura de secciones", "La landing contiene bloques suficientes para posicionamiento semantico."))
     else:
         seo_findings.append(_criterion("warning", "Estructura de secciones", "Conviene ampliar secciones de valor, oferta y confianza."))
 
     if context.contact_email or context.contact_whatsapp:
         seo_score += 10
-        seo_findings.append(_criterion("ok", "Contacto", "Se detecta canal de contacto visible para conversión."))
+        seo_findings.append(_criterion("ok", "Contacto", "Se detecta canal de contacto visible para conversion."))
     else:
         seo_findings.append(_criterion("warning", "Contacto", "Falta contacto visible o formulario claro en la propuesta."))
 
     if context.category_count > 0 or context.product_count > 0 or context.service_count > 0:
         seo_score += 12
-        seo_findings.append(_criterion("ok", "Oferta indexable", "Existe oferta comercial (productos/servicios/categorías) asociada a la marca."))
+        seo_findings.append(_criterion("ok", "Oferta indexable", "Existe oferta comercial (productos/servicios/categorias) asociada a la marca."))
     else:
         seo_findings.append(_criterion("warning", "Oferta indexable", "No se detecta oferta comercial estructurada para descubrimiento."))
 
-    if any(word in text_lower for word in ["beneficio", "valor", "ventaja", "resultado", "solución", "solucion"]):
+    if any(word in text_lower for word in ["beneficio", "valor", "ventaja", "resultado", "solucion"]):
         seo_score += 12
         seo_findings.append(_criterion("ok", "Propuesta de valor", "El mensaje incluye lenguaje de valor comercial."))
     else:
-        seo_findings.append(_criterion("warning", "Propuesta de valor", "La propuesta de valor puede ser más explícita."))
+        seo_findings.append(_criterion("warning", "Propuesta de valor", "La propuesta de valor puede ser mas explicita."))
 
     if context.language.lower().startswith("es"):
         seo_score += 10
-        seo_findings.append(_criterion("ok", "Idioma", "La configuración de idioma principal está definida en español."))
+        seo_findings.append(_criterion("ok", "Idioma", "La configuracion de idioma principal esta definida en espanol."))
     else:
         seo_findings.append(_criterion("info", "Idioma", "Revisa que el idioma principal coincida con el mercado objetivo."))
 
-    # AEO rules
     aeo_findings: list[dict[str, str]] = []
     aeo_score = 0.0
 
-    if any(token in text_lower for token in ["somos", "ofrecemos", "plataforma", "servicios", "ecommerce", "formación", "formacion"]):
+    if any(token in text_lower for token in ["somos", "ofrecemos", "plataforma", "servicios", "ecommerce", "formacion"]):
         aeo_score += 18
-        aeo_findings.append(_criterion("ok", "Qué hace la marca", "El contenido responde qué hace la marca."))
+        aeo_findings.append(_criterion("ok", "Que hace la marca", "El contenido responde que hace la marca."))
     else:
-        aeo_findings.append(_criterion("warning", "Qué hace la marca", "No queda totalmente claro qué hace la marca en una sola lectura."))
+        aeo_findings.append(_criterion("warning", "Que hace la marca", "No queda totalmente claro que hace la marca en una sola lectura."))
 
     if any(token in text_lower for token in ["para", "dirigido", "empresas", "distribuidores", "clientes", "profesionales"]):
         aeo_score += 14
-        aeo_findings.append(_criterion("ok", "Audiencia objetivo", "El texto indica para quién está diseñada la oferta."))
+        aeo_findings.append(_criterion("ok", "Audiencia objetivo", "El texto indica para quien esta disenada la oferta."))
     else:
         aeo_findings.append(_criterion("warning", "Audiencia objetivo", "Falta especificar mejor la audiencia principal."))
 
@@ -250,30 +460,29 @@ def run_diagnostic(context: DiagnosticContext) -> dict:
     qna_signals = sum(1 for section in context.sections if "?" in section.get("title", "") or "como" in section.get("title", "").lower())
     if qna_signals > 0:
         aeo_score += 12
-        aeo_findings.append(_criterion("ok", "Bloques tipo pregunta/respuesta", "Se detectan bloques con formato útil para motores de respuesta."))
+        aeo_findings.append(_criterion("ok", "Bloques tipo pregunta/respuesta", "Se detectan bloques con formato util para motores de respuesta."))
     else:
         aeo_findings.append(_criterion("warning", "Bloques tipo pregunta/respuesta", "Agrega FAQ o bloques de respuesta directa para fortalecer AEO."))
 
     avg_sentence_len = len(full_text.split()) / max(1, len([s for s in full_text.replace("?", ".").split(".") if s.strip()]))
     if avg_sentence_len <= 24:
         aeo_score += 12
-        aeo_findings.append(_criterion("ok", "Claridad semántica", "El contenido tiene una longitud de oración razonable para comprensión por IA."))
+        aeo_findings.append(_criterion("ok", "Claridad semantica", "El contenido tiene una longitud de oracion razonable para comprension por IA."))
     else:
-        aeo_findings.append(_criterion("warning", "Claridad semántica", "Hay oraciones extensas; conviene simplificar para mejorar interpretación automática."))
+        aeo_findings.append(_criterion("warning", "Claridad semantica", "Hay oraciones extensas; conviene simplificar para mejorar interpretacion automatica."))
 
     if context.cta_primary and context.cta_secondary:
         aeo_score += 14
-        aeo_findings.append(_criterion("ok", "Intención comercial", "La intención comercial está explícita con llamados a acción claros."))
+        aeo_findings.append(_criterion("ok", "Intencion comercial", "La intencion comercial esta explicita con llamados a accion claros."))
     else:
-        aeo_findings.append(_criterion("warning", "Intención comercial", "Falta reforzar llamados a la acción y siguiente paso."))
+        aeo_findings.append(_criterion("warning", "Intencion comercial", "Falta reforzar llamados a la accion y siguiente paso."))
 
     if context.business_type in {"products", "services", "mixed"}:
         aeo_score += 16
-        aeo_findings.append(_criterion("ok", "Contexto de negocio", "El contexto de industria/tipo de negocio está identificado."))
+        aeo_findings.append(_criterion("ok", "Contexto de negocio", "El contexto de industria/tipo de negocio esta identificado."))
     else:
-        aeo_findings.append(_criterion("warning", "Contexto de negocio", "Define con más precisión el tipo de negocio para respuestas más certeras."))
+        aeo_findings.append(_criterion("warning", "Contexto de negocio", "Define con mas precision el tipo de negocio para respuestas mas certeras."))
 
-    # Branding rules
     branding_findings: list[dict[str, str]] = []
     branding_score = 0.0
 
@@ -281,25 +490,25 @@ def run_diagnostic(context: DiagnosticContext) -> dict:
         branding_score += 18
         branding_findings.append(_criterion("ok", "Promesa de marca", "Existe promesa principal y soporte narrativo en la cabecera."))
     else:
-        branding_findings.append(_criterion("warning", "Promesa de marca", "La promesa central de marca necesita mayor definición."))
+        branding_findings.append(_criterion("warning", "Promesa de marca", "La promesa central de marca necesita mayor definicion."))
 
     if any(token in text_lower for token in ["diferente", "especializado", "premium", "inteligente", "profesional"]):
         branding_score += 14
-        branding_findings.append(_criterion("ok", "Diferenciación", "El mensaje presenta elementos de diferenciación comercial."))
+        branding_findings.append(_criterion("ok", "Diferenciacion", "El mensaje presenta elementos de diferenciacion comercial."))
     else:
-        branding_findings.append(_criterion("warning", "Diferenciación", "Falta enfatizar qué hace única a la marca frente a competidores."))
+        branding_findings.append(_criterion("warning", "Diferenciacion", "Falta enfatizar que hace unica a la marca frente a competidores."))
 
     if context.business_type == "services" and (context.service_count > 0 or "servicio" in text_lower):
         branding_score += 14
-        branding_findings.append(_criterion("ok", "Alineación con industria", "La narrativa está alineada con un negocio de servicios."))
+        branding_findings.append(_criterion("ok", "Alineacion con industria", "La narrativa esta alineada con un negocio de servicios."))
     elif context.business_type == "products" and (context.product_count > 0 or "producto" in text_lower):
         branding_score += 14
-        branding_findings.append(_criterion("ok", "Alineación con industria", "La narrativa está alineada con un negocio de productos."))
+        branding_findings.append(_criterion("ok", "Alineacion con industria", "La narrativa esta alineada con un negocio de productos."))
     elif context.business_type == "mixed" and (context.product_count > 0 or context.service_count > 0):
         branding_score += 14
-        branding_findings.append(_criterion("ok", "Alineación con industria", "La narrativa soporta oferta mixta de productos y servicios."))
+        branding_findings.append(_criterion("ok", "Alineacion con industria", "La narrativa soporta oferta mixta de productos y servicios."))
     else:
-        branding_findings.append(_criterion("warning", "Alineación con industria", "El mensaje no refleja totalmente el tipo de negocio actual."))
+        branding_findings.append(_criterion("warning", "Alineacion con industria", "El mensaje no refleja totalmente el tipo de negocio actual."))
 
     if context.cta_primary:
         branding_score += 14
@@ -309,7 +518,7 @@ def run_diagnostic(context: DiagnosticContext) -> dict:
 
     if len(context.brand_name) >= 4 and any(char.isalpha() for char in context.brand_name):
         branding_score += 10
-        branding_findings.append(_criterion("ok", "Identidad nominal", "El nombre de marca está definido y usable en comunicación comercial."))
+        branding_findings.append(_criterion("ok", "Identidad nominal", "El nombre de marca esta definido y usable en comunicacion comercial."))
     else:
         branding_findings.append(_criterion("warning", "Identidad nominal", "El nombre de marca requiere mayor claridad o consistencia."))
 
@@ -317,7 +526,7 @@ def run_diagnostic(context: DiagnosticContext) -> dict:
         branding_score += 12
         branding_findings.append(_criterion("ok", "Coherencia oferta-mensaje", "La oferta visible respalda la promesa comercial de marca."))
     else:
-        branding_findings.append(_criterion("warning", "Coherencia oferta-mensaje", "Amplía la oferta visible para reforzar credibilidad comercial."))
+        branding_findings.append(_criterion("warning", "Coherencia oferta-mensaje", "Amplia la oferta visible para reforzar credibilidad comercial."))
 
     if context.contact_email or context.contact_whatsapp:
         branding_score += 10
@@ -341,60 +550,50 @@ def run_diagnostic(context: DiagnosticContext) -> dict:
     low_priority: list[str] = []
 
     if seo < 70:
-        high_priority.append("Refinar titular, subtítulo y bloques de valor para mejorar descubrimiento orgánico.")
+        high_priority.append("Refinar titular, subtitulo y bloques de valor para mejorar descubrimiento organico.")
     if aeo < 70:
         high_priority.append("Agregar bloque FAQ/respuestas directas para mejorar visibilidad en asistentes de IA.")
     if branding < 75:
-        medium_priority.append("Fortalecer diferenciación de marca y beneficios concretos por audiencia.")
+        medium_priority.append("Fortalecer diferenciacion de marca y beneficios concretos por audiencia.")
     if not (context.contact_email or context.contact_whatsapp):
         high_priority.append("Habilitar un canal de contacto visible con CTA comercial en la landing.")
     if len(context.sections) < 3:
-        medium_priority.append("Incluir secciones mínimas: propuesta de valor, beneficios, oferta principal y contacto.")
+        medium_priority.append("Incluir secciones minimas: propuesta de valor, beneficios, oferta principal y contacto.")
     if context.has_existing_landing:
         low_priority.append("Mantener alineado el copy del preview interno con la landing externa declarada.")
     if context.product_count + context.service_count == 0:
-        high_priority.append("Publicar oferta base (productos/servicios) para reforzar posicionamiento y conversión.")
+        high_priority.append("Publicar oferta base (productos/servicios) para reforzar posicionamiento y conversion.")
 
     if not high_priority:
-        high_priority.append("Mantener ciclo de mejora continua con revisión mensual de SEO/AEO/branding.")
+        high_priority.append("Mantener ciclo de mejora continua con revision mensual de SEO/AEO/branding.")
     if not medium_priority:
         medium_priority.append("Ajustar estilo de titulares para mayor claridad comercial por industria.")
     if not low_priority:
-        low_priority.append("Documentar casos de éxito y testimonios para aumentar prueba social.")
+        low_priority.append("Documentar casos de exito y testimonios para aumentar prueba social.")
 
     next_actions = [
-        "Priorizar 2 mejoras de alta prioridad en la próxima iteración de landing.",
+        "Priorizar 2 mejoras de alta prioridad en la proxima iteracion de landing.",
         "Validar consistencia entre propuesta de valor, audiencia y CTA principal.",
-        "Reanalizar la marca después de aplicar mejoras para medir avance de score.",
+        "Reanalizar despues de aplicar mejoras para medir avance de score.",
     ]
 
+    subject = "La landing externa evaluada" if context.analysis_type == "external_url" else "La marca"
     summary = (
-        f"La marca obtuvo un score global de {global_score}/100. "
+        f"{subject} obtuvo un score global de {global_score}/100. "
         f"SEO {seo}, AEO {aeo} e identidad {branding}. "
-        "El diagnóstico sugiere reforzar claridad comercial, bloques de respuesta para IA y coherencia de propuesta."
+        "El diagnostico sugiere reforzar claridad comercial, bloques de respuesta para IA y coherencia de propuesta."
     )
 
     return {
+        "analysis_type": context.analysis_type,
+        "source_url": context.source_url,
         "tenant_id": context.tenant_id,
         "brand_name": context.brand_name,
         "analyzed_at": datetime.utcnow(),
         "status": "completed",
-        "scores": {
-            "seo": seo,
-            "aeo": aeo,
-            "branding": branding,
-            "global": global_score,
-        },
-        "findings": {
-            "seo": seo_findings,
-            "aeo": aeo_findings,
-            "branding": branding_findings,
-        },
-        "recommendations": {
-            "high_priority": high_priority,
-            "medium_priority": medium_priority,
-            "low_priority": low_priority,
-        },
+        "scores": {"seo": seo, "aeo": aeo, "branding": branding, "global": global_score},
+        "findings": {"seo": seo_findings, "aeo": aeo_findings, "branding": branding_findings},
+        "recommendations": {"high_priority": high_priority, "medium_priority": medium_priority, "low_priority": low_priority},
         "summary": summary,
         "next_actions": next_actions,
         "missing_data": context.missing_data,
@@ -442,18 +641,17 @@ def parse_diagnostic_row(row: BrandDiagnostic) -> dict:
         improvement_plan = None
 
     tenant_data = context_payload.get("tenant", {}) if isinstance(context_payload, dict) else {}
+    analysis_type = str(context_payload.get("analysis_type") or "internal_brand") if isinstance(context_payload, dict) else "internal_brand"
+    source_url = context_payload.get("source_url") if isinstance(context_payload, dict) else None
     return {
         "id": row.id,
         "tenant_id": row.tenant_id,
         "brand_name": str(tenant_data.get("name") or f"Tenant {row.tenant_id}"),
+        "analysis_type": analysis_type,
+        "source_url": str(source_url) if source_url else None,
         "analyzed_at": row.analyzed_at,
         "status": row.status,
-        "scores": {
-            "seo": row.seo_score,
-            "aeo": row.aeo_score,
-            "branding": row.branding_score,
-            "global": row.global_score,
-        },
+        "scores": {"seo": row.seo_score, "aeo": row.aeo_score, "branding": row.branding_score, "global": row.global_score},
         "findings": findings if isinstance(findings, dict) else {},
         "recommendations": recommendations if isinstance(recommendations, dict) else {},
         "summary": row.summary,
