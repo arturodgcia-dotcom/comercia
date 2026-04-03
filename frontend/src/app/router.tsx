@@ -38,6 +38,7 @@ import { CookiesPolicyPage } from "../pages/CookiesPolicyPage";
 import { CouponsAdminPage } from "../pages/CouponsAdminPage";
 import { DataProtectionPolicyPage } from "../pages/DataProtectionPolicyPage";
 import { DashboardPage } from "../pages/DashboardPage";
+import { BrandDiagnosticsPage } from "../pages/BrandDiagnosticsPage";
 import { DistributorApplicationsAdminPage } from "../pages/DistributorApplicationsAdminPage";
 import { DistributorLoginPlaceholderPage } from "../pages/DistributorLoginPlaceholderPage";
 import { DistributorRegistrationPage } from "../pages/DistributorRegistrationPage";
@@ -62,6 +63,7 @@ import { ProductsPage } from "../pages/ProductsPage";
 import { RecurringOrdersAdminPage } from "../pages/RecurringOrdersAdminPage";
 import { AutomationAdminPage } from "../pages/AutomationAdminPage";
 import { ReinpiaDashboardPage } from "../pages/ReinpiaDashboardPage";
+import { ReinpiaDiagnosticsPage } from "../pages/ReinpiaDiagnosticsPage";
 import { ReinpiaBrandsNewPage } from "../pages/ReinpiaBrandsNewPage";
 import { BrandSetupWizard } from "../pages/BrandSetupWizard";
 import { ReinpiaCommissionAgentsPage } from "../pages/ReinpiaCommissionAgentsPage";
@@ -185,6 +187,7 @@ export function AppRouter() {
             <Route path="admin/channels/public" element={<BrandPublicEcommerceChannelPage />} />
             <Route path="admin/channels/distributors" element={<BrandDistributorsChannelPage />} />
             <Route path="admin/channels/pos" element={<BrandPosChannelPage />} />
+            <Route path="admin/diagnostico-inteligente" element={<BrandDiagnosticsPage />} />
             <Route path="admin/users" element={<UsersAdminPage />} />
             <Route path="admin/language" element={<LanguageAdminPage />} />
             <Route path="admin/currency" element={<CurrencyAdminPage />} />
@@ -222,6 +225,7 @@ export function AppRouter() {
               <Route path="reinpia/language" element={<LanguageAdminPage />} />
               <Route path="reinpia/currency" element={<CurrencyAdminPage />} />
               <Route path="reinpia/tenants/:tenantId" element={<ReinpiaTenantDetailPage />} />
+              <Route path="reinpia/diagnosticos" element={<ReinpiaDiagnosticsPage />} />
               <Route path="reinpia/payments" element={<ReinpiaPaymentsPage />} />
               <Route path="reinpia/operations" element={<ReinpiaOperationsPage />} />
               <Route path="reinpia/logistics-services" element={<ReinpiaLogisticsServicesPage />} />

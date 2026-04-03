@@ -805,6 +805,26 @@ class MarketingInsight(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False, index=True)
 
 
+class BrandDiagnostic(Base, TimestampMixin):
+    __tablename__ = "brand_diagnostics"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id"), nullable=False, index=True)
+    status: Mapped[str] = mapped_column(String(30), default="completed", nullable=False, index=True)
+    analyzed_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+    seo_score: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    aeo_score: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    branding_score: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    global_score: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    findings_json: Mapped[str] = mapped_column(Text, default="{}", nullable=False)
+    recommendations_json: Mapped[str] = mapped_column(Text, default="{}", nullable=False)
+    summary: Mapped[str] = mapped_column(Text, default="", nullable=False)
+    next_actions_json: Mapped[str] = mapped_column(Text, default="[]", nullable=False)
+    context_json: Mapped[str] = mapped_column(Text, default="{}", nullable=False)
+    missing_data_json: Mapped[str] = mapped_column(Text, default="[]", nullable=False)
+    improvement_plan_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+
 class OnboardingGuide(Base, TimestampMixin):
     __tablename__ = "onboarding_guides"
 

@@ -2,6 +2,8 @@ import {
   Appointment,
   AutomationEventLog,
   Banner,
+  BrandDiagnostic,
+  BrandDiagnosticSummary,
   BrandGeneratedContent,
   BrandEcommerceData,
   BrandIdentityData,
@@ -640,6 +642,30 @@ export const api = {
     request<BrandAdminSettings>(`/api/v1/admin/brand-settings/${tenantId}`, {}, token),
   updateBrandAdminSettings: (token: string, tenantId: number, payload: Record<string, unknown>) =>
     request<BrandAdminSettings>(`/api/v1/admin/brand-settings/${tenantId}`, { method: "PUT", body: JSON.stringify(payload) }, token),
+  analyzeBrandDiagnostics: (token: string, tenantId: number) =>
+    request<BrandDiagnostic>(`/api/v1/brand-diagnostics/${tenantId}/analyze`, { method: "POST" }, token),
+  getBrandDiagnosticsLatest: (token: string, tenantId: number) =>
+    request<BrandDiagnostic>(`/api/v1/brand-diagnostics/${tenantId}/latest`, {}, token),
+  getBrandDiagnosticsHistory: (token: string, tenantId: number) =>
+    request<BrandDiagnosticSummary[]>(`/api/v1/brand-diagnostics/${tenantId}`, {}, token),
+  saveBrandDiagnosticsImprovementPlan: (
+    token: string,
+    tenantId: number,
+    payload: {
+      accepted_high_priority: string[];
+      accepted_medium_priority: string[];
+      accepted_low_priority: string[];
+      notes: string;
+      owner: string;
+    }
+  ) =>
+    request<BrandDiagnostic>(
+      `/api/v1/brand-diagnostics/${tenantId}/improvement-plan`,
+      { method: "POST", body: JSON.stringify(payload) },
+      token
+    ),
+  getReinpiaDiagnostics: (token: string) =>
+    request<BrandDiagnosticSummary[]>("/api/v1/reinpia/diagnostics", {}, token),
   getExchangeRates: (query = "") =>
     request<ExchangeRate[]>(`/api/v1/exchange-rates${query ? `?${query}` : ""}`),
   createManualExchangeRate: (token: string, payload: Record<string, unknown>) =>

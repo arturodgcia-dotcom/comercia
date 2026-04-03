@@ -902,6 +902,58 @@ export interface AdminUser {
   updated_at: string;
 }
 
+export interface BrandDiagnosticFinding {
+  status: string;
+  criterion: string;
+  detail: string;
+}
+
+export interface BrandDiagnosticScores {
+  seo: number;
+  aeo: number;
+  branding: number;
+  global: number;
+}
+
+export interface BrandDiagnosticFindings {
+  seo: BrandDiagnosticFinding[];
+  aeo: BrandDiagnosticFinding[];
+  branding: BrandDiagnosticFinding[];
+}
+
+export interface BrandDiagnosticRecommendations {
+  high_priority: string[];
+  medium_priority: string[];
+  low_priority: string[];
+}
+
+export interface BrandDiagnostic {
+  id: number;
+  tenant_id: number;
+  brand_name: string;
+  analyzed_at: string;
+  status: string;
+  scores: BrandDiagnosticScores;
+  findings: BrandDiagnosticFindings;
+  recommendations: BrandDiagnosticRecommendations;
+  summary: string;
+  next_actions: string[];
+  missing_data: string[];
+  raw_context: Record<string, unknown>;
+  improvement_plan?: Record<string, unknown> | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BrandDiagnosticSummary {
+  id: number;
+  tenant_id: number;
+  brand_name: string;
+  analyzed_at: string;
+  status: string;
+  global_score: number;
+}
+
 export interface ExchangeRate {
   id: number;
   base_currency: string;
