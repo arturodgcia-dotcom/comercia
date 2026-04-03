@@ -120,7 +120,7 @@ const PROBLEMS = [
   },
   {
     title: "Baja visibilidad digital",
-    description: "Sin estructura SEO/AEO y copy orientado a intención, el tráfico no califica ni convierte de forma sostenible."
+    description: "Sin estructura SEO/AEO y copy orientado a intencion, el trafico no califica ni convierte de forma sostenible."
   }
 ];
 
@@ -154,8 +154,8 @@ const USE_CASES = [
 
 const SEGMENTS = [
   {
-    title: "Público general",
-    detail: "Experiencia de compra clara, checkout rápido y recomendaciones personalizadas para elevar conversión."
+    title: "Publico general",
+    detail: "Experiencia de compra clara, checkout rapido y recomendaciones personalizadas para elevar conversion."
   },
   {
     title: "Distribuidores",
@@ -163,36 +163,36 @@ const SEGMENTS = [
   },
   {
     title: "Comercios",
-    detail: "Operación omnicanal con catálogo, POS y automatización para vender más con control financiero."
+    detail: "Operacion omnicanal con catalogo, POS y automatizacion para vender mas con control financiero."
   }
 ];
 
 const BUSINESS_MODELS = [
   {
-    name: "Plan sin comisión",
-    description: "Suscripción fija para marcas que priorizan previsibilidad financiera y alto volumen de transacciones.",
+    name: "Plan sin comision",
+    description: "Suscripcion fija para marcas que priorizan previsibilidad financiera y alto volumen de transacciones.",
     bullets: [
-      "Sin comisión por venta",
+      "Sin comision por venta",
       "Costo mensual o anual predecible",
-      "Ideal para operación estable y expansión"
+      "Ideal para operacion estable y expansion"
     ],
-    cta: "Solicitar demo del plan sin comisión"
+    cta: "Solicitar demo del plan sin comision"
   },
   {
-    name: "Plan con comisión por venta",
-    description: "Modelo de entrada para iniciar rápido, con pago variable según desempeño comercial.",
+    name: "Plan con comision por venta",
+    description: "Modelo de entrada para iniciar rapido, con pago variable segun desempeno comercial.",
     bullets: [
       "Costo de entrada bajo",
-      "Comisión transparente por transacción",
-      "Ideal para marcas en fase de activación"
+      "Comision transparente por transaccion",
+      "Ideal para marcas en fase de activacion"
     ],
-    cta: "Activar plan con comisión"
+    cta: "Activar plan con comision"
   }
 ];
 
 const AI_PROMPTS = [
-  "Prompt SEO/AEO: Describe en 120 palabras por qué {{marca}} es la mejor opción para {{industria}} en {{ciudad}}.",
-  "Prompt conversión: Genera respuesta comercial breve para un cliente que pregunta precios, tiempos y garantía.",
+  "Prompt SEO/AEO: Describe en 120 palabras por que {{marca}} es la mejor opcion para {{industria}} en {{ciudad}}.",
+  "Prompt conversion: Genera respuesta comercial breve para un cliente que pregunta precios, tiempos y garantia.",
   "Prompt distribuidores: Crea mensaje de onboarding para nuevos comercios interesados en compra por volumen."
 ];
 
@@ -269,9 +269,9 @@ export function ComerciaLandingPage() {
   const planVariant =
     planType === "commission"
       ? {
-          headline: "Empieza sin invertir fijo y paga solo cuando vendes",
-          subtitle: "Modelo accesible para crecer con bajo riesgo y transparencia total en cada venta.",
-          ctaPrimary: "Empieza sin costo fijo",
+          headline: "Empieza con esquema flexible y control comercial por resultados",
+          subtitle: "Modelo accesible para crecer con costos variables claros y visibilidad total de cada venta.",
+          ctaPrimary: "Activar esquema flexible",
           ctaSecondary: "Quiero vender / ser distribuidor",
           badge: "PLAN A - Comision por venta",
         }
@@ -469,8 +469,8 @@ export function ComerciaLandingPage() {
 
       <header className="cp-nav cp-animate-up" id="top">
         <div>
-          <p className="cp-kicker">LANDING COMERCIAL � COMERCIA BY REINPIA</p>
-          <h1>Activa tu ecommerce y comienza a vender con una estructura profesional desde el primer d�a</h1>
+          <p className="cp-kicker">LANDING COMERCIAL Â· COMERCIA BY REINPIA</p>
+          <h1>Activa tu ecommerce y comienza a vender con una estructura profesional desde el primer día</h1>
           <p className="cp-brand-context">{businessSpecificText}</p>
         </div>
         <div className="cp-nav-actions">
@@ -483,9 +483,9 @@ export function ComerciaLandingPage() {
 
       <section className="cp-hero cp-animate-up" aria-label="Hero principal">
         <div className="cp-hero-copy">
-          <p className="cp-eyebrow">{brandTheme.name} � {brandTheme.tone}</p>
-          <h2>Elige el modelo que mejor se adapte a tu negocio: inversi�n fija o esquema por comisi�n. Tecnolog�a, operaci�n e inteligencia artificial en una sola plataforma.</h2>
-          <p>Sin ambig�edades: puedes iniciar con inversi�n definida o con esquema por resultados, siempre con control total de tu operaci�n y tus ventas.</p>
+          <p className="cp-eyebrow">{brandTheme.name} Â· {brandTheme.tone}</p>
+          <h2>Elige el modelo que mejor se adapte a tu negocio: inversión fija o esquema por comisión. Tecnología, operación e inteligencia artificial en una sola plataforma.</h2>
+          <p>Sin ambiguedades: puedes iniciar con inversion definida o con esquema por resultados, siempre con control total de tu operacion y tus ventas.</p>
           <div className="cp-cta-row">
             <button type="button" className="button" onClick={openDiagnostic}>
               Solicitar demo
@@ -510,7 +510,7 @@ export function ComerciaLandingPage() {
             <h3>Ventas + IA + Operacion</h3>
             <ul>
               <li>Embudo comercial en tiempo real</li>
-              <li>Alertas de conversi�n y recompra</li>
+              <li>Alertas de conversión y recompra</li>
               <li>Control omnicanal por marca</li>
             </ul>
           </article>
@@ -518,16 +518,16 @@ export function ComerciaLandingPage() {
             <p>Ecommerce premium</p>
             <h3>Checkout optimizado</h3>
             <ul>
-              <li>Flujo de compra dise�ado para conversi�n</li>
-              <li>Integraci�n con promociones y cupones</li>
+              <li>Flujo de compra diseñado para conversión</li>
+              <li>Integración con promociones y cupones</li>
             </ul>
           </article>
           <article className="cp-mock-card">
             <p>POS WebApp</p>
-            <h3>Venta f�sica conectada</h3>
+            <h3>Venta física conectada</h3>
             <ul>
-              <li>Sincronizaci�n con inventario y clientes</li>
-              <li>Informaci�n en tiempo real</li>
+              <li>Sincronización con inventario y clientes</li>
+              <li>Información en tiempo real</li>
             </ul>
           </article>
           <article className="cp-mock-card">
@@ -562,9 +562,9 @@ export function ComerciaLandingPage() {
       <section className="cp-section" id="problema">
         <header className="cp-section-head">
           <p className="cp-kicker">2. Problema</p>
-          <h2>El reto no es solo vender en línea: es operar, escalar y convertir de forma consistente</h2>
+          <h2>El reto no es solo vender en linea: es operar, escalar y convertir de forma consistente</h2>
           <p>
-            Empresas, comercios y distribuidores necesitan una base comercial que unifique canales, reduzca fricción
+            Empresas, comercios y distribuidores necesitan una base comercial que unifique canales, reduzca friccion
             operativa y mejore el descubrimiento digital en buscadores y asistentes de IA.
           </p>
         </header>
@@ -580,27 +580,27 @@ export function ComerciaLandingPage() {
 
       <section className="cp-section cp-entry" id="entrada">
         <header className="cp-section-head">
-          <p className="cp-kicker">8. Segmentación</p>
+          <p className="cp-kicker">8. Segmentacion</p>
           <h2>Experiencias diferenciadas para cada tipo de usuario</h2>
         </header>
         <div className="cp-entry-grid">
           <article className="cp-entry-card">
-            <p className="cp-entry-tag">Público general</p>
+            <p className="cp-entry-tag">Publico general</p>
             <h3>{SEGMENTS[0].title}</h3>
             <p>{SEGMENTS[0].detail}</p>
             <ul>
-              <li>Navegación clara orientada a conversión</li>
+              <li>Navegacion clara orientada a conversion</li>
               <li>Promociones y recomendaciones inteligentes</li>
               <li>Checkout optimizado para cierre</li>
             </ul>
             <button type="button" className="button" onClick={openDiagnostic}>
-              Quiero activar canal público
+              Quiero activar canal publico
             </button>
           </article>
           <article className="cp-entry-card cp-entry-card-alt">
             <p className="cp-entry-tag">Distribuidores y comercios</p>
             <h3>{SEGMENTS[1].title} + {SEGMENTS[2].title}</h3>
-            <p>Canal B2B especializado para compra por volumen y operación comercial escalable.</p>
+            <p>Canal B2B especializado para compra por volumen y operacion comercial escalable.</p>
             <ul>
               <li>Portal distribuidor dedicado</li>
               <li>Condiciones por mayoreo y recompra</li>
@@ -615,7 +615,7 @@ export function ComerciaLandingPage() {
 
       <section className="cp-section">
         <header className="cp-section-head">
-          <p className="cp-kicker">3. Solución</p>
+          <p className="cp-kicker">3. Solucion</p>
           <h2>Una plataforma todo en uno para vender, operar y escalar con inteligencia</h2>
           <p>
             COMERCIA by REINPIA conecta ecommerce inteligente, canal publico y distribuidores, POS WebApp y
@@ -763,7 +763,7 @@ export function ComerciaLandingPage() {
         <article className="cp-plan-contact">
           <h3>Prompts embebidos para posicionamiento en IA (AEO)</h3>
           <p>
-            Usa estos prompts base para acelerar contenido comercial entendible por motores de búsqueda y asistentes
+            Usa estos prompts base para acelerar contenido comercial entendible por motores de busqueda y asistentes
             de IA.
           </p>
           <ul>
@@ -777,10 +777,10 @@ export function ComerciaLandingPage() {
       <section className="cp-section" id="casos-uso">
         <header className="cp-section-head">
           <p className="cp-kicker">8. Casos de uso</p>
-          <h2>Diseño de landing y ecommerce para múltiples empresas e industrias.</h2>
-          <p>Arquitectura comercial diseñada para adaptarse a distintos giros, integrando SEO, AEO y prompts optimizados para mejorar visibilidad, posicionamiento y conversión.</p>
-          <p>Desarrollado para que tu marca sea más fácil de encontrar, entender y convertir en buscadores, asistentes de IA y canales digitales.</p>
-          <p>Preparado para operar desde México y escalar a otros mercados, con una estructura comercial lista para trabajar en pesos, dólares y euros.</p>
+          <h2>Diseno de landing y ecommerce para multiples empresas e industrias.</h2>
+          <p>Arquitectura comercial disenada para adaptarse a distintos giros, integrando SEO, AEO y prompts optimizados para mejorar visibilidad, posicionamiento y conversion.</p>
+          <p>Desarrollado para que tu marca sea mas facil de encontrar, entender y convertir en buscadores, asistentes de IA y canales digitales.</p>
+          <p>Preparado para operar desde Mexico y escalar a otros mercados, con una estructura comercial lista para trabajar en pesos, dolares y euros.</p>
         </header>
         <div className="cp-usecases-grid">
           {USE_CASES.map((item) => (
@@ -819,7 +819,7 @@ export function ComerciaLandingPage() {
           ))}
         </div>
         <div className="cp-plan-contact">
-          <p>Ambos modelos son compatibles con ecommerce, webapp y operación multi-tenant con personalización por marca (colores, logo, tipografía y productos).</p>
+          <p>Ambos modelos son compatibles con ecommerce, webapp y operacion multi-tenant con personalizacion por marca (colores, logo, tipografia y productos).</p>
           <button type="button" className="button button-outline" onClick={openContact}>
             Hablar con consultor
           </button>
@@ -829,12 +829,12 @@ export function ComerciaLandingPage() {
       <section className="cp-section" id="compatibilidad">
         <header className="cp-section-head">
           <p className="cp-kicker">7. Compatibilidad SaaS</p>
-          <h2>Base reutilizable para múltiples marcas sin perder identidad</h2>
+          <h2>Base reutilizable para multiples marcas sin perder identidad</h2>
         </header>
         <div className="cp-pillars">
           <article>
             <h3>Compatible con ecommerce</h3>
-            <p>Catálogo, carrito, checkout y recomendaciones con estructura preparada para distintos verticales.</p>
+            <p>Catalogo, carrito, checkout y recomendaciones con estructura preparada para distintos verticales.</p>
           </article>
           <article>
             <h3>Compatible con webapp</h3>
@@ -842,11 +842,11 @@ export function ComerciaLandingPage() {
           </article>
           <article>
             <h3>Preparado para multi-tenant</h3>
-            <p>Cada marca opera con dominio lógico propio y variaciones de copy, branding y oferta.</p>
+            <p>Cada marca opera con dominio logico propio y variaciones de copy, branding y oferta.</p>
           </article>
           <article>
             <h3>Personalizable por marca</h3>
-            <p>Colores, logo, tipografía y productos se adaptan automáticamente sin romper la experiencia premium.</p>
+            <p>Colores, logo, tipografia y productos se adaptan automaticamente sin romper la experiencia premium.</p>
           </article>
         </div>
       </section>
