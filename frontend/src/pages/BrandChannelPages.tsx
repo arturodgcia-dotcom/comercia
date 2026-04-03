@@ -22,6 +22,17 @@ import {
 type ChannelKey = "landing" | "public" | "distributors" | "pos";
 type PublishState = "borrador" | "en revision" | "publicado" | "requiere ajustes";
 
+type LandingDraftPayload = {
+  hero_title?: string;
+  hero_subtitle?: string;
+};
+
+type WorkflowPayload = {
+  flow_type?: string;
+  selected_template?: string;
+  is_published?: boolean;
+};
+
 function parseConfig(raw?: string | null): Record<string, unknown> {
   if (!raw) return {};
   try {
@@ -201,6 +212,8 @@ function BrandChannelShell({ channel }: { channel: ChannelKey }) {
   const identityData = (parsedConfig.identity_data as Record<string, unknown> | undefined) ?? {};
   const ecommerceData = (parsedConfig.ecommerce_data as Record<string, unknown> | undefined) ?? {};
   const posSetupData = (parsedConfig.pos_setup_data as Record<string, unknown> | undefined) ?? {};
+  const landingDraft = (parsedConfig.landing_draft as LandingDraftPayload | undefined) ?? {};
+  const workflowPayload = (parsedConfig.workflow as WorkflowPayload | undefined) ?? {};
 
   const categoriesCount = useMemo(() => {
     const ids = new Set(products.map((item) => item.category_id).filter(Boolean));
@@ -217,6 +230,16 @@ function BrandChannelShell({ channel }: { channel: ChannelKey }) {
   const landingExternalUrl = normalizeExternalUrl(landingExternalRaw);
   const landingExternalDemo = isDemoOrUnusableExternalUrl(landingExternalUrl);
   const canUseExternalLanding = Boolean(landingExternal && landingExternalUrl && !landingExternalDemo);
+  const hasApprovedTemplateInternal =
+    Boolean(landingDraft.hero_title || landingDraft.hero_subtitle || branding?.hero_title || snapshot?.config?.landing_enabled) &&
+    workflowPayload.flow_type !== "with_existing_landing";
+  const landingTemplateKey =
+    String(
+      workflowPayload.selected_template ??
+        parsedConfig.landing_template ??
+        parsedConfig.landing_mode ??
+        `tenant-${tenantSlug}-landing`
+    ).trim() || `tenant-${tenantSlug}-landing`;
 
   const landingStep = getStep(workflow, "landing_setup");
   const ecommerceStep = getStep(workflow, "ecommerce_setup");
@@ -242,7 +265,8 @@ function BrandChannelShell({ channel }: { channel: ChannelKey }) {
   const urls = buildBrandChannelUrls(tenantSlug);
   const landingInternalUrl = urls.landingInternalUrl;
   const landingPreviewInternalUrl = urls.landingPreviewInternalUrl;
-  const landingUrl = canUseExternalLanding ? landingExternalUrl! : landingInternalUrl;
+  const useExternalLandingAsPrimary = canUseExternalLanding && !hasApprovedTemplateInternal;
+  const landingUrl = useExternalLandingAsPrimary ? landingExternalUrl! : landingInternalUrl;
   const landingPreviewUrl = landingPreviewInternalUrl;
   const publicUrl = urls.publicUrl;
   const distributorsUrl = urls.distributorsUrl;
@@ -256,10 +280,21 @@ function BrandChannelShell({ channel }: { channel: ChannelKey }) {
     setMessage("");
     try {
       if (!isGlobalAdmin) {
-        if (kind === "landing" && branding) {
+        if (kind === "landing") {
+          const fallbackHeroTitle =
+            landingDraft.hero_title ??
+            branding?.hero_title ??
+            tenant?.name ??
+            "Landing de marca";
+          const fallbackHeroSubtitle =
+            landingDraft.hero_subtitle ??
+            branding?.hero_subtitle ??
+            "Landing tenant-aware sincronizada con branding activo.";
           await api.upsertTenantBranding(token, tenantId, {
-            hero_title: branding.hero_title ?? tenant?.name ?? "",
-            hero_subtitle: branding.hero_subtitle ?? "",
+            primary_color: branding?.primary_color ?? "#0d3e86",
+            secondary_color: branding?.secondary_color ?? "#5f97e3",
+            hero_title: fallbackHeroTitle,
+            hero_subtitle: fallbackHeroSubtitle,
           });
         } else if (channelSettings) {
           await api.updateBrandChannelSettings(token, tenantId, {
@@ -333,10 +368,22 @@ function BrandChannelShell({ channel }: { channel: ChannelKey }) {
             <h3>Estado de publicacion</h3>
             <p className={statusClass(landingState)}>{landingState}</p>
             <ChannelStateLabel label="Landing externa" value={landingExternal ? "Si" : "No"} />
-            <ChannelStateLabel label="Modo" value={canUseExternalLanding ? "Externa publicada" : "Interna tenant-aware"} />
+            <ChannelStateLabel label="Template de landing" value={landingTemplateKey} />
+            <ChannelStateLabel
+              label="Modo"
+              value={useExternalLandingAsPrimary ? "Externa publicada" : "Interna tenant-aware aprobada"}
+            />
+            <ChannelStateLabel
+              label="Estado de template"
+              value={hasApprovedTemplateInternal ? "Aprobado para marca activa" : "Pendiente de aprobacion interna"}
+            />
+            <ChannelStateLabel
+              label="Publicacion"
+              value={workflowPayload.is_published ? "Publicado" : "Borrador / revision"}
+            />
             <ChannelStateLabel
               label="URL que abrira Ver landing"
-              value={canUseExternalLanding ? landingUrl : `${window.location.origin}${landingUrl}`}
+              value={useExternalLandingAsPrimary ? landingUrl : `${window.location.origin}${landingUrl}`}
             />
             <ChannelStateLabel
               label="URL que abrira Ver preview"
