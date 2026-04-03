@@ -180,3 +180,26 @@ Nuevos endpoints:
 - Permisos
   - Crear marca solo para `reinpia_admin` y solo en contexto global.
   - Usuarios de marca sin acceso a modulos globales por ruta/rol.
+
+## Actualizacion canales de marca tenant-aware (Ejecucion 38)
+- Nuevas rutas de control por canal en panel de marca:
+  - `/admin/channels/landing`
+  - `/admin/channels/public`
+  - `/admin/channels/distributors`
+  - `/admin/channels/pos`
+- Cada modulo reemplaza vistas genericas y trabaja con tenant activo real.
+- Estados por canal disponibles:
+  - `borrador`
+  - `en revision`
+  - `publicado`
+  - `requiere ajustes`
+- Datos de estado visibles por canal:
+  - Landing: modo externa/interna, URL, branding aplicado
+  - Ecommerce publico: productos, categorias, banners, moneda e idioma
+  - Ecommerce distribuidores: precios B2B, reglas de volumen, distribuidores registrados
+  - POS/WebApp: habilitacion, puntos de venta, empleados, Mercado Pago y NFC
+- Acciones por canal:
+  - abrir vista real
+  - abrir preview
+  - editar modulo relacionado
+  - regenerar plantilla (solo `reinpia_admin`)

@@ -129,6 +129,11 @@ npm run dev
   - `http://localhost:5175/onboarding/client`
 - Monedas:
   - `http://localhost:5175/admin/currency`
+- Canales de marca (control tenant-aware):
+  - `http://localhost:5175/admin/channels/landing`
+  - `http://localhost:5175/admin/channels/public`
+  - `http://localhost:5175/admin/channels/distributors`
+  - `http://localhost:5175/admin/channels/pos`
 - Configuracion de pagos por canal:
   - `http://localhost:5175/admin/settings/payments/stripe`
   - `http://localhost:5175/admin/settings/payments/mercadopago`
@@ -501,6 +506,12 @@ npm run dev
 - Indicadores persistentes en interfaz:
   - `Modo actual: ...`
   - `Marca activa: ...`
+
+### Canales de marca conectados a vistas reales (nuevo)
+- Los modulos de marca `Landing`, `Ecommerce publico`, `Ecommerce distribuidores` y `POS / WebApp` ahora abren centros de control por tenant activo.
+- Cada canal muestra estado de publicacion (`borrador`, `en revision`, `publicado`, `requiere ajustes`) y datos reales de la marca activa.
+- Las acciones por canal permiten abrir vista real, preview, editar modulo relacionado y regenerar plantilla cuando el usuario es `reinpia_admin`.
+- Cuando una marca tiene landing externa, se respeta la URL externa y se evita forzar una landing interna innecesaria.
 
 ### Monedas por contexto (actualizado)
 - Global (`Administración General de ComerCia`):

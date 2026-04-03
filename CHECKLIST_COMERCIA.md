@@ -406,3 +406,13 @@
 - [x] Navegacion limpiada para evitar modulos vacios o rutas confusas
 - [x] Validacion backend compile OK
 - [x] Validacion frontend build OK
+
+## Entregables ejecucion 38 (Canales de marca conectados a vistas reales por tenant)
+- [x] Nuevo centro de control por canal de marca: landing, ecommerce publico, ecommerce distribuidores y POS/WebApp
+- [x] Modulos del panel de marca redirigidos a rutas de control tenant-aware (sin placeholders genericos)
+- [x] Estado por canal visible: borrador, en revision, publicado, requiere ajustes
+- [x] Acciones por canal habilitadas: abrir vista real, preview, editar modulo relacionado y regenerar (solo global admin)
+- [x] Integracion de datos reales por tenant: branding, catalogo, distribuidores, POS, Mercado Pago y configuracion admin de marca
+- [x] POS ajustado para usar tenant activo del selector de contexto (incluye modo marca para `reinpia_admin`)
+- [x] Build frontend OK
+- [x] Compile backend OK

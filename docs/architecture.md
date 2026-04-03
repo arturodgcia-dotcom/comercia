@@ -510,3 +510,20 @@ Esto habilita un flujo de seguimiento comercial end-to-end sin depender de formu
   - configuracion global de plataforma
   - configuracion de moneda por marca con herencia global opcional.
 - Se evita que cuentas de marca creen o administren otras marcas desde backend y frontend.
+
+## Ejecucion 38: canales de marca conectados a plantillas reales por tenant
+- Se agrega una capa de "centro de control de canal" en frontend para la operacion de marca:
+  - Landing de la marca
+  - Ecommerce publico
+  - Ecommerce distribuidores
+  - POS / WebApp
+- Los modulos dejan de navegar a cascarones genericos y ahora resuelven datos reales del tenant activo via:
+  - `GET /api/v1/tenants/{tenant_id}/storefront-config`
+  - branding, catalogo, distribuidores, POS y channel settings por tenant
+- El tenant activo se toma desde el selector de contexto (`sessionStorage`) para `reinpia_admin` en modo marca, y desde `user.tenant_id` para usuarios de marca.
+- Se unifica la operacion por canal con estados de publicacion y acciones de lifecycle:
+  - ver vista real
+  - preview
+  - editar modulo relacionado
+  - regenerar plantilla (restringido a `reinpia_admin`)
+- POS se alinea a esta arquitectura: ya no usa fallback hardcodeado de tenant; opera con tenant activo real.
