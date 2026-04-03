@@ -541,3 +541,44 @@ Esto habilita un flujo de seguimiento comercial end-to-end sin depender de formu
   - usuario de marca: stub operativo con timestamp y confirmacion visible.
 - POS principal de canal se normaliza a ruta tenant-aware:
   - `/pos?tenant_id={tenantId}`
+
+## Ejecucion 40: módulo independiente Diagnóstico inteligente
+Se agrega un nuevo modulo desacoplado del wizard de marca y de la generacion de landing/ecommerce.
+
+Objetivo:
+- evaluar la marca activa desde tres perspectivas:
+  - SEO
+  - AEO
+  - identidad de marca
+- generar recomendaciones accionables para cliente y equipo interno.
+
+Arquitectura:
+- backend:
+  - nueva entidad `BrandDiagnostic`
+  - servicio `brand_diagnostics_service`
+  - endpoint router `brand_diagnostics.py`
+- frontend:
+  - vista de marca: `/admin/diagnostico-inteligente`
+  - vista global base: `/reinpia/diagnosticos`
+  - navegacion integrada en bloque Comercial de marca.
+
+Persistencia por analisis:
+- `tenant_id`, `analyzed_at`, `status`
+- scores `seo`, `aeo`, `branding`, `global`
+- hallazgos por eje
+- recomendaciones por prioridad
+- resumen ejecutivo
+- siguientes acciones
+- contexto usado y datos faltantes
+- plan de mejora editable
+
+Endpoints:
+- `POST /api/v1/brand-diagnostics/{tenant_id}/analyze`
+- `GET /api/v1/brand-diagnostics/{tenant_id}/latest`
+- `GET /api/v1/brand-diagnostics/{tenant_id}`
+- `POST /api/v1/brand-diagnostics/{tenant_id}/improvement-plan`
+- `GET /api/v1/reinpia/diagnostics`
+
+Regla de diseño:
+- no modifica wizard ni onboarding.
+- opera como modulo paralelo de evaluacion comercial y de visibilidad.

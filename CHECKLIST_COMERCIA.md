@@ -428,3 +428,15 @@
 - [x] Eliminado hardcode de puerto `8001` en cliente API frontend
 - [x] `Abrir WebApp / POS` usa ruta valida tenant-aware (`/pos?tenant_id=...`)
 - [x] Validacion ejecutada: frontend build + backend compile
+
+## Entregables ejecucion 40 (Diagnóstico inteligente independiente)
+- [x] Nuevo modulo independiente `Diagnóstico inteligente` (separado de wizard/setup)
+- [x] Ruta de marca: `/admin/diagnostico-inteligente`
+- [x] Ruta global base: `/reinpia/diagnosticos`
+- [x] Backend: endpoints de analisis, latest, historial y plan de mejora
+- [x] Backend: persistencia en entidad `BrandDiagnostic`
+- [x] Analisis real inicial por reglas (SEO, AEO, identidad de marca)
+- [x] Frontend: scores visuales, hallazgos, recomendaciones y resumen ejecutivo
+- [x] Frontend: plan de mejora editable y guardable
+- [x] Navegacion: acceso desde bloque Comercial de marca
+- [x] Validacion ejecutada: backend compile + frontend build

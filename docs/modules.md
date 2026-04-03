@@ -52,6 +52,7 @@
 | Storefront distribuidores separado | Inicial funcional | home comercial B2B con beneficios, volumen y compra recurrente |
 | Dashboard de marca reorganizado | Inicial funcional | modulos agrupados + topbar con volver y breadcrumbs |
 | Arranque local unificado | Inicial funcional | scripts robustos con bootstrap, deteccion de puertos y URLs utiles |
+| Diagnóstico inteligente | Inicial funcional | modulo independiente para evaluar SEO, AEO e identidad por marca |
 | Bots / agentes | Base arquitectura | pendiente implementacion |
 | Lia agente comercial | Base funcional | widget conversacional con recomendacion de plan y envio a diagnostico |
 | Visibilidad por rol en admin | Inicial funcional | distributor/public fuera de modulos admin de marca/global |
@@ -117,6 +118,32 @@
 - `/api/v1/security/blocked-entities`
 - `/api/v1/security/blocked-entities/{id}/unblock`
 - `/api/v1/security/kpis`
+
+## Endpoints diagnóstico inteligente
+- `POST /api/v1/brand-diagnostics/{tenant_id}/analyze`
+- `GET /api/v1/brand-diagnostics/{tenant_id}/latest`
+- `GET /api/v1/brand-diagnostics/{tenant_id}`
+- `POST /api/v1/brand-diagnostics/{tenant_id}/improvement-plan`
+- `GET /api/v1/reinpia/diagnostics`
+
+## Actualizacion modulo Diagnóstico inteligente
+- Nuevo modulo desacoplado del wizard de setup.
+- Disponible en panel de marca:
+  - `/admin/diagnostico-inteligente`
+- Vista global base para REINPIA:
+  - `/reinpia/diagnosticos`
+- Analisis inicial por reglas semanticas y estructurales:
+  - SEO: headline/subheadline/CTA/estructura/contacto/oferta/indexacion base.
+  - AEO: capacidad de responder que hace la marca, para quien, beneficios y bloques reutilizables por IA.
+  - Identidad: claridad de promesa, diferenciacion, alineacion con industria y coherencia de CTA.
+- Persistencia por ejecucion en `brand_diagnostics`:
+  - scores
+  - hallazgos
+  - recomendaciones
+  - resumen ejecutivo
+  - siguientes acciones
+  - contexto usado y datos faltantes
+  - plan de mejora guardable
 
 ## Actualizacion: trust/compliance y conversion en landing
 Nuevos componentes y capacidades:

@@ -134,6 +134,9 @@ npm run dev
   - `http://localhost:5175/admin/channels/public`
   - `http://localhost:5175/admin/channels/distributors`
   - `http://localhost:5175/admin/channels/pos`
+  - `http://localhost:5175/admin/diagnostico-inteligente`
+- Diagnosticos globales REINPIA:
+  - `http://localhost:5175/reinpia/diagnosticos`
 - Configuracion de pagos por canal:
   - `http://localhost:5175/admin/settings/payments/stripe`
   - `http://localhost:5175/admin/settings/payments/mercadopago`
@@ -514,6 +517,25 @@ npm run dev
 - Si la URL externa es de demo/no desplegada (`.demo`, `.local`, `.invalid`), el panel muestra aviso y usa fallback interno.
 - Ruta de landing interna tenant-aware:
   - `/store/:tenantSlug/landing`
+
+### Diagnóstico inteligente (nuevo)
+- Modulo independiente del wizard y de la generacion de canales.
+- Objetivo: evaluar marca activa en tres ejes:
+  - SEO
+  - AEO
+  - Identidad de marca
+- Ruta de marca:
+  - `/admin/diagnostico-inteligente`
+- Ruta global base (listado):
+  - `/reinpia/diagnosticos`
+- Endpoints:
+  - `POST /api/v1/brand-diagnostics/{tenant_id}/analyze`
+  - `GET /api/v1/brand-diagnostics/{tenant_id}/latest`
+  - `GET /api/v1/brand-diagnostics/{tenant_id}`
+  - `POST /api/v1/brand-diagnostics/{tenant_id}/improvement-plan`
+  - `GET /api/v1/reinpia/diagnostics`
+- Persistencia:
+  - nueva entidad `BrandDiagnostic` con scores, hallazgos, recomendaciones, resumen, plan de mejora y contexto analizado.
 
 ### Monedas por contexto (actualizado)
 - Global (`Administración General de ComerCia`):
