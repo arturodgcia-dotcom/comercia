@@ -91,8 +91,6 @@ const RUNTIME_BASE_URL_KEY = "comercia.runtime_api_url";
 const DEV_LOCAL_BASE_URLS = [
   "http://127.0.0.1:8000",
   "http://localhost:8000",
-  "http://127.0.0.1:8001",
-  "http://localhost:8001",
 ];
 
 function isLocalBaseUrl(url: string): boolean {
@@ -145,7 +143,7 @@ function getCandidateBaseUrls(): string[] {
   if (typeof window !== "undefined") {
     const host = window.location.hostname;
     if (host) {
-      ordered.push(`http://${host}:8000`, `http://${host}:8001`);
+      ordered.push(`http://${host}:8000`);
     }
   }
 
@@ -153,7 +151,7 @@ function getCandidateBaseUrls(): string[] {
     const parsed = new URL(configured);
     const isLocalHost = parsed.hostname === "127.0.0.1" || parsed.hostname === "localhost";
     if (isLocalHost && parsed.protocol === "http:") {
-      ordered.push(`http://${parsed.hostname}:8000`, `http://${parsed.hostname}:8001`);
+      ordered.push(`http://${parsed.hostname}:8000`);
     }
   } catch {
     // Si configured no es una URL valida, seguimos con los defaults.

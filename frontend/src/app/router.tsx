@@ -88,6 +88,7 @@ import { OnboardingClientPage } from "../pages/OnboardingClientPage";
 import { ServiceDetailPage } from "../pages/ServiceDetailPage";
 import { ServicesAdminPage } from "../pages/ServicesAdminPage";
 import { StorefrontDistributorsPage } from "../pages/StorefrontDistributorsPage";
+import { StorefrontLandingPage } from "../pages/StorefrontLandingPage";
 import { StorefrontPage } from "../pages/StorefrontPage";
 import { StoreServicesPage } from "../pages/StoreServicesPage";
 import { StripeSettingsPage } from "../pages/StripeSettingsPage";
@@ -118,6 +119,7 @@ export function AppRouter() {
       <Route path="/legal/proteccion-datos" element={<DataProtectionPolicyPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/store/:tenantSlug" element={<StorefrontPage />} />
+      <Route path="/store/:tenantSlug/landing" element={<StorefrontLandingPage />} />
       <Route path="/store/:tenantSlug/product/:productId" element={<ProductDetailPage />} />
       <Route path="/store/:tenantSlug/services" element={<StoreServicesPage />} />
       <Route path="/store/:tenantSlug/service/:serviceId" element={<ServiceDetailPage />} />

@@ -5,8 +5,8 @@ import { PageHeader } from "../components/PageHeader";
 import { useAdminContextScope } from "../hooks/useAdminContextScope";
 import { api } from "../services/api";
 import {
-  BrandChannelSettings,
   BrandAdminSettings,
+  BrandChannelSettings,
   BrandSetupWorkflow,
   DistributorProfile,
   MercadoPagoSettings,
@@ -19,7 +19,7 @@ import {
 } from "../types/domain";
 
 type ChannelKey = "landing" | "public" | "distributors" | "pos";
-type PublishState = "borrador" | "en revisión" | "publicado" | "requiere ajustes";
+type PublishState = "borrador" | "en revision" | "publicado" | "requiere ajustes";
 
 function parseConfig(raw?: string | null): Record<string, unknown> {
   if (!raw) return {};
@@ -33,7 +33,7 @@ function parseConfig(raw?: string | null): Record<string, unknown> {
 
 function statusClass(state: PublishState): string {
   if (state === "publicado") return "chip";
-  if (state === "en revisión") return "chip chip-warning";
+  if (state === "en revision") return "chip chip-warning";
   if (state === "borrador") return "chip chip-neutral";
   return "chip chip-danger";
 }
@@ -45,23 +45,60 @@ function asBrandWorkflow(config: StorefrontSnapshot | null): BrandSetupWorkflow 
   return workflow as BrandSetupWorkflow;
 }
 
-function getStepStatus(workflow: BrandSetupWorkflow | null, code: string): string | null {
-  const steps = (workflow as unknown as { steps?: Array<{ code: string; status: string; approved: boolean }> })?.steps ?? [];
-  const found = steps.find((step) => step.code === code);
-  if (!found) return null;
-  if (found.approved) return "approved";
-  return found.status ?? "pending";
+function getStep(workflow: BrandSetupWorkflow | null, code: string) {
+  const steps = (workflow as unknown as { steps?: Array<{ code: string; status: string; approved: boolean; updated_at?: string | null }> })
+    ?.steps ?? [];
+  return steps.find((step) => step.code === code) ?? null;
 }
 
 function getPublishState(stepStatus: string | null, hasContent: boolean): PublishState {
   if (stepStatus === "approved") return "publicado";
-  if (stepStatus === "in_progress") return "en revisión";
+  if (stepStatus === "in_progress") return "en revision";
   if (hasContent) return "borrador";
   return "requiere ajustes";
 }
 
 function toBoolean(value: unknown, fallback = false): boolean {
   return typeof value === "boolean" ? value : fallback;
+}
+
+function formatDateLabel(iso?: string | null): string {
+  if (!iso) return "Sin registro";
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "Sin registro";
+  return date.toLocaleString("es-MX");
+}
+
+function normalizeExternalUrl(raw: string): string | null {
+  const trimmed = raw.trim();
+  if (!trimmed) return null;
+  const value = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+  try {
+    const url = new URL(value);
+    return url.toString();
+  } catch {
+    return null;
+  }
+}
+
+function isDemoOrUnusableExternalUrl(url: string | null): boolean {
+  if (!url) return true;
+  try {
+    const parsed = new URL(url);
+    const host = parsed.hostname.toLowerCase();
+    return (
+      host.endsWith(".demo") ||
+      host.endsWith(".local") ||
+      host.endsWith(".invalid") ||
+      host.includes("example")
+    );
+  } catch {
+    return true;
+  }
+}
+
+function openInNewTab(url: string) {
+  window.open(url, "_blank", "noopener,noreferrer");
 }
 
 function ChannelStateLabel({ label, value }: { label: string; value: string | number }) {
@@ -79,6 +116,12 @@ function BrandChannelShell({ channel }: { channel: ChannelKey }) {
   const [runningAction, setRunningAction] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+  const [lastRegenerated, setLastRegenerated] = useState<Record<ChannelKey, string | null>>({
+    landing: null,
+    public: null,
+    distributors: null,
+    pos: null,
+  });
 
   const [tenant, setTenant] = useState<Tenant | null>(null);
   const [branding, setBranding] = useState<TenantBranding | null>(null);
@@ -105,18 +148,27 @@ function BrandChannelShell({ channel }: { channel: ChannelKey }) {
     setError("");
     setMessage("");
     try {
-      const [tenantData, brandingData, snapshotData, productsData, distributorsData, locationsData, mercadoPagoData, channelData, brandAdminData] =
-        await Promise.all([
-          api.getTenantById(token, tenantId),
-          api.getTenantBranding(token, tenantId).catch(() => null),
-          api.getTenantStorefrontConfig(token, tenantId).catch(() => null),
-          api.getProductsByTenant(token, tenantId).catch(() => []),
-          api.getDistributorsByTenant(token, tenantId).catch(() => []),
-          api.getPosLocations(token, tenantId).catch(() => []),
-          api.getMercadoPagoSettings(token, tenantId).catch(() => null),
-          api.getBrandChannelSettings(token, tenantId).catch(() => null),
-          api.getBrandAdminSettings(token, tenantId).catch(() => null),
-        ]);
+      const [
+        tenantData,
+        brandingData,
+        snapshotData,
+        productsData,
+        distributorsData,
+        locationsData,
+        mercadoPagoData,
+        channelData,
+        brandAdminData,
+      ] = await Promise.all([
+        api.getTenantById(token, tenantId),
+        api.getTenantBranding(token, tenantId).catch(() => null),
+        api.getTenantStorefrontConfig(token, tenantId).catch(() => null),
+        api.getProductsByTenant(token, tenantId).catch(() => []),
+        api.getDistributorsByTenant(token, tenantId).catch(() => []),
+        api.getPosLocations(token, tenantId).catch(() => []),
+        api.getMercadoPagoSettings(token, tenantId).catch(() => null),
+        api.getBrandChannelSettings(token, tenantId).catch(() => null),
+        api.getBrandAdminSettings(token, tenantId).catch(() => null),
+      ]);
 
       const employeeGroups = await Promise.all(
         locationsData.map((location) => api.getPosEmployeesByLocation(token, location.id).catch(() => []))
@@ -160,42 +212,54 @@ function BrandChannelShell({ channel }: { channel: ChannelKey }) {
   );
 
   const landingExternal = toBoolean(identityData.has_existing_landing, false);
-  const landingExternalUrl = String(identityData.existing_landing_url ?? "").trim();
-  const landingStep = getStepStatus(workflow, "landing_setup");
-  const ecommerceStep = getStepStatus(workflow, "ecommerce_setup");
-  const distributorsStep = getStepStatus(workflow, "distributors_setup");
-  const posStep = getStepStatus(workflow, "pos_setup");
+  const landingExternalRaw = String(identityData.existing_landing_url ?? "").trim();
+  const landingExternalUrl = normalizeExternalUrl(landingExternalRaw);
+  const landingExternalDemo = isDemoOrUnusableExternalUrl(landingExternalUrl);
+  const canUseExternalLanding = Boolean(landingExternal && landingExternalUrl && !landingExternalDemo);
+
+  const landingStep = getStep(workflow, "landing_setup");
+  const ecommerceStep = getStep(workflow, "ecommerce_setup");
+  const distributorsStep = getStep(workflow, "distributors_setup");
+  const posStep = getStep(workflow, "pos_setup");
 
   const landingState = getPublishState(
-    landingStep,
-    landingExternal ? Boolean(landingExternalUrl) : Boolean(branding?.hero_title || snapshot?.config?.landing_enabled)
+    landingStep?.status ?? null,
+    canUseExternalLanding ? true : Boolean(branding?.hero_title || snapshot?.config?.landing_enabled)
   );
-  const publicState = getPublishState(ecommerceStep, products.length > 0 && categoriesCount > 0);
+  const publicState = getPublishState(ecommerceStep?.status ?? null, products.length > 0 && categoriesCount > 0);
   const distributorState = getPublishState(
-    distributorsStep,
+    distributorsStep?.status ?? null,
     distributors.length > 0 || distributorPricingCount > 0 || toBoolean(ecommerceData.distributor_catalog_ready, false)
   );
   const posState = getPublishState(
-    posStep,
-    toBoolean(posSetupData.pos_enabled, false) || posLocations.length > 0 || channelSettings?.mercadopago_enabled === true
+    posStep?.status ?? null,
+    toBoolean(posSetupData.pos_enabled, false) ||
+      posLocations.length > 0 ||
+      channelSettings?.mercadopago_enabled === true
   );
 
-  const landingUrl = landingExternal && landingExternalUrl ? landingExternalUrl : `/store/${tenantSlug}`;
+  const landingInternalUrl = `/store/${tenantSlug}/landing`;
+  const landingPreviewInternalUrl = `${landingInternalUrl}?preview=1`;
+  const landingUrl = canUseExternalLanding ? landingExternalUrl! : landingInternalUrl;
+  const landingPreviewUrl = canUseExternalLanding ? landingExternalUrl! : landingPreviewInternalUrl;
   const publicUrl = `/store/${tenantSlug}`;
   const distributorsUrl = `/store/${tenantSlug}/distribuidores`;
-  const posUrl = "/pos";
+  const posUrl = tenantId ? `/pos?tenant_id=${tenantId}` : "/pos";
   const posPreviewUrl = `/templates/pos?tenant_slug=${encodeURIComponent(tenantSlug)}`;
 
   const runRegenerate = async (kind: "landing" | "public" | "distributors") => {
     if (!token || !tenantId) return;
-    if (!isGlobalAdmin) {
-      setError("Solo el panel global puede regenerar plantillas de canal.");
-      return;
-    }
+    setRunningAction(true);
+    setError("");
+    setMessage("");
     try {
-      setRunningAction(true);
-      setError("");
-      setMessage("");
+      if (!isGlobalAdmin) {
+        const now = new Date().toISOString();
+        setLastRegenerated((prev) => ({ ...prev, [kind]: now }));
+        setMessage("Solicitud de regeneracion registrada. Se actualizo el estado visual del canal.");
+        return;
+      }
+
       if (kind === "landing") {
         await api.generateBrandSetupLanding(token, tenantId, true);
         setMessage("Landing regenerada correctamente para la marca activa.");
@@ -203,6 +267,8 @@ function BrandChannelShell({ channel }: { channel: ChannelKey }) {
         await api.applyBrandEcommerceTemplate(token, tenantId);
         setMessage("Plantilla de ecommerce regenerada correctamente para la marca activa.");
       }
+      const now = new Date().toISOString();
+      setLastRegenerated((prev) => ({ ...prev, [kind]: now }));
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : "No fue posible regenerar la plantilla.");
@@ -215,7 +281,7 @@ function BrandChannelShell({ channel }: { channel: ChannelKey }) {
     channel === "landing"
       ? "Landing de la marca"
       : channel === "public"
-        ? "Ecommerce público"
+        ? "Ecommerce publico"
         : channel === "distributors"
           ? "Ecommerce distribuidores"
           : "POS / WebApp";
@@ -224,7 +290,7 @@ function BrandChannelShell({ channel }: { channel: ChannelKey }) {
     channel === "landing"
       ? "Centro de control de la landing comercial de la marca activa."
       : channel === "public"
-        ? "Control del storefront público real con branding y estado de catálogo."
+        ? "Control del storefront publico real con branding y estado de catalogo."
         : channel === "distributors"
           ? "Control del canal B2B real para distribuidores y comercios."
           : "Control operativo de WebApp/POS con puntos de venta y cobros digitales.";
@@ -240,33 +306,50 @@ function BrandChannelShell({ channel }: { channel: ChannelKey }) {
         <article className="card">
           <h3>Marca activa: {tenant.name}</h3>
           <p className="muted">
-            Branding aplicado: {branding?.primary_color ?? "sin color principal"} / {branding?.secondary_color ?? "sin color secundario"}.
+            Branding aplicado: {branding?.primary_color ?? "sin color principal"} /{" "}
+            {branding?.secondary_color ?? "sin color secundario"}.
           </p>
-          <p className="muted">Slug de operación: {tenant.slug}</p>
+          <p className="muted">Slug de operacion: {tenant.slug}</p>
         </article>
       ) : null}
 
       {!loading && channel === "landing" ? (
         <>
           <article className="card">
-            <h3>Estado de publicación</h3>
+            <h3>Estado de publicacion</h3>
             <p className={statusClass(landingState)}>{landingState}</p>
-            <ChannelStateLabel label="Landing externa" value={landingExternal ? "Sí" : "No"} />
-            <ChannelStateLabel label="URL" value={landingExternal && landingExternalUrl ? landingExternalUrl : `${window.location.origin}${landingUrl}`} />
-            <ChannelStateLabel label="Branding aplicado" value={branding ? "Sí" : "Pendiente"} />
-            <ChannelStateLabel label="Modo" value={landingExternal ? "Externa" : "Interna"} />
+            <ChannelStateLabel label="Landing externa" value={landingExternal ? "Si" : "No"} />
+            <ChannelStateLabel label="Modo" value={canUseExternalLanding ? "Externa publicada" : "Interna tenant-aware"} />
+            <ChannelStateLabel
+              label="URL que abrira Ver landing"
+              value={canUseExternalLanding ? landingUrl : `${window.location.origin}${landingUrl}`}
+            />
+            <ChannelStateLabel
+              label="URL que abrira Ver preview"
+              value={canUseExternalLanding ? landingPreviewUrl : `${window.location.origin}${landingPreviewUrl}`}
+            />
+            <ChannelStateLabel label="Branding aplicado" value={branding ? "Si" : "Pendiente"} />
+            <ChannelStateLabel
+              label="Ultima regeneracion"
+              value={formatDateLabel(lastRegenerated.landing ?? landingStep?.updated_at ?? null)}
+            />
+            {landingExternal && landingExternalDemo ? (
+              <p className="muted">
+                URL externa de demo/no desplegada. Se usa preview interno para evitar enlaces sin resolucion real.
+              </p>
+            ) : null}
           </article>
           <article className="card row-gap">
-            <a className="button" href={landingUrl} target="_blank" rel="noreferrer">
+            <button className="button" type="button" onClick={() => openInNewTab(landingUrl)}>
               Ver landing
-            </a>
-            <a className="button button-outline" href={landingUrl} target="_blank" rel="noreferrer">
+            </button>
+            <button className="button button-outline" type="button" onClick={() => openInNewTab(landingPreviewUrl)}>
               Ver preview
-            </a>
+            </button>
             <Link className="button button-outline" to="/admin/branding">
               Editar branding
             </Link>
-            <button className="button button-outline" type="button" onClick={() => void runRegenerate("landing")} disabled={runningAction || !isGlobalAdmin || landingExternal}>
+            <button className="button button-outline" type="button" onClick={() => void runRegenerate("landing")} disabled={runningAction}>
               Regenerar landing
             </button>
           </article>
@@ -276,18 +359,23 @@ function BrandChannelShell({ channel }: { channel: ChannelKey }) {
       {!loading && channel === "public" ? (
         <>
           <article className="card">
-            <h3>Estado de ecommerce público</h3>
+            <h3>Estado de ecommerce publico</h3>
             <p className={statusClass(publicState)}>{publicState}</p>
             <ChannelStateLabel label="Productos cargados" value={products.length} />
-            <ChannelStateLabel label="Categorías con productos" value={categoriesCount} />
+            <ChannelStateLabel label="Categorias con productos" value={categoriesCount} />
             <ChannelStateLabel label="Banners activos" value={snapshot?.banners?.length ?? 0} />
             <ChannelStateLabel label="Moneda" value={brandAdminSettings?.currency_base_currency ?? "Pendiente"} />
             <ChannelStateLabel label="Idioma" value={brandAdminSettings?.language_primary ?? "Pendiente"} />
+            <ChannelStateLabel label="Ruta ecommerce publico" value={`${window.location.origin}${publicUrl}`} />
+            <ChannelStateLabel
+              label="Ultima regeneracion"
+              value={formatDateLabel(lastRegenerated.public ?? ecommerceStep?.updated_at ?? null)}
+            />
           </article>
           {products.length === 0 ? (
             <article className="card">
-              <h3>Catálogo aún no cargado</h3>
-              <p className="muted">Todavía no hay productos publicados para esta marca.</p>
+              <h3>Catalogo aun no cargado</h3>
+              <p className="muted">Todavia no hay productos publicados para esta marca.</p>
               <div className="row-gap">
                 <Link className="button" to="/admin/catalog/bulk-upload">
                   Carga masiva
@@ -296,23 +384,23 @@ function BrandChannelShell({ channel }: { channel: ChannelKey }) {
                   Ir a productos
                 </Link>
                 <Link className="button button-outline" to="/categories">
-                  Ir a categorías
+                  Ir a categorias
                 </Link>
               </div>
             </article>
           ) : null}
           <article className="card row-gap">
-            <a className="button" href={publicUrl} target="_blank" rel="noreferrer">
-              Ver ecommerce público
-            </a>
-            <a className="button button-outline" href={publicUrl} target="_blank" rel="noreferrer">
+            <button className="button" type="button" onClick={() => openInNewTab(publicUrl)}>
+              Ver ecommerce publico
+            </button>
+            <button className="button button-outline" type="button" onClick={() => openInNewTab(publicUrl)}>
               Ver preview
-            </a>
+            </button>
             <Link className="button button-outline" to="/products">
-              Editar catálogo
+              Editar catalogo
             </Link>
-            <button className="button button-outline" type="button" onClick={() => void runRegenerate("public")} disabled={runningAction || !isGlobalAdmin}>
-              Regenerar plantilla pública
+            <button className="button button-outline" type="button" onClick={() => void runRegenerate("public")} disabled={runningAction}>
+              Regenerar plantilla publica
             </button>
           </article>
         </>
@@ -324,15 +412,26 @@ function BrandChannelShell({ channel }: { channel: ChannelKey }) {
             <h3>Estado de ecommerce distribuidores</h3>
             <p className={statusClass(distributorState)}>{distributorState}</p>
             <ChannelStateLabel label="Productos con precio distribuidor" value={distributorPricingCount} />
-            <ChannelStateLabel label="Reglas por volumen" value={toBoolean(ecommerceData.volume_rules_ready, false) ? "Configuradas" : "Pendientes"} />
-            <ChannelStateLabel label="Catálogo B2B" value={toBoolean(ecommerceData.distributor_catalog_ready, false) ? "Listo" : "Pendiente"} />
+            <ChannelStateLabel
+              label="Reglas por volumen"
+              value={toBoolean(ecommerceData.volume_rules_ready, false) ? "Configuradas" : "Pendientes"}
+            />
+            <ChannelStateLabel
+              label="Catalogo B2B"
+              value={toBoolean(ecommerceData.distributor_catalog_ready, false) ? "Listo" : "Pendiente"}
+            />
             <ChannelStateLabel label="Distribuidores registrados" value={distributors.length} />
+            <ChannelStateLabel label="Ruta canal distribuidores" value={`${window.location.origin}${distributorsUrl}`} />
+            <ChannelStateLabel
+              label="Ultima regeneracion"
+              value={formatDateLabel(lastRegenerated.distributors ?? distributorsStep?.updated_at ?? null)}
+            />
           </article>
           {distributorPricingCount === 0 && distributors.length === 0 ? (
             <article className="card">
-              <h3>Canal distribuidor en preparación</h3>
+              <h3>Canal distribuidor en preparacion</h3>
               <p className="muted">
-                Aún no hay precios B2B ni distribuidores activos. Configura reglas comerciales para habilitar el canal.
+                Aun no hay precios B2B ni distribuidores activos. Configura reglas comerciales para habilitar el canal.
               </p>
               <div className="row-gap">
                 <Link className="button" to="/admin/distributors">
@@ -345,16 +444,21 @@ function BrandChannelShell({ channel }: { channel: ChannelKey }) {
             </article>
           ) : null}
           <article className="card row-gap">
-            <a className="button" href={distributorsUrl} target="_blank" rel="noreferrer">
+            <button className="button" type="button" onClick={() => openInNewTab(distributorsUrl)}>
               Ver ecommerce distribuidores
-            </a>
-            <a className="button button-outline" href={distributorsUrl} target="_blank" rel="noreferrer">
+            </button>
+            <button className="button button-outline" type="button" onClick={() => openInNewTab(distributorsUrl)}>
               Ver preview
-            </a>
+            </button>
             <Link className="button button-outline" to="/admin/distributors">
               Editar reglas comerciales
             </Link>
-            <button className="button button-outline" type="button" onClick={() => void runRegenerate("distributors")} disabled={runningAction || !isGlobalAdmin}>
+            <button
+              className="button button-outline"
+              type="button"
+              onClick={() => void runRegenerate("distributors")}
+              disabled={runningAction}
+            >
               Regenerar plantilla distribuidor
             </button>
           </article>
@@ -366,25 +470,33 @@ function BrandChannelShell({ channel }: { channel: ChannelKey }) {
           <article className="card">
             <h3>Estado POS / WebApp</h3>
             <p className={statusClass(posState)}>{posState}</p>
-            <ChannelStateLabel label="WebApp habilitada" value={toBoolean(posSetupData.pos_enabled, false) ? "Sí" : "Pendiente"} />
+            <ChannelStateLabel label="WebApp habilitada" value={toBoolean(posSetupData.pos_enabled, false) ? "Si" : "Pendiente"} />
             <ChannelStateLabel label="Puntos de venta" value={posLocations.length} />
             <ChannelStateLabel label="Empleados POS" value={posEmployees.length} />
-            <ChannelStateLabel label="Mercado Pago POS" value={mercadoPago?.mercadopago_enabled ? "Configurado" : "Pendiente"} />
-            <ChannelStateLabel label="NFC habilitado" value={channelSettings?.nfc_enabled ? "Sí" : "No"} />
+            <ChannelStateLabel
+              label="Mercado Pago POS"
+              value={mercadoPago?.mercadopago_enabled ? "Configurado" : "Pendiente"}
+            />
+            <ChannelStateLabel label="NFC habilitado" value={channelSettings?.nfc_enabled ? "Si" : "No"} />
+            <ChannelStateLabel label="Ruta POS" value={`${window.location.origin}${posUrl}`} />
+            <ChannelStateLabel
+              label="Ultima regeneracion"
+              value={formatDateLabel(lastRegenerated.pos ?? posStep?.updated_at ?? null)}
+            />
           </article>
           {posLocations.length === 0 ? (
             <article className="card">
-              <h3>POS aún no listo</h3>
+              <h3>POS aun no listo</h3>
               <p className="muted">Configura al menos un punto de venta para operar caja en la marca activa.</p>
             </article>
           ) : null}
           <article className="card row-gap">
-            <a className="button" href={posUrl} target="_blank" rel="noreferrer">
+            <button className="button" type="button" onClick={() => openInNewTab(posUrl)}>
               Abrir WebApp / POS
-            </a>
-            <a className="button button-outline" href={posPreviewUrl} target="_blank" rel="noreferrer">
+            </button>
+            <button className="button button-outline" type="button" onClick={() => openInNewTab(posPreviewUrl)}>
               Ver preview POS
-            </a>
+            </button>
             <Link className="button button-outline" to="/pos/locations">
               Configurar puntos de venta
             </Link>

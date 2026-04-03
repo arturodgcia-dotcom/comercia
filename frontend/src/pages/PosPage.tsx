@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { useAuth } from "../app/AuthContext";
 import { buildBrandTheme, tokensToCssVars } from "../branding/multibrandTemplates";
 import { AppInstallHelp } from "../components/AppInstallHelp";
@@ -28,8 +28,14 @@ const PAYMENT_LABELS: Record<string, string> = {
 
 export function PosPage() {
   const { token, user } = useAuth();
+  const [searchParams] = useSearchParams();
   const { tenantId: scopedTenantId } = useAdminContextScope();
-  const tenantId = scopedTenantId ?? user?.tenant_id ?? 0;
+  const tenantFromQuery = Number(searchParams.get("tenant_id") ?? "");
+  const tenantId =
+    scopedTenantId ??
+    (Number.isFinite(tenantFromQuery) && tenantFromQuery > 0 ? tenantFromQuery : null) ??
+    user?.tenant_id ??
+    0;
   const [locations, setLocations] = useState<PosLocation[]>([]);
   const [selectedLocationId, setSelectedLocationId] = useState<number>(0);
   const [customers, setCustomers] = useState<PosCustomer[]>([]);
