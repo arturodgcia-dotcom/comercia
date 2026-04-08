@@ -1,4 +1,5 @@
 import json
+from decimal import Decimal
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
@@ -12,9 +13,9 @@ from app.schemas.storefront import StorefrontSnapshot
 from app.schemas.tenant import TenantCreate, TenantRead, TenantUpdate
 from app.services.storefront_initializer import initialize_storefront
 from app.services.tenant_config_service import (
+    normalize_billing_config,
     normalize_commission_rules,
     normalize_subscription_plan,
-    resolve_plan_type,
 )
 
 router = APIRouter()
@@ -45,8 +46,28 @@ def create_tenant(
         default_plan = db.scalar(select(Plan).where(Plan.code == "PLAN_1"))
         values["plan_id"] = default_plan.id if default_plan else None
     plan = db.get(Plan, values["plan_id"]) if values.get("plan_id") else default_plan
-    values["plan_type"] = resolve_plan_type(values.get("plan_type"), bool(plan and plan.commission_enabled))
-    values["commission_rules_json"] = json.dumps(normalize_commission_rules(values.get("commission_rules_json")))
+    billing = normalize_billing_config(
+        billing_model=values.get("billing_model"),
+        commission_percentage=values.get("commission_percentage"),
+        commission_enabled=values.get("commission_enabled"),
+        commission_scope=values.get("commission_scope"),
+        commission_notes=values.get("commission_notes"),
+        tenant_plan_type=values.get("plan_type"),
+        plan_commission_enabled=bool(plan and plan.commission_enabled),
+    )
+    values["plan_type"] = "commission" if billing["billing_model"] == "commission_based" else "subscription"
+    values["billing_model"] = billing["billing_model"]
+    values["commission_enabled"] = billing["commission_enabled"]
+    values["commission_percentage"] = Decimal(str(billing["commission_percentage"]))
+    values["commission_scope"] = billing["commission_scope"]
+    values["commission_notes"] = billing["commission_notes"]
+    values["commission_rules_json"] = json.dumps(
+        _commission_rules_for_billing(
+            commission_rules_json=values.get("commission_rules_json"),
+            commission_enabled=billing["commission_enabled"],
+            commission_percentage=billing["commission_percentage"],
+        )
+    )
     values["subscription_plan_json"] = json.dumps(normalize_subscription_plan(values.get("subscription_plan_json")))
     tenant = Tenant(**values)
     db.add(tenant)
@@ -88,9 +109,29 @@ def update_tenant(
         setattr(tenant, key, value)
     target_plan_id = changes.get("plan_id", tenant.plan_id)
     plan = db.get(Plan, target_plan_id) if target_plan_id else None
-    tenant.plan_type = resolve_plan_type(changes.get("plan_type", tenant.plan_type), bool(plan and plan.commission_enabled))
-    if "commission_rules_json" in changes:
-        tenant.commission_rules_json = json.dumps(normalize_commission_rules(changes.get("commission_rules_json")))
+    billing = normalize_billing_config(
+        billing_model=changes.get("billing_model", tenant.billing_model),
+        commission_percentage=changes.get("commission_percentage", tenant.commission_percentage),
+        commission_enabled=changes.get("commission_enabled", tenant.commission_enabled),
+        commission_scope=changes.get("commission_scope", tenant.commission_scope),
+        commission_notes=changes.get("commission_notes", tenant.commission_notes),
+        tenant_plan_type=changes.get("plan_type", tenant.plan_type),
+        plan_commission_enabled=bool(plan and plan.commission_enabled),
+    )
+    tenant.plan_type = "commission" if billing["billing_model"] == "commission_based" else "subscription"
+    tenant.billing_model = billing["billing_model"]
+    tenant.commission_enabled = bool(billing["commission_enabled"])
+    tenant.commission_percentage = Decimal(str(billing["commission_percentage"]))
+    tenant.commission_scope = str(billing["commission_scope"])
+    tenant.commission_notes = billing["commission_notes"]
+    if "commission_rules_json" in changes or "billing_model" in changes or "commission_percentage" in changes or "commission_enabled" in changes:
+        tenant.commission_rules_json = json.dumps(
+            _commission_rules_for_billing(
+                commission_rules_json=changes.get("commission_rules_json", tenant.commission_rules_json),
+                commission_enabled=billing["commission_enabled"],
+                commission_percentage=billing["commission_percentage"],
+            )
+        )
     if "subscription_plan_json" in changes:
         tenant.subscription_plan_json = json.dumps(normalize_subscription_plan(changes.get("subscription_plan_json")))
     db.commit()
@@ -141,3 +182,15 @@ def _assert_tenant_scope(current_user: User, tenant_id: int) -> None:
         return
     if current_user.tenant_id != tenant_id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="sin acceso a esta marca")
+
+
+def _commission_rules_for_billing(*, commission_rules_json: str | None, commission_enabled: bool, commission_percentage: str) -> dict:
+    if not commission_enabled:
+        return {"tiers": [{"up_to": None, "rate": "0", "label": "Sin comision"}], "minimum_per_operation": None}
+    if commission_rules_json:
+        return normalize_commission_rules(commission_rules_json)
+    rate = (Decimal(str(commission_percentage)) / Decimal("100")).quantize(Decimal("0.0001"))
+    return {
+        "tiers": [{"up_to": None, "rate": str(rate), "label": "Comision general"}],
+        "minimum_per_operation": None,
+    }

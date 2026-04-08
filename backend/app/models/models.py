@@ -32,6 +32,11 @@ class Tenant(Base, TimestampMixin):
     plan_type: Mapped[str] = mapped_column(String(20), default="subscription", nullable=False)
     commission_rules_json: Mapped[str | None] = mapped_column(Text, nullable=True)
     subscription_plan_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+    billing_model: Mapped[str] = mapped_column(String(30), default="fixed_subscription", nullable=False)
+    commission_percentage: Mapped[Decimal] = mapped_column(Numeric(6, 2), default=Decimal("0"), nullable=False)
+    commission_enabled: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    commission_scope: Mapped[str] = mapped_column(String(60), default="ventas_online_pagadas", nullable=False)
+    commission_notes: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     branding: Mapped["TenantBranding"] = relationship(back_populates="tenant", uselist=False)
     stripe_config: Mapped["StripeConfig"] = relationship(back_populates="tenant", uselist=False)

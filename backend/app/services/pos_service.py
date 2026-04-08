@@ -87,6 +87,11 @@ def create_pos_sale(
             tenant_plan_type=tenant.plan_type,
             commission_rules_json=tenant.commission_rules_json,
             subscription_plan_json=tenant.subscription_plan_json,
+            billing_model=tenant.billing_model,
+            commission_percentage=tenant.commission_percentage,
+            commission_enabled=tenant.commission_enabled,
+            commission_scope=tenant.commission_scope,
+            commission_notes=tenant.commission_notes,
             plan_commission_enabled=bool(plan and plan.commission_enabled),
         )
         totals = calculate_totals(

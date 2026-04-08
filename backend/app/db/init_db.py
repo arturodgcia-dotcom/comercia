@@ -45,6 +45,20 @@ def _ensure_runtime_compat_schema() -> None:
             conn.execute(text("ALTER TABLE tenants ADD COLUMN commission_rules_json TEXT"))
         if "subscription_plan_json" not in table_columns["tenants"]:
             conn.execute(text("ALTER TABLE tenants ADD COLUMN subscription_plan_json TEXT"))
+        if "billing_model" not in table_columns["tenants"]:
+            conn.execute(text("ALTER TABLE tenants ADD COLUMN billing_model VARCHAR(30)"))
+            conn.execute(text("UPDATE tenants SET billing_model = 'fixed_subscription' WHERE billing_model IS NULL"))
+        if "commission_percentage" not in table_columns["tenants"]:
+            conn.execute(text("ALTER TABLE tenants ADD COLUMN commission_percentage NUMERIC(6,2)"))
+            conn.execute(text("UPDATE tenants SET commission_percentage = 0 WHERE commission_percentage IS NULL"))
+        if "commission_enabled" not in table_columns["tenants"]:
+            conn.execute(text("ALTER TABLE tenants ADD COLUMN commission_enabled BOOLEAN"))
+            conn.execute(text("UPDATE tenants SET commission_enabled = 0 WHERE commission_enabled IS NULL"))
+        if "commission_scope" not in table_columns["tenants"]:
+            conn.execute(text("ALTER TABLE tenants ADD COLUMN commission_scope VARCHAR(60)"))
+            conn.execute(text("UPDATE tenants SET commission_scope = 'ventas_online_pagadas' WHERE commission_scope IS NULL"))
+        if "commission_notes" not in table_columns["tenants"]:
+            conn.execute(text("ALTER TABLE tenants ADD COLUMN commission_notes TEXT"))
 
         if "commission_amount" not in table_columns["pos_sales"]:
             conn.execute(text("ALTER TABLE pos_sales ADD COLUMN commission_amount NUMERIC(12,2)"))

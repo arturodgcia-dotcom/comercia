@@ -13,6 +13,11 @@ class TenantCreate(BaseModel):
     plan_type: str | None = None
     commission_rules_json: str | None = None
     subscription_plan_json: str | None = None
+    billing_model: str | None = None
+    commission_percentage: float | None = None
+    commission_enabled: bool | None = None
+    commission_scope: str | None = None
+    commission_notes: str | None = None
 
 
 class TenantUpdate(BaseModel):
@@ -25,6 +30,11 @@ class TenantUpdate(BaseModel):
     plan_type: str | None = None
     commission_rules_json: str | None = None
     subscription_plan_json: str | None = None
+    billing_model: str | None = None
+    commission_percentage: float | None = None
+    commission_enabled: bool | None = None
+    commission_scope: str | None = None
+    commission_notes: str | None = None
 
 
 class TenantRead(TimestampSchema):
@@ -38,3 +48,8 @@ class TenantRead(TimestampSchema):
     plan_type: str
     commission_rules_json: str | None
     subscription_plan_json: str | None
+    billing_model: str
+    commission_percentage: float
+    commission_enabled: bool
+    commission_scope: str
+    commission_notes: str | None

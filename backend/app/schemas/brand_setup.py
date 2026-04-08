@@ -106,6 +106,11 @@ class BrandSetupWorkflowRead(BaseModel):
     landing_template: str | None = None
     public_store_template: str | None = None
     distributor_store_template: str | None = None
+    billing_model: str | None = None
+    commission_percentage: float | None = None
+    commission_enabled: bool | None = None
+    commission_scope: str | None = None
+    commission_notes: str | None = None
     flow_type: str = "without_landing"
     steps: list[BrandSetupStepState]
     assets: list[BrandSetupAssetRead]
@@ -125,6 +130,11 @@ class BrandSetupWorkflowUpdate(BaseModel):
     landing_template: str | None = None
     public_store_template: str | None = None
     distributor_store_template: str | None = None
+    billing_model: str | None = None
+    commission_percentage: float | None = None
+    commission_enabled: bool | None = None
+    commission_scope: str | None = None
+    commission_notes: str | None = None
     flow_type: str | None = None
     steps: list[BrandSetupStepState] | None = None
     identity_data: BrandIdentityData | None = None

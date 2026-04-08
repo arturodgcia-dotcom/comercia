@@ -88,6 +88,7 @@ def get_global_kpis(db: Session, date_from: datetime | None = None, date_to: dat
 
 
 def get_tenant_kpis(db: Session, tenant_id: int, date_from: datetime | None = None, date_to: datetime | None = None) -> dict:
+    tenant = db.get(Tenant, tenant_id)
     order_filters = _order_filters(date_from=date_from, date_to=date_to, tenant_id=tenant_id)
     paid_orders = db.scalar(select(func.count(Order.id)).where(*order_filters, Order.status == "paid")) or 0
     failed_orders = db.scalar(select(func.count(Order.id)).where(*order_filters, Order.status == "failed")) or 0
@@ -118,6 +119,15 @@ def get_tenant_kpis(db: Session, tenant_id: int, date_from: datetime | None = No
             *_date_filters(LogisticsOrder.created_at, date_from, date_to),
         )
     ) or 0
+    billing_model = tenant.billing_model if tenant else "fixed_subscription"
+    commission_enabled = bool(tenant.commission_enabled) if tenant else False
+    commission_percentage = Decimal(tenant.commission_percentage or 0) if tenant else Decimal("0")
+    sales_subject_to_commission = Decimal(revenue) if billing_model == "commission_based" and commission_enabled else Decimal("0")
+    estimated_commission = (
+        (sales_subject_to_commission * commission_percentage / Decimal("100")).quantize(Decimal("0.01"))
+        if sales_subject_to_commission > 0
+        else Decimal("0")
+    )
 
     return {
         "tenant_id": tenant_id,
@@ -130,6 +140,12 @@ def get_tenant_kpis(db: Session, tenant_id: int, date_from: datetime | None = No
         "distributors_approved": distributors_approved,
         "appointments_count": appointments,
         "logistics_delivered_count": logistics_delivered,
+        "billing_model": billing_model,
+        "commission_enabled": commission_enabled,
+        "commission_percentage": _to_float(commission_percentage),
+        "commission_scope": tenant.commission_scope if tenant else "ventas_online_pagadas",
+        "sales_subject_to_commission": _to_float(sales_subject_to_commission),
+        "estimated_commission_amount": _to_float(estimated_commission),
     }
 
 
@@ -192,7 +208,46 @@ def get_commissions_summary(
     filters = _order_filters(date_from=date_from, date_to=date_to, tenant_id=tenant_id, status=status)
     commission = db.scalar(select(func.coalesce(func.sum(Order.commission_amount), 0)).where(*filters)) or 0
     net = db.scalar(select(func.coalesce(func.sum(Order.net_amount), 0)).where(*filters)) or 0
-    return {"total_commissions": _to_float(commission), "total_net_amount": _to_float(net)}
+    tenant_filters = []
+    if tenant_id is not None:
+        tenant_filters.append(Tenant.id == tenant_id)
+    commission_tenants = db.scalar(
+        select(func.count(Tenant.id)).where(*tenant_filters, Tenant.billing_model == "commission_based", Tenant.commission_enabled.is_(True))
+    ) or 0
+    sales_subject = db.scalar(
+        select(func.coalesce(func.sum(Order.total_amount), 0))
+        .join(Tenant, Tenant.id == Order.tenant_id)
+        .where(
+            *filters,
+            Tenant.billing_model == "commission_based",
+            Tenant.commission_enabled.is_(True),
+            Order.status == "paid",
+        )
+    ) or 0
+    estimated_commission = db.scalar(
+        select(
+            func.coalesce(
+                func.sum(
+                    Order.total_amount * (Tenant.commission_percentage / 100)
+                ),
+                0,
+            )
+        )
+        .join(Tenant, Tenant.id == Order.tenant_id)
+        .where(
+            *filters,
+            Tenant.billing_model == "commission_based",
+            Tenant.commission_enabled.is_(True),
+            Order.status == "paid",
+        )
+    ) or 0
+    return {
+        "total_commissions": _to_float(commission),
+        "total_net_amount": _to_float(net),
+        "sales_subject_to_commission": _to_float(sales_subject),
+        "estimated_commission_amount": _to_float(estimated_commission),
+        "commission_based_tenants": int(commission_tenants),
+    }
 
 
 def get_orders_timeseries(
@@ -380,6 +435,12 @@ def get_tenants_summary(
                 "commissions": kpis["commissions"],
                 "net_amount": kpis["net_amount"],
                 "paid_orders": kpis["paid_orders"],
+                "billing_model": kpis["billing_model"],
+                "commission_enabled": kpis["commission_enabled"],
+                "commission_percentage": kpis["commission_percentage"],
+                "commission_scope": kpis["commission_scope"],
+                "sales_subject_to_commission": kpis["sales_subject_to_commission"],
+                "estimated_commission_amount": kpis["estimated_commission_amount"],
             }
         )
     return summary

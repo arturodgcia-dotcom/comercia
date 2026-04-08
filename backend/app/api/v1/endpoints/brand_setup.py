@@ -30,6 +30,7 @@ from app.schemas.brand_setup import (
     BrandSetupWorkflowUpdate,
 )
 from app.services.brand_setup_generator import generate_brand_content, generate_landing_draft
+from app.services.tenant_config_service import normalize_billing_config
 
 router = APIRouter()
 ALLOWED_ASSET_TYPES = {"logo", "base_image"}
@@ -77,6 +78,14 @@ OFFICIAL_CHANNEL_TEMPLATE_DEFAULTS = {
     "distributor_store_template": "approved_b2b_v1",
 }
 
+DEFAULT_BILLING_CONFIG = {
+    "billing_model": "fixed_subscription",
+    "commission_enabled": False,
+    "commission_percentage": "0.00",
+    "commission_scope": "ventas_online_pagadas",
+    "commission_notes": None,
+}
+
 
 @router.get("/{tenant_id}", response_model=BrandSetupWorkflowRead, dependencies=[Depends(get_reinpia_admin)])
 def get_brand_setup_workflow(tenant_id: int, db: Session = Depends(get_db)) -> BrandSetupWorkflowRead:
@@ -99,6 +108,7 @@ def get_brand_setup_workflow(tenant_id: int, db: Session = Depends(get_db)) -> B
     landing_draft = _parse_landing_draft(payload)
     ecommerce_data = _parse_ecommerce_data(payload)
     pos_setup_data = _parse_pos_setup_data(payload)
+    billing_config = _resolve_billing_config(payload, tenant)
 
     return BrandSetupWorkflowRead(
         tenant_id=tenant.id,
@@ -111,6 +121,11 @@ def get_brand_setup_workflow(tenant_id: int, db: Session = Depends(get_db)) -> B
         landing_template=channel_templates["landing_template"],
         public_store_template=channel_templates["public_store_template"],
         distributor_store_template=channel_templates["distributor_store_template"],
+        billing_model=billing_config["billing_model"],
+        commission_percentage=float(Decimal(str(billing_config["commission_percentage"]))),
+        commission_enabled=bool(billing_config["commission_enabled"]),
+        commission_scope=billing_config["commission_scope"],
+        commission_notes=billing_config["commission_notes"],
         flow_type=flow_type,
         steps=steps,
         assets=assets,
@@ -133,6 +148,7 @@ def update_brand_setup_workflow(
     config, raw_payload = _load_brand_payload(db, tenant_id)
     workflow = raw_payload.setdefault("workflow", {})
     channel_templates = _resolve_channel_templates(raw_payload, workflow)
+    billing_config = _resolve_billing_config(raw_payload, tenant)
 
     update_data = payload.model_dump(exclude_unset=True)
     for key in ("current_step", "is_published", "prompt_master", "selected_template"):
@@ -141,6 +157,22 @@ def update_brand_setup_workflow(
     for key in ("landing_template", "public_store_template", "distributor_store_template"):
         if key in update_data and update_data[key]:
             channel_templates[key] = str(update_data[key]).strip()
+    billing_updates = {}
+    for key in ("billing_model", "commission_percentage", "commission_enabled", "commission_scope", "commission_notes"):
+        if key in update_data:
+            billing_updates[key] = update_data[key]
+    if billing_updates:
+        billing_config = normalize_billing_config(
+            billing_model=billing_updates.get("billing_model", billing_config["billing_model"]),
+            commission_percentage=billing_updates.get("commission_percentage", billing_config["commission_percentage"]),
+            commission_enabled=billing_updates.get("commission_enabled", billing_config["commission_enabled"]),
+            commission_scope=billing_updates.get("commission_scope", billing_config["commission_scope"]),
+            commission_notes=billing_updates.get("commission_notes", billing_config["commission_notes"]),
+            tenant_plan_type=tenant.plan_type,
+            plan_commission_enabled=False,
+        )
+        _apply_billing_config(raw_payload, billing_config)
+        _sync_tenant_billing(tenant, billing_config)
     if "landing_template" in update_data and update_data.get("landing_template") and "selected_template" not in update_data:
         workflow["selected_template"] = str(update_data["landing_template"]).strip()
     if "flow_type" in update_data and update_data["flow_type"] is not None:
@@ -196,6 +228,9 @@ def update_brand_setup_workflow(
         workflow["steps"] = [step.model_dump() for step in _normalize_steps(existing_steps, flow_type=flow_type)]
     workflow["current_step"] = _next_step_code([BrandSetupStepState(**step) for step in workflow["steps"]])
     _apply_channel_templates(raw_payload, channel_templates)
+    if not billing_updates:
+        _apply_billing_config(raw_payload, billing_config)
+        _sync_tenant_billing(tenant, billing_config)
 
     _save_brand_payload(config, raw_payload, db)
     return get_brand_setup_workflow(tenant.id, db)
@@ -671,6 +706,65 @@ def _apply_channel_templates(payload: dict, templates: dict[str, str]) -> None:
         "public_store_template": templates["public_store_template"],
         "distributor_store_template": templates["distributor_store_template"],
     }
+
+
+def _resolve_billing_config(payload: dict, tenant: Tenant) -> dict[str, str | bool | None]:
+    billing_payload = payload.get("billing_config", {})
+    if not isinstance(billing_payload, dict):
+        billing_payload = {}
+    resolved = normalize_billing_config(
+        billing_model=payload.get("billing_model") or billing_payload.get("billing_model") or tenant.billing_model,
+        commission_percentage=payload.get("commission_percentage") or billing_payload.get("commission_percentage") or tenant.commission_percentage,
+        commission_enabled=payload.get("commission_enabled")
+        if payload.get("commission_enabled") is not None
+        else billing_payload.get("commission_enabled")
+        if billing_payload.get("commission_enabled") is not None
+        else tenant.commission_enabled,
+        commission_scope=payload.get("commission_scope") or billing_payload.get("commission_scope") or tenant.commission_scope,
+        commission_notes=payload.get("commission_notes") or billing_payload.get("commission_notes") or tenant.commission_notes,
+        tenant_plan_type=tenant.plan_type,
+        plan_commission_enabled=False,
+    )
+    for key, fallback in DEFAULT_BILLING_CONFIG.items():
+        if resolved.get(key) in (None, ""):
+            resolved[key] = fallback
+    return resolved
+
+
+def _apply_billing_config(payload: dict, config: dict[str, str | bool | None]) -> None:
+    payload["billing_model"] = config["billing_model"]
+    payload["commission_percentage"] = config["commission_percentage"]
+    payload["commission_enabled"] = bool(config["commission_enabled"])
+    payload["commission_scope"] = config["commission_scope"]
+    payload["commission_notes"] = config["commission_notes"]
+    payload["billing_config"] = {
+        "billing_model": config["billing_model"],
+        "commission_percentage": config["commission_percentage"],
+        "commission_enabled": bool(config["commission_enabled"]),
+        "commission_scope": config["commission_scope"],
+        "commission_notes": config["commission_notes"],
+    }
+
+
+def _sync_tenant_billing(tenant: Tenant, config: dict[str, str | bool | None]) -> None:
+    tenant.billing_model = str(config["billing_model"])
+    tenant.commission_enabled = bool(config["commission_enabled"])
+    tenant.commission_percentage = Decimal(str(config["commission_percentage"]))
+    tenant.commission_scope = str(config["commission_scope"])
+    tenant.commission_notes = config["commission_notes"]
+    tenant.plan_type = "commission" if tenant.billing_model == "commission_based" else "subscription"
+    if tenant.commission_enabled:
+        rate = (tenant.commission_percentage / Decimal("100")).quantize(Decimal("0.0001"))
+        tenant.commission_rules_json = json.dumps(
+            {
+                "tiers": [{"up_to": None, "rate": str(rate), "label": "Comision general"}],
+                "minimum_per_operation": None,
+            }
+        )
+    else:
+        tenant.commission_rules_json = json.dumps(
+            {"tiers": [{"up_to": None, "rate": "0", "label": "Sin comision"}], "minimum_per_operation": None}
+        )
 
 
 def _parse_identity(payload: dict) -> BrandIdentityData | None:

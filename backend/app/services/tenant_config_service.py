@@ -18,6 +18,10 @@ DEFAULT_SUBSCRIPTION_PLAN = {
     ]
 }
 
+DEFAULT_BILLING_MODEL = "fixed_subscription"
+DEFAULT_COMMISSION_SCOPE = "ventas_online_pagadas"
+ALLOWED_BILLING_MODELS = {"fixed_subscription", "commission_based"}
+
 
 def _to_decimal(value: object, fallback: str = "0") -> Decimal:
     try:
@@ -92,10 +96,61 @@ def resolve_plan_type(tenant_plan_type: str | None, plan_commission_enabled: boo
     return "commission" if plan_commission_enabled else "subscription"
 
 
-def build_tenant_config_payload(*, tenant_id: int, tenant_slug: str, tenant_name: str, business_type: str, tenant_plan_type: str | None, commission_rules_json: str | None, subscription_plan_json: str | None, plan_commission_enabled: bool) -> dict:
+def resolve_billing_model(billing_model: str | None, tenant_plan_type: str | None, plan_commission_enabled: bool) -> str:
+    normalized = (billing_model or "").strip().lower()
+    if normalized in ALLOWED_BILLING_MODELS:
+        return normalized
+    plan_type = resolve_plan_type(tenant_plan_type, plan_commission_enabled)
+    return "commission_based" if plan_type == "commission" else DEFAULT_BILLING_MODEL
+
+
+def normalize_billing_config(
+    *,
+    billing_model: str | None,
+    commission_percentage: object | None,
+    commission_enabled: bool | None,
+    commission_scope: str | None,
+    commission_notes: str | None,
+    tenant_plan_type: str | None,
+    plan_commission_enabled: bool,
+) -> dict:
+    resolved_model = resolve_billing_model(billing_model, tenant_plan_type, plan_commission_enabled)
+    resolved_enabled = resolved_model == "commission_based"
+    resolved_percentage = (
+        _to_decimal(commission_percentage, "3").quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+        if resolved_enabled
+        else Decimal("0.00")
+    )
+    if commission_enabled is not None and resolved_model == "fixed_subscription":
+        resolved_enabled = False
+    elif commission_enabled is not None and resolved_model == "commission_based":
+        resolved_enabled = True
+
+    scope = str(commission_scope or DEFAULT_COMMISSION_SCOPE).strip() or DEFAULT_COMMISSION_SCOPE
+    notes = (commission_notes or "").strip() or None
+
+    return {
+        "billing_model": resolved_model,
+        "commission_enabled": resolved_enabled,
+        "commission_percentage": str(resolved_percentage),
+        "commission_scope": scope,
+        "commission_notes": notes,
+    }
+
+
+def build_tenant_config_payload(*, tenant_id: int, tenant_slug: str, tenant_name: str, business_type: str, tenant_plan_type: str | None, commission_rules_json: str | None, subscription_plan_json: str | None, billing_model: str | None, commission_percentage: object | None, commission_enabled: bool | None, commission_scope: str | None, commission_notes: str | None, plan_commission_enabled: bool) -> dict:
     plan_type = resolve_plan_type(tenant_plan_type, plan_commission_enabled)
     commission_rules = normalize_commission_rules(commission_rules_json)
     subscription_plan = normalize_subscription_plan(subscription_plan_json)
+    billing = normalize_billing_config(
+        billing_model=billing_model,
+        commission_percentage=commission_percentage,
+        commission_enabled=commission_enabled,
+        commission_scope=commission_scope,
+        commission_notes=commission_notes,
+        tenant_plan_type=tenant_plan_type,
+        plan_commission_enabled=plan_commission_enabled,
+    )
 
     landing_copy = {
         "commission": {
@@ -120,4 +175,9 @@ def build_tenant_config_payload(*, tenant_id: int, tenant_slug: str, tenant_name
         "subscription_plan": subscription_plan,
         "checkout_badge": "Modelo comision" if plan_type == "commission" else "Sin comision",
         "landing_variant": landing_copy[plan_type],
+        "billing_model": billing["billing_model"],
+        "commission_percentage": billing["commission_percentage"],
+        "commission_enabled": billing["commission_enabled"],
+        "commission_scope": billing["commission_scope"],
+        "commission_notes": billing["commission_notes"],
     }
