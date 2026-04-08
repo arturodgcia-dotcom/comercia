@@ -4,6 +4,7 @@ export type BrandChannelUrls = {
   publicUrl: string;
   publicPreviewUrl: string;
   distributorsUrl: string;
+  distributorsPreviewUrl: string;
   posPreviewUrl: string;
 };
 
@@ -16,6 +17,7 @@ export function buildBrandChannelUrls(tenantSlug: string): BrandChannelUrls {
     publicUrl: `/store/${safeSlug}`,
     publicPreviewUrl: `/store/${safeSlug}?preview=1`,
     distributorsUrl: `/store/${safeSlug}/distribuidores`,
+    distributorsPreviewUrl: `/store/${safeSlug}/distribuidores?preview=1`,
     posPreviewUrl: `/templates/pos?tenant_slug=${encodeURIComponent(safeSlug)}`,
   };
 }

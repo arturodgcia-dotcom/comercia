@@ -89,9 +89,9 @@ import { OnboardingSalesPage } from "../pages/OnboardingSalesPage";
 import { OnboardingClientPage } from "../pages/OnboardingClientPage";
 import { ServiceDetailPage } from "../pages/ServiceDetailPage";
 import { ServicesAdminPage } from "../pages/ServicesAdminPage";
-import { StorefrontDistributorsPage } from "../pages/StorefrontDistributorsPage";
-import { StorefrontLandingPage } from "../pages/StorefrontLandingPage";
-import { StorefrontPage } from "../pages/StorefrontPage";
+import { ResolvedStorefrontDistributorsPage } from "../pages/ResolvedStorefrontDistributorsPage";
+import { ResolvedStorefrontLandingPage } from "../pages/ResolvedStorefrontLandingPage";
+import { ResolvedStorefrontPublicPage } from "../pages/ResolvedStorefrontPublicPage";
 import { StoreServicesPage } from "../pages/StoreServicesPage";
 import { StripeSettingsPage } from "../pages/StripeSettingsPage";
 import { TenantDetailPage } from "../pages/TenantDetailPage";
@@ -120,12 +120,12 @@ export function AppRouter() {
       <Route path="/legal/cookies" element={<CookiesPolicyPage />} />
       <Route path="/legal/proteccion-datos" element={<DataProtectionPolicyPage />} />
       <Route path="/login" element={<LoginPage />} />
-      <Route path="/store/:tenantSlug" element={<StorefrontPage />} />
-      <Route path="/store/:tenantSlug/landing" element={<StorefrontLandingPage />} />
+      <Route path="/store/:tenantSlug" element={<ResolvedStorefrontPublicPage />} />
+      <Route path="/store/:tenantSlug/landing" element={<ResolvedStorefrontLandingPage />} />
       <Route path="/store/:tenantSlug/product/:productId" element={<ProductDetailPage />} />
       <Route path="/store/:tenantSlug/services" element={<StoreServicesPage />} />
       <Route path="/store/:tenantSlug/service/:serviceId" element={<ServiceDetailPage />} />
-      <Route path="/store/:tenantSlug/distribuidores" element={<StorefrontDistributorsPage />} />
+      <Route path="/store/:tenantSlug/distribuidores" element={<ResolvedStorefrontDistributorsPage />} />
       <Route path="/store/:tenantSlug/distribuidores/registro" element={<DistributorRegistrationPage />} />
       <Route path="/store/:tenantSlug/distribuidores/login-placeholder" element={<DistributorLoginPlaceholderPage />} />
       <Route path="/pos/login-placeholder" element={<PosLoginPlaceholderPage />} />
