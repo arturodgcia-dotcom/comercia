@@ -258,3 +258,24 @@ Nuevos endpoints:
 - POS / WebApp:
   - `Abrir WebApp / POS` abre ruta tenant-aware `/pos?tenant_id={tenantId}`.
   - `Ver preview POS` mantiene plantilla de preview.
+
+## Actualizacion arquitectura oficial de plantillas (Ejecucion 42)
+- Landing de la marca | Estado: funcional
+  - motor oficial: `approved_landing_v1`
+  - ruta oficial: `/store/:tenantSlug/landing`
+- Ecommerce publico | Estado: funcional
+  - motor oficial: `approved_public_v1`
+  - ruta oficial: `/store/:tenantSlug`
+- Ecommerce distribuidores | Estado: funcional
+  - motor oficial: `approved_b2b_v1`
+  - ruta oficial: `/store/:tenantSlug/distribuidores`
+- Resolver central de canal:
+  - `frontend/src/branding/channelTemplateResolver.tsx`
+- Config oficial por tenant:
+  - `frontend/src/branding/officialChannelTemplates.ts`
+  - backend `brand_setup` normaliza y persiste en `config_json`
+- Wizard conectado al motor oficial:
+  - persiste `landing_template`, `public_store_template`, `distributor_store_template`
+- Panel de marca conectado al motor oficial:
+  - muestra plantilla activa por canal y rutas oficiales reales
+  - preview de distribuidores separado en `/store/:tenantSlug/distribuidores?preview=1`

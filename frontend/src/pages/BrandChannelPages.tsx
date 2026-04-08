@@ -5,6 +5,7 @@ import { PageHeader } from "../components/PageHeader";
 import { useAdminContextScope } from "../hooks/useAdminContextScope";
 import { api } from "../services/api";
 import { buildBrandChannelUrls } from "../utils/brandChannelUrls";
+import { resolveOfficialChannelTemplatesFromConfig } from "../branding/officialChannelTemplates";
 import {
   BrandAdminSettings,
   BrandChannelSettings,
@@ -121,25 +122,25 @@ function buildFallbackLandingDraft(tenantName: string, businessType: string, bra
   const isTulipanes = tenantName.toLowerCase().includes("tulipanes");
   if (isTulipanes) {
     return {
-      hero_title: branding?.hero_title ?? `${tenantName}: formación profesional para transformar tu futuro`,
+      hero_title: branding?.hero_title ?? `${tenantName}: formacion profesional para transformar tu futuro`,
       hero_subtitle:
         branding?.hero_subtitle ??
-        "Programas en cosmetología, podología, cursos y diplomados con enfoque práctico y visión comercial.",
-      cta_primary: "Solicitar diagnóstico académico",
+        "Programas en cosmetologia, podologia, cursos y diplomados con enfoque practico y vision comercial.",
+      cta_primary: "Solicitar diagnostico academico",
       cta_secondary: "Ver programas disponibles",
-      contact_cta: "Agenda una asesoría y recibe una ruta recomendada según tu perfil profesional.",
+      contact_cta: "Agenda una asesoria y recibe una ruta recomendada segun tu perfil profesional.",
       sections: [
         {
           title: "Propuesta de valor",
-          body: "Integramos formación técnica, práctica real y acompañamiento para que avances con estructura profesional."
+          body: "Integramos formacion tecnica, practica real y acompanamiento para que avances con estructura profesional."
         },
         {
-          title: "¿Por qué elegirnos?",
+          title: "Por que elegirnos?",
           body: "Docentes especializados, enfoque en empleabilidad, horarios flexibles y seguimiento personalizado."
         },
         {
           title: "Oferta principal",
-          body: "Cosmetología integral, podología profesional, cursos intensivos y diplomados para especialización."
+          body: "Cosmetologia integral, podologia profesional, cursos intensivos y diplomados para especializacion."
         }
       ]
     };
@@ -147,27 +148,27 @@ function buildFallbackLandingDraft(tenantName: string, businessType: string, bra
 
   const isServices = businessType === "services";
   return {
-    hero_title: branding?.hero_title ?? `${tenantName}: landing comercial lista para conversión`,
+    hero_title: branding?.hero_title ?? `${tenantName}: landing comercial lista para conversion`,
     hero_subtitle:
       branding?.hero_subtitle ??
       (isServices
-        ? "Presenta servicios, beneficios y llamados a la acción con estructura comercial clara."
-        : "Muestra catálogo, propuesta de valor y llamados a la acción para acelerar ventas."),
-    cta_primary: "Solicitar diagnóstico comercial",
+        ? "Presenta servicios, beneficios y llamados a la accion con estructura comercial clara."
+        : "Muestra catalogo, propuesta de valor y llamados a la accion para acelerar ventas."),
+    cta_primary: "Solicitar diagnostico comercial",
     cta_secondary: "Conocer programas y soluciones",
-    contact_cta: "Comparte tu objetivo y diseñamos una ruta comercial clara para tu marca.",
+    contact_cta: "Comparte tu objetivo y disenamos una ruta comercial clara para tu marca.",
     sections: [
       {
         title: "Propuesta de valor",
-        body: "Landing tenant-aware conectada al branding, diseñada para captar, explicar y convertir."
+        body: "Landing tenant-aware conectada al branding, disenada para captar, explicar y convertir."
       },
       {
         title: "Beneficios clave",
-        body: "Claridad comercial, mensajes consistentes y estructura optimizada para revisión interna."
+        body: "Claridad comercial, mensajes consistentes y estructura optimizada para revision interna."
       },
       {
         title: "Oferta principal",
-        body: "Bloques de servicios o productos listos para validación antes de publicación final."
+        body: "Bloques de servicios o productos listos para validacion antes de publicacion final."
       }
     ]
   };
@@ -274,6 +275,7 @@ function BrandChannelShell({ channel }: { channel: ChannelKey }) {
   const posSetupData = (parsedConfig.pos_setup_data as Record<string, unknown> | undefined) ?? {};
   const landingDraft = (parsedConfig.landing_draft as LandingDraftPayload | undefined) ?? {};
   const workflowPayload = (parsedConfig.workflow as WorkflowPayload | undefined) ?? {};
+  const channelTemplates = resolveOfficialChannelTemplatesFromConfig(snapshot?.config?.config_json);
 
   const categoriesCount = useMemo(() => {
     const ids = new Set(products.map((item) => item.category_id).filter(Boolean));
@@ -294,13 +296,9 @@ function BrandChannelShell({ channel }: { channel: ChannelKey }) {
   const hasApprovedTemplateInternal =
     Boolean(landingDraft.hero_title || landingDraft.hero_subtitle || branding?.hero_title || snapshot?.config?.landing_enabled) &&
     workflowPayload.flow_type !== "with_existing_landing";
-  const landingTemplateKey =
-    String(
-      workflowPayload.selected_template ??
-        parsedConfig.landing_template ??
-        parsedConfig.landing_mode ??
-        `tenant-${tenantSlug}-landing`
-    ).trim() || `tenant-${tenantSlug}-landing`;
+  const landingTemplateKey = channelTemplates.landing_template;
+  const publicTemplateKey = channelTemplates.public_store_template;
+  const distributorTemplateKey = channelTemplates.distributor_store_template;
 
   const landingStep = getStep(workflow, "landing_setup");
   const ecommerceStep = getStep(workflow, "ecommerce_setup");
@@ -326,12 +324,12 @@ function BrandChannelShell({ channel }: { channel: ChannelKey }) {
   const urls = buildBrandChannelUrls(tenantSlug);
   const landingInternalUrl = urls.landingInternalUrl;
   const landingPreviewInternalUrl = urls.landingPreviewInternalUrl;
-  const useExternalLandingAsPrimary = !isExistingLandingFlow && canUseExternalLanding && !hasApprovedTemplateInternal;
-  const landingUrl = useExternalLandingAsPrimary ? landingExternalUrl! : landingInternalUrl;
+  const landingUrl = landingInternalUrl;
   const landingPreviewUrl = landingPreviewInternalUrl;
   const publicUrl = urls.publicUrl;
   const publicPreviewUrl = urls.publicPreviewUrl;
   const distributorsUrl = urls.distributorsUrl;
+  const distributorsPreviewUrl = urls.distributorsPreviewUrl;
   const posPreviewUrl = urls.posPreviewUrl;
   const posUrl = posPreviewUrl;
 
@@ -361,20 +359,30 @@ function BrandChannelShell({ channel }: { channel: ChannelKey }) {
             hero_title: fallbackHeroTitle,
             hero_subtitle: fallbackHeroSubtitle,
           });
+          await api.updateBrandSetupWorkflow(token, tenantId, {
+            landing_template: landingTemplateKey,
+            selected_template: landingTemplateKey,
+          });
         } else if (kind === "public" && channelSettings) {
           await api.updateBrandChannelSettings(token, tenantId, {
             nfc_enabled: channelSettings.nfc_enabled,
             mercadopago_enabled: channelSettings.mercadopago_enabled,
           });
+          await api.updateBrandSetupWorkflow(token, tenantId, {
+            public_store_template: publicTemplateKey,
+          });
           const now = new Date().toISOString();
           setLastRegenerated((prev) => ({ ...prev, [kind]: now }));
-          setMessage("Plantilla pública recalculada para la marca activa.");
+          setMessage("Plantilla publica recalculada para la marca activa.");
           await load();
           return;
         } else if (channelSettings) {
           await api.updateBrandChannelSettings(token, tenantId, {
             nfc_enabled: channelSettings.nfc_enabled,
             mercadopago_enabled: channelSettings.mercadopago_enabled,
+          });
+          await api.updateBrandSetupWorkflow(token, tenantId, {
+            distributor_store_template: distributorTemplateKey,
           });
         }
         const now = new Date().toISOString();
@@ -401,6 +409,8 @@ function BrandChannelShell({ channel }: { channel: ChannelKey }) {
         if (isExistingLandingFlow) {
           await api.updateBrandSetupWorkflow(token, tenantId, {
             landing_draft: normalizedDraft,
+            landing_template: landingTemplateKey,
+            selected_template: landingTemplateKey,
           });
           await api.upsertTenantBranding(token, tenantId, {
             primary_color: branding?.primary_color ?? "#0d3e86",
@@ -410,6 +420,10 @@ function BrandChannelShell({ channel }: { channel: ChannelKey }) {
           });
           setMessage("Preview interno de landing regenerado correctamente para la marca activa.");
         } else {
+          await api.updateBrandSetupWorkflow(token, tenantId, {
+            landing_template: landingTemplateKey,
+            selected_template: landingTemplateKey,
+          });
           await api.generateBrandSetupLanding(token, tenantId, true);
           setMessage("Landing regenerada correctamente para la marca activa.");
         }
@@ -418,8 +432,14 @@ function BrandChannelShell({ channel }: { channel: ChannelKey }) {
           nfc_enabled: channelSettings?.nfc_enabled ?? false,
           mercadopago_enabled: channelSettings?.mercadopago_enabled ?? false,
         });
-        setMessage("Plantilla pública recalculada con branding y catálogo del tenant activo.");
+        await api.updateBrandSetupWorkflow(token, tenantId, {
+          public_store_template: publicTemplateKey,
+        });
+        setMessage("Plantilla publica recalculada con branding y catalogo del tenant activo.");
       } else {
+        await api.updateBrandSetupWorkflow(token, tenantId, {
+          distributor_store_template: distributorTemplateKey,
+        });
         await api.applyBrandEcommerceTemplate(token, tenantId);
         setMessage("Plantilla de ecommerce regenerada correctamente para la marca activa.");
       }
@@ -475,10 +495,10 @@ function BrandChannelShell({ channel }: { channel: ChannelKey }) {
             <h3>Estado de publicacion</h3>
             <p className={statusClass(landingState)}>{landingState}</p>
             <ChannelStateLabel label="Landing externa" value={landingExternal ? "Si" : "No"} />
-            <ChannelStateLabel label="Template de landing" value={landingTemplateKey} />
+            <ChannelStateLabel label="Plantilla activa" value={landingTemplateKey} />
             <ChannelStateLabel
               label="Modo"
-              value={isExistingLandingFlow ? "Interna de revision (ComerCia)" : useExternalLandingAsPrimary ? "Externa publicada" : "Interna tenant-aware aprobada"}
+              value={isExistingLandingFlow ? "Interna de revision (ComerCia)" : "Interna tenant-aware aprobada"}
             />
             <ChannelStateLabel
               label="Preview interno ComerCia"
@@ -494,7 +514,7 @@ function BrandChannelShell({ channel }: { channel: ChannelKey }) {
             />
             <ChannelStateLabel
               label="URL que abrira Ver landing"
-              value={useExternalLandingAsPrimary ? landingUrl : `${window.location.origin}${landingUrl}`}
+              value={`${window.location.origin}${landingUrl}`}
             />
             <ChannelStateLabel
               label="URL que abrira Ver preview"
@@ -512,9 +532,10 @@ function BrandChannelShell({ channel }: { channel: ChannelKey }) {
             ) : null}
             {canUseExternalLanding ? (
               <p className="muted">
-                Landing externa valida detectada. Para revision comercial en ComerCia se prioriza la vista interna tenant-aware.
+                Landing externa valida detectada. Se conserva como dato comercial, pero el motor oficial usa la plantilla interna tenant-aware.
               </p>
             ) : null}
+            {canUseExternalLanding ? <ChannelStateLabel label="Landing externa declarada" value={landingExternalUrl ?? "Sin URL"} /> : null}
           </article>
           <article className="card row-gap">
             <button className="button" type="button" onClick={() => openInNewTab(landingUrl)}>
@@ -540,6 +561,7 @@ function BrandChannelShell({ channel }: { channel: ChannelKey }) {
             <p className={statusClass(publicState)}>{publicState}</p>
             <ChannelStateLabel label="Productos cargados" value={products.length} />
             <ChannelStateLabel label="Categorias con productos" value={categoriesCount} />
+            <ChannelStateLabel label="Plantilla activa" value={publicTemplateKey} />
             <ChannelStateLabel label="Banners activos" value={snapshot?.banners?.length ?? 0} />
             <ChannelStateLabel label="Moneda" value={brandAdminSettings?.currency_base_currency ?? "Pendiente"} />
             <ChannelStateLabel label="Idioma" value={brandAdminSettings?.language_primary ?? "Pendiente"} />
@@ -590,6 +612,7 @@ function BrandChannelShell({ channel }: { channel: ChannelKey }) {
             <h3>Estado de ecommerce distribuidores</h3>
             <p className={statusClass(distributorState)}>{distributorState}</p>
             <ChannelStateLabel label="Productos con precio distribuidor" value={distributorPricingCount} />
+            <ChannelStateLabel label="Plantilla activa" value={distributorTemplateKey} />
             <ChannelStateLabel
               label="Reglas por volumen"
               value={toBoolean(ecommerceData.volume_rules_ready, false) ? "Configuradas" : "Pendientes"}
@@ -600,6 +623,7 @@ function BrandChannelShell({ channel }: { channel: ChannelKey }) {
             />
             <ChannelStateLabel label="Distribuidores registrados" value={distributors.length} />
             <ChannelStateLabel label="Ruta canal distribuidores" value={`${window.location.origin}${distributorsUrl}`} />
+            <ChannelStateLabel label="Ruta preview distribuidores" value={`${window.location.origin}${distributorsPreviewUrl}`} />
             <ChannelStateLabel
               label="Ultima regeneracion"
               value={formatDateLabel(lastRegenerated.distributors ?? distributorsStep?.updated_at ?? null)}
@@ -625,7 +649,7 @@ function BrandChannelShell({ channel }: { channel: ChannelKey }) {
             <button className="button" type="button" onClick={() => openInNewTab(distributorsUrl)}>
               Ver ecommerce distribuidores
             </button>
-            <button className="button button-outline" type="button" onClick={() => openInNewTab(distributorsUrl)}>
+            <button className="button button-outline" type="button" onClick={() => openInNewTab(distributorsPreviewUrl)}>
               Ver preview
             </button>
             <Link className="button button-outline" to="/admin/distributors">

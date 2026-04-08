@@ -4,6 +4,11 @@ import { useAuth } from "../app/AuthContext";
 import { PageHeader } from "../components/PageHeader";
 import { ApiError, api } from "../services/api";
 import {
+  OFFICIAL_DISTRIBUTOR_STORE_TEMPLATE,
+  OFFICIAL_LANDING_TEMPLATE,
+  OFFICIAL_PUBLIC_STORE_TEMPLATE,
+} from "../branding/officialChannelTemplates";
+import {
   BrandChannelSettings,
   BrandEcommerceData,
   BrandGeneratedContent,
@@ -109,6 +114,12 @@ const REQUIRED_COLUMNS = [
   "stripe_price_id_menudeo",
   "stripe_price_id_mayoreo",
 ];
+
+const OFFICIAL_CHANNEL_TEMPLATE_PAYLOAD = {
+  landing_template: OFFICIAL_LANDING_TEMPLATE,
+  public_store_template: OFFICIAL_PUBLIC_STORE_TEMPLATE,
+  distributor_store_template: OFFICIAL_DISTRIBUTOR_STORE_TEMPLATE,
+} as const;
 
 function isStepCode(value: string): value is StepCode {
   return ["brand_identity", "landing_setup", "ecommerce_setup", "distributors_setup", "pos_setup", "final_review"].includes(value);
@@ -457,6 +468,8 @@ export function BrandSetupWizard() {
         identity_data: identity,
         prompt_master: generated.prompt_master,
         flow_type: flowType,
+        selected_template: OFFICIAL_LANDING_TEMPLATE,
+        ...OFFICIAL_CHANNEL_TEMPLATE_PAYLOAD,
       });
       setWorkflow(updated);
       setMessage("Paso 1 guardado correctamente.");
@@ -486,7 +499,11 @@ export function BrandSetupWizard() {
     try {
       setSaving(true);
       setError("");
-      await api.updateBrandSetupWorkflow(token, workflow.tenant_id, { prompt_master: generated.prompt_master });
+      await api.updateBrandSetupWorkflow(token, workflow.tenant_id, {
+        prompt_master: generated.prompt_master,
+        selected_template: OFFICIAL_LANDING_TEMPLATE,
+        landing_template: OFFICIAL_LANDING_TEMPLATE,
+      });
       const updated = await api.generateBrandSetupLanding(token, workflow.tenant_id, regenerate);
       setWorkflow(updated);
       if (updated.generated_content) {
@@ -513,6 +530,8 @@ export function BrandSetupWizard() {
       const updated = await api.updateBrandSetupWorkflow(token, workflow.tenant_id, {
         landing_draft: landingDraft,
         generated_content: generated,
+        selected_template: OFFICIAL_LANDING_TEMPLATE,
+        landing_template: OFFICIAL_LANDING_TEMPLATE,
       });
       setWorkflow(updated);
       await approveStep("landing_setup", "Landing aprobada. Seguimos con ecommerce publico.");
@@ -548,6 +567,7 @@ export function BrandSetupWizard() {
       }
       await api.updateBrandSetupWorkflow(token, workflow.tenant_id, {
         ecommerce_data: ecommerceData,
+        public_store_template: OFFICIAL_PUBLIC_STORE_TEMPLATE,
       });
       const activated = await api.activateBrandSetupEcommercePublic(token, workflow.tenant_id);
       setWorkflow(activated);
@@ -573,6 +593,7 @@ export function BrandSetupWizard() {
       setError("");
       const updated = await api.updateBrandSetupWorkflow(token, workflow.tenant_id, {
         ecommerce_data: ecommerceData,
+        distributor_store_template: OFFICIAL_DISTRIBUTOR_STORE_TEMPLATE,
       });
       setWorkflow(updated);
       await approveStep("distributors_setup", "Canal de distribuidores aprobado. Continuamos con POS/WebApp.");
@@ -619,6 +640,8 @@ export function BrandSetupWizard() {
       const published = await api.updateBrandSetupWorkflow(token, workflow.tenant_id, {
         current_step: "final_review",
         is_published: true,
+        selected_template: OFFICIAL_LANDING_TEMPLATE,
+        ...OFFICIAL_CHANNEL_TEMPLATE_PAYLOAD,
       });
       setWorkflow({ ...published, steps: approvedFinal.steps });
       setMessage("Marca publicada correctamente.");
@@ -854,7 +877,8 @@ export function BrandSetupWizard() {
           </label>
 
           <div className="row-gap">
-            <Link className="button button-outline" to={`/store/${workflow.tenant_slug}`}>Ver preview web</Link>
+            <Link className="button button-outline" to={`/store/${workflow.tenant_slug}/landing`}>Ver landing oficial</Link>
+            <Link className="button button-outline" to={`/store/${workflow.tenant_slug}/landing?preview=1`}>Ver preview</Link>
             <button className="button" type="button" onClick={approveLanding} disabled={saving}>
               Aprobar y continuar
             </button>

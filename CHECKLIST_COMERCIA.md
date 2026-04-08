@@ -450,3 +450,14 @@
 - [x] Persistencia de analisis externo en historial con `analysis_type=external_url` y `source_url`
 - [x] Historial muestra tipo de analisis y origen
 - [x] Validacion ejecutada: backend compile + frontend build
+
+## Entregables ejecucion 42 (Plantillas oficiales por canal)
+- [x] Arquitectura oficial por tenant definida con `landing_template`, `public_store_template`, `distributor_store_template`
+- [x] Defaults oficiales fijados: `approved_landing_v1`, `approved_public_v1`, `approved_b2b_v1`
+- [x] Resolver central frontend por canal implementado (`landing`, `public`, `distributors`)
+- [x] Rutas oficiales conectadas al resolver tenant-aware (`/store/:tenantSlug`, `/landing`, `/distribuidores`)
+- [x] Wizard persistiendo plantilla oficial por canal en pasos landing/public/distribuidores
+- [x] Panel de marca leyendo y mostrando plantilla activa por canal
+- [x] Preview de distribuidores separado (`/store/:tenantSlug/distribuidores?preview=1`)
+- [x] Compatibilidad con flujo legacy (`workflow.selected_template`) mantenida sin romper setup previo
+- [x] Documentacion actualizada (`README.md`, `docs/modules.md`, `docs/architecture.md`, `CHECKLIST_COMERCIA.md`)

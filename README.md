@@ -719,3 +719,33 @@ Variables backend (`backend/.env`):
   - Solo `reinpia_admin` puede crear/actualizar marcas.
   - Usuarios de marca no pueden administrar marcas hermanas.
   - Endpoints de branding/tenant restringidos por scope de tenant.
+
+## Actualizacion ejecucion 42 (Plantillas oficiales por canal)
+- Se establece arquitectura oficial de plantillas por tenant y por canal:
+  - `landing_template`
+  - `public_store_template`
+  - `distributor_store_template`
+- Valores oficiales activos:
+  - `approved_landing_v1`
+  - `approved_public_v1`
+  - `approved_b2b_v1`
+- Persistencia central en `StorefrontConfig.config_json`:
+  - campos top-level de plantilla
+  - `channel_templates` como bloque normalizado
+  - compatibilidad con `workflow.selected_template` para landing
+- Nuevo resolver central frontend:
+  - `resolveLandingTemplate(...)`
+  - `resolvePublicStoreTemplate(...)`
+  - `resolveDistributorStoreTemplate(...)`
+- Rutas oficiales conectadas al motor de plantillas resueltas:
+  - `/store/:tenantSlug/landing`
+  - `/store/:tenantSlug`
+  - `/store/:tenantSlug/distribuidores`
+- Wizard conectado al motor real:
+  - paso landing guarda `landing_template`
+  - paso ecommerce publico guarda `public_store_template`
+  - paso ecommerce distribuidores guarda `distributor_store_template`
+- Panel de marca actualizado como centro de control oficial:
+  - muestra plantilla activa por canal
+  - muestra rutas oficiales y preview tenant-aware
+  - regeneraciones mantienen plantilla oficial configurada

@@ -599,3 +599,39 @@ Regla de diseño:
 - Persistencia compartida en `brand_diagnostics` con separacion logica por contexto:
   - `analysis_type`: `internal_brand` o `external_url`
   - `source_url`: URL auditada para casos externos
+
+## Ejecucion 42: arquitectura oficial de plantillas por canal
+Objetivo estructural:
+- eliminar ambiguedad entre demo/preview/storefront oficial
+- fijar motor oficial por tenant en landing, ecommerce publico y ecommerce distribuidores
+
+Persistencia oficial por tenant (`StorefrontConfig.config_json`):
+- `landing_template`
+- `public_store_template`
+- `distributor_store_template`
+- `channel_templates` (objeto espejo normalizado)
+- compatibilidad legacy: `workflow.selected_template` para landing
+
+IDs oficiales activos:
+- `approved_landing_v1`
+- `approved_public_v1`
+- `approved_b2b_v1`
+
+Capa central de resolucion (frontend):
+- `resolveLandingTemplate(templateId)`
+- `resolvePublicStoreTemplate(templateId)`
+- `resolveDistributorStoreTemplate(templateId)`
+- archivo: `frontend/src/branding/channelTemplateResolver.tsx`
+
+Rutas oficiales conectadas al resolver:
+- `/store/:tenantSlug/landing`
+- `/store/:tenantSlug`
+- `/store/:tenantSlug/distribuidores`
+
+Integracion de setup y operacion:
+- Wizard persiste plantilla oficial por paso/canal.
+- Panel de marca lee plantilla activa desde config oficial y expone:
+  - plantilla activa
+  - ruta oficial
+  - preview tenant-aware
+  - estado y ultima regeneracion
