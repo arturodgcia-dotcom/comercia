@@ -164,6 +164,9 @@ export interface BrandSetupWorkflow {
   is_published: boolean;
   prompt_master?: string | null;
   selected_template?: string | null;
+  landing_template?: string | null;
+  public_store_template?: string | null;
+  distributor_store_template?: string | null;
   flow_type: "with_existing_landing" | "without_landing" | string;
   steps: BrandSetupStepState[];
   assets: BrandSetupAsset[];

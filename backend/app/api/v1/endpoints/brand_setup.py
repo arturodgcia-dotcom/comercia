@@ -71,6 +71,12 @@ DEFAULT_CHANNEL_SETTINGS = {
     "mfa_required_for_public": False,
 }
 
+OFFICIAL_CHANNEL_TEMPLATE_DEFAULTS = {
+    "landing_template": "approved_landing_v1",
+    "public_store_template": "approved_public_v1",
+    "distributor_store_template": "approved_b2b_v1",
+}
+
 
 @router.get("/{tenant_id}", response_model=BrandSetupWorkflowRead, dependencies=[Depends(get_reinpia_admin)])
 def get_brand_setup_workflow(tenant_id: int, db: Session = Depends(get_db)) -> BrandSetupWorkflowRead:
@@ -87,6 +93,7 @@ def get_brand_setup_workflow(tenant_id: int, db: Session = Depends(get_db)) -> B
     steps = _apply_ecommerce_step_status(steps, ecommerce_summary)
     assets = _normalize_assets(assets_raw)
     current_step = workflow.get("current_step") or _next_step_code(steps)
+    channel_templates = _resolve_channel_templates(payload, workflow)
     identity_data = _parse_identity(payload)
     generated_content = _parse_generated_content(payload)
     landing_draft = _parse_landing_draft(payload)
@@ -101,6 +108,9 @@ def get_brand_setup_workflow(tenant_id: int, db: Session = Depends(get_db)) -> B
         is_published=bool(workflow.get("is_published", False)),
         prompt_master=workflow.get("prompt_master"),
         selected_template=workflow.get("selected_template"),
+        landing_template=channel_templates["landing_template"],
+        public_store_template=channel_templates["public_store_template"],
+        distributor_store_template=channel_templates["distributor_store_template"],
         flow_type=flow_type,
         steps=steps,
         assets=assets,
@@ -122,11 +132,17 @@ def update_brand_setup_workflow(
     tenant = _get_tenant_or_404(db, tenant_id)
     config, raw_payload = _load_brand_payload(db, tenant_id)
     workflow = raw_payload.setdefault("workflow", {})
+    channel_templates = _resolve_channel_templates(raw_payload, workflow)
 
     update_data = payload.model_dump(exclude_unset=True)
     for key in ("current_step", "is_published", "prompt_master", "selected_template"):
         if key in update_data:
             workflow[key] = update_data[key]
+    for key in ("landing_template", "public_store_template", "distributor_store_template"):
+        if key in update_data and update_data[key]:
+            channel_templates[key] = str(update_data[key]).strip()
+    if "landing_template" in update_data and update_data.get("landing_template") and "selected_template" not in update_data:
+        workflow["selected_template"] = str(update_data["landing_template"]).strip()
     if "flow_type" in update_data and update_data["flow_type"] is not None:
         workflow["flow_type"] = update_data["flow_type"]
         workflow["steps"] = _build_default_steps(update_data["flow_type"])
@@ -179,6 +195,7 @@ def update_brand_setup_workflow(
         existing_steps = [BrandSetupStepState(**step) for step in workflow.get("steps", _build_default_steps(flow_type))]
         workflow["steps"] = [step.model_dump() for step in _normalize_steps(existing_steps, flow_type=flow_type)]
     workflow["current_step"] = _next_step_code([BrandSetupStepState(**step) for step in workflow["steps"]])
+    _apply_channel_templates(raw_payload, channel_templates)
 
     _save_brand_payload(config, raw_payload, db)
     return get_brand_setup_workflow(tenant.id, db)
@@ -448,6 +465,8 @@ def apply_ecommerce_template(
         db.add(service)
 
     config, payload = _load_brand_payload(db, tenant_id)
+    channel_templates = _resolve_channel_templates(payload, payload.get("workflow", {}))
+    _apply_channel_templates(payload, channel_templates)
     ecommerce_data = _parse_ecommerce_data(payload) or BrandEcommerceData()
     ecommerce_data.catalog_mode = "bulk"
     ecommerce_data.categories_ready = True
@@ -606,6 +625,52 @@ def _sync_mercadopago_settings(db: Session, *, tenant_id: int, settings: dict) -
     row.mercadopago_point_enabled = bool(settings.get("mercadopago_point_enabled", False))
     row.mercadopago_active_for_pos_only = bool(settings.get("mercadopago_active_for_pos_only", True))
     db.add(row)
+
+
+def _resolve_channel_templates(payload: dict, workflow: dict | None = None) -> dict[str, str]:
+    workflow_payload = workflow or {}
+    channel_templates = payload.get("channel_templates", {})
+    if not isinstance(channel_templates, dict):
+        channel_templates = {}
+    legacy_landing = (
+        workflow_payload.get("selected_template")
+        or workflow_payload.get("landing_template")
+        or payload.get("selected_template")
+        or payload.get("landing_mode")
+    )
+    templates = {
+        "landing_template": str(
+            payload.get("landing_template")
+            or channel_templates.get("landing_template")
+            or legacy_landing
+            or OFFICIAL_CHANNEL_TEMPLATE_DEFAULTS["landing_template"]
+        ).strip(),
+        "public_store_template": str(
+            payload.get("public_store_template")
+            or channel_templates.get("public_store_template")
+            or OFFICIAL_CHANNEL_TEMPLATE_DEFAULTS["public_store_template"]
+        ).strip(),
+        "distributor_store_template": str(
+            payload.get("distributor_store_template")
+            or channel_templates.get("distributor_store_template")
+            or OFFICIAL_CHANNEL_TEMPLATE_DEFAULTS["distributor_store_template"]
+        ).strip(),
+    }
+    for key, fallback in OFFICIAL_CHANNEL_TEMPLATE_DEFAULTS.items():
+        if not templates.get(key):
+            templates[key] = fallback
+    return templates
+
+
+def _apply_channel_templates(payload: dict, templates: dict[str, str]) -> None:
+    payload["landing_template"] = templates["landing_template"]
+    payload["public_store_template"] = templates["public_store_template"]
+    payload["distributor_store_template"] = templates["distributor_store_template"]
+    payload["channel_templates"] = {
+        "landing_template": templates["landing_template"],
+        "public_store_template": templates["public_store_template"],
+        "distributor_store_template": templates["distributor_store_template"],
+    }
 
 
 def _parse_identity(payload: dict) -> BrandIdentityData | None:

@@ -103,6 +103,9 @@ class BrandSetupWorkflowRead(BaseModel):
     is_published: bool = False
     prompt_master: str | None = None
     selected_template: str | None = None
+    landing_template: str | None = None
+    public_store_template: str | None = None
+    distributor_store_template: str | None = None
     flow_type: str = "without_landing"
     steps: list[BrandSetupStepState]
     assets: list[BrandSetupAssetRead]
@@ -119,6 +122,9 @@ class BrandSetupWorkflowUpdate(BaseModel):
     is_published: bool | None = None
     prompt_master: str | None = None
     selected_template: str | None = None
+    landing_template: str | None = None
+    public_store_template: str | None = None
+    distributor_store_template: str | None = None
     flow_type: str | None = None
     steps: list[BrandSetupStepState] | None = None
     identity_data: BrandIdentityData | None = None

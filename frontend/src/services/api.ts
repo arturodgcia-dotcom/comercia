@@ -252,6 +252,9 @@ export const api = {
       is_published?: boolean;
       prompt_master?: string;
       selected_template?: string;
+      landing_template?: string;
+      public_store_template?: string;
+      distributor_store_template?: string;
       flow_type?: string;
       steps?: BrandSetupStepState[];
       identity_data?: BrandIdentityData;
