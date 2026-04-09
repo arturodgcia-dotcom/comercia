@@ -121,6 +121,7 @@ export function AdminLayout() {
         { label: "Leads", to: "/reinpia/reports/leads" },
         { label: "Diagnósticos", to: "/reinpia/diagnosticos" },
         { label: "Contactos", to: "/reinpia/commercial-inbox" },
+        { label: "Prospectos MKT", to: "/reinpia/marketing/prospectos" },
         { label: "Marketing global", to: "/reinpia/reports/marketing-opportunities" },
         { label: "Comisionistas", to: "/reinpia/commission-agents" },
         { label: "Alertas", to: "/reinpia/alerts" },

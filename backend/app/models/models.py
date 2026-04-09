@@ -695,6 +695,45 @@ class CustomerContactLead(Base, TimestampMixin):
     status: Mapped[str] = mapped_column(String(30), default="new", nullable=False, index=True)
 
 
+class MarketingProspect(Base, TimestampMixin):
+    __tablename__ = "marketing_prospects"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    contact_name: Mapped[str] = mapped_column(String(180), nullable=False)
+    contact_email: Mapped[str] = mapped_column(String(180), nullable=False, index=True)
+    contact_phone: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    company_brand: Mapped[str] = mapped_column(String(180), nullable=False, index=True)
+    location: Mapped[str | None] = mapped_column(String(180), nullable=True)
+    industry: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    sells: Mapped[str] = mapped_column(String(30), default="productos", nullable=False)
+    desired_conversion_channel: Mapped[str] = mapped_column(String(50), default="ecommerce", nullable=False, index=True)
+    active_social_networks: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    products_to_promote: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
+    average_ticket_mxn: Mapped[Decimal] = mapped_column(Numeric(12, 2), default=0, nullable=False)
+    offer_clarity: Mapped[str | None] = mapped_column(String(30), nullable=True)
+    urgency: Mapped[str] = mapped_column(String(30), default="media", nullable=False, index=True)
+    followup_level: Mapped[str] = mapped_column(String(30), default="medio", nullable=False)
+    has_landing: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    has_ecommerce: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    needs_extra_landing: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    needs_extra_ecommerce: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    needs_commercial_tracking: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    wants_custom_proposal: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    client_notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    status: Mapped[str] = mapped_column(String(30), default="nuevo", nullable=False, index=True)
+    internal_notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    contacted_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    responsible_user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True, index=True)
+    channel: Mapped[str] = mapped_column(String(40), default="landing_marketing_form", nullable=False, index=True)
+    internal_summary: Mapped[str] = mapped_column(Text, default="", nullable=False)
+    internal_sections_json: Mapped[str] = mapped_column(Text, default="[]", nullable=False)
+    suggested_price_min_mxn: Mapped[Decimal] = mapped_column(Numeric(12, 2), default=0, nullable=False)
+    suggested_price_max_mxn: Mapped[Decimal] = mapped_column(Numeric(12, 2), default=0, nullable=False)
+    suggested_price_mxn: Mapped[Decimal] = mapped_column(Numeric(12, 2), default=0, nullable=False)
+    recommended_services_json: Mapped[str] = mapped_column(Text, default="[]", nullable=False)
+    risks_json: Mapped[str] = mapped_column(Text, default="[]", nullable=False)
+
+
 class InternalAlert(Base):
     __tablename__ = "internal_alerts"
 

@@ -916,6 +916,50 @@ export interface CustomerContactLead {
   updated_at: string;
 }
 
+export interface MarketingProspectInternalSection {
+  title: string;
+  body: string;
+}
+
+export interface MarketingProspect {
+  id: number;
+  contact_name: string;
+  contact_email: string;
+  contact_phone?: string | null;
+  company_brand: string;
+  location?: string | null;
+  industry?: string | null;
+  sells: string;
+  desired_conversion_channel: string;
+  active_social_networks?: string | null;
+  products_to_promote: number;
+  average_ticket_mxn: number;
+  offer_clarity?: string | null;
+  urgency: string;
+  followup_level: string;
+  has_landing: boolean;
+  has_ecommerce: boolean;
+  needs_extra_landing: boolean;
+  needs_extra_ecommerce: boolean;
+  needs_commercial_tracking: boolean;
+  wants_custom_proposal: boolean;
+  client_notes?: string | null;
+  status: string;
+  internal_notes?: string | null;
+  contacted_at?: string | null;
+  responsible_user_id?: number | null;
+  channel: string;
+  internal_summary: string;
+  internal_sections: MarketingProspectInternalSection[];
+  suggested_price_min_mxn: number;
+  suggested_price_max_mxn: number;
+  suggested_price_mxn: number;
+  recommended_services: string[];
+  risks: string[];
+  created_at: string;
+  updated_at: string;
+}
+
 export interface InternalAlert {
   id: number;
   alert_type: string;

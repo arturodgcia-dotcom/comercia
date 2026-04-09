@@ -22,6 +22,7 @@ from app.schemas.commission_agents import (
     SalesReferralRead,
 )
 from app.schemas.customer_contact import CustomerContactLeadRead, CustomerContactLeadUpdate
+from app.schemas.marketing_prospects import MarketingProspectRead, MarketingProspectUpdate
 from app.schemas.reinpia import SubscriptionRead
 from app.schemas.logistics_additional import (
     LogisticsAdditionalServiceCreate,
@@ -57,6 +58,11 @@ from app.services.commission_agents_service import (
     update_commission_agent,
 )
 from app.services.customer_contact_service import list_customer_contact_leads, update_customer_contact_lead
+from app.services.marketing_prospects_service import (
+    get_marketing_prospect,
+    list_marketing_prospects,
+    update_marketing_prospect,
+)
 from app.services.export_service import (
     export_commission_agents_csv,
     export_commissions_summary_csv,
@@ -526,6 +532,40 @@ def update_customer_contact(
 
         raise HTTPException(status_code=404, detail="contacto no encontrado")
     return lead
+
+
+@router.get("/marketing-prospects", response_model=list[MarketingProspectRead])
+def list_marketing_prospects_endpoint(
+    status: str | None = None,
+    urgency: str | None = None,
+    channel: str | None = None,
+    db: Session = Depends(get_db),
+):
+    return list_marketing_prospects(db, status=status, urgency=urgency, channel=channel)
+
+
+@router.get("/marketing-prospects/{prospect_id}", response_model=MarketingProspectRead)
+def get_marketing_prospect_endpoint(prospect_id: int, db: Session = Depends(get_db)):
+    row = get_marketing_prospect(db, prospect_id)
+    if not row:
+        from fastapi import HTTPException
+
+        raise HTTPException(status_code=404, detail="prospecto no encontrado")
+    return row
+
+
+@router.put("/marketing-prospects/{prospect_id}", response_model=MarketingProspectRead)
+def update_marketing_prospect_endpoint(
+    prospect_id: int,
+    payload: MarketingProspectUpdate,
+    db: Session = Depends(get_db),
+):
+    row = update_marketing_prospect(db, prospect_id=prospect_id, **payload.model_dump(exclude_unset=True))
+    if not row:
+        from fastapi import HTTPException
+
+        raise HTTPException(status_code=404, detail="prospecto no encontrado")
+    return row
 
 
 @router.get("/alerts", response_model=list[InternalAlertRead])
