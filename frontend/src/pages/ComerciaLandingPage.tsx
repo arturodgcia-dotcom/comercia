@@ -224,6 +224,35 @@ const MARKETING_MIN_KPIS = [
   "Ticket promedio y productos con mayor traccion",
 ];
 
+const MARKETING_REQUIRED_CONTEXT = [
+  "Nombre de marca, industria, pais y ciudad",
+  "Sitio/dominio y redes activas",
+  "Tipo de negocio: servicio, ecommerce, distribuidor o local fisico",
+  "Ticket promedio, margen estimado y oferta principal",
+  "Objetivo comercial: reconocimiento, leads, ventas, distribuidores o recompra",
+  "Canal principal de conversion: WhatsApp, formulario, landing, ecommerce o POS",
+];
+
+const MARKETING_INTERNAL_RULES = [
+  "No prometer viralidad ni resultados irreales",
+  "No subcotizar proyectos complejos",
+  "Proteger margen con recomendacion rentable",
+  "Ajustar estrategia segun complejidad, madurez digital e intensidad requerida",
+];
+
+const MARKETING_OUTPUT_STRUCTURE = [
+  "1. Resumen del negocio",
+  "2. Diagnostico comercial",
+  "3. Nivel de oportunidad detectado",
+  "4. Estrategia recomendada",
+  "5. Canales y activos recomendados",
+  "6. KPIs estimados",
+  "7. Proyeccion mensual de resultados",
+  "8. Cotizacion sugerida",
+  "9. Servicios adicionales recomendados",
+  "10. Riesgos y consideraciones",
+];
+
 const TESTIMONIALS = [
   {
     quote:
@@ -797,10 +826,10 @@ export function ComerciaLandingPage() {
 
       <section className="cp-section" id="marketing-diagnostico">
         <header className="cp-section-head">
-          <p className="cp-kicker">7. Diagnostico y cotizacion comercial IA</p>
-          <h2>Tu propuesta sale con metodo ejecutivo, no con precios improvisados</h2>
+          <p className="cp-kicker">7. Seccion Marketing COMERCIA (solo captacion)</p>
+          <h2>Diagnostico comercial y cotizacion inteligente para captar clientes de marketing</h2>
           <p>
-            COMERCIA integra un flujo consultivo para analizar marca, estimar KPIs viables y recomendar una cotizacion mensual rentable.
+            Esta seccion es exclusiva de la landing principal de COMERCIA. No se replica en tenants ni en plantillas de comercios.
           </p>
         </header>
         <div className="cp-pillars">
@@ -811,11 +840,44 @@ export function ComerciaLandingPage() {
             </article>
           ))}
         </div>
+        <div className="cp-pillars">
+          <article>
+            <h3>CODEX de estrategia comercial (base oficial)</h3>
+            <p>
+              La propuesta se redacta en tono ejecutivo, consultivo y orientado a negocio, con enfoque en utilidad y
+              claridad para clientes no tecnicos.
+            </p>
+            <ul>
+              {MARKETING_INTERNAL_RULES.map((rule) => (
+                <li key={rule}>{rule}</li>
+              ))}
+            </ul>
+          </article>
+          <article>
+            <h3>Datos de entrada requeridos (Ejemplo Input MKT)</h3>
+            <ul>
+              {MARKETING_REQUIRED_CONTEXT.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+            <p>Con esto definimos ruta de conversion, KPIs exigibles y alcance real de ejecucion.</p>
+          </article>
+        </div>
         <article className="cp-plan-contact">
           <h3>KPIs minimos cuando aun no hay integraciones completas</h3>
           <ul>
             {MARKETING_MIN_KPIS.map((kpi) => (
               <li key={kpi}>{kpi}</li>
+            ))}
+          </ul>
+          <p>
+            Clasificacion interna usada para decidir propuesta: complejidad, madurez digital, intensidad requerida y
+            potencial comercial.
+          </p>
+          <h3>Formato ejecutivo de salida (obligatorio)</h3>
+          <ul>
+            {MARKETING_OUTPUT_STRUCTURE.map((item) => (
+              <li key={item}>{item}</li>
             ))}
           </ul>
           <p>
@@ -1043,6 +1105,7 @@ export function ComerciaLandingPage() {
           <div>
             <h4>Recursos</h4>
             <a href="#faq">FAQ SEO/AEO</a>
+            <a href="#marketing-diagnostico">Seccion Marketing COMERCIA</a>
             <Link to="/templates/familia">Demo sistema multimarcas</Link>
             <Link to={`/templates/tienda-publica?brand=${brandTheme.key}`}>Preview ecommerce publico</Link>
             <Link to={`/templates/distribuidores?brand=${brandTheme.key}`}>Preview distribuidores</Link>
