@@ -2,6 +2,7 @@ import { Link, useParams, useSearchParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { api } from "../services/api";
 import { StorefrontHomePayload } from "../types/domain";
+import { resolveOfficialChannelTemplatesFromConfig } from "../branding/officialChannelTemplates";
 
 type LandingSection = { title?: string; body?: string };
 type LandingDraft = {
@@ -82,9 +83,8 @@ function resolveLandingConfig(payload: StorefrontHomePayload | null): ParsedLand
   const parsed = parseConfig(payload?.storefront_config?.config_json);
   const workflow = (parsed.workflow as WorkflowPayload | undefined) ?? {};
   const identity = (parsed.identity_data as IdentityPayload | undefined) ?? {};
-  const selectedTemplateRaw =
-    workflow.selected_template ?? parsed.landing_template ?? parsed.landing_mode ?? `tenant-${payload?.tenant.slug ?? "sin-slug"}-landing`;
-  const selectedTemplate = String(selectedTemplateRaw).trim() || `tenant-${payload?.tenant.slug ?? "sin-slug"}-landing`;
+  const channelTemplates = resolveOfficialChannelTemplatesFromConfig(payload?.storefront_config?.config_json);
+  const selectedTemplate = channelTemplates.landing_template;
   return {
     landingDraft: (parsed.landing_draft as LandingDraft | undefined) ?? null,
     selectedTemplate,

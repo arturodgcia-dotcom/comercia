@@ -117,7 +117,7 @@ def get_brand_setup_workflow(tenant_id: int, db: Session = Depends(get_db)) -> B
         current_step=current_step,
         is_published=bool(workflow.get("is_published", False)),
         prompt_master=workflow.get("prompt_master"),
-        selected_template=workflow.get("selected_template"),
+        selected_template=channel_templates["landing_template"],
         landing_template=channel_templates["landing_template"],
         public_store_template=channel_templates["public_store_template"],
         distributor_store_template=channel_templates["distributor_store_template"],
@@ -155,12 +155,9 @@ def update_brand_setup_workflow(
     billing_config = _resolve_billing_config(raw_payload, tenant)
 
     update_data = payload.model_dump(exclude_unset=True)
-    for key in ("current_step", "is_published", "prompt_master", "selected_template"):
+    for key in ("current_step", "is_published", "prompt_master"):
         if key in update_data:
             workflow[key] = update_data[key]
-    for key in ("landing_template", "public_store_template", "distributor_store_template"):
-        if key in update_data and update_data[key]:
-            channel_templates[key] = str(update_data[key]).strip()
     billing_updates = {}
     for key in ("billing_model", "commission_percentage", "commission_enabled", "commission_scope", "commission_notes"):
         if key in update_data:
@@ -177,8 +174,7 @@ def update_brand_setup_workflow(
         )
         _apply_billing_config(raw_payload, billing_config)
         _sync_tenant_billing(tenant, billing_config)
-    if "landing_template" in update_data and update_data.get("landing_template") and "selected_template" not in update_data:
-        workflow["selected_template"] = str(update_data["landing_template"]).strip()
+    workflow["selected_template"] = OFFICIAL_CHANNEL_TEMPLATE_DEFAULTS["landing_template"]
     if "flow_type" in update_data and update_data["flow_type"] is not None:
         workflow["flow_type"] = update_data["flow_type"]
         workflow["steps"] = _build_default_steps(update_data["flow_type"])
@@ -667,44 +663,21 @@ def _sync_mercadopago_settings(db: Session, *, tenant_id: int, settings: dict) -
 
 
 def _resolve_channel_templates(payload: dict, workflow: dict | None = None) -> dict[str, str]:
-    workflow_payload = workflow or {}
-    channel_templates = payload.get("channel_templates", {})
-    if not isinstance(channel_templates, dict):
-        channel_templates = {}
-    legacy_landing = (
-        workflow_payload.get("selected_template")
-        or workflow_payload.get("landing_template")
-        or payload.get("selected_template")
-        or payload.get("landing_mode")
-    )
-    templates = {
-        "landing_template": str(
-            payload.get("landing_template")
-            or channel_templates.get("landing_template")
-            or legacy_landing
-            or OFFICIAL_CHANNEL_TEMPLATE_DEFAULTS["landing_template"]
-        ).strip(),
-        "public_store_template": str(
-            payload.get("public_store_template")
-            or channel_templates.get("public_store_template")
-            or OFFICIAL_CHANNEL_TEMPLATE_DEFAULTS["public_store_template"]
-        ).strip(),
-        "distributor_store_template": str(
-            payload.get("distributor_store_template")
-            or channel_templates.get("distributor_store_template")
-            or OFFICIAL_CHANNEL_TEMPLATE_DEFAULTS["distributor_store_template"]
-        ).strip(),
+    # Se conservan los parametros para compatibilidad de firma y futuras extensiones.
+    return {
+        "landing_template": OFFICIAL_CHANNEL_TEMPLATE_DEFAULTS["landing_template"],
+        "public_store_template": OFFICIAL_CHANNEL_TEMPLATE_DEFAULTS["public_store_template"],
+        "distributor_store_template": OFFICIAL_CHANNEL_TEMPLATE_DEFAULTS["distributor_store_template"],
     }
-    for key, fallback in OFFICIAL_CHANNEL_TEMPLATE_DEFAULTS.items():
-        if not templates.get(key):
-            templates[key] = fallback
-    return templates
 
 
 def _apply_channel_templates(payload: dict, templates: dict[str, str]) -> None:
     payload["landing_template"] = templates["landing_template"]
     payload["public_store_template"] = templates["public_store_template"]
     payload["distributor_store_template"] = templates["distributor_store_template"]
+    workflow = payload.setdefault("workflow", {})
+    if isinstance(workflow, dict):
+        workflow["selected_template"] = templates["landing_template"]
     payload["channel_templates"] = {
         "landing_template": templates["landing_template"],
         "public_store_template": templates["public_store_template"],

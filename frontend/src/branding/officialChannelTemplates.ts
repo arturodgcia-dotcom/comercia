@@ -31,23 +31,20 @@ function parseConfig(raw?: string | null): Record<string, unknown> {
 
 function normalizeTemplateId(value: unknown, fallback: string): string {
   const normalized = String(value ?? "").trim();
-  return normalized || fallback;
+  if (!normalized) return fallback;
+  if (normalized === OFFICIAL_LANDING_TEMPLATE) return OFFICIAL_LANDING_TEMPLATE;
+  if (normalized === OFFICIAL_PUBLIC_STORE_TEMPLATE) return OFFICIAL_PUBLIC_STORE_TEMPLATE;
+  if (normalized === OFFICIAL_DISTRIBUTOR_STORE_TEMPLATE) return OFFICIAL_DISTRIBUTOR_STORE_TEMPLATE;
+  return fallback;
 }
 
 export function resolveOfficialChannelTemplatesFromConfig(configJson?: string | null): OfficialChannelTemplates {
   const parsed = parseConfig(configJson);
-  const workflow = (parsed.workflow as Record<string, unknown> | undefined) ?? {};
   const channelTemplates = (parsed.channel_templates as Record<string, unknown> | undefined) ?? {};
-
-  const legacyLandingTemplate =
-    workflow.selected_template ??
-    parsed.selected_template ??
-    parsed.landing_template ??
-    parsed.landing_mode;
 
   return {
     landing_template: normalizeTemplateId(
-      parsed.landing_template ?? channelTemplates.landing_template ?? legacyLandingTemplate,
+      parsed.landing_template ?? channelTemplates.landing_template,
       OFFICIAL_CHANNEL_TEMPLATE_DEFAULTS.landing_template
     ),
     public_store_template: normalizeTemplateId(
