@@ -802,3 +802,16 @@ Variables backend (`backend/.env`):
   - potencial comercial
 - Se genera salida estructurada en 10 puntos (formato ejecutivo esperado) + cotizacion preliminar.
 - El brief se registra en leads de contacto para seguimiento comercial.
+
+## Actualizacion ejecucion 46 (Templates oficiales unicos en flujo principal)
+- Flujo principal de marca bloqueado a templates oficiales por canal:
+  - landing: `approved_landing_v1`
+  - ecommerce publico: `approved_public_v1`
+  - ecommerce distribuidores: `approved_b2b_v1`
+- Backend `brand_setup` ya no acepta ni resuelve templates legacy para motor activo.
+- Wizard y lectura de storefront persisten/consumen solo los IDs oficiales.
+- Rutas oficiales productivas:
+  - `/store/:tenantSlug/landing`
+  - `/store/:tenantSlug`
+  - `/store/:tenantSlug/distribuidores`
+- Rutas `/templates/*` y `/demo/*` permanecen como internas de referencia, fuera del flujo principal de marca.

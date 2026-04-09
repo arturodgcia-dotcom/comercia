@@ -332,3 +332,21 @@ Nuevos endpoints:
 - Archivos impactados:
   - `frontend/src/pages/ComerciaLandingPage.tsx`
   - `frontend/src/pages/ComerciaLandingPage.css`
+
+## Actualizacion templates oficiales unicos (Ejecucion 46)
+- Landing de la marca | Estado: funcional
+  - template oficial unico: `approved_landing_v1`
+  - ruta oficial: `/store/:tenantSlug/landing`
+- Ecommerce publico | Estado: funcional
+  - template oficial unico: `approved_public_v1`
+  - ruta oficial: `/store/:tenantSlug`
+- Ecommerce distribuidores | Estado: funcional
+  - template oficial unico: `approved_b2b_v1`
+  - ruta oficial: `/store/:tenantSlug/distribuidores`
+- Resolver oficial activo:
+  - `frontend/src/branding/channelTemplateResolver.tsx`
+  - `frontend/src/branding/officialChannelTemplates.ts`
+- Backend de setup bloqueado a oficiales:
+  - `backend/app/api/v1/endpoints/brand_setup.py`
+- Legacy/demo fuera del flujo principal:
+  - `/templates/*` y `/demo/*` solo referencia interna, no motor activo por tenant.

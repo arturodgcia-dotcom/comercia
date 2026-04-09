@@ -509,3 +509,13 @@
 - [x] Salida ejecutiva en 10 puntos implementada en UI
 - [x] Brief registrado a leads para seguimiento comercial
 - [x] Validacion ejecutada: frontend build
+
+## Entregables ejecucion 46 (Templates oficiales unicos por canal)
+- [x] Inventario de templates de landing/publico/distribuidores con identificacion de legacy activo
+- [x] Resolver central de canales forzado a templates oficiales unicos
+- [x] Backend `brand_setup` bloqueado para persistir solo IDs oficiales
+- [x] Wizard sin seleccion de templates legacy y persistencia oficial por defecto
+- [x] Storefront landing/publico/distribuidores sin fallback legacy en flujo principal
+- [x] Modulos de marca muestran y regeneran sobre template oficial por canal
+- [x] Legacy/demo retirado del flujo principal (permanece solo como referencia interna)
+- [x] Validacion ejecutada: backend compile + frontend build

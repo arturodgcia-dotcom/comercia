@@ -730,3 +730,29 @@ Componentes:
 Nota de alcance:
 - aplica solo a landing principal COMERCIA (captacion)
 - no se propaga a templates tenant/storefront
+
+## Ejecucion 46: hard lock de templates oficiales por canal
+Objetivo:
+- retirar templates legacy del flujo principal tenant-aware
+- dejar un unico motor oficial por canal para evitar ambiguedad demo/preview/produccion
+
+Arquitectura activa:
+- `landing_template = approved_landing_v1`
+- `public_store_template = approved_public_v1`
+- `distributor_store_template = approved_b2b_v1`
+
+Puntos de control:
+- resolver frontend por canal siempre devuelve el componente oficial:
+  - `resolveLandingTemplate(...)`
+  - `resolvePublicStoreTemplate(...)`
+  - `resolveDistributorStoreTemplate(...)`
+- `brand_setup` en backend normaliza y persiste siempre IDs oficiales en `config_json`
+- `workflow.selected_template` queda forzado al oficial de landing para compatibilidad
+
+Rutas productivas oficiales:
+- `/store/:tenantSlug/landing`
+- `/store/:tenantSlug`
+- `/store/:tenantSlug/distribuidores`
+
+Rutas legacy/demo:
+- `/templates/*` y `/demo/*` no participan como motor principal de canales por marca.
