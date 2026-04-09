@@ -529,3 +529,5 @@
 - [x] Detalle interno por prospecto con estatus, notas y responsable
 - [x] Alerta interna al crear solicitud (`marketing_prospect_new`)
 - [x] Registro de trazabilidad (`new_marketing_prospect_request`)
+- [x] Filtros internos por estatus, urgencia, fecha, canal y busqueda
+- [x] Persistencia de objetivo principal (`main_goal`) y historial simple de estatus

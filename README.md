@@ -834,3 +834,4 @@ Variables backend (`backend/.env`):
   - precotizacion sugerida (rango y recomendacion inicial)
   - alerta interna (`marketing_prospect_new`)
   - registro de automatizacion (`new_marketing_prospect_request`)
+  - historial de estatus comercial (`status_history`) con trazabilidad basica

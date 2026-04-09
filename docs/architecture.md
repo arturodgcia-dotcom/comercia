@@ -788,10 +788,13 @@ Arquitectura final:
 3) Persistencia y motor interno
 - tabla: `marketing_prospects`
 - migracion: `20260409_19_marketing_prospects_internal.py`
+- migracion incremental: `20260409_20_marketing_prospects_goal_history.py`
 - servicio: `marketing_prospects_service.py`
   - genera salida interna en 10 secciones
   - calcula rango y sugerencia de precotizacion
   - guarda servicios recomendados y riesgos
+  - separa datos capturados del prospecto y resultado interno de COMERCIA
+  - agrega `main_goal` y `status_history` para gestion comercial
 
 4) Alertas internas
 - al crear prospecto:

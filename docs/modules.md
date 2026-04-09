@@ -360,7 +360,7 @@ Nuevos endpoints:
   - Endpoint de captura publica: `POST /api/v1/comercia/marketing-prospects`.
 - Prospectos MKT internos (panel global) | Estado: funcional
   - Ruta: `/reinpia/marketing/prospectos`.
-  - Lista prospectos por estatus/urgencia, detalle ejecutivo y actualizacion comercial.
+  - Lista prospectos por estatus/urgencia/fecha/canal, detalle ejecutivo y actualizacion comercial.
   - Endpoints internos:
     - `GET /api/v1/reinpia/marketing-prospects`
     - `GET /api/v1/reinpia/marketing-prospects/{id}`
@@ -369,3 +369,4 @@ Nuevos endpoints:
   - Servicio: `backend/app/services/marketing_prospects_service.py`
   - Genera diagnostico en 10 secciones, rango de precio sugerido, servicios recomendados y riesgos.
   - Salida solo interna (no expuesta en landing publica).
+  - Incluye `main_goal` persistido y `status_history` para trazabilidad comercial basica.
