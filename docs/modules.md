@@ -321,3 +321,14 @@ Nuevos endpoints:
 - Landing COMERCIA (seccion marketing por bloques) | Estado: parcial (bloque 1 implementado)
   - Nueva seccion `#marketing-diagnostico` en `ComerciaLandingPage`
   - Enfocada en diagnostico comercial, KPIs minimos y cotizacion rentable
+
+## Actualizacion seccion marketing de captacion (Ejecucion 45)
+- Landing principal COMERCIA | Estado: funcional
+  - Seccion `#marketing-diagnostico` redisenada como flujo operativo:
+    - formulario de brief comercial completo
+    - metodologia consultiva CODEX
+    - clasificacion interna automatica
+    - salida ejecutiva en 10 puntos con cotizacion preliminar
+- Archivos impactados:
+  - `frontend/src/pages/ComerciaLandingPage.tsx`
+  - `frontend/src/pages/ComerciaLandingPage.css`

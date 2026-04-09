@@ -787,3 +787,18 @@ Variables backend (`backend/.env`):
 - Wizard/panel ahora exponen visibilidad del plan pagado y estado de creditos IA.
 - Landing principal agrega nueva seccion por bloques:
   - Diagnostico comercial y cotizacion inteligente (basado en contexto/kpis/riesgo/rentabilidad).
+
+## Actualizacion ejecucion 45 (Seccion Marketing redisenada con formulario y salida ejecutiva)
+- La seccion de marketing en landing principal COMERCIA se rehizo para operar como brief comercial real.
+- Ahora incluye formulario completo basado en `Ejemplo Input MKT`:
+  - contexto de marca
+  - madurez digital
+  - urgencia/seguimiento
+  - ticket promedio y canal de conversion
+- Se aplica metodologia del CODEX con clasificacion interna automatica para:
+  - complejidad
+  - madurez digital
+  - intensidad requerida
+  - potencial comercial
+- Se genera salida estructurada en 10 puntos (formato ejecutivo esperado) + cotizacion preliminar.
+- El brief se registra en leads de contacto para seguimiento comercial.

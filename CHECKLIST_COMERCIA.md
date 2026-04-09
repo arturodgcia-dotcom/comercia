@@ -499,3 +499,13 @@
 - [x] Panel global detalle de marca muestra plan comercial y creditos IA
 - [x] Seccion nueva en landing principal (bloque 1 marketing): `#marketing-diagnostico`
 - [x] Validacion ejecutada: backend compile + frontend build
+
+## Entregables ejecucion 45 (Rediseno seccion marketing COMERCIA)
+- [x] Seccion `#marketing-diagnostico` convertida a flujo real de brief + cotizacion
+- [x] Formulario completo alineado a `Ejemplo Input MKT`
+- [x] Metodologia alineada a `CODEX Seccion marketing`
+- [x] Reglas de cotizacion alineadas a `Cotizacion interna MKT`
+- [x] Clasificacion interna aplicada segun `Clasificacion Interna MKT`
+- [x] Salida ejecutiva en 10 puntos implementada en UI
+- [x] Brief registrado a leads para seguimiento comercial
+- [x] Validacion ejecutada: frontend build

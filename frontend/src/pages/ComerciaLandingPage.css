@@ -490,6 +490,62 @@
   max-width: 760px;
 }
 
+.cp-marketing-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: 1fr 1.4fr;
+}
+
+.cp-marketing-card {
+  border: 1px solid #cfe0fb;
+  border-radius: 14px;
+  background: #ffffff;
+  padding: 16px;
+}
+
+.cp-marketing-card h3 {
+  margin: 0 0 10px;
+}
+
+.cp-marketing-card ul {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--cp-muted);
+  line-height: 1.5;
+}
+
+.cp-marketing-form {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.cp-marketing-form label {
+  margin: 0;
+}
+
+.cp-marketing-form .checkbox,
+.cp-marketing-form textarea,
+.cp-marketing-form button {
+  grid-column: span 2;
+}
+
+.cp-marketing-output {
+  border: 1px dashed #a7c0ee;
+  border-radius: 12px;
+  padding: 14px;
+  background: #f7fbff;
+}
+
+.cp-marketing-output h3 {
+  margin: 0 0 8px;
+}
+
+.cp-marketing-output p {
+  margin: 0;
+  color: var(--cp-muted);
+}
+
 .cp-testimonial {
   margin: 0;
 }
@@ -625,6 +681,10 @@
   .cp-demo-panel {
     grid-template-columns: 1fr;
   }
+
+  .cp-marketing-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 780px) {
@@ -646,5 +706,15 @@
 
   .cp-nav-actions {
     justify-content: flex-start;
+  }
+
+  .cp-marketing-form {
+    grid-template-columns: 1fr;
+  }
+
+  .cp-marketing-form .checkbox,
+  .cp-marketing-form textarea,
+  .cp-marketing-form button {
+    grid-column: span 1;
   }
 }

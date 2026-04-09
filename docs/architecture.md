@@ -711,3 +711,22 @@ Integracion con capas existentes:
 - `tenant_config` ahora expone `commercial_plan_key/status`, `limits`, `ai_tokens_balance`, `ai_tokens_locked`
 - `brand_setup` expone plan comercial y estado de creditos IA para que wizard lea el estado pagado
 - `analytics_service` incorpora metricas de plan comercial y llave IA en KPIs globales y por tenant
+
+## Ejecucion 45: arquitectura de captacion marketing en landing COMERCIA
+Objetivo:
+- convertir la seccion marketing en un flujo util de pre-cotizacion
+- priorizar formulario de entrada real y salida ejecutiva accionable
+
+Componentes:
+- Formulario de brief comercial (frontend) en `#marketing-diagnostico`
+  - basado en campos de `Ejemplo Input MKT`
+- Motor de clasificacion interna local (frontend)
+  - complejidad, madurez digital, intensidad y potencial
+  - aplicado solo para decidir cotizacion preliminar
+- Generador de salida ejecutiva
+  - formato de 10 puntos definido en CODEX marketing
+  - resultado visible en la misma seccion para revision inmediata
+
+Nota de alcance:
+- aplica solo a landing principal COMERCIA (captacion)
+- no se propaga a templates tenant/storefront
