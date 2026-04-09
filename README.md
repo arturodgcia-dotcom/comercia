@@ -802,6 +802,8 @@ Variables backend (`backend/.env`):
   - potencial comercial
 - Se genera salida estructurada en 10 puntos (formato ejecutivo esperado) + cotizacion preliminar.
 - El brief se registra en leads de contacto para seguimiento comercial.
+- Nota:
+  - este enfoque publico fue reemplazado en Ejecucion 47 para proteger la logica interna y moverla al panel REINPIA.
 
 ## Actualizacion ejecucion 46 (Templates oficiales unicos en flujo principal)
 - Flujo principal de marca bloqueado a templates oficiales por canal:
@@ -815,3 +817,20 @@ Variables backend (`backend/.env`):
   - `/store/:tenantSlug`
   - `/store/:tenantSlug/distribuidores`
 - Rutas `/templates/*` y `/demo/*` permanecen como internas de referencia, fuera del flujo principal de marca.
+
+## Actualizacion ejecucion 47 (Mercadotecnia publica + flujo interno de prospectos)
+- La landing publica de COMERCIA mantiene enfoque comercial y formulario de interes en `#marketing-diagnostico`.
+- Se retiro de la vista publica cualquier salida de metodologia interna, scoring y precotizacion visible.
+- Nuevo flujo interno de prospectos de mercadotecnia:
+  - `POST /api/v1/comercia/marketing-prospects`
+  - `GET /api/v1/reinpia/marketing-prospects`
+  - `GET /api/v1/reinpia/marketing-prospects/{id}`
+  - `PUT /api/v1/reinpia/marketing-prospects/{id}`
+- Nuevo modulo global REINPIA para gestion comercial interna:
+  - ruta frontend: `/reinpia/marketing/prospectos`
+  - listado de prospectos, estatus comercial, urgencia y detalle ejecutivo.
+- Al crear prospecto se genera automaticamente:
+  - diagnostico interno estructurado en 10 puntos
+  - precotizacion sugerida (rango y recomendacion inicial)
+  - alerta interna (`marketing_prospect_new`)
+  - registro de automatizacion (`new_marketing_prospect_request`)

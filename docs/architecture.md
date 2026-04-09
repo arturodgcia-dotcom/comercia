@@ -756,3 +756,47 @@ Rutas productivas oficiales:
 
 Rutas legacy/demo:
 - `/templates/*` y `/demo/*` no participan como motor principal de canales por marca.
+
+## Ejecucion 47: separacion publica vs interna en mercadotecnia COMERCIA
+Objetivo:
+- mantener la landing publica en enfoque comercial
+- mover diagnostico y precotizacion al panel interno REINPIA
+
+Arquitectura final:
+1) Capa publica (landing COMERCIA)
+- ruta: `/comercia` (seccion `#marketing-diagnostico`)
+- solo muestra:
+  - explicacion comercial del servicio
+  - formulario de solicitud
+  - mensaje de confirmacion
+- endpoint de captura:
+  - `POST /api/v1/comercia/marketing-prospects`
+
+2) Capa interna (panel global)
+- ruta: `/reinpia/marketing/prospectos`
+- funcionalidades:
+  - listado de prospectos por estatus/urgencia
+  - detalle interno con datos originales
+  - diagnostico ejecutivo interno
+  - precotizacion sugerida
+  - notas internas y responsable
+- endpoints internos:
+  - `GET /api/v1/reinpia/marketing-prospects`
+  - `GET /api/v1/reinpia/marketing-prospects/{id}`
+  - `PUT /api/v1/reinpia/marketing-prospects/{id}`
+
+3) Persistencia y motor interno
+- tabla: `marketing_prospects`
+- migracion: `20260409_19_marketing_prospects_internal.py`
+- servicio: `marketing_prospects_service.py`
+  - genera salida interna en 10 secciones
+  - calcula rango y sugerencia de precotizacion
+  - guarda servicios recomendados y riesgos
+
+4) Alertas internas
+- al crear prospecto:
+  - se genera alerta `marketing_prospect_new`
+  - se registra evento `new_marketing_prospect_request`
+
+Nota de control:
+- la salida analitica y de cotizacion ya no se expone en la landing publica.

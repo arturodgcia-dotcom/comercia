@@ -519,3 +519,13 @@
 - [x] Modulos de marca muestran y regeneran sobre template oficial por canal
 - [x] Legacy/demo retirado del flujo principal (permanece solo como referencia interna)
 - [x] Validacion ejecutada: backend compile + frontend build
+
+## Entregables ejecucion 47 (Mercadotecnia publica + flujo interno)
+- [x] Landing publica sin exponer metodologia interna ni cotizacion al prospecto
+- [x] Formulario publico conectado a `POST /api/v1/comercia/marketing-prospects`
+- [x] Persistencia de prospectos de mercadotecnia en tabla `marketing_prospects`
+- [x] Motor interno de diagnostico y precotizacion en `marketing_prospects_service.py`
+- [x] Modulo global interno `Prospectos MKT` en `/reinpia/marketing/prospectos`
+- [x] Detalle interno por prospecto con estatus, notas y responsable
+- [x] Alerta interna al crear solicitud (`marketing_prospect_new`)
+- [x] Registro de trazabilidad (`new_marketing_prospect_request`)

@@ -320,7 +320,7 @@ Nuevos endpoints:
   - Detalle global de marca muestra plan comercial, estado y metricas de creditos
 - Landing COMERCIA (seccion marketing por bloques) | Estado: parcial (bloque 1 implementado)
   - Nueva seccion `#marketing-diagnostico` en `ComerciaLandingPage`
-  - Enfocada en diagnostico comercial, KPIs minimos y cotizacion rentable
+  - Enfocada en captacion comercial y solicitud de interes
 
 ## Actualizacion seccion marketing de captacion (Ejecucion 45)
 - Landing principal COMERCIA | Estado: funcional
@@ -329,6 +329,8 @@ Nuevos endpoints:
     - metodologia consultiva CODEX
     - clasificacion interna automatica
     - salida ejecutiva en 10 puntos con cotizacion preliminar
+- Nota:
+  - este enfoque publico fue reemplazado en Ejecucion 47 para no exponer logica interna en landing.
 - Archivos impactados:
   - `frontend/src/pages/ComerciaLandingPage.tsx`
   - `frontend/src/pages/ComerciaLandingPage.css`
@@ -350,3 +352,20 @@ Nuevos endpoints:
   - `backend/app/api/v1/endpoints/brand_setup.py`
 - Legacy/demo fuera del flujo principal:
   - `/templates/*` y `/demo/*` solo referencia interna, no motor activo por tenant.
+
+## Actualizacion mercadotecnia publica e interna (Ejecucion 47)
+- Landing principal COMERCIA | Estado: funcional
+  - Seccion publica de mercadotecnia enfocada en explicacion comercial + formulario de solicitud.
+  - No muestra metodologia interna, scoring interno ni precotizacion al prospecto.
+  - Endpoint de captura publica: `POST /api/v1/comercia/marketing-prospects`.
+- Prospectos MKT internos (panel global) | Estado: funcional
+  - Ruta: `/reinpia/marketing/prospectos`.
+  - Lista prospectos por estatus/urgencia, detalle ejecutivo y actualizacion comercial.
+  - Endpoints internos:
+    - `GET /api/v1/reinpia/marketing-prospects`
+    - `GET /api/v1/reinpia/marketing-prospects/{id}`
+    - `PUT /api/v1/reinpia/marketing-prospects/{id}`
+- Motor de precotizacion interna | Estado: funcional
+  - Servicio: `backend/app/services/marketing_prospects_service.py`
+  - Genera diagnostico en 10 secciones, rango de precio sugerido, servicios recomendados y riesgos.
+  - Salida solo interna (no expuesta en landing publica).
