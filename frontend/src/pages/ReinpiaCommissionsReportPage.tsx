@@ -33,6 +33,9 @@ export function ReinpiaCommissionsReportPage() {
       <div className="card-grid">
         <ReportKpiCard label="Comisiones de pagos" value={`$${Number(payments.total_commissions ?? 0).toLocaleString("es-MX")}`} />
         <ReportKpiCard label="Neto a tenants" value={`$${Number(payments.total_net_amount ?? 0).toLocaleString("es-MX")}`} />
+        <ReportKpiCard label="Ventas sujetas a comision" value={`$${Number(payments.sales_subject_to_commission ?? 0).toLocaleString("es-MX")}`} />
+        <ReportKpiCard label="Comision estimada" value={`$${Number(payments.estimated_commission_amount ?? 0).toLocaleString("es-MX")}`} />
+        <ReportKpiCard label="Marcas con comision" value={Number(payments.commission_based_tenants ?? 0)} />
         <ReportKpiCard label="Ventas comisionadas" value={Number(kpis.total_commission_sales ?? 0)} />
         <ReportKpiCard label="Ventas directas" value={Number(kpis.total_direct_sales ?? 0)} />
         <ReportKpiCard label="Comisionistas activos" value={Number(kpis.total_commission_agents ?? 0)} />
@@ -40,4 +43,3 @@ export function ReinpiaCommissionsReportPage() {
     </section>
   );
 }
-

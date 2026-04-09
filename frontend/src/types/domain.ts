@@ -9,6 +9,11 @@ export interface Tenant {
   plan_type?: "commission" | "subscription" | string;
   commission_rules_json?: string | null;
   subscription_plan_json?: string | null;
+  billing_model?: "fixed_subscription" | "commission_based" | string;
+  commission_percentage?: number;
+  commission_enabled?: boolean;
+  commission_scope?: string;
+  commission_notes?: string | null;
 }
 
 export interface User {
@@ -167,6 +172,11 @@ export interface BrandSetupWorkflow {
   landing_template?: string | null;
   public_store_template?: string | null;
   distributor_store_template?: string | null;
+  billing_model?: "fixed_subscription" | "commission_based" | string | null;
+  commission_percentage?: number | null;
+  commission_enabled?: boolean | null;
+  commission_scope?: string | null;
+  commission_notes?: string | null;
   flow_type: "with_existing_landing" | "without_landing" | string;
   steps: BrandSetupStepState[];
   assets: BrandSetupAsset[];
@@ -609,6 +619,11 @@ export interface TenantConfig {
   plan_type: "commission" | "subscription" | string;
   commission_rules: TenantCommissionRules;
   subscription_plan: TenantSubscriptionPlan;
+  billing_model: "fixed_subscription" | "commission_based" | string;
+  commission_percentage: string;
+  commission_enabled: boolean;
+  commission_scope: string;
+  commission_notes?: string | null;
   checkout_badge: string;
   landing_variant: {
     headline: string;
@@ -707,6 +722,12 @@ export interface ReinpiaTenantSummaryRow {
   commissions: number;
   net_amount: number;
   paid_orders: number;
+  billing_model?: "fixed_subscription" | "commission_based" | string;
+  commission_enabled?: boolean;
+  commission_percentage?: number;
+  commission_scope?: string;
+  sales_subject_to_commission?: number;
+  estimated_commission_amount?: number;
 }
 
 export interface ReinpiaTenantKpis {
@@ -720,6 +741,12 @@ export interface ReinpiaTenantKpis {
   distributors_approved: number;
   appointments_count: number;
   logistics_delivered_count: number;
+  billing_model?: "fixed_subscription" | "commission_based" | string;
+  commission_enabled?: boolean;
+  commission_percentage?: number;
+  commission_scope?: string;
+  sales_subject_to_commission?: number;
+  estimated_commission_amount?: number;
 }
 
 export interface ReinpiaSubscription {

@@ -235,7 +235,18 @@ export const api = {
   getTenants: (token: string) => request<Tenant[]>("/api/v1/tenants", {}, token),
   createTenant: (
     token: string,
-    payload: { name: string; slug: string; subdomain: string; business_type: string; is_active: boolean }
+    payload: {
+      name: string;
+      slug: string;
+      subdomain: string;
+      business_type: string;
+      is_active: boolean;
+      billing_model?: string;
+      commission_percentage?: number;
+      commission_enabled?: boolean;
+      commission_scope?: string;
+      commission_notes?: string;
+    }
   ) => request<Tenant>("/api/v1/tenants", { method: "POST", body: JSON.stringify(payload) }, token),
   getTenantById: (token: string, tenantId: number) => request<Tenant>(`/api/v1/tenants/${tenantId}`, {}, token),
   updateTenant: (token: string, tenantId: number, payload: Partial<Tenant>) =>
@@ -255,6 +266,11 @@ export const api = {
       landing_template?: string;
       public_store_template?: string;
       distributor_store_template?: string;
+      billing_model?: string;
+      commission_percentage?: number;
+      commission_enabled?: boolean;
+      commission_scope?: string;
+      commission_notes?: string;
       flow_type?: string;
       steps?: BrandSetupStepState[];
       identity_data?: BrandIdentityData;

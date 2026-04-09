@@ -17,6 +17,10 @@ import {
   TenantBranding
 } from "../types/domain";
 
+function billingModelLabel(value?: string): string {
+  return value === "commission_based" ? "Comision por venta" : "Cuota fija";
+}
+
 export function ReinpiaTenantDetailPage() {
   const { tenantId } = useParams();
   const { token } = useAuth();
@@ -110,6 +114,11 @@ export function ReinpiaTenantDetailPage() {
         <KpiCard label="Distribuidores aprobados" value={kpis.distributors_approved} />
         <KpiCard label="Citas" value={kpis.appointments_count} />
         <KpiCard label="Logistica entregada" value={kpis.logistics_delivered_count} />
+        <KpiCard label="Modelo comercial" value={billingModelLabel(kpis.billing_model)} />
+        <KpiCard label="Comision habilitada" value={kpis.commission_enabled ? "Si" : "No"} />
+        <KpiCard label="% comision" value={`${Number(kpis.commission_percentage ?? 0).toFixed(2)}%`} />
+        <KpiCard label="Ventas sujetas a comision" value={`$${Number(kpis.sales_subject_to_commission ?? 0).toLocaleString("es-MX")}`} />
+        <KpiCard label="Comision estimada" value={`$${Number(kpis.estimated_commission_amount ?? 0).toLocaleString("es-MX")}`} />
       </div>
 
       <section className="store-banner">

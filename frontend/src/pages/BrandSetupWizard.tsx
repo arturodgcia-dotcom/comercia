@@ -94,6 +94,14 @@ const defaultPosSetup: BrandPosSetupData = {
 
 type ImportRow = Record<string, string>;
 
+type BillingSetupData = {
+  billing_model: "fixed_subscription" | "commission_based";
+  commission_percentage: number;
+  commission_enabled: boolean;
+  commission_scope: string;
+  commission_notes: string;
+};
+
 const REQUIRED_COLUMNS = [
   "nombre",
   "descripcion",
@@ -120,6 +128,14 @@ const OFFICIAL_CHANNEL_TEMPLATE_PAYLOAD = {
   public_store_template: OFFICIAL_PUBLIC_STORE_TEMPLATE,
   distributor_store_template: OFFICIAL_DISTRIBUTOR_STORE_TEMPLATE,
 } as const;
+
+const defaultBillingSetup: BillingSetupData = {
+  billing_model: "fixed_subscription",
+  commission_percentage: 3,
+  commission_enabled: false,
+  commission_scope: "ventas_online_pagadas",
+  commission_notes: "",
+};
 
 function isStepCode(value: string): value is StepCode {
   return ["brand_identity", "landing_setup", "ecommerce_setup", "distributors_setup", "pos_setup", "final_review"].includes(value);
@@ -149,6 +165,7 @@ export function BrandSetupWizard() {
   const [landingDraft, setLandingDraft] = useState<BrandLandingDraft>(defaultLanding);
   const [ecommerceData, setEcommerceData] = useState<BrandEcommerceData>(defaultEcommerce);
   const [posSetupData, setPosSetupData] = useState<BrandPosSetupData>(defaultPosSetup);
+  const [billingSetup, setBillingSetup] = useState<BillingSetupData>(defaultBillingSetup);
 
   const [selectedStep, setSelectedStep] = useState<StepCode>("brand_identity");
   const [loading, setLoading] = useState(true);
@@ -184,6 +201,13 @@ export function BrandSetupWizard() {
         massive_upload_enabled: summary ? summary.last_import_valid_rows > 0 : (workflowData.ecommerce_data?.massive_upload_enabled ?? false),
       });
       setPosSetupData(workflowData.pos_setup_data ?? defaultPosSetup);
+      setBillingSetup({
+        billing_model: workflowData.billing_model === "commission_based" ? "commission_based" : "fixed_subscription",
+        commission_percentage: Number(workflowData.commission_percentage ?? defaultBillingSetup.commission_percentage),
+        commission_enabled: Boolean(workflowData.commission_enabled ?? (workflowData.billing_model === "commission_based")),
+        commission_scope: workflowData.commission_scope ?? defaultBillingSetup.commission_scope,
+        commission_notes: workflowData.commission_notes ?? "",
+      });
 
       const nextStep = workflowData.current_step;
       if (isStepCode(nextStep)) {
@@ -459,6 +483,10 @@ export function BrandSetupWizard() {
       setError("Si indicas landing existente, debes capturar su URL.");
       return;
     }
+    if (billingSetup.billing_model === "commission_based" && !(billingSetup.commission_percentage > 0)) {
+      setError("Para modelo por comision debes indicar un porcentaje mayor a 0.");
+      return;
+    }
 
     try {
       setSaving(true);
@@ -468,6 +496,11 @@ export function BrandSetupWizard() {
         identity_data: identity,
         prompt_master: generated.prompt_master,
         flow_type: flowType,
+        billing_model: billingSetup.billing_model,
+        commission_enabled: billingSetup.billing_model === "commission_based",
+        commission_percentage: billingSetup.billing_model === "commission_based" ? billingSetup.commission_percentage : 0,
+        commission_scope: billingSetup.commission_scope,
+        commission_notes: billingSetup.commission_notes || "",
         selected_template: OFFICIAL_LANDING_TEMPLATE,
         ...OFFICIAL_CHANNEL_TEMPLATE_PAYLOAD,
       });
@@ -777,6 +810,53 @@ export function BrandSetupWizard() {
               <option value="tecnico">Tecnico</option>
             </select>
           </label>
+
+          <label>
+            Modelo comercial
+            <select
+              value={billingSetup.billing_model}
+              onChange={(event) =>
+                setBillingSetup((prev) => ({
+                  ...prev,
+                  billing_model: event.target.value as BillingSetupData["billing_model"],
+                  commission_enabled: event.target.value === "commission_based",
+                  commission_percentage: event.target.value === "commission_based" ? Math.max(prev.commission_percentage, 1) : 0,
+                }))
+              }
+            >
+              <option value="fixed_subscription">Cuota fija</option>
+              <option value="commission_based">Comision por venta</option>
+            </select>
+          </label>
+          {billingSetup.billing_model === "commission_based" ? (
+            <>
+              <label>
+                Porcentaje de comision (%)
+                <input
+                  type="number"
+                  min={0.1}
+                  step={0.1}
+                  value={billingSetup.commission_percentage}
+                  onChange={(event) =>
+                    setBillingSetup((prev) => ({
+                      ...prev,
+                      commission_percentage: Number(event.target.value || 0),
+                      commission_enabled: true,
+                    }))
+                  }
+                />
+              </label>
+              <label>
+                Notas internas de comision (opcional)
+                <textarea
+                  value={billingSetup.commission_notes}
+                  onChange={(event) => setBillingSetup((prev) => ({ ...prev, commission_notes: event.target.value }))}
+                />
+              </label>
+            </>
+          ) : (
+            <p className="muted">Este modelo no aplica porcentaje sobre venta.</p>
+          )}
 
           <label>
             Prompt maestro de la marca

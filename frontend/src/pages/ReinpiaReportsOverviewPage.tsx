@@ -38,6 +38,8 @@ export function ReinpiaReportsOverviewPage() {
         <ReportKpiCard label="Tenants activos" value={Number(kpis.tenants_active ?? 0)} />
         <ReportKpiCard label="Ordenes pagadas" value={Number(kpis.total_paid_orders ?? 0)} />
         <ReportKpiCard label="Ordenes fallidas" value={Number(kpis.total_failed_orders ?? 0)} />
+        <ReportKpiCard label="Ventas sujetas a comision" value={`$${Number(commissions.sales_subject_to_commission ?? 0).toLocaleString("es-MX")}`} />
+        <ReportKpiCard label="Comision estimada" value={`$${Number(commissions.estimated_commission_amount ?? 0).toLocaleString("es-MX")}`} />
       </div>
     </section>
   );

@@ -12,6 +12,10 @@ function describeActivity(row: ReinpiaTenantSummaryRow): string {
   return "Sin actividad reciente";
 }
 
+function billingModelLabel(value?: string): string {
+  return value === "commission_based" ? "Comision por venta" : "Cuota fija";
+}
+
 export function ReinpiaTenantsPage() {
   const { token } = useAuth();
   const [filters, setFilters] = useState({ tenantId: "", dateFrom: "", dateTo: "", status: "" });
@@ -73,8 +77,12 @@ export function ReinpiaTenantsPage() {
               <th>Estado</th>
               <th>Plan</th>
               <th>Tipo de negocio</th>
+              <th>Modelo comercial</th>
+              <th>% comision</th>
               <th>Revenue</th>
               <th>Comisiones</th>
+              <th>Ventas sujetas</th>
+              <th>Comision estimada</th>
               <th>Neto</th>
               <th>Última actividad</th>
               <th>Acción principal</th>
@@ -89,8 +97,12 @@ export function ReinpiaTenantsPage() {
                 <td>{row.is_active ? "Activa" : "Inactiva"}</td>
                 <td>{row.plan_id ?? "-"}</td>
                 <td>{row.business_type}</td>
+                <td>{billingModelLabel(row.billing_model)}</td>
+                <td>{row.commission_enabled ? `${Number(row.commission_percentage ?? 0).toFixed(2)}%` : "No aplica"}</td>
                 <td>${row.revenue.toLocaleString("es-MX")}</td>
                 <td>${row.commissions.toLocaleString("es-MX")}</td>
+                <td>${Number(row.sales_subject_to_commission ?? 0).toLocaleString("es-MX")}</td>
+                <td>${Number(row.estimated_commission_amount ?? 0).toLocaleString("es-MX")}</td>
                 <td>${row.net_amount.toLocaleString("es-MX")}</td>
                 <td>{describeActivity(row)}</td>
                 <td>

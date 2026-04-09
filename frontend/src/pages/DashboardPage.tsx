@@ -52,11 +52,12 @@ export function DashboardPage() {
         subtitle="Vista inicial para operacion multitenant de ComerCia by REINPIA."
       />
       <div className="card-grid" style={{ marginBottom: "1rem" }}>
-        <KpiCard label="Modelo de monetizacion" value={tenantConfig?.plan_type === "commission" ? "Comision" : "Suscripcion"} />
+        <KpiCard label="Modelo de monetizacion" value={tenantConfig?.billing_model === "commission_based" ? "Comision por venta" : "Cuota fija"} />
         <KpiCard label="Ventas totales" value={`$${metrics.sold.toLocaleString("es-MX")}`} />
-        {tenantConfig?.plan_type === "commission" ? (
+        {tenantConfig?.billing_model === "commission_based" ? (
           <>
             <KpiCard label="Comision generada" value={`$${metrics.commission.toLocaleString("es-MX")}`} />
+            <KpiCard label="Porcentaje de comision" value={`${Number(tenantConfig?.commission_percentage ?? 0).toFixed(2)}%`} />
             <KpiCard label="Ingreso neto marca" value={`$${metrics.net.toLocaleString("es-MX")}`} />
           </>
         ) : (

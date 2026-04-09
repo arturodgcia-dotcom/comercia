@@ -15,6 +15,10 @@ export function ReinpiaBrandsNewPage() {
     subdomain: "",
     business_type: "mixed",
     is_active: true,
+    billing_model: "fixed_subscription",
+    commission_percentage: 3,
+    commission_scope: "ventas_online_pagadas",
+    commission_notes: "",
   });
 
   const handleSubmit = async (event: FormEvent) => {
@@ -95,6 +99,47 @@ export function ReinpiaBrandsNewPage() {
           />
           Marca activa
         </label>
+        <label>
+          Modelo comercial
+          <select
+            value={form.billing_model}
+            onChange={(event) =>
+              setForm((previous) => ({
+                ...previous,
+                billing_model: event.target.value,
+                commission_percentage: event.target.value === "commission_based" ? Math.max(previous.commission_percentage, 1) : 0,
+              }))
+            }
+          >
+            <option value="fixed_subscription">Cuota fija</option>
+            <option value="commission_based">Comision por venta</option>
+          </select>
+        </label>
+        {form.billing_model === "commission_based" ? (
+          <>
+            <label>
+              Porcentaje de comision (%)
+              <input
+                type="number"
+                min={0.1}
+                step={0.1}
+                value={form.commission_percentage}
+                onChange={(event) =>
+                  setForm((previous) => ({ ...previous, commission_percentage: Number(event.target.value || 0) }))
+                }
+              />
+            </label>
+            <label>
+              Notas internas (opcional)
+              <textarea
+                value={form.commission_notes}
+                onChange={(event) => setForm((previous) => ({ ...previous, commission_notes: event.target.value }))}
+              />
+            </label>
+          </>
+        ) : (
+          <p className="muted">La cuota fija no cobra porcentaje sobre venta.</p>
+        )}
         {error ? <p className="error">{error}</p> : null}
         <button className="button" type="submit" disabled={saving}>
           {saving ? "Creando..." : "Crear marca y abrir workflow"}

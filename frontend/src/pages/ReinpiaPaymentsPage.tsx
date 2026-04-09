@@ -20,7 +20,13 @@ export function ReinpiaPaymentsPage() {
     stripe_ecommerce?: { orders: number; amount: number };
     pos?: { sales: number; amount: number; by_method: Array<{ payment_method: string; sales: number; amount: number }> };
   } | null>(null);
-  const [commissions, setCommissions] = useState<{ total_commissions: number; total_net_amount: number } | null>(null);
+  const [commissions, setCommissions] = useState<{
+    total_commissions: number;
+    total_net_amount: number;
+    sales_subject_to_commission?: number;
+    estimated_commission_amount?: number;
+    commission_based_tenants?: number;
+  } | null>(null);
   const [tenantOptions, setTenantOptions] = useState<Array<{ id: number; name: string }>>([]);
   const [error, setError] = useState("");
 
@@ -91,6 +97,9 @@ export function ReinpiaPaymentsPage() {
           <KpiCard label="Revenue" value={`$${sales.total_revenue.toLocaleString("es-MX")}`} />
           <KpiCard label="Comisiones" value={`$${commissions.total_commissions.toLocaleString("es-MX")}`} />
           <KpiCard label="Neto tenants" value={`$${commissions.total_net_amount.toLocaleString("es-MX")}`} />
+          <KpiCard label="Ventas sujetas a comision" value={`$${Number(commissions.sales_subject_to_commission ?? 0).toLocaleString("es-MX")}`} />
+          <KpiCard label="Comision estimada" value={`$${Number(commissions.estimated_commission_amount ?? 0).toLocaleString("es-MX")}`} />
+          <KpiCard label="Marcas con comision" value={Number(commissions.commission_based_tenants ?? 0)} />
           <KpiCard label="Stripe ecommerce" value={`$${(sales.stripe_ecommerce?.amount ?? 0).toLocaleString("es-MX")}`} />
           <KpiCard label="POS total" value={`$${(sales.pos?.amount ?? 0).toLocaleString("es-MX")}`} />
         </div>

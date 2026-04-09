@@ -182,6 +182,10 @@ function ChannelStateLabel({ label, value }: { label: string; value: string | nu
   );
 }
 
+function billingModelLabel(value?: string): string {
+  return value === "commission_based" ? "Comision por venta" : "Cuota fija";
+}
+
 function BrandChannelShell({ channel }: { channel: ChannelKey }) {
   const { token, user } = useAuth();
   const { tenantId } = useAdminContextScope();
@@ -486,6 +490,10 @@ function BrandChannelShell({ channel }: { channel: ChannelKey }) {
             {branding?.secondary_color ?? "sin color secundario"}.
           </p>
           <p className="muted">Slug de operacion: {tenant.slug}</p>
+          <p className="muted">Modelo comercial: {billingModelLabel(tenant.billing_model)}</p>
+          <p className="muted">
+            Comision por venta: {tenant.commission_enabled ? `Si (${Number(tenant.commission_percentage ?? 0).toFixed(2)}%)` : "No aplica"}
+          </p>
         </article>
       ) : null}
 
@@ -565,6 +573,13 @@ function BrandChannelShell({ channel }: { channel: ChannelKey }) {
             <ChannelStateLabel label="Banners activos" value={snapshot?.banners?.length ?? 0} />
             <ChannelStateLabel label="Moneda" value={brandAdminSettings?.currency_base_currency ?? "Pendiente"} />
             <ChannelStateLabel label="Idioma" value={brandAdminSettings?.language_primary ?? "Pendiente"} />
+            <ChannelStateLabel label="Modelo comercial" value={billingModelLabel(tenant?.billing_model)} />
+            <ChannelStateLabel label="Comision habilitada" value={tenant?.commission_enabled ? "Si" : "No"} />
+            <ChannelStateLabel label="Porcentaje configurado" value={`${Number(tenant?.commission_percentage ?? 0).toFixed(2)}%`} />
+            <ChannelStateLabel
+              label="Explicacion"
+              value={tenant?.commission_enabled ? "Se calcula sobre ventas elegibles del canal." : "No se cobra porcentaje por venta."}
+            />
             <ChannelStateLabel label="Ruta ecommerce publico" value={`${window.location.origin}${publicUrl}`} />
             <ChannelStateLabel label="Ruta preview ecommerce" value={`${window.location.origin}${publicPreviewUrl}`} />
             <ChannelStateLabel
