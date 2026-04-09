@@ -224,12 +224,6 @@ type MarketingBriefForm = {
   notes: string;
 };
 
-type MarketingQuoteResult = {
-  sections: Array<{ title: string; body: string }>;
-  priceRange: { min: number; max: number };
-  suggestedPrice: number;
-};
-
 const DEFAULT_MARKETING_BRIEF: MarketingBriefForm = {
   contact_name: "",
   contact_email: "",
@@ -317,73 +311,6 @@ function createFaqSchema() {
   };
 }
 
-function clamp(value: number, min: number, max: number): number {
-  return Math.min(max, Math.max(min, value));
-}
-
-function computeMarketingQuote(brief: MarketingBriefForm): MarketingQuoteResult {
-  const complexityScore =
-    (brief.products_to_push >= 200 ? 2 : brief.products_to_push >= 80 ? 1 : 0) +
-    (brief.sells_to === "ambos" ? 2 : brief.sells_to === "distribuidores" ? 1 : 0) +
-    (brief.needs_extra_landing ? 1 : 0) +
-    (brief.needs_extra_ecommerce ? 1 : 0) +
-    (brief.needs_commercial_tracking ? 1 : 0);
-
-  const maturityScore =
-    (brief.has_landing ? 1 : 0) +
-    (brief.has_ecommerce ? 1 : 0) +
-    (brief.active_social_networks.trim() ? 1 : 0) +
-    (brief.posts_consistently ? 1 : 0) +
-    (brief.offer_clarity === "alta" ? 1 : brief.offer_clarity === "parcial" ? 0.5 : 0) +
-    (brief.brand_clarity === "alta" ? 1 : brief.brand_clarity === "parcial" ? 0.5 : 0);
-
-  const intensityScore =
-    (brief.urgency === "inmediata" ? 3 : brief.urgency === "alta" ? 2 : brief.urgency === "media" ? 1 : 0) +
-    (brief.followup_level === "alto" ? 2 : brief.followup_level === "medio" ? 1 : 0) +
-    (brief.wants_custom_proposal ? 1 : 0);
-
-  const potentialScore =
-    (brief.average_ticket_mxn >= 2000 ? 3 : brief.average_ticket_mxn >= 900 ? 2 : 1) +
-    (brief.offer_clarity === "alta" ? 2 : brief.offer_clarity === "parcial" ? 1 : 0) +
-    (brief.has_ecommerce || brief.has_landing ? 1 : 0);
-
-  const combined = complexityScore * 2 + intensityScore * 2 + potentialScore - maturityScore * 0.5;
-
-  let priceRange = { min: 4990, max: 8990 };
-  if (combined >= 8 && combined < 13) priceRange = { min: 12000, max: 20000 };
-  if (combined >= 13 && combined < 18) priceRange = { min: 20000, max: 35000 };
-  if (combined >= 18) priceRange = { min: 35000, max: 60000 };
-
-  const midpoint = Math.round((priceRange.min + priceRange.max) / 2);
-  const urgencyLift = brief.urgency === "inmediata" ? 2500 : brief.urgency === "alta" ? 1500 : 0;
-  const infraLift = (brief.needs_extra_landing ? 1000 : 0) + (brief.needs_extra_ecommerce ? 1500 : 0);
-  const suggestedPrice = clamp(midpoint + urgencyLift + infraLift, priceRange.min, priceRange.max);
-  const plusIva = Math.round(suggestedPrice * 1.16);
-
-  const kpis =
-    brief.conversion_channel === "ecommerce"
-      ? "Publicaciones emitidas, visitas a tienda, productos vistos, agregar al carrito, inicios de checkout, compras, ticket promedio y tasa de conversion ecommerce."
-      : brief.conversion_channel === "landing"
-        ? "Publicaciones emitidas, visitas a landing, clics a CTA, formularios, clics a WhatsApp y tasa de conversion de landing."
-        : "Publicaciones emitidas, visitas, clics clave, leads calificados y conversion por canal principal.";
-
-  return {
-    priceRange,
-    suggestedPrice,
-    sections: [
-      { title: "1. Resumen del negocio", body: `${brief.brand || "Marca"} en ${brief.location || "ubicacion por definir"}, giro ${brief.industry || "comercial"}, enfoque en ${brief.main_goal}.` },
-      { title: "2. Diagnostico comercial", body: `La marca presenta ${brief.has_landing || brief.has_ecommerce ? "base digital parcial" : "base digital inicial"} con necesidad de orden comercial y foco en conversion.` },
-      { title: "3. Nivel de oportunidad detectado", body: `Se detecta una oportunidad ${potentialScore >= 5 ? "alta" : potentialScore >= 3 ? "media" : "controlada"} por ticket promedio y objetivo declarado.` },
-      { title: "4. Estrategia recomendada", body: "Activar un plan de ejecucion mensual con contenido orientado a conversion, seguimiento comercial y optimizacion por aprendizaje semanal." },
-      { title: "5. Canales y activos recomendados", body: `Canal principal: ${brief.conversion_channel}. Activos sugeridos: ${brief.needs_extra_landing ? "landing adicional, " : ""}${brief.needs_extra_ecommerce ? "ecommerce adicional, " : ""}${brief.needs_commercial_tracking ? "seguimiento comercial y CRM base." : "seguimiento comercial operativo."}` },
-      { title: "6. KPIs estimados", body: kpis },
-      { title: "7. Proyeccion mensual de resultados", body: "Escenario conservador: crecimiento gradual en trafico calificado y conversion, con mejora al sostener ejecucion y seguimiento comercial." },
-      { title: "8. Cotizacion sugerida", body: `Recomendacion mensual: $${suggestedPrice.toLocaleString("es-MX")} MXN + IVA (total estimado con IVA: $${plusIva.toLocaleString("es-MX")} MXN).` },
-      { title: "9. Servicios adicionales recomendados", body: `${brief.needs_extra_landing ? "Construccion/ajuste de landing. " : ""}${brief.needs_extra_ecommerce ? "Construccion/ajuste de ecommerce. " : ""}Automatizacion de seguimiento, reportes ejecutivos y ajuste de mensajes por canal.` },
-      { title: "10. Riesgos y consideraciones", body: "El resultado depende de claridad de oferta, consistencia de ejecucion, capacidad de respuesta comercial y calidad de activos de conversion." },
-    ],
-  };
-}
 
 export function ComerciaLandingPage() {
   const [searchParams] = useSearchParams();
@@ -442,7 +369,6 @@ export function ComerciaLandingPage() {
   const [serviceSubmitted, setServiceSubmitted] = useState(false);
   const [serviceError, setServiceError] = useState("");
   const [marketingBrief, setMarketingBrief] = useState<MarketingBriefForm>(DEFAULT_MARKETING_BRIEF);
-  const [marketingQuote, setMarketingQuote] = useState<MarketingQuoteResult | null>(null);
   const [marketingSubmitting, setMarketingSubmitting] = useState(false);
   const [marketingError, setMarketingError] = useState("");
   const [marketingSuccess, setMarketingSuccess] = useState("");
@@ -566,27 +492,37 @@ export function ComerciaLandingPage() {
     event.preventDefault();
     setMarketingError("");
     setMarketingSuccess("");
-    const generated = computeMarketingQuote(marketingBrief);
-    setMarketingQuote(generated);
     try {
       setMarketingSubmitting(true);
-      await api.createComerciaCustomerContactLead({
-        name: marketingBrief.contact_name,
-        email: marketingBrief.contact_email,
-        phone: marketingBrief.contact_phone,
-        company: marketingBrief.brand,
-        contact_reason: "marketing_cotizacion",
-        message:
-          `Brief marketing recibido. Ubicacion=${marketingBrief.location}. Giro=${marketingBrief.industry}. ` +
-          `Objetivo=${marketingBrief.main_goal}. Canal=${marketingBrief.conversion_channel}. ` +
-          `Ticket=${marketingBrief.average_ticket_mxn}. Cotizacion sugerida=${generated.suggestedPrice}. ` +
-          `Notas=${marketingBrief.notes || "-"}`,
+      await api.createComerciaMarketingProspect({
+        contact_name: marketingBrief.contact_name,
+        contact_email: marketingBrief.contact_email,
+        contact_phone: marketingBrief.contact_phone,
+        company_brand: marketingBrief.brand,
+        location: marketingBrief.location,
+        industry: marketingBrief.industry,
+        sells: marketingBrief.sells,
+        desired_conversion_channel: marketingBrief.conversion_channel,
+        active_social_networks: marketingBrief.active_social_networks,
+        products_to_promote: marketingBrief.products_to_push,
+        average_ticket_mxn: marketingBrief.average_ticket_mxn,
+        offer_clarity: marketingBrief.offer_clarity,
+        urgency: marketingBrief.urgency,
+        followup_level: marketingBrief.followup_level,
+        has_landing: marketingBrief.has_landing,
+        has_ecommerce: marketingBrief.has_ecommerce,
+        needs_extra_landing: marketingBrief.needs_extra_landing,
+        needs_extra_ecommerce: marketingBrief.needs_extra_ecommerce,
+        needs_commercial_tracking: marketingBrief.needs_commercial_tracking,
+        wants_custom_proposal: marketingBrief.wants_custom_proposal,
+        client_notes:
+          `objetivo=${marketingBrief.main_goal}; seguimiento=${marketingBrief.followup_level}; ` +
+          `sells_to=${marketingBrief.sells_to}; notas=${marketingBrief.notes || "-"}`,
         channel: "landing_marketing_form",
-        status: "nuevo",
       });
-      setMarketingSuccess("Brief recibido. Ya tienes una cotizacion preliminar y el equipo comercial puede darle seguimiento.");
+      setMarketingSuccess("Solicitud recibida. Tu informacion sera revisada por nuestro equipo para preparar una propuesta inicial.");
     } catch (err) {
-      setMarketingError(err instanceof Error ? err.message : "No fue posible registrar el brief de marketing.");
+      setMarketingError(err instanceof Error ? err.message : "No fue posible registrar tu solicitud de mercadotecnia.");
     } finally {
       setMarketingSubmitting(false);
     }
@@ -934,73 +870,63 @@ export function ComerciaLandingPage() {
 
       <section className="cp-section" id="marketing-diagnostico">
         <header className="cp-section-head">
-          <p className="cp-kicker">7. Seccion Marketing COMERCIA (solo captacion)</p>
-          <h2>Brief de marketing + metodologia de cotizacion ejecutiva</h2>
+          <p className="cp-kicker">7. Mercadotecnia digital</p>
+          <h2>Impulsa tu marca con estrategia comercial y campanas digitales</h2>
           <p>
-            Aqui el cliente llena su formulario de contexto comercial y COMERCIA genera una cotizacion preliminar con metodologia consultiva.
+            Ayudamos a marcas a posicionarse mejor, atraer clientes calificados y convertir con mayor consistencia.
+            Analizamos el contexto comercial de tu negocio y un especialista revisa tu caso para preparar la propuesta inicial.
           </p>
         </header>
         <div className="cp-marketing-grid">
           <article className="cp-marketing-card">
-            <h3>Metodologia aplicada (CODEX)</h3>
+            <h3>Que resolvemos</h3>
             <ul>
-              <li>Diagnostico consultivo con enfoque en rentabilidad y ejecucion real.</li>
-              <li>Clasificacion interna por complejidad, madurez digital, intensidad y potencial comercial.</li>
-              <li>Cotizacion sugerida sin promesas irreales ni subcotizacion.</li>
-              <li>Entrega en formato ejecutivo de 10 puntos para revision comercial.</li>
+              <li>Diseno de estrategia comercial de mercadotecnia digital por etapa de negocio.</li>
+              <li>Planeacion de campanas para captacion, leads, ventas y recompra.</li>
+              <li>Ajustes por tipo de marca: servicios, ecommerce, distribuidores o modelo mixto.</li>
+              <li>Ejecucion con seguimiento comercial y enfoque en resultados medibles.</li>
+            </ul>
+            <h3>Negocios que atendemos</h3>
+            <ul>
+              <li>Marcas en arranque que necesitan su primera ruta digital.</li>
+              <li>Empresas con operacion activa que buscan escalar conversiones.</li>
+              <li>Negocios con canal distribuidor que requieren estructura comercial.</li>
+              <li>Operaciones con ventas mixtas: landing, ecommerce, WhatsApp o POS.</li>
             </ul>
           </article>
           <article className="cp-marketing-card">
-            <h3>Formulario de brief comercial (cliente)</h3>
+            <h3>Solicitud de estrategia y propuesta inicial</h3>
             <form className="detail-form cp-marketing-form" onSubmit={handleMarketingBriefSubmit}>
               <label>Nombre de contacto<input required value={marketingBrief.contact_name} onChange={(e) => setMarketingBrief((p) => ({ ...p, contact_name: e.target.value }))} /></label>
               <label>Correo<input required type="email" value={marketingBrief.contact_email} onChange={(e) => setMarketingBrief((p) => ({ ...p, contact_email: e.target.value }))} /></label>
               <label>Telefono / WhatsApp<input required value={marketingBrief.contact_phone} onChange={(e) => setMarketingBrief((p) => ({ ...p, contact_phone: e.target.value }))} /></label>
-              <label>Marca<input required value={marketingBrief.brand} onChange={(e) => setMarketingBrief((p) => ({ ...p, brand: e.target.value }))} /></label>
+              <label>Empresa / marca<input required value={marketingBrief.brand} onChange={(e) => setMarketingBrief((p) => ({ ...p, brand: e.target.value }))} /></label>
               <label>Ubicacion<input required value={marketingBrief.location} onChange={(e) => setMarketingBrief((p) => ({ ...p, location: e.target.value }))} /></label>
               <label>Giro / industria<input required value={marketingBrief.industry} onChange={(e) => setMarketingBrief((p) => ({ ...p, industry: e.target.value }))} /></label>
-              <label>Vende<select value={marketingBrief.sells} onChange={(e) => setMarketingBrief((p) => ({ ...p, sells: e.target.value as MarketingBriefForm["sells"] }))}><option value="productos">Productos</option><option value="servicios">Servicios</option><option value="mixto">Mixto</option></select></label>
+              <label>Que vende<select value={marketingBrief.sells} onChange={(e) => setMarketingBrief((p) => ({ ...p, sells: e.target.value as MarketingBriefForm["sells"] }))}><option value="productos">Productos</option><option value="servicios">Servicios</option><option value="mixto">Mixto</option></select></label>
               <label>Objetivo principal<select value={marketingBrief.main_goal} onChange={(e) => setMarketingBrief((p) => ({ ...p, main_goal: e.target.value as MarketingBriefForm["main_goal"] }))}><option value="ventas">Ventas</option><option value="leads">Leads</option><option value="reconocimiento">Reconocimiento</option><option value="distribuidores">Distribuidores</option><option value="recompra">Recompra</option></select></label>
               <label>Canal de conversion<select value={marketingBrief.conversion_channel} onChange={(e) => setMarketingBrief((p) => ({ ...p, conversion_channel: e.target.value as MarketingBriefForm["conversion_channel"] }))}><option value="ecommerce">Ecommerce</option><option value="landing">Landing</option><option value="whatsapp">WhatsApp</option><option value="formulario">Formulario</option><option value="pos">POS</option></select></label>
               <label>Redes activas<input value={marketingBrief.active_social_networks} onChange={(e) => setMarketingBrief((p) => ({ ...p, active_social_networks: e.target.value }))} /></label>
               <label>Cantidad de productos a impulsar<input type="number" min={1} value={marketingBrief.products_to_push} onChange={(e) => setMarketingBrief((p) => ({ ...p, products_to_push: Number(e.target.value || 1) }))} /></label>
               <label>Ticket promedio (MXN)<input type="number" min={100} value={marketingBrief.average_ticket_mxn} onChange={(e) => setMarketingBrief((p) => ({ ...p, average_ticket_mxn: Number(e.target.value || 100) }))} /></label>
               <label>Oferta clara<select value={marketingBrief.offer_clarity} onChange={(e) => setMarketingBrief((p) => ({ ...p, offer_clarity: e.target.value as MarketingBriefForm["offer_clarity"] }))}><option value="alta">Si</option><option value="parcial">Parcialmente</option><option value="baja">No</option></select></label>
-              <label>Marca clara<select value={marketingBrief.brand_clarity} onChange={(e) => setMarketingBrief((p) => ({ ...p, brand_clarity: e.target.value as MarketingBriefForm["brand_clarity"] }))}><option value="alta">Si</option><option value="parcial">Parcialmente</option><option value="baja">No</option></select></label>
               <label>Urgencia<select value={marketingBrief.urgency} onChange={(e) => setMarketingBrief((p) => ({ ...p, urgency: e.target.value as MarketingBriefForm["urgency"] }))}><option value="inmediata">Inmediata</option><option value="alta">Alta</option><option value="media">Media</option><option value="baja">Baja</option></select></label>
               <label>Nivel de seguimiento<select value={marketingBrief.followup_level} onChange={(e) => setMarketingBrief((p) => ({ ...p, followup_level: e.target.value as MarketingBriefForm["followup_level"] }))}><option value="alto">Alto</option><option value="medio">Medio</option><option value="bajo">Bajo</option></select></label>
-              <label>Venta dirigida a<select value={marketingBrief.sells_to} onChange={(e) => setMarketingBrief((p) => ({ ...p, sells_to: e.target.value as MarketingBriefForm["sells_to"] }))}><option value="publico_general">Publico general</option><option value="distribuidores">Distribuidores</option><option value="ambos">Ambos</option></select></label>
+              <label>Canal comercial objetivo<select value={marketingBrief.sells_to} onChange={(e) => setMarketingBrief((p) => ({ ...p, sells_to: e.target.value as MarketingBriefForm["sells_to"] }))}><option value="publico_general">Publico general</option><option value="distribuidores">Distribuidores</option><option value="ambos">Ambos</option></select></label>
               <label className="checkbox"><input type="checkbox" checked={marketingBrief.has_landing} onChange={(e) => setMarketingBrief((p) => ({ ...p, has_landing: e.target.checked }))} />Tiene landing actual</label>
               <label className="checkbox"><input type="checkbox" checked={marketingBrief.has_ecommerce} onChange={(e) => setMarketingBrief((p) => ({ ...p, has_ecommerce: e.target.checked }))} />Tiene ecommerce actual</label>
-              <label className="checkbox"><input type="checkbox" checked={marketingBrief.posts_consistently} onChange={(e) => setMarketingBrief((p) => ({ ...p, posts_consistently: e.target.checked }))} />Publica de forma constante</label>
               <label className="checkbox"><input type="checkbox" checked={marketingBrief.needs_extra_landing} onChange={(e) => setMarketingBrief((p) => ({ ...p, needs_extra_landing: e.target.checked }))} />Necesita landing adicional</label>
               <label className="checkbox"><input type="checkbox" checked={marketingBrief.needs_extra_ecommerce} onChange={(e) => setMarketingBrief((p) => ({ ...p, needs_extra_ecommerce: e.target.checked }))} />Necesita ecommerce adicional</label>
               <label className="checkbox"><input type="checkbox" checked={marketingBrief.needs_commercial_tracking} onChange={(e) => setMarketingBrief((p) => ({ ...p, needs_commercial_tracking: e.target.checked }))} />Necesita seguimiento comercial</label>
               <label className="checkbox"><input type="checkbox" checked={marketingBrief.wants_custom_proposal} onChange={(e) => setMarketingBrief((p) => ({ ...p, wants_custom_proposal: e.target.checked }))} />Quiere propuesta personalizada</label>
               <label>Notas del cliente<textarea value={marketingBrief.notes} onChange={(e) => setMarketingBrief((p) => ({ ...p, notes: e.target.value }))} /></label>
-              <button className="button" type="submit" disabled={marketingSubmitting}>{marketingSubmitting ? "Generando..." : "Generar cotizacion preliminar"}</button>
+              <p className="muted">Tu informacion sera revisada por nuestro equipo para preparar una propuesta inicial.</p>
+              <button className="button" type="submit" disabled={marketingSubmitting}>{marketingSubmitting ? "Enviando..." : "Enviar solicitud de mercadotecnia"}</button>
             </form>
             {marketingError ? <p className="error">{marketingError}</p> : null}
             {marketingSuccess ? <p className="cp-success">{marketingSuccess}</p> : null}
           </article>
         </div>
-        {marketingQuote ? (
-          <article className="cp-marketing-output">
-            <h3>Resultado esperado (ejemplo de salida de cotizacion)</h3>
-            <p>
-              Cotizacion sugerida: <strong>${marketingQuote.suggestedPrice.toLocaleString("es-MX")} MXN + IVA</strong>
-              {" | "}Rango de referencia: ${marketingQuote.priceRange.min.toLocaleString("es-MX")} - ${marketingQuote.priceRange.max.toLocaleString("es-MX")} MXN + IVA
-            </p>
-            <div className="cp-pillars">
-              {marketingQuote.sections.map((section) => (
-                <article key={section.title}>
-                  <h3>{section.title}</h3>
-                  <p>{section.body}</p>
-                </article>
-              ))}
-            </div>
-          </article>
-        ) : null}
       </section>
 
       <section className="cp-section" id="casos-uso">
@@ -1222,7 +1148,7 @@ export function ComerciaLandingPage() {
           <div>
             <h4>Recursos</h4>
             <a href="#faq">FAQ SEO/AEO</a>
-            <a href="#marketing-diagnostico">Seccion Marketing COMERCIA</a>
+            <a href="#marketing-diagnostico">Mercadotecnia digital</a>
             <Link to="/templates/familia">Demo sistema multimarcas</Link>
             <Link to={`/templates/tienda-publica?brand=${brandTheme.key}`}>Preview ecommerce publico</Link>
             <Link to={`/templates/distribuidores?brand=${brandTheme.key}`}>Preview distribuidores</Link>
