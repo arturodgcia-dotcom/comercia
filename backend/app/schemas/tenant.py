@@ -18,6 +18,9 @@ class TenantCreate(BaseModel):
     commission_enabled: bool | None = None
     commission_scope: str | None = None
     commission_notes: str | None = None
+    commercial_plan_key: str | None = None
+    commercial_plan_status: str | None = None
+    commercial_plan_source: str | None = None
 
 
 class TenantUpdate(BaseModel):
@@ -35,6 +38,11 @@ class TenantUpdate(BaseModel):
     commission_enabled: bool | None = None
     commission_scope: str | None = None
     commission_notes: str | None = None
+    commercial_plan_key: str | None = None
+    commercial_plan_status: str | None = None
+    commercial_plan_source: str | None = None
+    ai_tokens_locked: bool | None = None
+    ai_tokens_lock_reason: str | None = None
 
 
 class TenantRead(TimestampSchema):
@@ -53,3 +61,13 @@ class TenantRead(TimestampSchema):
     commission_enabled: bool
     commission_scope: str
     commission_notes: str | None
+    commercial_plan_key: str | None
+    commercial_plan_status: str
+    commercial_plan_source: str | None
+    commercial_checkout_session_id: str | None
+    commercial_limits_json: str | None
+    ai_tokens_included: int
+    ai_tokens_balance: int
+    ai_tokens_used: int
+    ai_tokens_locked: bool
+    ai_tokens_lock_reason: str | None

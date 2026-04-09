@@ -1,0 +1,76 @@
+from pydantic import BaseModel, Field
+
+
+class CommercialPlanRead(BaseModel):
+    id: str
+    name: str
+    tier: str
+    billing_model: str
+    commission_enabled: bool
+    commission_percentage: str
+    support: str
+    limits: dict
+    price_without_tax_mxn: str
+    tax_rate: str
+    tax_amount_mxn: str
+    price_with_tax_mxn: str
+
+
+class CommercialAddonRead(BaseModel):
+    id: str
+    name: str
+    price_without_tax_mxn: str
+    tax_rate: str
+    tax_amount_mxn: str
+    price_with_tax_mxn: str
+
+
+class CommercialPlanCatalogRead(BaseModel):
+    iva_rate: str
+    plans: list[CommercialPlanRead]
+    addons: list[CommercialAddonRead]
+
+
+class CommercialPlanCheckoutRequest(BaseModel):
+    tenant_id: int
+    plan_key: str
+    success_url: str
+    cancel_url: str
+
+
+class CommercialPlanCheckoutResponse(BaseModel):
+    plan_key: str
+    session_id: str
+    session_url: str
+    price_with_tax_mxn: str
+
+
+class TenantCommercialStatusRead(BaseModel):
+    tenant_id: int
+    commercial_plan_key: str | None
+    commercial_plan_status: str
+    commercial_plan_source: str | None
+    billing_model: str
+    commission_enabled: bool
+    commission_percentage: str
+    limits: dict
+    ai_tokens_included: int
+    ai_tokens_balance: int
+    ai_tokens_used: int
+    ai_tokens_locked: bool
+    ai_tokens_lock_reason: str | None
+
+
+class TokenConsumeRequest(BaseModel):
+    tokens: int = Field(ge=1)
+    reason: str | None = None
+
+
+class TokenTopupRequest(BaseModel):
+    tokens: int = Field(ge=1)
+    reason: str | None = None
+
+
+class TokenLockRequest(BaseModel):
+    locked: bool
+    reason: str | None = None

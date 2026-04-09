@@ -668,3 +668,46 @@ Superficies integradas:
 - wizard de setup (paso identidad)
 - panel global (marcas, detalle, pagos, reportes)
 - panel de marca (canales)
+
+## Ejecucion 44: plan comercial gobernado por Stripe checkout
+Objetivo:
+- que el plan comercial no sea una seleccion manual aislada en wizard
+- que el pago en Stripe determine plan activo, comision y limites operativos reales
+- habilitar control interno de creditos IA con apertura/cierre de llave por tenant
+
+Nucleo de arquitectura:
+- servicio central: `backend/app/services/commercial_plan_service.py`
+  - catalogo oficial de planes:
+    - `fixed_subscription_basic|growth|premium`
+    - `commission_based_basic|growth|premium`
+  - add-ons oficiales y calculo de IVA
+  - aplicacion atomica del plan al tenant (`apply_plan_to_tenant`)
+  - control de creditos IA (`consume_tokens`, `topup_tokens`, `set_tokens_lock`)
+
+Flujo oficial Stripe -> tenant:
+1. `POST /api/v1/commercial-plans/create-checkout-session`
+2. Stripe Checkout completa pago
+3. webhook `POST /api/v1/stripe/webhook` recibe `checkout.session.completed`
+4. si `metadata.kind=tenant_commercial_plan`:
+   - se aplica plan al tenant
+   - se sincroniza `billing_model`, `commission_enabled`, `% comision`
+   - se guardan limites operativos
+   - se inicializan creditos IA y estado de llave
+
+Persistencia tenant (nueva):
+- `commercial_plan_key`
+- `commercial_plan_status`
+- `commercial_plan_source`
+- `commercial_checkout_session_id`
+- `commercial_limits_json`
+- `ai_tokens_included`
+- `ai_tokens_balance`
+- `ai_tokens_used`
+- `ai_tokens_locked`
+- `ai_tokens_lock_reason`
+- `ai_tokens_last_reset_at`
+
+Integracion con capas existentes:
+- `tenant_config` ahora expone `commercial_plan_key/status`, `limits`, `ai_tokens_balance`, `ai_tokens_locked`
+- `brand_setup` expone plan comercial y estado de creditos IA para que wizard lea el estado pagado
+- `analytics_service` incorpora metricas de plan comercial y llave IA en KPIs globales y por tenant

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import json
 from decimal import Decimal, ROUND_HALF_UP
-
 DEFAULT_COMMISSION_TIERS = [
     {"up_to": "2000", "rate": "0.025", "label": "Hasta 2000"},
     {"up_to": None, "rate": "0.03", "label": "Mayor a 2000"},
@@ -37,6 +36,16 @@ def _normalize_tier(tier: dict) -> dict:
         "rate": str(_to_decimal(tier.get("rate"), "0")),
         "label": str(tier.get("label") or "Regla"),
     }
+
+
+def _parse_limits(raw: str | None) -> dict:
+    if not raw:
+        return {}
+    try:
+        parsed = json.loads(raw)
+    except Exception:
+        return {}
+    return parsed if isinstance(parsed, dict) else {}
 
 
 def normalize_commission_rules(raw: str | None) -> dict:
@@ -138,7 +147,7 @@ def normalize_billing_config(
     }
 
 
-def build_tenant_config_payload(*, tenant_id: int, tenant_slug: str, tenant_name: str, business_type: str, tenant_plan_type: str | None, commission_rules_json: str | None, subscription_plan_json: str | None, billing_model: str | None, commission_percentage: object | None, commission_enabled: bool | None, commission_scope: str | None, commission_notes: str | None, plan_commission_enabled: bool) -> dict:
+def build_tenant_config_payload(*, tenant_id: int, tenant_slug: str, tenant_name: str, business_type: str, tenant_plan_type: str | None, commission_rules_json: str | None, subscription_plan_json: str | None, billing_model: str | None, commission_percentage: object | None, commission_enabled: bool | None, commission_scope: str | None, commission_notes: str | None, commercial_plan_key: str | None = None, commercial_plan_status: str | None = None, commercial_limits_json: str | None = None, ai_tokens_balance: int | None = None, ai_tokens_locked: bool | None = None, plan_commission_enabled: bool = False) -> dict:
     plan_type = resolve_plan_type(tenant_plan_type, plan_commission_enabled)
     commission_rules = normalize_commission_rules(commission_rules_json)
     subscription_plan = normalize_subscription_plan(subscription_plan_json)
@@ -180,4 +189,9 @@ def build_tenant_config_payload(*, tenant_id: int, tenant_slug: str, tenant_name
         "commission_enabled": billing["commission_enabled"],
         "commission_scope": billing["commission_scope"],
         "commission_notes": billing["commission_notes"],
+        "commercial_plan_key": commercial_plan_key,
+        "commercial_plan_status": commercial_plan_status or "not_purchased",
+        "limits": _parse_limits(commercial_limits_json),
+        "ai_tokens_balance": int(ai_tokens_balance or 0),
+        "ai_tokens_locked": bool(ai_tokens_locked),
     }

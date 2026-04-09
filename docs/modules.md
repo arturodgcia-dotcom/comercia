@@ -299,3 +299,25 @@ Nuevos endpoints:
     - comision estimada
 - Panel de marca | Estado: funcional
   - `BrandChannelPages` muestra modelo activo y explicacion por canal
+
+## Actualizacion plan comercial desde Stripe y creditos IA (Ejecucion 44)
+- Plan comercial oficial por marca | Estado: funcional
+  - Catalogo central: `backend/app/services/commercial_plan_service.py`
+  - Modelos: `fixed_subscription` y `commission_based` con tiers `basic/growth/premium`
+  - Precios + IVA + add-ons oficiales incluidos en payload de catalogo
+- Checkout de plan comercial | Estado: funcional
+  - `POST /api/v1/commercial-plans/create-checkout-session`
+  - genera sesion Stripe con metadata de plan (`kind=tenant_commercial_plan`)
+- Activacion automatica por webhook | Estado: funcional
+  - `backend/app/api/v1/endpoints/stripe_webhook.py`
+  - `checkout.session.completed` aplica plan al tenant y sincroniza billing/comision/limites/creditos IA
+- Control de creditos IA (llave interna) | Estado: funcional
+  - `POST /api/v1/commercial-plans/tenant/{tenant_id}/tokens/consume`
+  - `POST /api/v1/commercial-plans/tenant/{tenant_id}/tokens/topup`
+  - `POST /api/v1/commercial-plans/tenant/{tenant_id}/tokens/lock`
+- Wizard y panel de marca | Estado: funcional
+  - Wizard muestra plan pagado desde Stripe y estado de creditos IA
+  - Detalle global de marca muestra plan comercial, estado y metricas de creditos
+- Landing COMERCIA (seccion marketing por bloques) | Estado: parcial (bloque 1 implementado)
+  - Nueva seccion `#marketing-diagnostico` en `ComerciaLandingPage`
+  - Enfocada en diagnostico comercial, KPIs minimos y cotizacion rentable

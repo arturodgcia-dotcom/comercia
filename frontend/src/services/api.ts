@@ -20,6 +20,7 @@ import {
   CheckoutSessionRequest,
   CheckoutSessionResponse,
   ContractTemplate,
+  CommercialPlanCatalog,
   Coupon,
   CurrencySettings,
   PlatformSettings,
@@ -77,6 +78,7 @@ import {
   TenantReportSales,
   TenantReportUsers,
   Tenant,
+  TenantCommercialStatus,
   TenantBranding,
   TenantConfig,
   User,
@@ -334,6 +336,37 @@ export const api = {
     request<TenantBranding>(`/api/v1/tenant-branding/${tenantId}`, { method: "PUT", body: JSON.stringify(payload) }, token),
 
   getPlans: (token: string) => request<Plan[]>("/api/v1/plans", {}, token),
+  getCommercialPlanCatalog: (token: string) =>
+    request<CommercialPlanCatalog>("/api/v1/commercial-plans/catalog", {}, token),
+  createCommercialPlanCheckoutSession: (
+    token: string,
+    payload: { tenant_id: number; plan_key: string; success_url: string; cancel_url: string }
+  ) =>
+    request<{ plan_key: string; session_id: string; session_url: string; price_with_tax_mxn: string }>(
+      "/api/v1/commercial-plans/create-checkout-session",
+      { method: "POST", body: JSON.stringify(payload) },
+      token
+    ),
+  getTenantCommercialStatus: (token: string, tenantId: number) =>
+    request<TenantCommercialStatus>(`/api/v1/commercial-plans/tenant/${tenantId}/status`, {}, token),
+  consumeTenantAiTokens: (token: string, tenantId: number, payload: { tokens: number; reason?: string }) =>
+    request<TenantCommercialStatus>(
+      `/api/v1/commercial-plans/tenant/${tenantId}/tokens/consume`,
+      { method: "POST", body: JSON.stringify(payload) },
+      token
+    ),
+  topupTenantAiTokens: (token: string, tenantId: number, payload: { tokens: number; reason?: string }) =>
+    request<TenantCommercialStatus>(
+      `/api/v1/commercial-plans/tenant/${tenantId}/tokens/topup`,
+      { method: "POST", body: JSON.stringify(payload) },
+      token
+    ),
+  setTenantAiTokensLock: (token: string, tenantId: number, payload: { locked: boolean; reason?: string }) =>
+    request<TenantCommercialStatus>(
+      `/api/v1/commercial-plans/tenant/${tenantId}/tokens/lock`,
+      { method: "POST", body: JSON.stringify(payload) },
+      token
+    ),
   getStripeConfigByTenant: (token: string, tenantId: number) =>
     request<StripeConfig>(`/api/v1/stripe-config/${tenantId}`, {}, token),
   upsertStripeConfig: (token: string, payload: Record<string, unknown>) =>

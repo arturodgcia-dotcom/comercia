@@ -111,6 +111,10 @@ class BrandSetupWorkflowRead(BaseModel):
     commission_enabled: bool | None = None
     commission_scope: str | None = None
     commission_notes: str | None = None
+    commercial_plan_key: str | None = None
+    commercial_plan_status: str | None = None
+    ai_tokens_balance: int | None = None
+    ai_tokens_locked: bool | None = None
     flow_type: str = "without_landing"
     steps: list[BrandSetupStepState]
     assets: list[BrandSetupAssetRead]

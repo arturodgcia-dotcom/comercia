@@ -119,6 +119,12 @@ export function ReinpiaTenantDetailPage() {
         <KpiCard label="% comision" value={`${Number(kpis.commission_percentage ?? 0).toFixed(2)}%`} />
         <KpiCard label="Ventas sujetas a comision" value={`$${Number(kpis.sales_subject_to_commission ?? 0).toLocaleString("es-MX")}`} />
         <KpiCard label="Comision estimada" value={`$${Number(kpis.estimated_commission_amount ?? 0).toLocaleString("es-MX")}`} />
+        <KpiCard label="Plan comercial Stripe" value={kpis.commercial_plan_key ?? "No pagado"} />
+        <KpiCard label="Estado plan comercial" value={kpis.commercial_plan_status ?? "not_purchased"} />
+        <KpiCard label="Creditos IA incluidos" value={kpis.ai_tokens_included ?? 0} />
+        <KpiCard label="Creditos IA disponibles" value={kpis.ai_tokens_balance ?? 0} />
+        <KpiCard label="Creditos IA consumidos" value={kpis.ai_tokens_used ?? 0} />
+        <KpiCard label="Llave IA" value={kpis.ai_tokens_locked ? "Cerrada" : "Abierta"} />
       </div>
 
       <section className="store-banner">

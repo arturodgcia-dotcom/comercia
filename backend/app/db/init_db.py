@@ -59,6 +59,33 @@ def _ensure_runtime_compat_schema() -> None:
             conn.execute(text("UPDATE tenants SET commission_scope = 'ventas_online_pagadas' WHERE commission_scope IS NULL"))
         if "commission_notes" not in table_columns["tenants"]:
             conn.execute(text("ALTER TABLE tenants ADD COLUMN commission_notes TEXT"))
+        if "commercial_plan_key" not in table_columns["tenants"]:
+            conn.execute(text("ALTER TABLE tenants ADD COLUMN commercial_plan_key VARCHAR(60)"))
+        if "commercial_plan_status" not in table_columns["tenants"]:
+            conn.execute(text("ALTER TABLE tenants ADD COLUMN commercial_plan_status VARCHAR(30)"))
+            conn.execute(text("UPDATE tenants SET commercial_plan_status = 'not_purchased' WHERE commercial_plan_status IS NULL"))
+        if "commercial_plan_source" not in table_columns["tenants"]:
+            conn.execute(text("ALTER TABLE tenants ADD COLUMN commercial_plan_source VARCHAR(40)"))
+        if "commercial_checkout_session_id" not in table_columns["tenants"]:
+            conn.execute(text("ALTER TABLE tenants ADD COLUMN commercial_checkout_session_id VARCHAR(255)"))
+        if "commercial_limits_json" not in table_columns["tenants"]:
+            conn.execute(text("ALTER TABLE tenants ADD COLUMN commercial_limits_json TEXT"))
+        if "ai_tokens_included" not in table_columns["tenants"]:
+            conn.execute(text("ALTER TABLE tenants ADD COLUMN ai_tokens_included INTEGER"))
+            conn.execute(text("UPDATE tenants SET ai_tokens_included = 0 WHERE ai_tokens_included IS NULL"))
+        if "ai_tokens_balance" not in table_columns["tenants"]:
+            conn.execute(text("ALTER TABLE tenants ADD COLUMN ai_tokens_balance INTEGER"))
+            conn.execute(text("UPDATE tenants SET ai_tokens_balance = 0 WHERE ai_tokens_balance IS NULL"))
+        if "ai_tokens_used" not in table_columns["tenants"]:
+            conn.execute(text("ALTER TABLE tenants ADD COLUMN ai_tokens_used INTEGER"))
+            conn.execute(text("UPDATE tenants SET ai_tokens_used = 0 WHERE ai_tokens_used IS NULL"))
+        if "ai_tokens_locked" not in table_columns["tenants"]:
+            conn.execute(text("ALTER TABLE tenants ADD COLUMN ai_tokens_locked BOOLEAN"))
+            conn.execute(text("UPDATE tenants SET ai_tokens_locked = 0 WHERE ai_tokens_locked IS NULL"))
+        if "ai_tokens_lock_reason" not in table_columns["tenants"]:
+            conn.execute(text("ALTER TABLE tenants ADD COLUMN ai_tokens_lock_reason TEXT"))
+        if "ai_tokens_last_reset_at" not in table_columns["tenants"]:
+            conn.execute(text("ALTER TABLE tenants ADD COLUMN ai_tokens_last_reset_at DATETIME"))
 
         if "commission_amount" not in table_columns["pos_sales"]:
             conn.execute(text("ALTER TABLE pos_sales ADD COLUMN commission_amount NUMERIC(12,2)"))

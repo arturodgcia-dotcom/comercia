@@ -37,6 +37,11 @@ def get_tenant_config(
         commission_enabled=tenant.commission_enabled,
         commission_scope=tenant.commission_scope,
         commission_notes=tenant.commission_notes,
+        commercial_plan_key=tenant.commercial_plan_key,
+        commercial_plan_status=tenant.commercial_plan_status,
+        commercial_limits_json=tenant.commercial_limits_json,
+        ai_tokens_balance=tenant.ai_tokens_balance,
+        ai_tokens_locked=tenant.ai_tokens_locked,
         plan_commission_enabled=bool(plan and plan.commission_enabled),
     )
     return TenantConfigRead.model_validate(payload)

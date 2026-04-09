@@ -828,6 +828,13 @@ export function BrandSetupWizard() {
               <option value="commission_based">Comision por venta</option>
             </select>
           </label>
+          {workflow?.commercial_plan_key ? (
+            <p className="muted">
+              Plan pagado desde Stripe: <strong>{workflow.commercial_plan_key}</strong> ({workflow.commercial_plan_status ?? "sin estado"})
+              {" | "}Creditos IA: {workflow.ai_tokens_balance ?? 0}
+              {" | "}Llave IA: {workflow.ai_tokens_locked ? "Cerrada" : "Abierta"}
+            </p>
+          ) : null}
           {billingSetup.billing_model === "commission_based" ? (
             <>
               <label>

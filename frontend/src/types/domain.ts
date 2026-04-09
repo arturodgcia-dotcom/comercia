@@ -14,6 +14,16 @@ export interface Tenant {
   commission_enabled?: boolean;
   commission_scope?: string;
   commission_notes?: string | null;
+  commercial_plan_key?: string | null;
+  commercial_plan_status?: string;
+  commercial_plan_source?: string | null;
+  commercial_checkout_session_id?: string | null;
+  commercial_limits_json?: string | null;
+  ai_tokens_included?: number;
+  ai_tokens_balance?: number;
+  ai_tokens_used?: number;
+  ai_tokens_locked?: boolean;
+  ai_tokens_lock_reason?: string | null;
 }
 
 export interface User {
@@ -177,6 +187,10 @@ export interface BrandSetupWorkflow {
   commission_enabled?: boolean | null;
   commission_scope?: string | null;
   commission_notes?: string | null;
+  commercial_plan_key?: string | null;
+  commercial_plan_status?: string | null;
+  ai_tokens_balance?: number | null;
+  ai_tokens_locked?: boolean | null;
   flow_type: "with_existing_landing" | "without_landing" | string;
   steps: BrandSetupStepState[];
   assets: BrandSetupAsset[];
@@ -624,6 +638,11 @@ export interface TenantConfig {
   commission_enabled: boolean;
   commission_scope: string;
   commission_notes?: string | null;
+  commercial_plan_key?: string | null;
+  commercial_plan_status?: string | null;
+  limits: Record<string, unknown>;
+  ai_tokens_balance: number;
+  ai_tokens_locked: boolean;
   checkout_badge: string;
   landing_variant: {
     headline: string;
@@ -693,6 +712,8 @@ export interface ReinpiaGlobalKpis {
   total_leads_requiring_followup: number;
   total_leads_requesting_appointment: number;
   total_accountant_notices_pending: number;
+  tenants_with_paid_commercial_plan?: number;
+  tenants_with_locked_ai_tokens?: number;
 }
 
 export interface ReinpiaKpisResponse {
@@ -728,6 +749,12 @@ export interface ReinpiaTenantSummaryRow {
   commission_scope?: string;
   sales_subject_to_commission?: number;
   estimated_commission_amount?: number;
+  commercial_plan_key?: string | null;
+  commercial_plan_status?: string;
+  ai_tokens_included?: number;
+  ai_tokens_balance?: number;
+  ai_tokens_used?: number;
+  ai_tokens_locked?: boolean;
 }
 
 export interface ReinpiaTenantKpis {
@@ -747,6 +774,58 @@ export interface ReinpiaTenantKpis {
   commission_scope?: string;
   sales_subject_to_commission?: number;
   estimated_commission_amount?: number;
+  commercial_plan_key?: string | null;
+  commercial_plan_status?: string;
+  ai_tokens_included?: number;
+  ai_tokens_balance?: number;
+  ai_tokens_used?: number;
+  ai_tokens_locked?: boolean;
+}
+
+export interface CommercialPlan {
+  id: string;
+  name: string;
+  tier: string;
+  billing_model: string;
+  commission_enabled: boolean;
+  commission_percentage: string;
+  support: string;
+  limits: Record<string, unknown>;
+  price_without_tax_mxn: string;
+  tax_rate: string;
+  tax_amount_mxn: string;
+  price_with_tax_mxn: string;
+}
+
+export interface CommercialAddon {
+  id: string;
+  name: string;
+  price_without_tax_mxn: string;
+  tax_rate: string;
+  tax_amount_mxn: string;
+  price_with_tax_mxn: string;
+}
+
+export interface CommercialPlanCatalog {
+  iva_rate: string;
+  plans: CommercialPlan[];
+  addons: CommercialAddon[];
+}
+
+export interface TenantCommercialStatus {
+  tenant_id: number;
+  commercial_plan_key?: string | null;
+  commercial_plan_status: string;
+  commercial_plan_source?: string | null;
+  billing_model: string;
+  commission_enabled: boolean;
+  commission_percentage: string;
+  limits: Record<string, unknown>;
+  ai_tokens_included: number;
+  ai_tokens_balance: number;
+  ai_tokens_used: number;
+  ai_tokens_locked: boolean;
+  ai_tokens_lock_reason?: string | null;
 }
 
 export interface ReinpiaSubscription {

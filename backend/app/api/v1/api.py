@@ -9,6 +9,7 @@ from app.api.v1.endpoints import (
     brand_diagnostics,
     brand_setup,
     categories,
+    commercial_plans,
     comercia_public,
     checkout,
     contracts,
@@ -48,6 +49,7 @@ api_router.include_router(tenant_config.router, prefix="/tenant", tags=["tenant-
 api_router.include_router(plans.router, prefix="/plans", tags=["plans"])
 api_router.include_router(stripe_config.router, prefix="/stripe-config", tags=["stripe-config"])
 api_router.include_router(categories.router, prefix="/categories", tags=["categories"])
+api_router.include_router(commercial_plans.router, prefix="/commercial-plans", tags=["commercial-plans"])
 api_router.include_router(products.router, prefix="/products", tags=["products"])
 api_router.include_router(reports.router, prefix="/reports", tags=["reports"])
 api_router.include_router(storefront.router, prefix="/storefront", tags=["storefront"])

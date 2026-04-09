@@ -7,7 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
-from app.models.models import Appointment, Coupon, Order, ServiceOffering, StripeConfig
+from app.models.models import Appointment, Coupon, Order, ServiceOffering, StripeConfig, Tenant
 from app.services.coupon_service import increment_coupon_usage
 from app.services.email_service import send_purchase_receipt
 from app.services.loyalty_service import apply_points_for_order, consume_points
@@ -15,6 +15,7 @@ from app.services.notifications_service import send_email_notification, send_wha
 from app.services.security_hooks import on_checkout_payment_failed, on_webhook_verification_failed
 from app.services.stripe_service import construct_webhook_event
 from app.services.automation_service import log_automation_event
+from app.services.commercial_plan_service import apply_plan_to_tenant
 
 router = APIRouter()
 
@@ -30,6 +31,9 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)) -> dic
     data_object = event.get("data", {}).get("object", {})
 
     if event_type == "checkout.session.completed":
+        if _is_commercial_plan_session(data_object):
+            _apply_commercial_plan_checkout(db, data_object)
+            return {"received": True}
         order = _find_order_from_checkout_session(db, data_object)
         if order:
             was_paid = order.status == "paid"
@@ -87,6 +91,30 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)) -> dic
             on_checkout_payment_failed(db, tenant_id=order.tenant_id, source_ip=source_ip)
 
     return {"received": True}
+
+
+def _is_commercial_plan_session(session_obj: dict) -> bool:
+    metadata = session_obj.get("metadata", {})
+    return str(metadata.get("kind") or "").strip().lower() == "tenant_commercial_plan"
+
+
+def _apply_commercial_plan_checkout(db: Session, session_obj: dict) -> None:
+    metadata = session_obj.get("metadata", {})
+    tenant_id = metadata.get("tenant_id")
+    plan_key = metadata.get("plan_key")
+    if not tenant_id or not plan_key:
+        return
+    tenant = db.get(Tenant, int(tenant_id))
+    if not tenant:
+        return
+    apply_plan_to_tenant(
+        tenant,
+        plan_key=str(plan_key),
+        source="stripe_checkout",
+        checkout_session_id=str(session_obj.get("id") or ""),
+    )
+    db.add(tenant)
+    db.commit()
 
 
 def _resolve_event(db: Session, payload: bytes, sig_header: str | None, source_ip: str | None = None) -> dict:

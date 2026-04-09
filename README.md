@@ -766,3 +766,24 @@ Variables backend (`backend/.env`):
   - ventas sujetas a comision
   - comision acumulada estimada
   - marcas bajo modelo por comision
+
+## Actualizacion ejecucion 44 (Plan comercial desde Stripe + control de creditos IA)
+- Se crea arquitectura oficial de plan comercial por tenant con activacion desde Stripe Checkout:
+  - endpoint catalogo: `GET /api/v1/commercial-plans/catalog`
+  - endpoint checkout plan: `POST /api/v1/commercial-plans/create-checkout-session`
+  - webhook `checkout.session.completed` aplica plan pagado en tenant cuando `metadata.kind=tenant_commercial_plan`
+- Nuevos campos persistidos por tenant:
+  - `commercial_plan_key`, `commercial_plan_status`, `commercial_plan_source`, `commercial_checkout_session_id`
+  - `commercial_limits_json`
+  - `ai_tokens_included`, `ai_tokens_balance`, `ai_tokens_used`, `ai_tokens_locked`, `ai_tokens_lock_reason`
+- Catalogo oficial incorporado (con IVA) para:
+  - `fixed_subscription` (basic/growth/premium)
+  - `commission_based` (basic/growth/premium)
+  - add-ons oficiales (usuarios, agentes IA, marcas, productos, sucursales, creditos IA, soporte)
+- Control interno de “llave” de creditos IA:
+  - `POST /api/v1/commercial-plans/tenant/{tenant_id}/tokens/consume`
+  - `POST /api/v1/commercial-plans/tenant/{tenant_id}/tokens/topup`
+  - `POST /api/v1/commercial-plans/tenant/{tenant_id}/tokens/lock`
+- Wizard/panel ahora exponen visibilidad del plan pagado y estado de creditos IA.
+- Landing principal agrega nueva seccion por bloques:
+  - Diagnostico comercial y cotizacion inteligente (basado en contexto/kpis/riesgo/rentabilidad).

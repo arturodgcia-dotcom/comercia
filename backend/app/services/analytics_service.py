@@ -83,6 +83,12 @@ def get_global_kpis(db: Session, date_from: datetime | None = None, date_to: dat
         "total_appointments": appointments_total,
         "total_logistics_orders": logistics_total,
         "delivered_logistics_orders": logistics_delivered,
+        "tenants_with_paid_commercial_plan": int(
+            db.scalar(select(func.count(Tenant.id)).where(Tenant.commercial_plan_status == "paid")) or 0
+        ),
+        "tenants_with_locked_ai_tokens": int(
+            db.scalar(select(func.count(Tenant.id)).where(Tenant.ai_tokens_locked.is_(True))) or 0
+        ),
         **commission_kpis,
     }
 
@@ -146,6 +152,12 @@ def get_tenant_kpis(db: Session, tenant_id: int, date_from: datetime | None = No
         "commission_scope": tenant.commission_scope if tenant else "ventas_online_pagadas",
         "sales_subject_to_commission": _to_float(sales_subject_to_commission),
         "estimated_commission_amount": _to_float(estimated_commission),
+        "commercial_plan_key": tenant.commercial_plan_key if tenant else None,
+        "commercial_plan_status": tenant.commercial_plan_status if tenant else "not_purchased",
+        "ai_tokens_included": int(tenant.ai_tokens_included or 0) if tenant else 0,
+        "ai_tokens_balance": int(tenant.ai_tokens_balance or 0) if tenant else 0,
+        "ai_tokens_used": int(tenant.ai_tokens_used or 0) if tenant else 0,
+        "ai_tokens_locked": bool(tenant.ai_tokens_locked) if tenant else False,
     }
 
 
@@ -441,6 +453,12 @@ def get_tenants_summary(
                 "commission_scope": kpis["commission_scope"],
                 "sales_subject_to_commission": kpis["sales_subject_to_commission"],
                 "estimated_commission_amount": kpis["estimated_commission_amount"],
+                "commercial_plan_key": kpis["commercial_plan_key"],
+                "commercial_plan_status": kpis["commercial_plan_status"],
+                "ai_tokens_included": kpis["ai_tokens_included"],
+                "ai_tokens_balance": kpis["ai_tokens_balance"],
+                "ai_tokens_used": kpis["ai_tokens_used"],
+                "ai_tokens_locked": kpis["ai_tokens_locked"],
             }
         )
     return summary

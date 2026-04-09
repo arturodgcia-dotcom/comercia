@@ -17,6 +17,7 @@ from app.services.tenant_config_service import (
     normalize_commission_rules,
     normalize_subscription_plan,
 )
+from app.services.commercial_plan_service import apply_plan_to_tenant
 
 router = APIRouter()
 
@@ -69,7 +70,17 @@ def create_tenant(
         )
     )
     values["subscription_plan_json"] = json.dumps(normalize_subscription_plan(values.get("subscription_plan_json")))
+    values.setdefault("commercial_plan_status", "not_purchased")
     tenant = Tenant(**values)
+    if values.get("commercial_plan_key"):
+        try:
+            apply_plan_to_tenant(
+                tenant,
+                plan_key=str(values["commercial_plan_key"]),
+                source=str(values.get("commercial_plan_source") or "manual_admin"),
+            )
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
     db.add(tenant)
     db.flush()
     initialize_storefront(db, tenant)
@@ -134,6 +145,20 @@ def update_tenant(
         )
     if "subscription_plan_json" in changes:
         tenant.subscription_plan_json = json.dumps(normalize_subscription_plan(changes.get("subscription_plan_json")))
+    if "commercial_plan_key" in changes and changes.get("commercial_plan_key"):
+        try:
+            apply_plan_to_tenant(
+                tenant,
+                plan_key=str(changes["commercial_plan_key"]),
+                source=str(changes.get("commercial_plan_source") or "manual_admin"),
+                checkout_session_id=tenant.commercial_checkout_session_id,
+            )
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+    if "ai_tokens_locked" in changes and changes["ai_tokens_locked"] is not None:
+        tenant.ai_tokens_locked = bool(changes["ai_tokens_locked"])
+    if "ai_tokens_lock_reason" in changes:
+        tenant.ai_tokens_lock_reason = changes["ai_tokens_lock_reason"]
     db.commit()
     db.refresh(tenant)
     return tenant

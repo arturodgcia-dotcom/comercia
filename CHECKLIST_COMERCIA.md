@@ -472,3 +472,30 @@
 - [x] Panel de marca muestra modelo activo y explicacion de comision
 - [x] Reportes/pagos reconocen si aplica comision y exponen calculo estimado base
 - [x] Validacion ejecutada: backend compile + frontend build
+
+## Entregables ejecucion 44 (Plan comercial desde Stripe + llave de creditos IA)
+- [x] Catalogo oficial de planes comerciales centralizado (`fixed_subscription` y `commission_based`, tiers basic/growth/premium)
+- [x] Catalogo de add-ons oficial con calculo de IVA en backend
+- [x] Nuevo endpoint de catalogo: `GET /api/v1/commercial-plans/catalog`
+- [x] Nuevo endpoint checkout de plan: `POST /api/v1/commercial-plans/create-checkout-session`
+- [x] Webhook Stripe aplica plan pagado cuando `metadata.kind=tenant_commercial_plan`
+- [x] Persistencia tenant de plan comercial y limites:
+  - [x] `commercial_plan_key`
+  - [x] `commercial_plan_status`
+  - [x] `commercial_plan_source`
+  - [x] `commercial_checkout_session_id`
+  - [x] `commercial_limits_json`
+- [x] Persistencia tenant para control de creditos IA:
+  - [x] `ai_tokens_included`
+  - [x] `ai_tokens_balance`
+  - [x] `ai_tokens_used`
+  - [x] `ai_tokens_locked`
+  - [x] `ai_tokens_lock_reason`
+- [x] Endpoints internos de llave/consumo de creditos IA:
+  - [x] consumir
+  - [x] recargar
+  - [x] abrir/cerrar llave
+- [x] Wizard muestra plan pagado desde Stripe y estado de creditos IA
+- [x] Panel global detalle de marca muestra plan comercial y creditos IA
+- [x] Seccion nueva en landing principal (bloque 1 marketing): `#marketing-diagnostico`
+- [x] Validacion ejecutada: backend compile + frontend build

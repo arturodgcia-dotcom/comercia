@@ -196,6 +196,34 @@ const AI_PROMPTS = [
   "Prompt distribuidores: Crea mensaje de onboarding para nuevos comercios interesados en compra por volumen."
 ];
 
+const MARKETING_DIAGNOSTIC_STEPS = [
+  {
+    title: "1. Contexto de marca",
+    body: "Leemos industria, ciudad, propuesta de valor, ticket promedio y canal real de conversion para evitar estrategia generica."
+  },
+  {
+    title: "2. Diagnostico comercial",
+    body: "Evaluamos madurez digital, complejidad operativa y potencial para definir una ruta de ejecucion rentable."
+  },
+  {
+    title: "3. KPIs y proyeccion",
+    body: "Estimamos visitas, clics, leads, carritos o compras con rangos realistas y supuestos claros por periodo."
+  },
+  {
+    title: "4. Cotizacion recomendada",
+    body: "La propuesta protege margen, contempla carga operativa y evita subcotizar proyectos con alta exigencia."
+  }
+];
+
+const MARKETING_MIN_KPIS = [
+  "Publicaciones emitidas por canal",
+  "Visitas a landing o tienda",
+  "Clics a CTA clave (WhatsApp, formulario, checkout)",
+  "Leads, carritos o compras completadas",
+  "Tasa de conversion por canal",
+  "Ticket promedio y productos con mayor traccion",
+];
+
 const TESTIMONIALS = [
   {
     quote:
@@ -764,6 +792,35 @@ export function ComerciaLandingPage() {
               <li key={prompt}>{prompt}</li>
             ))}
           </ul>
+        </article>
+      </section>
+
+      <section className="cp-section" id="marketing-diagnostico">
+        <header className="cp-section-head">
+          <p className="cp-kicker">7. Diagnostico y cotizacion comercial IA</p>
+          <h2>Tu propuesta sale con metodo ejecutivo, no con precios improvisados</h2>
+          <p>
+            COMERCIA integra un flujo consultivo para analizar marca, estimar KPIs viables y recomendar una cotizacion mensual rentable.
+          </p>
+        </header>
+        <div className="cp-pillars">
+          {MARKETING_DIAGNOSTIC_STEPS.map((step) => (
+            <article key={step.title}>
+              <h3>{step.title}</h3>
+              <p>{step.body}</p>
+            </article>
+          ))}
+        </div>
+        <article className="cp-plan-contact">
+          <h3>KPIs minimos cuando aun no hay integraciones completas</h3>
+          <ul>
+            {MARKETING_MIN_KPIS.map((kpi) => (
+              <li key={kpi}>{kpi}</li>
+            ))}
+          </ul>
+          <p>
+            Resultado final: resumen mensual accionable por marca con actividad ejecutada, conversion, resultado comercial, hallazgos y siguiente ajuste.
+          </p>
         </article>
       </section>
 
