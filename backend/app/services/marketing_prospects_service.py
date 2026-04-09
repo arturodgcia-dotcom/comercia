@@ -4,11 +4,16 @@ import json
 from datetime import datetime
 from decimal import Decimal
 
-from sqlalchemy import select
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
 from app.models.models import MarketingProspect
-from app.schemas.marketing_prospects import MarketingProspectCreate, MarketingProspectInternalSection, MarketingProspectRead
+from app.schemas.marketing_prospects import (
+    MarketingProspectCreate,
+    MarketingProspectInternalSection,
+    MarketingProspectRead,
+    MarketingProspectStatusEvent,
+)
 from app.services.automation_service import log_automation_event
 from app.services.internal_alerts_service import create_internal_alert
 
@@ -96,7 +101,13 @@ def _compute_internal_prequote(payload: MarketingProspectCreate) -> dict:
         risks.append("Base digital inicial: se recomienda fase de arranque antes de escalar presupuesto.")
 
     sections = [
-        {"title": "1. Resumen del negocio", "body": f"{payload.company_brand} en {payload.location or 'ubicacion por definir'}, giro {payload.industry or 'por definir'}."},
+        {
+            "title": "1. Resumen del negocio",
+            "body": (
+                f"{payload.company_brand} en {payload.location or 'ubicacion por definir'}, "
+                f"giro {payload.industry or 'por definir'} y objetivo principal {payload.main_goal}."
+            ),
+        },
         {"title": "2. Diagnostico comercial", "body": "Se detecta necesidad de estructura comercial orientada a captacion y conversion por canal."},
         {"title": "3. Nivel de oportunidad detectado", "body": f"Oportunidad {opportunity_level} por ticket promedio, urgencia y contexto digital."},
         {"title": "4. Estrategia recomendada", "body": "Ejecucion mensual con mensajes de valor, optimizacion continua y seguimiento comercial."},
@@ -129,11 +140,28 @@ def _deserialize_list(raw: str | None) -> list:
         return []
 
 
+def _build_status_event(status: str, note: str | None = None) -> dict:
+    return {
+        "status": status,
+        "changed_at": datetime.utcnow().isoformat(),
+        "note": note.strip() if note else None,
+    }
+
+
 def _to_read_model(row: MarketingProspect) -> MarketingProspectRead:
     sections = [
         MarketingProspectInternalSection(**section)
         for section in _deserialize_list(row.internal_sections_json)
         if isinstance(section, dict)
+    ]
+    history = [
+        MarketingProspectStatusEvent(
+            status=str(item.get("status", "")),
+            changed_at=datetime.fromisoformat(str(item.get("changed_at"))),
+            note=item.get("note"),
+        )
+        for item in _deserialize_list(row.status_history_json)
+        if isinstance(item, dict) and item.get("status") and item.get("changed_at")
     ]
     return MarketingProspectRead(
         id=row.id,
@@ -144,6 +172,7 @@ def _to_read_model(row: MarketingProspect) -> MarketingProspectRead:
         location=row.location,
         industry=row.industry,
         sells=row.sells,
+        main_goal=row.main_goal,
         desired_conversion_channel=row.desired_conversion_channel,
         active_social_networks=row.active_social_networks,
         products_to_promote=row.products_to_promote,
@@ -159,6 +188,7 @@ def _to_read_model(row: MarketingProspect) -> MarketingProspectRead:
         wants_custom_proposal=row.wants_custom_proposal,
         client_notes=row.client_notes,
         status=row.status,
+        status_history=history,
         internal_notes=row.internal_notes,
         contacted_at=row.contacted_at,
         responsible_user_id=row.responsible_user_id,
@@ -185,6 +215,7 @@ def create_marketing_prospect(db: Session, payload: MarketingProspectCreate) -> 
         location=payload.location.strip() if payload.location else None,
         industry=payload.industry.strip() if payload.industry else None,
         sells=payload.sells.strip().lower() if payload.sells else "productos",
+        main_goal=payload.main_goal.strip().lower() if payload.main_goal else "ventas",
         desired_conversion_channel=payload.desired_conversion_channel.strip().lower() if payload.desired_conversion_channel else "ecommerce",
         active_social_networks=payload.active_social_networks.strip() if payload.active_social_networks else None,
         products_to_promote=int(payload.products_to_promote),
@@ -200,6 +231,7 @@ def create_marketing_prospect(db: Session, payload: MarketingProspectCreate) -> 
         wants_custom_proposal=bool(payload.wants_custom_proposal),
         client_notes=payload.client_notes.strip() if payload.client_notes else None,
         status="nuevo",
+        status_history_json=json.dumps([_build_status_event("nuevo", "captura inicial")], ensure_ascii=False),
         channel=(payload.channel or "landing_marketing_form").strip().lower(),
         internal_summary=computed["summary"],
         internal_sections_json=json.dumps(computed["sections"], ensure_ascii=False),
@@ -242,6 +274,9 @@ def list_marketing_prospects(
     status: str | None = None,
     urgency: str | None = None,
     channel: str | None = None,
+    date_from: datetime | None = None,
+    date_to: datetime | None = None,
+    search: str | None = None,
 ) -> list[MarketingProspectRead]:
     query = select(MarketingProspect)
     filters = []
@@ -251,6 +286,19 @@ def list_marketing_prospects(
         filters.append(MarketingProspect.urgency == urgency.strip().lower())
     if channel:
         filters.append(MarketingProspect.desired_conversion_channel == channel.strip().lower())
+    if date_from:
+        filters.append(MarketingProspect.created_at >= date_from)
+    if date_to:
+        filters.append(MarketingProspect.created_at <= date_to)
+    if search and search.strip():
+        q = f"%{search.strip().lower()}%"
+        filters.append(
+            or_(
+                func.lower(MarketingProspect.contact_name).like(q),
+                func.lower(MarketingProspect.company_brand).like(q),
+                func.lower(MarketingProspect.contact_email).like(q),
+            )
+        )
     rows = db.scalars(query.where(*filters).order_by(MarketingProspect.id.desc())).all()
     return [_to_read_model(row) for row in rows]
 
@@ -276,7 +324,11 @@ def update_marketing_prospect(
         return None
     if status is not None:
         normalized_status = status.strip().lower()
-        row.status = normalized_status if normalized_status in STATUS_LABELS else row.status
+        if normalized_status in STATUS_LABELS and normalized_status != row.status:
+            row.status = normalized_status
+            history = _deserialize_list(row.status_history_json)
+            history.append(_build_status_event(normalized_status, "actualizacion manual"))
+            row.status_history_json = json.dumps(history, ensure_ascii=False)
     if internal_notes is not None:
         row.internal_notes = internal_notes.strip() if internal_notes else None
     if contacted_at is not None:

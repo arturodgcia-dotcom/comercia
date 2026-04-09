@@ -539,9 +539,20 @@ def list_marketing_prospects_endpoint(
     status: str | None = None,
     urgency: str | None = None,
     channel: str | None = None,
+    date_from: datetime | None = None,
+    date_to: datetime | None = None,
+    search: str | None = None,
     db: Session = Depends(get_db),
 ):
-    return list_marketing_prospects(db, status=status, urgency=urgency, channel=channel)
+    return list_marketing_prospects(
+        db,
+        status=status,
+        urgency=urgency,
+        channel=channel,
+        date_from=date_from,
+        date_to=date_to,
+        search=search,
+    )
 
 
 @router.get("/marketing-prospects/{prospect_id}", response_model=MarketingProspectRead)

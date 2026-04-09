@@ -11,6 +11,12 @@ class MarketingProspectInternalSection(BaseModel):
     body: str
 
 
+class MarketingProspectStatusEvent(BaseModel):
+    status: str
+    changed_at: datetime
+    note: str | None = None
+
+
 class MarketingProspectCreate(BaseModel):
     contact_name: str = Field(min_length=2, max_length=180)
     contact_email: str = Field(min_length=5, max_length=180)
@@ -19,6 +25,7 @@ class MarketingProspectCreate(BaseModel):
     location: str | None = Field(default=None, max_length=180)
     industry: str | None = Field(default=None, max_length=120)
     sells: str = Field(default="productos", max_length=30)
+    main_goal: str = Field(default="ventas", max_length=40)
     desired_conversion_channel: str = Field(default="ecommerce", max_length=50)
     active_social_networks: str | None = Field(default=None, max_length=255)
     products_to_promote: int = Field(default=1, ge=1, le=20000)
@@ -45,6 +52,7 @@ class MarketingProspectRead(TimestampSchema):
     location: str | None
     industry: str | None
     sells: str
+    main_goal: str
     desired_conversion_channel: str
     active_social_networks: str | None
     products_to_promote: int
@@ -60,6 +68,7 @@ class MarketingProspectRead(TimestampSchema):
     wants_custom_proposal: bool
     client_notes: str | None
     status: str
+    status_history: list[MarketingProspectStatusEvent]
     internal_notes: str | None
     contacted_at: datetime | None
     responsible_user_id: int | None
@@ -78,4 +87,3 @@ class MarketingProspectUpdate(BaseModel):
     internal_notes: str | None = Field(default=None, max_length=5000)
     contacted_at: datetime | None = None
     responsible_user_id: int | None = None
-

@@ -921,6 +921,12 @@ export interface MarketingProspectInternalSection {
   body: string;
 }
 
+export interface MarketingProspectStatusEvent {
+  status: string;
+  changed_at: string;
+  note?: string | null;
+}
+
 export interface MarketingProspect {
   id: number;
   contact_name: string;
@@ -930,6 +936,7 @@ export interface MarketingProspect {
   location?: string | null;
   industry?: string | null;
   sells: string;
+  main_goal: string;
   desired_conversion_channel: string;
   active_social_networks?: string | null;
   products_to_promote: number;
@@ -945,6 +952,7 @@ export interface MarketingProspect {
   wants_custom_proposal: boolean;
   client_notes?: string | null;
   status: string;
+  status_history: MarketingProspectStatusEvent[];
   internal_notes?: string | null;
   contacted_at?: string | null;
   responsible_user_id?: number | null;

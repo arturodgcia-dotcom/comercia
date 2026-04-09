@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { useAuth } from "../app/AuthContext";
 import { PageHeader } from "../components/PageHeader";
 import { api } from "../services/api";
@@ -23,12 +23,24 @@ const URGENCY_OPTIONS = [
   { label: "Baja", value: "baja" },
 ];
 
+const CHANNEL_OPTIONS = [
+  { label: "Todos", value: "" },
+  { label: "Landing", value: "landing" },
+  { label: "Ecommerce", value: "ecommerce" },
+  { label: "WhatsApp", value: "whatsapp" },
+  { label: "Formulario", value: "formulario" },
+  { label: "POS", value: "pos" },
+];
+
 export function ReinpiaMarketingProspectsPage() {
   const { token } = useAuth();
   const [rows, setRows] = useState<MarketingProspect[]>([]);
   const [selected, setSelected] = useState<MarketingProspect | null>(null);
   const [status, setStatus] = useState("");
   const [urgency, setUrgency] = useState("");
+  const [channel, setChannel] = useState("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -42,6 +54,10 @@ export function ReinpiaMarketingProspectsPage() {
     const params = new URLSearchParams();
     if (status) params.set("status", status);
     if (urgency) params.set("urgency", urgency);
+    if (channel) params.set("channel", channel);
+    if (dateFrom) params.set("date_from", `${dateFrom}T00:00:00`);
+    if (dateTo) params.set("date_to", `${dateTo}T23:59:59`);
+    if (search.trim()) params.set("search", search.trim());
     api
       .getReinpiaMarketingProspects(token, params.toString())
       .then((data) => {
@@ -54,18 +70,7 @@ export function ReinpiaMarketingProspectsPage() {
 
   useEffect(() => {
     load();
-  }, [token, status, urgency]);
-
-  const filtered = useMemo(() => {
-    if (!search.trim()) return rows;
-    const q = search.trim().toLowerCase();
-    return rows.filter((row) =>
-      [row.contact_name, row.company_brand, row.contact_email, row.contact_phone ?? "", row.industry ?? "", row.desired_conversion_channel]
-        .join(" ")
-        .toLowerCase()
-        .includes(q)
-    );
-  }, [rows, search]);
+  }, [token, status, urgency, channel, dateFrom, dateTo]);
 
   const openDetail = async (row: MarketingProspect) => {
     if (!token) return;
@@ -127,6 +132,22 @@ export function ReinpiaMarketingProspectsPage() {
             </select>
           </label>
           <label>
+            Canal deseado
+            <select value={channel} onChange={(event) => setChannel(event.target.value)}>
+              {CHANNEL_OPTIONS.map((item) => (
+                <option key={item.value} value={item.value}>{item.label}</option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Fecha desde
+            <input type="date" value={dateFrom} onChange={(event) => setDateFrom(event.target.value)} />
+          </label>
+          <label>
+            Fecha hasta
+            <input type="date" value={dateTo} onChange={(event) => setDateTo(event.target.value)} />
+          </label>
+          <label>
             Buscar
             <input
               placeholder="Nombre, empresa, correo o canal"
@@ -154,25 +175,29 @@ export function ReinpiaMarketingProspectsPage() {
                   <th>Fecha</th>
                   <th>Empresa</th>
                   <th>Contacto</th>
+                  <th>Ubicacion</th>
+                  <th>Objetivo</th>
                   <th>Canal</th>
                   <th>Urgencia</th>
                   <th>Estatus</th>
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((row) => (
+                {rows.map((row) => (
                   <tr key={row.id} onClick={() => void openDetail(row)} style={{ cursor: "pointer" }}>
                     <td>{new Date(row.created_at).toLocaleString("es-MX")}</td>
                     <td>{row.company_brand}</td>
                     <td>{row.contact_name}</td>
+                    <td>{row.location ?? "-"}</td>
+                    <td>{row.main_goal}</td>
                     <td>{row.desired_conversion_channel}</td>
                     <td>{row.urgency}</td>
                     <td>{row.status}</td>
                   </tr>
                 ))}
-                {!filtered.length ? (
+                {!rows.length ? (
                   <tr>
-                    <td colSpan={6}>No hay prospectos para los filtros actuales.</td>
+                    <td colSpan={8}>No hay prospectos para los filtros actuales.</td>
                   </tr>
                 ) : null}
               </tbody>
@@ -191,6 +216,7 @@ export function ReinpiaMarketingProspectsPage() {
               <p><strong>Telefono:</strong> {selected.contact_phone ?? "-"}</p>
               <p><strong>Ubicacion:</strong> {selected.location ?? "-"}</p>
               <p><strong>Industria:</strong> {selected.industry ?? "-"}</p>
+              <p><strong>Objetivo principal:</strong> {selected.main_goal}</p>
               <p><strong>Canal deseado:</strong> {selected.desired_conversion_channel}</p>
               <p><strong>Urgencia:</strong> {selected.urgency}</p>
               <p><strong>Seguimiento:</strong> {selected.followup_level}</p>
@@ -219,6 +245,15 @@ export function ReinpiaMarketingProspectsPage() {
               <ul className="marketing-list">
                 {selected.risks.map((item) => (
                   <li key={item}>{item}</li>
+                ))}
+              </ul>
+              <h4>Historial simple de estatus</h4>
+              <ul className="marketing-list">
+                {selected.status_history.map((item, index) => (
+                  <li key={`${item.changed_at}-${index}`}>
+                    {new Date(item.changed_at).toLocaleString("es-MX")} - {item.status}
+                    {item.note ? ` (${item.note})` : ""}
+                  </li>
                 ))}
               </ul>
               <label>
