@@ -502,6 +502,7 @@ export function ComerciaLandingPage() {
         location: marketingBrief.location,
         industry: marketingBrief.industry,
         sells: marketingBrief.sells,
+        main_goal: marketingBrief.main_goal,
         desired_conversion_channel: marketingBrief.conversion_channel,
         active_social_networks: marketingBrief.active_social_networks,
         products_to_promote: marketingBrief.products_to_push,
@@ -516,8 +517,7 @@ export function ComerciaLandingPage() {
         needs_commercial_tracking: marketingBrief.needs_commercial_tracking,
         wants_custom_proposal: marketingBrief.wants_custom_proposal,
         client_notes:
-          `objetivo=${marketingBrief.main_goal}; seguimiento=${marketingBrief.followup_level}; ` +
-          `sells_to=${marketingBrief.sells_to}; notas=${marketingBrief.notes || "-"}`,
+          `seguimiento=${marketingBrief.followup_level}; sells_to=${marketingBrief.sells_to}; notas=${marketingBrief.notes || "-"}`,
         channel: "landing_marketing_form",
       });
       setMarketingSuccess("Solicitud recibida. Tu informacion sera revisada por nuestro equipo para preparar una propuesta inicial.");
@@ -871,10 +871,10 @@ export function ComerciaLandingPage() {
       <section className="cp-section" id="marketing-diagnostico">
         <header className="cp-section-head">
           <p className="cp-kicker">7. Mercadotecnia digital</p>
-          <h2>Impulsa tu marca con estrategia comercial y campanas digitales</h2>
+          <h2>Mercadotecnia digital para impulsar tu marca</h2>
           <p>
-            Ayudamos a marcas a posicionarse mejor, atraer clientes calificados y convertir con mayor consistencia.
-            Analizamos el contexto comercial de tu negocio y un especialista revisa tu caso para preparar la propuesta inicial.
+            Analizamos tu contexto comercial, tus canales y tu objetivo para proponerte una ruta realista de
+            posicionamiento, atraccion y conversion.
           </p>
         </header>
         <div className="cp-marketing-grid">
@@ -893,6 +893,9 @@ export function ComerciaLandingPage() {
               <li>Negocios con canal distribuidor que requieren estructura comercial.</li>
               <li>Operaciones con ventas mixtas: landing, ecommerce, WhatsApp o POS.</li>
             </ul>
+            <p className="muted">
+              Completa este formulario y nuestro equipo revisara tu caso para preparar una propuesta inicial de trabajo.
+            </p>
           </article>
           <article className="cp-marketing-card">
             <h3>Solicitud de estrategia y propuesta inicial</h3>
@@ -921,7 +924,7 @@ export function ComerciaLandingPage() {
               <label className="checkbox"><input type="checkbox" checked={marketingBrief.wants_custom_proposal} onChange={(e) => setMarketingBrief((p) => ({ ...p, wants_custom_proposal: e.target.checked }))} />Quiere propuesta personalizada</label>
               <label>Notas del cliente<textarea value={marketingBrief.notes} onChange={(e) => setMarketingBrief((p) => ({ ...p, notes: e.target.value }))} /></label>
               <p className="muted">Tu informacion sera revisada por nuestro equipo para preparar una propuesta inicial.</p>
-              <button className="button" type="submit" disabled={marketingSubmitting}>{marketingSubmitting ? "Enviando..." : "Enviar solicitud de mercadotecnia"}</button>
+              <button className="button" type="submit" disabled={marketingSubmitting}>{marketingSubmitting ? "Enviando..." : "Solicitar revision comercial"}</button>
             </form>
             {marketingError ? <p className="error">{marketingError}</p> : null}
             {marketingSuccess ? <p className="cp-success">{marketingSuccess}</p> : null}
