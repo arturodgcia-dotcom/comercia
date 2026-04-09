@@ -279,3 +279,23 @@ Nuevos endpoints:
 - Panel de marca conectado al motor oficial:
   - muestra plantilla activa por canal y rutas oficiales reales
   - preview de distribuidores separado en `/store/:tenantSlug/distribuidores?preview=1`
+
+## Actualizacion modelos comerciales por marca (Ejecucion 43)
+- Modelo comercial por tenant | Estado: funcional
+  - `billing_model`: `fixed_subscription` o `commission_based`
+  - `commission_percentage`, `commission_enabled`, `commission_scope`, `commission_notes`
+- Wizard de setup | Estado: funcional
+  - paso identidad incluye selector:
+    - `Cuota fija`
+    - `Comision por venta`
+  - si aplica comision: porcentaje + notas
+- Registro de marca (`/reinpia/brands/new`) | Estado: funcional
+  - alta inicial con modelo comercial y porcentaje de comision
+- Panel global | Estado: funcional
+  - `ReinpiaTenantsPage`, `ReinpiaTenantDetailPage`, `ReinpiaPaymentsPage` y reportes muestran:
+    - modelo comercial
+    - porcentaje configurado
+    - ventas sujetas
+    - comision estimada
+- Panel de marca | Estado: funcional
+  - `BrandChannelPages` muestra modelo activo y explicacion por canal

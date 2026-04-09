@@ -749,3 +749,20 @@ Variables backend (`backend/.env`):
   - muestra plantilla activa por canal
   - muestra rutas oficiales y preview tenant-aware
   - regeneraciones mantienen plantilla oficial configurada
+
+## Actualizacion ejecucion 43 (Modelos comerciales por marca)
+- Se agrego configuracion comercial oficial por tenant:
+  - `billing_model` (`fixed_subscription` | `commission_based`)
+  - `commission_percentage`
+  - `commission_enabled`
+  - `commission_scope`
+  - `commission_notes`
+- Reglas de negocio aplicadas:
+  - `fixed_subscription` => `commission_enabled=false`
+  - `commission_based` => `commission_enabled=true`
+- Wizard y alta de marca ya permiten configurar modelo comercial.
+- Panel global y panel de marca muestran modelo activo, porcentaje y estado de comision.
+- Reportes/pagos globales incluyen:
+  - ventas sujetas a comision
+  - comision acumulada estimada
+  - marcas bajo modelo por comision

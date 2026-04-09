@@ -635,3 +635,36 @@ Integracion de setup y operacion:
   - ruta oficial
   - preview tenant-aware
   - estado y ultima regeneracion
+
+## Ejecucion 43: arquitectura de modelos comerciales por tenant
+Objetivo:
+- habilitar dos modelos comerciales oficiales por marca:
+  - `fixed_subscription`
+  - `commission_based`
+
+Persistencia estructural:
+- columnas en `tenants`:
+  - `billing_model`
+  - `commission_percentage`
+  - `commission_enabled`
+  - `commission_scope`
+  - `commission_notes`
+- sincronizacion en workflow (`StorefrontConfig.config_json`) via `brand_setup`:
+  - `billing_model`
+  - `commission_percentage`
+  - `commission_enabled`
+  - `commission_scope`
+  - `commission_notes`
+
+Reglas de coherencia:
+- `fixed_subscription` fuerza `commission_enabled=false`
+- `commission_based` fuerza `commission_enabled=true`
+- `plan_type` legado se sincroniza automaticamente:
+  - `commission_based` -> `commission`
+  - `fixed_subscription` -> `subscription`
+
+Superficies integradas:
+- alta de marca (`/reinpia/brands/new`)
+- wizard de setup (paso identidad)
+- panel global (marcas, detalle, pagos, reportes)
+- panel de marca (canales)

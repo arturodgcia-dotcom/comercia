@@ -461,3 +461,14 @@
 - [x] Preview de distribuidores separado (`/store/:tenantSlug/distribuidores?preview=1`)
 - [x] Compatibilidad con flujo legacy (`workflow.selected_template`) mantenida sin romper setup previo
 - [x] Documentacion actualizada (`README.md`, `docs/modules.md`, `docs/architecture.md`, `CHECKLIST_COMERCIA.md`)
+
+## Entregables ejecucion 43 (Modelo comercial por marca)
+- [x] Persistencia en tenant de `billing_model`, `commission_percentage`, `commission_enabled`, `commission_scope`, `commission_notes`
+- [x] Regla aplicada: `fixed_subscription` sin comision y `commission_based` con comision
+- [x] Alta de marca (`/reinpia/brands/new`) con seleccion de modelo comercial
+- [x] Wizard (`BrandSetupWizard`) con seleccion de modelo y porcentaje/notas cuando aplica
+- [x] `brand_setup` sincroniza modelo comercial en workflow y tenant
+- [x] Panel global muestra modelo, porcentaje, ventas sujetas y comision estimada
+- [x] Panel de marca muestra modelo activo y explicacion de comision
+- [x] Reportes/pagos reconocen si aplica comision y exponen calculo estimado base
+- [x] Validacion ejecutada: backend compile + frontend build
