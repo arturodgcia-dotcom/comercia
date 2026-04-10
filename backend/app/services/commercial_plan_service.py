@@ -5,6 +5,7 @@ from datetime import datetime
 from decimal import Decimal, ROUND_HALF_UP
 from typing import Any
 
+from app.core.config import get_settings
 from app.models.models import Tenant
 
 IVA_RATE = Decimal("0.16")
@@ -12,14 +13,17 @@ IVA_RATE = Decimal("0.16")
 DEFAULT_SCOPE = "ventas_online_pagadas"
 
 COMMERCIAL_PLAN_CATALOG: dict[str, dict[str, Any]] = {
-    "fixed_subscription_basic": {
+    "basic_fixed": {
         "id": "fixed_subscription_basic",
+        "code": "basic_fixed",
+        "legacy_keys": ["fixed_subscription_basic"],
         "billing_model": "fixed_subscription",
         "tier": "basic",
-        "name": "Plan Basico",
+        "name": "Plan Basico sin comision",
         "monthly_price_mxn": Decimal("3500.00"),
         "commission_percentage": Decimal("0.00"),
         "commission_enabled": False,
+        "stripe_price_env": "stripe_price_basic_fixed",
         "support": "48h por correo",
         "limits": {
             "brands_min": 1,
@@ -32,14 +36,17 @@ COMMERCIAL_PLAN_CATALOG: dict[str, dict[str, Any]] = {
             "ia_tokens_per_brand": 200,
         },
     },
-    "fixed_subscription_growth": {
+    "growth_fixed": {
         "id": "fixed_subscription_growth",
+        "code": "growth_fixed",
+        "legacy_keys": ["fixed_subscription_growth"],
         "billing_model": "fixed_subscription",
         "tier": "growth",
-        "name": "Plan Growth",
+        "name": "Plan Growth sin comision",
         "monthly_price_mxn": Decimal("5990.00"),
         "commission_percentage": Decimal("0.00"),
         "commission_enabled": False,
+        "stripe_price_env": "stripe_price_growth_fixed",
         "support": "Prioritario 24h por Chat Agente IA",
         "limits": {
             "brands_min": 1,
@@ -53,14 +60,17 @@ COMMERCIAL_PLAN_CATALOG: dict[str, dict[str, Any]] = {
             "ia_tokens_per_brand": 350,
         },
     },
-    "fixed_subscription_premium": {
+    "premium_fixed": {
         "id": "fixed_subscription_premium",
+        "code": "premium_fixed",
+        "legacy_keys": ["fixed_subscription_premium"],
         "billing_model": "fixed_subscription",
         "tier": "premium",
-        "name": "Plan Premium",
+        "name": "Plan Premium sin comision",
         "monthly_price_mxn": Decimal("9990.00"),
         "commission_percentage": Decimal("0.00"),
         "commission_enabled": False,
+        "stripe_price_env": "stripe_price_premium_fixed",
         "support": "Premium 24h/7 por Chat Agente IA",
         "limits": {
             "brands_min": 3,
@@ -74,14 +84,17 @@ COMMERCIAL_PLAN_CATALOG: dict[str, dict[str, Any]] = {
             "ia_tokens_per_brand": 500,
         },
     },
-    "commission_based_basic": {
+    "basic_commission": {
         "id": "commission_based_basic",
+        "code": "basic_commission",
+        "legacy_keys": ["commission_based_basic"],
         "billing_model": "commission_based",
         "tier": "basic",
-        "name": "Plan Basico",
+        "name": "Plan Basico con comision",
         "monthly_price_mxn": Decimal("990.00"),
         "commission_percentage": Decimal("5.00"),
         "commission_enabled": True,
+        "stripe_price_env": "stripe_price_basic_commission",
         "support": "48h por correo",
         "limits": {
             "brands_min": 1,
@@ -94,14 +107,17 @@ COMMERCIAL_PLAN_CATALOG: dict[str, dict[str, Any]] = {
             "ia_tokens_per_brand": 100,
         },
     },
-    "commission_based_growth": {
+    "growth_commission": {
         "id": "commission_based_growth",
+        "code": "growth_commission",
+        "legacy_keys": ["commission_based_growth"],
         "billing_model": "commission_based",
         "tier": "growth",
-        "name": "Plan Growth",
+        "name": "Plan Growth con comision",
         "monthly_price_mxn": Decimal("1690.00"),
         "commission_percentage": Decimal("4.50"),
         "commission_enabled": True,
+        "stripe_price_env": "stripe_price_growth_commission",
         "support": "Prioritario 24h por Chat Agente IA",
         "limits": {
             "brands_min": 1,
@@ -115,14 +131,17 @@ COMMERCIAL_PLAN_CATALOG: dict[str, dict[str, Any]] = {
             "ia_tokens_per_brand": 100,
         },
     },
-    "commission_based_premium": {
+    "premium_commission": {
         "id": "commission_based_premium",
+        "code": "premium_commission",
+        "legacy_keys": ["commission_based_premium"],
         "billing_model": "commission_based",
         "tier": "premium",
-        "name": "Plan Premium",
+        "name": "Plan Premium con comision",
         "monthly_price_mxn": Decimal("2990.00"),
         "commission_percentage": Decimal("4.00"),
         "commission_enabled": True,
+        "stripe_price_env": "stripe_price_premium_commission",
         "support": "Premium 24h/7 por Chat Agente IA",
         "limits": {
             "brands_min": 3,
@@ -139,13 +158,13 @@ COMMERCIAL_PLAN_CATALOG: dict[str, dict[str, Any]] = {
 }
 
 COMMERCIAL_ADDONS: list[dict[str, Any]] = [
-    {"id": "extra_user", "name": "Usuario extra", "monthly_price_mxn": Decimal("199.00")},
-    {"id": "extra_ai_agent", "name": "Agente IA extra", "monthly_price_mxn": Decimal("490.00")},
-    {"id": "extra_brand", "name": "Marca extra", "monthly_price_mxn": Decimal("990.00")},
-    {"id": "extra_100_products", "name": "100 productos extra", "monthly_price_mxn": Decimal("490.00")},
-    {"id": "extra_branch", "name": "Sucursal extra", "monthly_price_mxn": Decimal("790.00")},
-    {"id": "extra_500_tokens", "name": "500 creditos IA extra", "monthly_price_mxn": Decimal("490.00")},
-    {"id": "premium_support", "name": "Soporte premium", "monthly_price_mxn": Decimal("990.00")},
+    {"id": "extra_user", "code": "extra_user", "name": "Usuario extra", "monthly_price_mxn": Decimal("199.00"), "stripe_price_env": "stripe_price_addon_extra_user"},
+    {"id": "extra_ai_agent", "code": "extra_ai_agent", "name": "Agente IA extra", "monthly_price_mxn": Decimal("490.00"), "stripe_price_env": "stripe_price_addon_extra_ai_agent"},
+    {"id": "extra_brand", "code": "extra_brand", "name": "Marca extra", "monthly_price_mxn": Decimal("990.00"), "stripe_price_env": "stripe_price_addon_extra_brand"},
+    {"id": "extra_100_products", "code": "extra_100_products", "name": "100 productos extra", "monthly_price_mxn": Decimal("490.00"), "stripe_price_env": "stripe_price_addon_extra_100_products"},
+    {"id": "extra_branch", "code": "extra_branch", "name": "Sucursal extra", "monthly_price_mxn": Decimal("790.00"), "stripe_price_env": "stripe_price_addon_extra_branch"},
+    {"id": "extra_500_tokens", "code": "extra_500_ai_credits", "name": "500 creditos IA extra", "monthly_price_mxn": Decimal("490.00"), "stripe_price_env": "stripe_price_addon_extra_500_ai_credits", "legacy_keys": ["extra_500_tokens"]},
+    {"id": "premium_support", "code": "premium_support", "name": "Soporte premium", "monthly_price_mxn": Decimal("990.00"), "stripe_price_env": "stripe_price_addon_premium_support"},
 ]
 
 
@@ -165,17 +184,44 @@ def _taxes(base: Decimal) -> dict[str, str]:
 
 
 def serialize_plan(plan: dict[str, Any]) -> dict[str, Any]:
+    settings = get_settings()
     base = Decimal(str(plan["monthly_price_mxn"]))
     taxes = _taxes(base)
+    stripe_price_id = str(getattr(settings, str(plan.get("stripe_price_env", "")), "") or "")
     return {
         "id": plan["id"],
+        "code": plan["code"],
+        "display_name": plan["name"],
         "name": plan["name"],
         "tier": plan["tier"],
         "billing_model": plan["billing_model"],
         "commission_enabled": bool(plan["commission_enabled"]),
         "commission_percentage": _money(Decimal(str(plan["commission_percentage"]))),
+        "monthly_price_mxn": _money(base),
+        "total_price_mxn": taxes["price_with_tax_mxn"],
+        "stripe_price_id": stripe_price_id,
         "support": plan["support"],
         "limits": dict(plan["limits"]),
+        **taxes,
+    }
+
+
+def serialize_addon(addon: dict[str, Any]) -> dict[str, Any]:
+    settings = get_settings()
+    base = Decimal(str(addon["monthly_price_mxn"]))
+    taxes = _taxes(base)
+    stripe_price_id = str(getattr(settings, str(addon.get("stripe_price_env", "")), "") or "")
+    return {
+        "id": addon["id"],
+        "code": addon["code"],
+        "display_name": addon["name"],
+        "name": addon["name"],
+        "billing_model": "addon",
+        "commission_enabled": False,
+        "commission_percentage": "0.00",
+        "monthly_price_mxn": _money(base),
+        "total_price_mxn": taxes["price_with_tax_mxn"],
+        "stripe_price_id": stripe_price_id,
         **taxes,
     }
 
@@ -184,22 +230,67 @@ def get_catalog_payload() -> dict[str, Any]:
     return {
         "iva_rate": _money(IVA_RATE),
         "plans": [serialize_plan(plan) for plan in COMMERCIAL_PLAN_CATALOG.values()],
-        "addons": [
-            {
-                "id": addon["id"],
-                "name": addon["name"],
-                **_taxes(Decimal(str(addon["monthly_price_mxn"]))),
-            }
-            for addon in COMMERCIAL_ADDONS
-        ],
+        "addons": [serialize_addon(addon) for addon in COMMERCIAL_ADDONS],
     }
 
 
 def get_plan_definition(plan_key: str) -> dict[str, Any]:
     key = (plan_key or "").strip().lower()
-    if key not in COMMERCIAL_PLAN_CATALOG:
-        raise ValueError("plan comercial no valido")
-    return COMMERCIAL_PLAN_CATALOG[key]
+    if key in COMMERCIAL_PLAN_CATALOG:
+        return COMMERCIAL_PLAN_CATALOG[key]
+    for plan in COMMERCIAL_PLAN_CATALOG.values():
+        legacy_keys = [str(item).strip().lower() for item in plan.get("legacy_keys", [])]
+        if key in legacy_keys or key == str(plan.get("id", "")).strip().lower():
+            return plan
+    raise ValueError("plan comercial no valido")
+
+
+def get_addon_definition(addon_code: str) -> dict[str, Any]:
+    code = (addon_code or "").strip().lower()
+    for addon in COMMERCIAL_ADDONS:
+        if code == str(addon["code"]).strip().lower() or code == str(addon["id"]).strip().lower():
+            return addon
+        legacy_keys = [str(item).strip().lower() for item in addon.get("legacy_keys", [])]
+        if code in legacy_keys:
+            return addon
+    raise ValueError("addon comercial no valido")
+
+
+def resolve_checkout_item(item_code: str) -> dict[str, Any]:
+    key = (item_code or "").strip().lower()
+    if not key:
+        raise ValueError("item comercial no valido")
+    try:
+        plan = get_plan_definition(key)
+        serialized = serialize_plan(plan)
+        return {
+            "item_type": "plan",
+            "item_code": serialized["code"],
+            "display_name": serialized["display_name"],
+            "billing_model": serialized["billing_model"],
+            "commission_enabled": serialized["commission_enabled"],
+            "commission_percentage": serialized["commission_percentage"],
+            "monthly_price_mxn": serialized["monthly_price_mxn"],
+            "total_price_mxn": serialized["total_price_mxn"],
+            "stripe_price_id": serialized["stripe_price_id"],
+            "plan_definition": plan,
+        }
+    except ValueError:
+        pass
+    addon = get_addon_definition(key)
+    serialized_addon = serialize_addon(addon)
+    return {
+        "item_type": "addon",
+        "item_code": serialized_addon["code"],
+        "display_name": serialized_addon["display_name"],
+        "billing_model": serialized_addon["billing_model"],
+        "commission_enabled": serialized_addon["commission_enabled"],
+        "commission_percentage": serialized_addon["commission_percentage"],
+        "monthly_price_mxn": serialized_addon["monthly_price_mxn"],
+        "total_price_mxn": serialized_addon["total_price_mxn"],
+        "stripe_price_id": serialized_addon["stripe_price_id"],
+        "plan_definition": None,
+    }
 
 
 def _build_commission_rules(commission_enabled: bool, commission_percentage: Decimal) -> str:

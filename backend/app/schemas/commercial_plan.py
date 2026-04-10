@@ -3,11 +3,16 @@ from pydantic import BaseModel, Field
 
 class CommercialPlanRead(BaseModel):
     id: str
+    code: str
+    display_name: str
     name: str
     tier: str
     billing_model: str
     commission_enabled: bool
     commission_percentage: str
+    monthly_price_mxn: str
+    total_price_mxn: str
+    stripe_price_id: str
     support: str
     limits: dict
     price_without_tax_mxn: str
@@ -18,7 +23,15 @@ class CommercialPlanRead(BaseModel):
 
 class CommercialAddonRead(BaseModel):
     id: str
+    code: str
+    display_name: str
     name: str
+    billing_model: str
+    commission_enabled: bool
+    commission_percentage: str
+    monthly_price_mxn: str
+    total_price_mxn: str
+    stripe_price_id: str
     price_without_tax_mxn: str
     tax_rate: str
     tax_amount_mxn: str
@@ -32,17 +45,19 @@ class CommercialPlanCatalogRead(BaseModel):
 
 
 class CommercialPlanCheckoutRequest(BaseModel):
-    tenant_id: int
-    plan_key: str
+    tenant_id: int | None = None
+    plan_key: str | None = None
+    item_code: str | None = None
     success_url: str
     cancel_url: str
 
 
 class CommercialPlanCheckoutResponse(BaseModel):
-    plan_key: str
+    item_code: str
+    item_type: str
+    checkout_url: str
     session_id: str
-    session_url: str
-    price_with_tax_mxn: str
+    total_price_mxn: str
 
 
 class TenantCommercialStatusRead(BaseModel):

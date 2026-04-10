@@ -350,9 +350,9 @@ export const api = {
     request<CommercialPlanRequest>("/api/v1/commercial-plans/requests", { method: "POST", body: JSON.stringify(payload) }, token),
   createCommercialPlanCheckoutSession: (
     token: string,
-    payload: { tenant_id: number; plan_key: string; success_url: string; cancel_url: string }
+    payload: { tenant_id?: number; plan_key?: string; item_code?: string; success_url: string; cancel_url: string }
   ) =>
-    request<{ plan_key: string; session_id: string; session_url: string; price_with_tax_mxn: string }>(
+    request<{ item_code: string; item_type: string; session_id: string; checkout_url: string; total_price_mxn: string }>(
       "/api/v1/commercial-plans/create-checkout-session",
       { method: "POST", body: JSON.stringify(payload) },
       token
@@ -697,6 +697,15 @@ export const api = {
     request<CustomerContactLead>("/api/v1/comercia/customer-contact-leads", { method: "POST", body: JSON.stringify(payload) }),
   getComerciaCommercialPlanCatalog: () =>
     request<CommercialPlanCatalog>("/api/v1/comercia/commercial-plans/catalog"),
+  createComerciaCommercialCheckoutSession: (payload: {
+    item_code: string;
+    success_url: string;
+    cancel_url: string;
+  }) =>
+    request<{ item_code: string; item_type: string; session_id: string; checkout_url: string; total_price_mxn: string }>(
+      "/api/v1/commercial-plans/create-checkout-session",
+      { method: "POST", body: JSON.stringify(payload) }
+    ),
   createComerciaMarketingProspect: (payload: Record<string, unknown>) =>
     request<MarketingProspect>("/api/v1/comercia/marketing-prospects", { method: "POST", body: JSON.stringify(payload) }),
   getReinpiaCustomerContactLeads: (token: string, query = "") =>

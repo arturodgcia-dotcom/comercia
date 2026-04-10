@@ -843,11 +843,16 @@ export interface ReinpiaTenantKpis {
 
 export interface CommercialPlan {
   id: string;
+  code: string;
+  display_name: string;
   name: string;
   tier: string;
   billing_model: string;
   commission_enabled: boolean;
   commission_percentage: string;
+  monthly_price_mxn: string;
+  total_price_mxn: string;
+  stripe_price_id: string;
   support: string;
   limits: Record<string, unknown>;
   price_without_tax_mxn: string;
@@ -858,7 +863,15 @@ export interface CommercialPlan {
 
 export interface CommercialAddon {
   id: string;
+  code: string;
+  display_name: string;
   name: string;
+  billing_model: string;
+  commission_enabled: boolean;
+  commission_percentage: string;
+  monthly_price_mxn: string;
+  total_price_mxn: string;
+  stripe_price_id: string;
   price_without_tax_mxn: string;
   tax_rate: string;
   tax_amount_mxn: string;

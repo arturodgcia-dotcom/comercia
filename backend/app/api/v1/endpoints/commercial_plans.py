@@ -1,5 +1,3 @@
-from decimal import Decimal, ROUND_HALF_UP
-
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -21,7 +19,7 @@ from app.services.commercial_plan_service import (
     apply_plan_to_tenant,
     consume_tokens,
     get_catalog_payload,
-    get_plan_definition,
+    resolve_checkout_item,
     set_tokens_lock,
     tenant_plan_status_payload,
     topup_tokens,
@@ -54,52 +52,51 @@ def get_tenant_commercial_status(
     "/create-checkout-session",
     response_model=CommercialPlanCheckoutResponse,
     status_code=status.HTTP_201_CREATED,
-    dependencies=[Depends(get_reinpia_admin)],
 )
 def create_commercial_plan_checkout_session(
     payload: CommercialPlanCheckoutRequest,
     db: Session = Depends(get_db),
 ) -> CommercialPlanCheckoutResponse:
-    tenant = db.get(Tenant, payload.tenant_id)
-    if not tenant:
-        raise HTTPException(status_code=404, detail="marca no encontrada")
-    plan = get_plan_definition(payload.plan_key)
-    stripe_config = _resolve_checkout_stripe_config(db, tenant_id=tenant.id)
-    price_without_tax = Decimal(str(plan["monthly_price_mxn"])).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
-    tax = (price_without_tax * Decimal("0.16")).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
-    total = (price_without_tax + tax).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+    item_code = (payload.item_code or payload.plan_key or "").strip().lower()
+    if not item_code:
+        raise HTTPException(status_code=400, detail="item_code es obligatorio")
+    try:
+        checkout_item = resolve_checkout_item(item_code)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    stripe_price_id = str(checkout_item.get("stripe_price_id") or "").strip()
+    if not stripe_price_id:
+        raise HTTPException(status_code=500, detail=f"Falta stripe_price_id configurado para {item_code}.")
+
+    tenant = db.get(Tenant, int(payload.tenant_id)) if payload.tenant_id else None
+    stripe_config = _resolve_checkout_stripe_config(db, tenant_id=tenant.id if tenant else None)
     metadata = {
-        "kind": "tenant_commercial_plan",
-        "tenant_id": str(tenant.id),
-        "plan_key": str(plan["id"]),
-        "billing_model": str(plan["billing_model"]),
-        "commission_percentage": str(plan["commission_percentage"]),
+        "kind": "tenant_commercial_plan" if (checkout_item["item_type"] == "plan" and tenant) else "comercia_catalog_checkout",
+        "tenant_id": str(tenant.id) if tenant else "",
+        "plan_key": str(checkout_item["item_code"]) if checkout_item["item_type"] == "plan" else "",
+        "item_code": str(checkout_item["item_code"]),
+        "item_type": str(checkout_item["item_type"]),
+        "billing_model": str(checkout_item["billing_model"]),
+        "commission_percentage": str(checkout_item["commission_percentage"]),
     }
     session = create_checkout_session_plan1(
         secret_key=stripe_config.secret_key,
-        line_items=[
-            {
-                "price_data": {
-                    "currency": "mxn",
-                    "product_data": {"name": f"{plan['name']} - {plan['billing_model']}"},
-                    "unit_amount": int((total * 100).to_integral_value(rounding=ROUND_HALF_UP)),
-                },
-                "quantity": 1,
-            }
-        ],
+        line_items=[{"price": stripe_price_id, "quantity": 1}],
         success_url=payload.success_url,
         cancel_url=payload.cancel_url,
         metadata=metadata,
     )
-    tenant.commercial_plan_status = "checkout_pending"
-    tenant.commercial_checkout_session_id = session.id
-    db.add(tenant)
-    db.commit()
+    if tenant and checkout_item["item_type"] == "plan":
+        tenant.commercial_plan_status = "checkout_pending"
+        tenant.commercial_checkout_session_id = session.id
+        db.add(tenant)
+        db.commit()
     return CommercialPlanCheckoutResponse(
-        plan_key=str(plan["id"]),
+        item_code=str(checkout_item["item_code"]),
+        item_type=str(checkout_item["item_type"]),
+        checkout_url=str(session.url),
         session_id=session.id,
-        session_url=session.url,
-        price_with_tax_mxn=str(total),
+        total_price_mxn=str(checkout_item["total_price_mxn"]),
     )
 
 
@@ -204,10 +201,11 @@ def _assert_scope(current_user: User, tenant_id: int) -> None:
     raise HTTPException(status_code=403, detail="sin acceso a esta marca")
 
 
-def _resolve_checkout_stripe_config(db: Session, *, tenant_id: int) -> StripeConfig:
-    config = db.scalar(select(StripeConfig).where(StripeConfig.tenant_id == tenant_id))
-    if config:
-        return config
+def _resolve_checkout_stripe_config(db: Session, *, tenant_id: int | None = None) -> StripeConfig:
+    if tenant_id:
+        config = db.scalar(select(StripeConfig).where(StripeConfig.tenant_id == tenant_id))
+        if config:
+            return config
     fallback = db.scalar(select(StripeConfig).order_by(StripeConfig.id.asc()))
     if fallback:
         return fallback

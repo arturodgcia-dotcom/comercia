@@ -30,6 +30,19 @@ class Settings(BaseSettings):
     data_mode: str = Field(default="demo", alias="DATA_MODE")
     force_superadmin_auth: bool = Field(default=False, alias="FORCE_SUPERADMIN_AUTH")
     force_superadmin_email: str = Field(default="superadmin@comercia.demo", alias="FORCE_SUPERADMIN_EMAIL")
+    stripe_price_basic_fixed: str = Field(default="", alias="STRIPE_PRICE_BASIC_FIXED")
+    stripe_price_growth_fixed: str = Field(default="", alias="STRIPE_PRICE_GROWTH_FIXED")
+    stripe_price_premium_fixed: str = Field(default="", alias="STRIPE_PRICE_PREMIUM_FIXED")
+    stripe_price_basic_commission: str = Field(default="", alias="STRIPE_PRICE_BASIC_COMMISSION")
+    stripe_price_growth_commission: str = Field(default="", alias="STRIPE_PRICE_GROWTH_COMMISSION")
+    stripe_price_premium_commission: str = Field(default="", alias="STRIPE_PRICE_PREMIUM_COMMISSION")
+    stripe_price_addon_extra_user: str = Field(default="", alias="STRIPE_PRICE_ADDON_EXTRA_USER")
+    stripe_price_addon_extra_ai_agent: str = Field(default="", alias="STRIPE_PRICE_ADDON_EXTRA_AI_AGENT")
+    stripe_price_addon_extra_brand: str = Field(default="", alias="STRIPE_PRICE_ADDON_EXTRA_BRAND")
+    stripe_price_addon_extra_100_products: str = Field(default="", alias="STRIPE_PRICE_ADDON_EXTRA_100_PRODUCTS")
+    stripe_price_addon_extra_branch: str = Field(default="", alias="STRIPE_PRICE_ADDON_EXTRA_BRANCH")
+    stripe_price_addon_extra_500_ai_credits: str = Field(default="", alias="STRIPE_PRICE_ADDON_EXTRA_500_AI_CREDITS")
+    stripe_price_addon_premium_support: str = Field(default="", alias="STRIPE_PRICE_ADDON_PREMIUM_SUPPORT")
 
     model_config = SettingsConfigDict(
         env_file=".env",
