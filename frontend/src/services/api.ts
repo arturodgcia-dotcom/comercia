@@ -672,6 +672,8 @@ export const api = {
     request<PlanPurchaseLead>("/api/v1/comercia/plan-purchase-leads", { method: "POST", body: JSON.stringify(payload) }),
   createComerciaCustomerContactLead: (payload: Record<string, unknown>) =>
     request<CustomerContactLead>("/api/v1/comercia/customer-contact-leads", { method: "POST", body: JSON.stringify(payload) }),
+  getComerciaCommercialPlanCatalog: () =>
+    request<CommercialPlanCatalog>("/api/v1/comercia/commercial-plans/catalog"),
   createComerciaMarketingProspect: (payload: Record<string, unknown>) =>
     request<MarketingProspect>("/api/v1/comercia/marketing-prospects", { method: "POST", body: JSON.stringify(payload) }),
   getReinpiaCustomerContactLeads: (token: string, query = "") =>

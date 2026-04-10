@@ -5,6 +5,7 @@ import { CookieConsentBanner } from "../components/marketing/CookieConsentBanner
 import { LiaSalesAssistant } from "../components/marketing/LiaSalesAssistant";
 import { buildBrandTheme, getDemoBrandInput, tokensToCssVars } from "../branding/multibrandTemplates";
 import { api } from "../services/api";
+import { CommercialAddon, CommercialPlan } from "../types/domain";
 import "./ComerciaLandingPage.css";
 
 type CustomerServiceForm = {
@@ -167,27 +168,101 @@ const SEGMENTS = [
   }
 ];
 
-const BUSINESS_MODELS = [
+const FALLBACK_COMMERCIAL_PLANS: CommercialPlan[] = [
   {
-    name: "Plan sin comision",
-    description: "Suscripcion fija para marcas que priorizan previsibilidad financiera y alto volumen de transacciones.",
-    bullets: [
-      "Sin comision por venta",
-      "Costo mensual o anual predecible",
-      "Ideal para operacion estable y expansion"
-    ],
-    cta: "Solicitar demo del plan sin comision"
+    id: "fixed_subscription_basic",
+    name: "Plan Basico",
+    tier: "basic",
+    billing_model: "fixed_subscription",
+    commission_enabled: false,
+    commission_percentage: "0.00",
+    support: "48h por correo",
+    limits: { brands_max: 1, users_max: 2, ai_agents_max: 1, products_max: 50, branches_max: 1, ia_tokens_total: 200 },
+    price_without_tax_mxn: "3500.00",
+    tax_rate: "0.16",
+    tax_amount_mxn: "560.00",
+    price_with_tax_mxn: "4060.00",
   },
   {
-    name: "Plan con comision por venta",
-    description: "Modelo de entrada para iniciar rapido, con pago variable segun desempeno comercial.",
-    bullets: [
-      "Costo de entrada bajo",
-      "Comision transparente por transaccion",
-      "Ideal para marcas en fase de activacion"
-    ],
-    cta: "Activar plan con comision"
-  }
+    id: "fixed_subscription_growth",
+    name: "Plan Growth",
+    tier: "growth",
+    billing_model: "fixed_subscription",
+    commission_enabled: false,
+    commission_percentage: "0.00",
+    support: "Prioritario 24h por Chat Agente IA",
+    limits: { brands_max: 3, users_max: 5, ai_agents_max: 3, products_max: 300, branches_max: 3, ia_tokens_total: 1050 },
+    price_without_tax_mxn: "5990.00",
+    tax_rate: "0.16",
+    tax_amount_mxn: "958.40",
+    price_with_tax_mxn: "6948.40",
+  },
+  {
+    id: "fixed_subscription_premium",
+    name: "Plan Premium",
+    tier: "premium",
+    billing_model: "fixed_subscription",
+    commission_enabled: false,
+    commission_percentage: "0.00",
+    support: "Premium 24h/7 por Chat Agente IA",
+    limits: { brands_max: 10, users_max: 10, ai_agents_max: 5, products_max: 1000, branches_max: 10, ia_tokens_total: 5000 },
+    price_without_tax_mxn: "9990.00",
+    tax_rate: "0.16",
+    tax_amount_mxn: "1598.40",
+    price_with_tax_mxn: "11588.40",
+  },
+  {
+    id: "commission_based_basic",
+    name: "Plan Basico",
+    tier: "basic",
+    billing_model: "commission_based",
+    commission_enabled: true,
+    commission_percentage: "5.00",
+    support: "48h por correo",
+    limits: { brands_max: 1, users_max: 2, ai_agents_max: 1, products_max: 50, branches_max: 1, ia_tokens_total: 100 },
+    price_without_tax_mxn: "990.00",
+    tax_rate: "0.16",
+    tax_amount_mxn: "158.40",
+    price_with_tax_mxn: "1148.40",
+  },
+  {
+    id: "commission_based_growth",
+    name: "Plan Growth",
+    tier: "growth",
+    billing_model: "commission_based",
+    commission_enabled: true,
+    commission_percentage: "4.50",
+    support: "Prioritario 24h por Chat Agente IA",
+    limits: { brands_max: 2, users_max: 5, ai_agents_max: 3, products_max: 200, branches_max: 2, ia_tokens_total: 200 },
+    price_without_tax_mxn: "1690.00",
+    tax_rate: "0.16",
+    tax_amount_mxn: "270.40",
+    price_with_tax_mxn: "1960.40",
+  },
+  {
+    id: "commission_based_premium",
+    name: "Plan Premium",
+    tier: "premium",
+    billing_model: "commission_based",
+    commission_enabled: true,
+    commission_percentage: "4.00",
+    support: "Premium 24h/7 por Chat Agente IA",
+    limits: { brands_max: 3, users_max: 10, ai_agents_max: 5, products_max: 450, branches_max: 5, ia_tokens_total: 450 },
+    price_without_tax_mxn: "2990.00",
+    tax_rate: "0.16",
+    tax_amount_mxn: "478.40",
+    price_with_tax_mxn: "3468.40",
+  },
+];
+
+const FALLBACK_COMMERCIAL_ADDONS: CommercialAddon[] = [
+  { id: "extra_user", name: "Usuario extra", price_without_tax_mxn: "199.00", tax_rate: "0.16", tax_amount_mxn: "31.84", price_with_tax_mxn: "230.84" },
+  { id: "extra_ai_agent", name: "Agente IA extra", price_without_tax_mxn: "490.00", tax_rate: "0.16", tax_amount_mxn: "78.40", price_with_tax_mxn: "568.40" },
+  { id: "extra_brand", name: "Marca extra", price_without_tax_mxn: "990.00", tax_rate: "0.16", tax_amount_mxn: "158.40", price_with_tax_mxn: "1148.40" },
+  { id: "extra_100_products", name: "100 productos extra", price_without_tax_mxn: "490.00", tax_rate: "0.16", tax_amount_mxn: "78.40", price_with_tax_mxn: "568.40" },
+  { id: "extra_branch", name: "Sucursal extra", price_without_tax_mxn: "790.00", tax_rate: "0.16", tax_amount_mxn: "126.40", price_with_tax_mxn: "916.40" },
+  { id: "extra_500_tokens", name: "500 creditos IA extra", price_without_tax_mxn: "490.00", tax_rate: "0.16", tax_amount_mxn: "78.40", price_with_tax_mxn: "568.40" },
+  { id: "premium_support", name: "Soporte premium", price_without_tax_mxn: "990.00", tax_rate: "0.16", tax_amount_mxn: "158.40", price_with_tax_mxn: "1148.40" },
 ];
 
 const AI_PROMPTS = [
@@ -351,7 +426,7 @@ export function ComerciaLandingPage() {
     buyer_name: "",
     buyer_email: "",
     buyer_phone: "",
-    selected_plan_code: "COMERCIA_IMPULSA",
+    selected_plan_code: "fixed_subscription_basic",
     referral_code: refQuery,
     needs_followup: true,
     needs_appointment: true,
@@ -372,11 +447,26 @@ export function ComerciaLandingPage() {
   const [marketingSubmitting, setMarketingSubmitting] = useState(false);
   const [marketingError, setMarketingError] = useState("");
   const [marketingSuccess, setMarketingSuccess] = useState("");
+  const [commercialPlans, setCommercialPlans] = useState<CommercialPlan[]>(FALLBACK_COMMERCIAL_PLANS);
+  const [commercialAddons, setCommercialAddons] = useState<CommercialAddon[]>(FALLBACK_COMMERCIAL_ADDONS);
 
   const activeDemoView = useMemo(
     () => DEMO_VIEWS.find((view) => view.code === activeDemo) ?? DEMO_VIEWS[0],
     [activeDemo]
   );
+  const planRows = useMemo(
+    () => commercialPlans.filter((plan) => plan.billing_model === "fixed_subscription"),
+    [commercialPlans]
+  );
+  const commissionRows = useMemo(
+    () => commercialPlans.filter((plan) => plan.billing_model === "commission_based"),
+    [commercialPlans]
+  );
+  const formatMoney = (value: string) => Number(value || 0).toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const limitValue = (plan: CommercialPlan, key: string) => {
+    const raw = plan.limits?.[key];
+    return typeof raw === "number" ? raw : Number(raw || 0);
+  };
 
   useEffect(() => {
     if (!refQuery) return;
@@ -385,6 +475,22 @@ export function ComerciaLandingPage() {
       .then((result) => setRefStatus(result.valid ? "valid" : "invalid"))
       .catch(() => setRefStatus("invalid"));
   }, [refQuery]);
+
+  useEffect(() => {
+    api
+      .getComerciaCommercialPlanCatalog()
+      .then((catalog) => {
+        if (catalog.plans?.length) {
+          setCommercialPlans(catalog.plans);
+        }
+        if (catalog.addons?.length) {
+          setCommercialAddons(catalog.addons);
+        }
+      })
+      .catch(() => {
+        // fallback local ya cargado
+      });
+  }, []);
 
   useEffect(() => {
     document.body.classList.add("public-landing", "comercia-premium-body");
@@ -958,26 +1064,83 @@ export function ComerciaLandingPage() {
       <section className="cp-section" id="planes">
         <header className="cp-section-head">
           <p className="cp-kicker">6. Modelos de negocio</p>
-          <h2>Elige el esquema comercial que mejor se adapta a tu etapa</h2>
+          <h2>Planes oficiales por modelo comercial (sin comision y con comision)</h2>
         </header>
-        <div className="cp-plans-grid">
-          {BUSINESS_MODELS.map((plan, index) => (
-            <article key={plan.name} className={`cp-plan-card ${index === 0 ? "is-highlight" : ""}`}>
-              <p className="cp-plan-name">{plan.name}</p>
-              <p className="cp-plan-price">{plan.description}</p>
-              <ul>
-                {plan.bullets.map((feature) => (
-                  <li key={feature}>{feature}</li>
-                ))}
-              </ul>
-              <button type="button" className="button" onClick={openDiagnostic}>
-                {plan.cta}
-              </button>
-            </article>
-          ))}
+        <div className="cp-plan-group">
+          <h3>Membresia sin porcentaje de cobro</h3>
+          <div className="cp-plans-grid">
+            {planRows.map((plan, index) => (
+              <article key={plan.id} className={`cp-plan-card ${index === 1 ? "is-highlight" : ""}`}>
+                <p className="cp-plan-name">{plan.name}</p>
+                <p className="cp-plan-price">${formatMoney(plan.price_without_tax_mxn)} MXN + IVA</p>
+                <ul>
+                  <li>Marcas: hasta {limitValue(plan, "brands_max")}</li>
+                  <li>Usuarios: {limitValue(plan, "users_max")}</li>
+                  <li>Agentes IA: {limitValue(plan, "ai_agents_max")}</li>
+                  <li>Productos: {limitValue(plan, "products_max")}</li>
+                  <li>Sucursales: {limitValue(plan, "branches_max")}</li>
+                  <li>Creditos IA: {limitValue(plan, "ia_tokens_total")}</li>
+                  <li>Comision por venta: No aplica</li>
+                  <li>Soporte: {plan.support}</li>
+                </ul>
+                <button
+                  type="button"
+                  className="button"
+                  onClick={() => {
+                    setLeadForm((prev) => ({ ...prev, selected_plan_code: plan.id }));
+                    openDiagnostic();
+                  }}
+                >
+                  Solicitar este plan
+                </button>
+              </article>
+            ))}
+          </div>
+        </div>
+        <div className="cp-plan-group">
+          <h3>Membresia con porcentaje de cobro</h3>
+          <div className="cp-plans-grid">
+            {commissionRows.map((plan, index) => (
+              <article key={plan.id} className={`cp-plan-card ${index === 1 ? "is-highlight" : ""}`}>
+                <p className="cp-plan-name">{plan.name}</p>
+                <p className="cp-plan-price">${formatMoney(plan.price_without_tax_mxn)} MXN + IVA + {plan.commission_percentage}%</p>
+                <ul>
+                  <li>Marcas: hasta {limitValue(plan, "brands_max")}</li>
+                  <li>Usuarios: {limitValue(plan, "users_max")}</li>
+                  <li>Agentes IA: {limitValue(plan, "ai_agents_max")}</li>
+                  <li>Productos: {limitValue(plan, "products_max")}</li>
+                  <li>Sucursales: {limitValue(plan, "branches_max")}</li>
+                  <li>Creditos IA: {limitValue(plan, "ia_tokens_total")}</li>
+                  <li>Comision por venta: {plan.commission_percentage}%</li>
+                  <li>Soporte: {plan.support}</li>
+                </ul>
+                <button
+                  type="button"
+                  className="button"
+                  onClick={() => {
+                    setLeadForm((prev) => ({ ...prev, selected_plan_code: plan.id }));
+                    openDiagnostic();
+                  }}
+                >
+                  Solicitar este plan
+                </button>
+              </article>
+            ))}
+          </div>
+        </div>
+        <div className="cp-plan-group">
+          <h3>Add-ons sugeridos</h3>
+          <div className="cp-addons-grid">
+            {commercialAddons.map((addon) => (
+              <article key={addon.id} className="cp-addon-card">
+                <strong>{addon.name}</strong>
+                <span>${formatMoney(addon.price_without_tax_mxn)} MXN + IVA</span>
+              </article>
+            ))}
+          </div>
         </div>
         <div className="cp-plan-contact">
-          <p>Ambos modelos son compatibles con ecommerce, webapp y operacion multi-tenant con personalizacion por marca (colores, logo, tipografia y productos).</p>
+          <p>Ambos modelos son compatibles con ecommerce, webapp y operacion multi-tenant. Selecciona un plan y te guiamos por checkout y activacion.</p>
           <button type="button" className="button button-outline" onClick={openContact}>
             Hablar con consultor
           </button>
@@ -1230,9 +1393,12 @@ export function ComerciaLandingPage() {
                   value={leadForm.selected_plan_code}
                   onChange={(e) => setLeadForm((p) => ({ ...p, selected_plan_code: e.target.value }))}
                 >
-                  <option value="COMERCIA_IMPULSA">Basico / IMPULSA</option>
-                  <option value="COMERCIA_ESCALA">Crecimiento / ESCALA</option>
-                  <option value="COMERCIA_EMPRESARIAL">Empresarial</option>
+                  <option value="fixed_subscription_basic">Basico sin comision</option>
+                  <option value="fixed_subscription_growth">Growth sin comision</option>
+                  <option value="fixed_subscription_premium">Premium sin comision</option>
+                  <option value="commission_based_basic">Basico con comision</option>
+                  <option value="commission_based_growth">Growth con comision</option>
+                  <option value="commission_based_premium">Premium con comision</option>
                 </select>
               </label>
               <label>

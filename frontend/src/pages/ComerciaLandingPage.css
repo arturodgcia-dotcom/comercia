@@ -472,6 +472,41 @@
   background: linear-gradient(150deg, var(--brand-panel-tint, #eef4ff), #fbfdff);
 }
 
+.cp-plan-group {
+  margin-bottom: 14px;
+}
+
+.cp-plan-group h3 {
+  margin: 0 0 10px;
+  font-size: 18px;
+  color: var(--cp-text);
+}
+
+.cp-addons-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+}
+
+.cp-addon-card {
+  border: 1px solid #d3e2fa;
+  border-radius: 12px;
+  padding: 12px;
+  background: #fbfdff;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.cp-addon-card strong {
+  color: var(--cp-text);
+}
+
+.cp-addon-card span {
+  color: var(--cp-muted);
+  font-size: 14px;
+}
+
 .cp-plan-contact {
   border: 1px dashed #a7c0ee;
   border-radius: 12px;
