@@ -18,6 +18,7 @@ from app.schemas.product import (
     ProductRead,
     ProductUpdate,
 )
+from app.services.commercial_account_guard_service import enforce_product_limit_for_tenant
 
 router = APIRouter()
 
@@ -189,6 +190,10 @@ def bulk_import_catalog(
 def create_product(payload: ProductCreate, db: Session = Depends(get_db)) -> Product:
     _tenant_or_404(db, payload.tenant_id)
     _validate_category_belongs_to_tenant(db, payload.tenant_id, payload.category_id)
+    try:
+        enforce_product_limit_for_tenant(db, payload.tenant_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
     product = Product(**payload.model_dump())
     db.add(product)
     db.commit()

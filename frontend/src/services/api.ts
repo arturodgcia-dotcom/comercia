@@ -20,7 +20,10 @@ import {
   CheckoutSessionRequest,
   CheckoutSessionResponse,
   ContractTemplate,
+  CommercialAccountUsage,
+  CommercialClientAccount,
   CommercialPlanCatalog,
+  CommercialPlanRequest,
   Coupon,
   CurrencySettings,
   PlatformSettings,
@@ -339,6 +342,11 @@ export const api = {
   getPlans: (token: string) => request<Plan[]>("/api/v1/plans", {}, token),
   getCommercialPlanCatalog: (token: string) =>
     request<CommercialPlanCatalog>("/api/v1/commercial-plans/catalog", {}, token),
+  createCommercialPlanRequest: (
+    token: string,
+    payload: { tenant_id: number; request_type: string; addon_id?: string; target_plan_key?: string; notes?: string }
+  ) =>
+    request<CommercialPlanRequest>("/api/v1/commercial-plans/requests", { method: "POST", body: JSON.stringify(payload) }, token),
   createCommercialPlanCheckoutSession: (
     token: string,
     payload: { tenant_id: number; plan_key: string; success_url: string; cancel_url: string }
@@ -666,6 +674,20 @@ export const api = {
     request<InternalAlert[]>(`/api/v1/reinpia/alerts${query ? `?${query}` : ""}`, {}, token),
   markReinpiaAlertRead: (token: string, id: number) =>
     request<InternalAlert>(`/api/v1/reinpia/alerts/${id}/read`, { method: "PUT" }, token),
+  getReinpiaCommercialClientAccounts: (token: string) =>
+    request<CommercialClientAccount[]>("/api/v1/reinpia/commercial-client-accounts", {}, token),
+  createReinpiaCommercialClientAccount: (token: string, payload: Record<string, unknown>) =>
+    request<CommercialClientAccount>("/api/v1/reinpia/commercial-client-accounts", { method: "POST", body: JSON.stringify(payload) }, token),
+  updateReinpiaCommercialClientAccount: (token: string, accountId: number, payload: Record<string, unknown>) =>
+    request<CommercialClientAccount>(`/api/v1/reinpia/commercial-client-accounts/${accountId}`, { method: "PUT", body: JSON.stringify(payload) }, token),
+  assignTenantToCommercialClientAccount: (
+    token: string,
+    accountId: number,
+    payload: { tenant_id: number; is_parent_brand?: boolean }
+  ) =>
+    request<Tenant>(`/api/v1/reinpia/commercial-client-accounts/${accountId}/assign-tenant`, { method: "POST", body: JSON.stringify(payload) }, token),
+  getReinpiaCommercialClientAccountUsage: (token: string, accountId: number) =>
+    request<CommercialAccountUsage>(`/api/v1/reinpia/commercial-client-accounts/${accountId}/usage`, {}, token),
   getComerciaReferralValidation: (refCode: string) =>
     request<{ valid: boolean; code: string; agent_name?: string }>(`/api/v1/comercia/referral/${encodeURIComponent(refCode)}`),
   createComerciaPlanPurchaseLead: (payload: Record<string, unknown>) =>

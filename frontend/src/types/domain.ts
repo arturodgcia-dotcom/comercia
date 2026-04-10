@@ -19,6 +19,8 @@ export interface Tenant {
   commercial_plan_source?: string | null;
   commercial_checkout_session_id?: string | null;
   commercial_limits_json?: string | null;
+  commercial_client_account_id?: number | null;
+  is_parent_brand?: boolean;
   ai_tokens_included?: number;
   ai_tokens_balance?: number;
   ai_tokens_used?: number;
@@ -826,6 +828,51 @@ export interface TenantCommercialStatus {
   ai_tokens_used: number;
   ai_tokens_locked: boolean;
   ai_tokens_lock_reason?: string | null;
+}
+
+export interface CommercialClientAccount {
+  id: number;
+  legal_name: string;
+  contact_name?: string | null;
+  contact_email?: string | null;
+  contact_phone?: string | null;
+  billing_model: string;
+  commercial_plan_key?: string | null;
+  commercial_limits_json: string;
+  addons_json: string;
+  status: string;
+  notes?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CommercialAccountUsage {
+  account_id: number;
+  brands_used: number;
+  brands_limit: number;
+  users_used: number;
+  users_limit: number;
+  products_used: number;
+  products_limit: number;
+  branches_used: number;
+  branches_limit: number;
+  ai_tokens_included: number;
+  ai_tokens_used: number;
+  ai_tokens_balance: number;
+}
+
+export interface CommercialPlanRequest {
+  id: number;
+  tenant_id: number;
+  commercial_client_account_id?: number | null;
+  request_type: string;
+  addon_id?: string | null;
+  target_plan_key?: string | null;
+  status: string;
+  notes?: string | null;
+  requested_by_user_id?: number | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface ReinpiaSubscription {

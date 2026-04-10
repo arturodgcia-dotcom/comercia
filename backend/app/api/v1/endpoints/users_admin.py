@@ -7,6 +7,7 @@ from app.core.security import get_password_hash
 from app.db.session import get_db
 from app.models.models import Tenant, User
 from app.schemas.users_admin import AdminUserCreate, AdminUserRead, AdminUserUpdate
+from app.services.commercial_account_guard_service import enforce_user_limit_for_tenant
 
 router = APIRouter()
 
@@ -92,6 +93,11 @@ def create_admin_user(
     target_tenant_id = None if resolved_scope == "global" else resolved_tenant_id
     if target_tenant_id is not None and not db.get(Tenant, target_tenant_id):
         raise HTTPException(status_code=404, detail="tenant no encontrado")
+    if target_tenant_id is not None:
+        try:
+            enforce_user_limit_for_tenant(db, target_tenant_id)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     row = User(
         email=payload.email.lower(),

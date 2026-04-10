@@ -803,3 +803,50 @@ Arquitectura final:
 
 Nota de control:
 - la salida analitica y de cotizacion ya no se expone en la landing publica.
+
+## Ejecucion 48: arquitectura de cuentas comerciales, limites y crecimiento
+Objetivo:
+- controlar consumo real por cliente comercial (marca padre/hijas)
+- evitar sobreasignacion gratuita fuera del plan
+- permitir upgrade/add-ons desde panel de marca con flujo interno trazable
+
+Modelo de dominio:
+- `CommercialClientAccount`:
+  - agrupa marcas de un mismo cliente comercial
+  - define `billing_model`, `commercial_plan_key`, `commercial_limits_json`, `addons_json`, `status`
+- `Tenant`:
+  - `commercial_client_account_id` (vinculo a cuenta comercial)
+  - `is_parent_brand` (marca principal del grupo)
+- `CommercialPlanRequest`:
+  - solicitud de upgrade o add-on originada por marca/panel
+  - estatus y notas para gestion interna.
+
+Arquitectura de enforcement:
+1. Resolver de limites efectivos:
+   - servicio `commercial_account_guard_service.py`
+   - combina limites base del plan + add-ons activos.
+2. Guardas transaccionales en endpoints criticos:
+   - marcas (`tenants.py`)
+   - usuarios (`users_admin.py`)
+   - productos (`products.py`)
+   - sucursales POS (`pos.py`)
+3. Si se excede limite:
+   - se bloquea operacion con mensaje comercial claro.
+
+Arquitectura de crecimiento comercial:
+- Panel de marca (`BrandChannelPages`) crea solicitudes:
+  - upgrade de plan
+  - add-ons
+- Endpoint: `POST /api/v1/commercial-plans/requests`
+- Se crea alerta interna `commercial_plan_request` para seguimiento REINPIA.
+
+Catalogo y precios publicos:
+- Endpoint publico: `GET /api/v1/comercia/commercial-plans/catalog`
+- Fuente: catalogo oficial de planes y add-ons
+- Visualizacion frontend con `price_with_tax_mxn` (IVA incluido), evitando riesgo de exhibir precios sin impuesto.
+
+Migraciones:
+- `20260409_22_commercial_client_accounts_and_limits.py`
+  - crea tablas nuevas necesarias
+  - agrega columnas nuevas en `tenants`
+  - idempotente para no romper bases con tablas ya existentes.

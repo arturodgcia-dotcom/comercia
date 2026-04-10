@@ -835,3 +835,35 @@ Variables backend (`backend/.env`):
   - alerta interna (`marketing_prospect_new`)
   - registro de automatizacion (`new_marketing_prospect_request`)
   - historial de estatus comercial (`status_history`) con trazabilidad basica
+
+## Actualizacion ejecucion 48 (Clientes comerciales, IVA incluido y candados por plan)
+- Se habilita catalogo publico de planes comerciales para landing COMERCIA:
+  - `GET /api/v1/comercia/commercial-plans/catalog`
+  - expone planes y add-ons oficiales con precio `price_with_tax_mxn` (IVA incluido).
+- La landing principal COMERCIA muestra precios con IVA incluido para:
+  - planes sin comision (`fixed_subscription`)
+  - planes con comision (`commission_based`)
+  - add-ons comerciales.
+- Se agrega arquitectura de cliente comercial (padre/hijas) para control de limites compartidos:
+  - entidad `CommercialClientAccount`
+  - relacion con marcas (`Tenant.commercial_client_account_id`, `Tenant.is_parent_brand`).
+- Se agregan solicitudes de crecimiento comercial:
+  - entidad `CommercialPlanRequest`
+  - endpoint publico autenticado: `POST /api/v1/commercial-plans/requests`
+  - endpoints globales REINPIA para gestion de cuentas y solicitudes.
+- Se activa enforcement de candados por plan y add-ons:
+  - limite de marcas por cliente comercial
+  - limite de usuarios por cuenta comercial
+  - limite de productos por cuenta comercial
+  - limite de sucursales POS por cuenta comercial
+  - creditos IA y llaves siguen gobernados por plan comercial.
+- Panel global REINPIA:
+  - nuevo modulo `Clientes comerciales` en `/reinpia/clientes-comerciales`
+  - alta/edicion de cliente comercial, asignacion de marcas y vista de uso vs limites.
+- Panel de marca:
+  - nueva tarjeta "Plan comercial y crecimiento" con botones para:
+    - solicitar upgrade de plan
+    - solicitar add-ons (usuarios, sucursales, creditos IA).
+- Migracion Alembic segura e idempotente:
+  - `20260409_22_commercial_client_accounts_and_limits.py`
+  - compatible con bases que ya tengan tablas creadas parcialmente.

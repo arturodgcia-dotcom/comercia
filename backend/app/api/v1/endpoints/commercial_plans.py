@@ -6,7 +6,8 @@ from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user, get_reinpia_admin
 from app.db.session import get_db
-from app.models.models import StripeConfig, Tenant, User
+from app.models.models import CommercialPlanRequest, StripeConfig, Tenant, User
+from app.schemas.commercial_accounts import CommercialPlanRequestCreate, CommercialPlanRequestRead
 from app.schemas.commercial_plan import (
     CommercialPlanCatalogRead,
     CommercialPlanCheckoutRequest,
@@ -26,6 +27,7 @@ from app.services.commercial_plan_service import (
     topup_tokens,
 )
 from app.services.stripe_service import create_checkout_session_plan1
+from app.services.internal_alerts_service import create_internal_alert
 
 router = APIRouter()
 
@@ -155,6 +157,45 @@ def set_tenant_tokens_lock(
     return TenantCommercialStatusRead.model_validate(status_payload)
 
 
+@router.post("/requests", response_model=CommercialPlanRequestRead)
+def create_commercial_plan_change_request(
+    payload: CommercialPlanRequestCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> CommercialPlanRequestRead:
+    tenant = db.get(Tenant, payload.tenant_id)
+    if not tenant:
+        raise HTTPException(status_code=404, detail="marca no encontrada")
+    _assert_scope(current_user, tenant.id)
+    request_type = payload.request_type.strip().lower()
+    if request_type not in {"addon", "upgrade"}:
+        raise HTTPException(status_code=400, detail="request_type invalido")
+    row = CommercialPlanRequest(
+        tenant_id=tenant.id,
+        commercial_client_account_id=tenant.commercial_client_account_id,
+        request_type=request_type,
+        addon_id=payload.addon_id,
+        target_plan_key=payload.target_plan_key,
+        status="nuevo",
+        notes=payload.notes,
+        requested_by_user_id=current_user.id,
+    )
+    db.add(row)
+    db.flush()
+    create_internal_alert(
+        db=db,
+        alert_type="commercial_plan_request",
+        title="Solicitud de cambio comercial",
+        message=f"{tenant.name}: {request_type} ({row.addon_id or row.target_plan_key or 'sin detalle'})",
+        severity="warning",
+        related_entity_type="commercial_plan_request",
+        related_entity_id=row.id,
+    )
+    db.commit()
+    db.refresh(row)
+    return CommercialPlanRequestRead.model_validate(row)
+
+
 def _assert_scope(current_user: User, tenant_id: int) -> None:
     if current_user.role == "reinpia_admin":
         return
@@ -171,4 +212,3 @@ def _resolve_checkout_stripe_config(db: Session, *, tenant_id: int) -> StripeCon
     if fallback:
         return fallback
     raise HTTPException(status_code=404, detail="no existe configuracion Stripe para checkout comercial")
-

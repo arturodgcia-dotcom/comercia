@@ -370,3 +370,27 @@ Nuevos endpoints:
   - Genera diagnostico en 10 secciones, rango de precio sugerido, servicios recomendados y riesgos.
   - Salida solo interna (no expuesta en landing publica).
   - Incluye `main_goal` persistido y `status_history` para trazabilidad comercial basica.
+
+## Actualizacion clientes comerciales y candados de plan (Ejecucion 48)
+- Catalogo publico de planes COMERCIA | Estado: funcional
+  - Endpoint: `GET /api/v1/comercia/commercial-plans/catalog`
+  - Devuelve planes y add-ons con precio `price_with_tax_mxn` (IVA incluido).
+- Landing principal COMERCIA (planes y precios) | Estado: funcional
+  - Renderiza 6 planes oficiales (sin comision/con comision) y add-ons con IVA incluido.
+- Clientes comerciales (panel global) | Estado: funcional
+  - Ruta: `/reinpia/clientes-comerciales`
+  - Alta/edicion de cliente comercial (marca padre/hijas)
+  - Asignacion de marcas a cuenta comercial
+  - Vista ejecutiva de uso vs limites por plan.
+- Solicitudes de crecimiento (upgrade/add-ons) | Estado: funcional
+  - Endpoint tenant/global: `POST /api/v1/commercial-plans/requests`
+  - Endpoints globales: listado/alta de solicitudes y gestion de cuentas comerciales.
+- Candados por plan | Estado: funcional
+  - Creacion/asignacion de marcas validada contra limite de cuenta comercial.
+  - Alta de usuarios bloqueada al exceder limite.
+  - Alta de productos bloqueada al exceder limite.
+  - Alta de sucursales POS bloqueada al exceder limite.
+- Botones de crecimiento en panel de marca | Estado: funcional
+  - `BrandChannelPages` agrega acciones para:
+    - solicitar upgrade a Growth/Premium
+    - solicitar add-ons (usuario extra, sucursal extra, 500 creditos IA).

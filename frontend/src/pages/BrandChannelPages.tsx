@@ -457,6 +457,27 @@ function BrandChannelShell({ channel }: { channel: ChannelKey }) {
     }
   };
 
+  const requestPlanChange = async (payload: { request_type: "addon" | "upgrade"; addon_id?: string; target_plan_key?: string; notes: string }) => {
+    if (!token || !tenantId) return;
+    setRunningAction(true);
+    setError("");
+    setMessage("");
+    try {
+      await api.createCommercialPlanRequest(token, {
+        tenant_id: tenantId,
+        request_type: payload.request_type,
+        addon_id: payload.addon_id,
+        target_plan_key: payload.target_plan_key,
+        notes: payload.notes,
+      });
+      setMessage("Solicitud enviada a ComerCia. El equipo comercial validara costo, plan y activacion.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "No fue posible registrar la solicitud comercial.");
+    } finally {
+      setRunningAction(false);
+    }
+  };
+
   const channelTitle =
     channel === "landing"
       ? "Landing de la marca"
@@ -494,6 +515,56 @@ function BrandChannelShell({ channel }: { channel: ChannelKey }) {
           <p className="muted">
             Comision por venta: {tenant.commission_enabled ? `Si (${Number(tenant.commission_percentage ?? 0).toFixed(2)}%)` : "No aplica"}
           </p>
+        </article>
+      ) : null}
+
+      {!loading && tenant ? (
+        <article className="card">
+          <h3>Plan comercial y crecimiento</h3>
+          <p className="muted">Plan activo: {tenant.commercial_plan_key ?? "Sin plan comercial asignado"}</p>
+          <p className="muted">Estatus: {tenant.commercial_plan_status}</p>
+          <div className="row-gap">
+            <button
+              className="button button-outline"
+              type="button"
+              disabled={runningAction}
+              onClick={() => void requestPlanChange({ request_type: "upgrade", target_plan_key: "fixed_subscription_growth", notes: "Solicitud de upgrade a Growth." })}
+            >
+              Solicitar upgrade a Growth
+            </button>
+            <button
+              className="button button-outline"
+              type="button"
+              disabled={runningAction}
+              onClick={() => void requestPlanChange({ request_type: "upgrade", target_plan_key: "fixed_subscription_premium", notes: "Solicitud de upgrade a Premium." })}
+            >
+              Solicitar upgrade a Premium
+            </button>
+            <button
+              className="button button-outline"
+              type="button"
+              disabled={runningAction}
+              onClick={() => void requestPlanChange({ request_type: "addon", addon_id: "extra_user", notes: "Solicitud de add-on usuario extra." })}
+            >
+              Comprar add-on usuario extra
+            </button>
+            <button
+              className="button button-outline"
+              type="button"
+              disabled={runningAction}
+              onClick={() => void requestPlanChange({ request_type: "addon", addon_id: "extra_branch", notes: "Solicitud de add-on sucursal extra." })}
+            >
+              Comprar add-on sucursal extra
+            </button>
+            <button
+              className="button button-outline"
+              type="button"
+              disabled={runningAction}
+              onClick={() => void requestPlanChange({ request_type: "addon", addon_id: "extra_500_tokens", notes: "Solicitud de add-on 500 creditos IA." })}
+            >
+              Comprar add-on 500 creditos IA
+            </button>
+          </div>
         </article>
       ) : null}
 

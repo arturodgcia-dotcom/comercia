@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.api.deps import get_reinpia_admin
 from app.db.session import get_db
-from app.models.models import User
+from app.models.models import CommercialClientAccount, CommercialPlanRequest, User
 from app.models.models import LogisticsAdditionalService
 from app.schemas.checkout import OrderRead
 from app.schemas.commission_agents import (
@@ -24,12 +24,22 @@ from app.schemas.commission_agents import (
 from app.schemas.customer_contact import CustomerContactLeadRead, CustomerContactLeadUpdate
 from app.schemas.marketing_prospects import MarketingProspectRead, MarketingProspectUpdate
 from app.schemas.reinpia import SubscriptionRead
+from app.schemas.commercial_accounts import (
+    AssignTenantToCommercialAccountPayload,
+    CommercialAccountUsageRead,
+    CommercialClientAccountCreate,
+    CommercialClientAccountRead,
+    CommercialClientAccountUpdate,
+    CommercialPlanRequestCreate,
+    CommercialPlanRequestRead,
+)
 from app.schemas.logistics_additional import (
     LogisticsAdditionalServiceCreate,
     LogisticsAdditionalServiceRead,
     LogisticsAdditionalServiceSummary,
     LogisticsAdditionalServiceUpdate,
 )
+from app.schemas.tenant import TenantRead
 from app.services.analytics_service import (
     get_active_vs_inactive_tenants,
     get_appointments_summary,
@@ -63,6 +73,8 @@ from app.services.marketing_prospects_service import (
     list_marketing_prospects,
     update_marketing_prospect,
 )
+from app.services.commercial_account_guard_service import build_account_usage_payload, enforce_brand_limit_for_account
+from app.services.internal_alerts_service import create_internal_alert
 from app.services.export_service import (
     export_commission_agents_csv,
     export_commissions_summary_csv,
@@ -576,6 +588,126 @@ def update_marketing_prospect_endpoint(
         from fastapi import HTTPException
 
         raise HTTPException(status_code=404, detail="prospecto no encontrado")
+    return row
+
+
+@router.get("/commercial-client-accounts", response_model=list[CommercialClientAccountRead])
+def list_commercial_client_accounts(db: Session = Depends(get_db)):
+    return db.scalars(select(CommercialClientAccount).order_by(CommercialClientAccount.id.desc())).all()
+
+
+@router.post("/commercial-client-accounts", response_model=CommercialClientAccountRead)
+def create_commercial_client_account(payload: CommercialClientAccountCreate, db: Session = Depends(get_db)):
+    row = CommercialClientAccount(**payload.model_dump())
+    db.add(row)
+    db.commit()
+    db.refresh(row)
+    return row
+
+
+@router.put("/commercial-client-accounts/{account_id}", response_model=CommercialClientAccountRead)
+def update_commercial_client_account(
+    account_id: int,
+    payload: CommercialClientAccountUpdate,
+    db: Session = Depends(get_db),
+):
+    row = db.get(CommercialClientAccount, account_id)
+    if not row:
+        from fastapi import HTTPException
+
+        raise HTTPException(status_code=404, detail="cliente comercial no encontrado")
+    for key, value in payload.model_dump(exclude_unset=True).items():
+        setattr(row, key, value)
+    db.add(row)
+    db.commit()
+    db.refresh(row)
+    return row
+
+
+@router.post("/commercial-client-accounts/{account_id}/assign-tenant", response_model=TenantRead)
+def assign_tenant_to_commercial_account(
+    account_id: int,
+    payload: AssignTenantToCommercialAccountPayload,
+    db: Session = Depends(get_db),
+):
+    account = db.get(CommercialClientAccount, account_id)
+    if not account:
+        from fastapi import HTTPException
+
+        raise HTTPException(status_code=404, detail="cliente comercial no encontrado")
+    tenant = db.get(Tenant, payload.tenant_id)
+    if not tenant:
+        from fastapi import HTTPException
+
+        raise HTTPException(status_code=404, detail="marca no encontrada")
+    if tenant.commercial_client_account_id != account.id:
+        try:
+            enforce_brand_limit_for_account(db, account)
+        except ValueError as exc:
+            from fastapi import HTTPException
+
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+    tenant.commercial_client_account_id = account.id
+    tenant.is_parent_brand = bool(payload.is_parent_brand)
+    db.add(tenant)
+    db.commit()
+    db.refresh(tenant)
+    return tenant
+
+
+@router.get("/commercial-client-accounts/{account_id}/usage", response_model=CommercialAccountUsageRead)
+def get_commercial_client_account_usage(account_id: int, db: Session = Depends(get_db)):
+    account = db.get(CommercialClientAccount, account_id)
+    if not account:
+        from fastapi import HTTPException
+
+        raise HTTPException(status_code=404, detail="cliente comercial no encontrado")
+    return CommercialAccountUsageRead.model_validate(build_account_usage_payload(db, account))
+
+
+@router.get("/commercial-plan-requests", response_model=list[CommercialPlanRequestRead])
+def list_commercial_plan_requests(
+    tenant_id: int | None = None,
+    status: str | None = None,
+    db: Session = Depends(get_db),
+):
+    filters = []
+    if tenant_id is not None:
+        filters.append(CommercialPlanRequest.tenant_id == tenant_id)
+    if status:
+        filters.append(CommercialPlanRequest.status == status.strip().lower())
+    return db.scalars(select(CommercialPlanRequest).where(*filters).order_by(CommercialPlanRequest.id.desc())).all()
+
+
+@router.post("/commercial-plan-requests", response_model=CommercialPlanRequestRead)
+def create_commercial_plan_request(payload: CommercialPlanRequestCreate, db: Session = Depends(get_db), _: User = Depends(get_reinpia_admin)):
+    tenant = db.get(Tenant, payload.tenant_id)
+    if not tenant:
+        from fastapi import HTTPException
+
+        raise HTTPException(status_code=404, detail="marca no encontrada")
+    row = CommercialPlanRequest(
+        tenant_id=tenant.id,
+        commercial_client_account_id=tenant.commercial_client_account_id,
+        request_type=payload.request_type.strip().lower(),
+        addon_id=payload.addon_id,
+        target_plan_key=payload.target_plan_key,
+        status="nuevo",
+        notes=payload.notes,
+    )
+    db.add(row)
+    db.flush()
+    create_internal_alert(
+        db=db,
+        alert_type="commercial_plan_request",
+        title="Nueva solicitud comercial de plan/add-on",
+        message=f"Marca {tenant.name}: {row.request_type} ({row.addon_id or row.target_plan_key or 'sin detalle'})",
+        severity="warning",
+        related_entity_type="commercial_plan_request",
+        related_entity_id=row.id,
+    )
+    db.commit()
+    db.refresh(row)
     return row
 
 

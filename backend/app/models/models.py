@@ -42,6 +42,8 @@ class Tenant(Base, TimestampMixin):
     commercial_plan_source: Mapped[str | None] = mapped_column(String(40), nullable=True)
     commercial_checkout_session_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
     commercial_limits_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+    commercial_client_account_id: Mapped[int | None] = mapped_column(ForeignKey("commercial_client_accounts.id"), nullable=True, index=True)
+    is_parent_brand: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     ai_tokens_included: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     ai_tokens_balance: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     ai_tokens_used: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
@@ -134,6 +136,36 @@ class Plan(Base, TimestampMixin):
     commission_enabled: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+
+
+class CommercialClientAccount(Base, TimestampMixin):
+    __tablename__ = "commercial_client_accounts"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    legal_name: Mapped[str] = mapped_column(String(220), nullable=False)
+    contact_name: Mapped[str | None] = mapped_column(String(180), nullable=True)
+    contact_email: Mapped[str | None] = mapped_column(String(180), nullable=True, index=True)
+    contact_phone: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    billing_model: Mapped[str] = mapped_column(String(30), default="fixed_subscription", nullable=False)
+    commercial_plan_key: Mapped[str | None] = mapped_column(String(60), nullable=True, index=True)
+    commercial_limits_json: Mapped[str] = mapped_column(Text, default="{}", nullable=False)
+    addons_json: Mapped[str] = mapped_column(Text, default="{}", nullable=False)
+    status: Mapped[str] = mapped_column(String(30), default="active", nullable=False, index=True)
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+
+class CommercialPlanRequest(Base, TimestampMixin):
+    __tablename__ = "commercial_plan_requests"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id"), nullable=False, index=True)
+    commercial_client_account_id: Mapped[int | None] = mapped_column(ForeignKey("commercial_client_accounts.id"), nullable=True, index=True)
+    request_type: Mapped[str] = mapped_column(String(30), nullable=False, index=True)  # addon|upgrade
+    addon_id: Mapped[str | None] = mapped_column(String(60), nullable=True)
+    target_plan_key: Mapped[str | None] = mapped_column(String(60), nullable=True)
+    status: Mapped[str] = mapped_column(String(30), default="nuevo", nullable=False, index=True)
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    requested_by_user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True, index=True)
 
 
 class Subscription(Base, TimestampMixin):

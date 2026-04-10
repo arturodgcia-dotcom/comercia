@@ -1072,7 +1072,7 @@ export function ComerciaLandingPage() {
             {planRows.map((plan, index) => (
               <article key={plan.id} className={`cp-plan-card ${index === 1 ? "is-highlight" : ""}`}>
                 <p className="cp-plan-name">{plan.name}</p>
-                <p className="cp-plan-price">${formatMoney(plan.price_without_tax_mxn)} MXN + IVA</p>
+                <p className="cp-plan-price">${formatMoney(plan.price_with_tax_mxn)} MXN IVA incluido</p>
                 <ul>
                   <li>Marcas: hasta {limitValue(plan, "brands_max")}</li>
                   <li>Usuarios: {limitValue(plan, "users_max")}</li>
@@ -1103,7 +1103,7 @@ export function ComerciaLandingPage() {
             {commissionRows.map((plan, index) => (
               <article key={plan.id} className={`cp-plan-card ${index === 1 ? "is-highlight" : ""}`}>
                 <p className="cp-plan-name">{plan.name}</p>
-                <p className="cp-plan-price">${formatMoney(plan.price_without_tax_mxn)} MXN + IVA + {plan.commission_percentage}%</p>
+                <p className="cp-plan-price">${formatMoney(plan.price_with_tax_mxn)} MXN IVA incluido + {plan.commission_percentage}%</p>
                 <ul>
                   <li>Marcas: hasta {limitValue(plan, "brands_max")}</li>
                   <li>Usuarios: {limitValue(plan, "users_max")}</li>
@@ -1134,7 +1134,7 @@ export function ComerciaLandingPage() {
             {commercialAddons.map((addon) => (
               <article key={addon.id} className="cp-addon-card">
                 <strong>{addon.name}</strong>
-                <span>${formatMoney(addon.price_without_tax_mxn)} MXN + IVA</span>
+                <span>${formatMoney(addon.price_with_tax_mxn)} MXN IVA incluido</span>
               </article>
             ))}
           </div>

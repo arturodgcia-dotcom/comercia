@@ -21,6 +21,8 @@ class TenantCreate(BaseModel):
     commercial_plan_key: str | None = None
     commercial_plan_status: str | None = None
     commercial_plan_source: str | None = None
+    commercial_client_account_id: int | None = None
+    is_parent_brand: bool = False
 
 
 class TenantUpdate(BaseModel):
@@ -41,6 +43,8 @@ class TenantUpdate(BaseModel):
     commercial_plan_key: str | None = None
     commercial_plan_status: str | None = None
     commercial_plan_source: str | None = None
+    commercial_client_account_id: int | None = None
+    is_parent_brand: bool | None = None
     ai_tokens_locked: bool | None = None
     ai_tokens_lock_reason: str | None = None
 
@@ -64,6 +68,8 @@ class TenantRead(TimestampSchema):
     commercial_plan_key: str | None
     commercial_plan_status: str
     commercial_plan_source: str | None
+    commercial_client_account_id: int | None
+    is_parent_brand: bool
     commercial_checkout_session_id: str | None
     commercial_limits_json: str | None
     ai_tokens_included: int

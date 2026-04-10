@@ -531,3 +531,19 @@
 - [x] Registro de trazabilidad (`new_marketing_prospect_request`)
 - [x] Filtros internos por estatus, urgencia, fecha, canal y busqueda
 - [x] Persistencia de objetivo principal (`main_goal`) y historial simple de estatus
+
+## Entregables ejecucion 48 (Planes con IVA + cliente comercial + candados)
+- [x] Catalogo publico de planes en `/api/v1/comercia/commercial-plans/catalog`
+- [x] Landing COMERCIA mostrando planes y add-ons con IVA incluido (`price_with_tax_mxn`)
+- [x] Modelo `CommercialClientAccount` para controlar cliente comercial y marcas padre/hijas
+- [x] Campos en tenant para vinculo comercial: `commercial_client_account_id`, `is_parent_brand`
+- [x] Modelo `CommercialPlanRequest` para upgrade/add-ons con trazabilidad
+- [x] Modulo global `/reinpia/clientes-comerciales` con alta, edicion, asignacion de marcas y uso vs limites
+- [x] Candado de limite de marcas por cliente comercial al crear/asignar tenant
+- [x] Candado de limite de usuarios en alta de usuarios
+- [x] Candado de limite de productos en alta de catalogo
+- [x] Candado de limite de sucursales en POS
+- [x] Botones en panel de marca para solicitar upgrade y add-ons
+- [x] Alerta interna `commercial_plan_request` al crear solicitud
+- [x] Migracion Alembic idempotente aplicada sin borrar data (`20260409_22`)
+- [x] Validacion: `alembic upgrade head`, `python -m compileall app`, `npm run build`

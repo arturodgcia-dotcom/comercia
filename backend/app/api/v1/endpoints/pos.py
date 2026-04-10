@@ -29,6 +29,7 @@ from app.services.pos_payment_service import (
 )
 from app.services.pos_service import create_pos_sale
 from app.services.security_watch_service import create_security_alert, log_security_event
+from app.services.commercial_account_guard_service import enforce_branch_limit_for_tenant
 
 router = APIRouter()
 
@@ -40,6 +41,10 @@ def list_locations_by_tenant(tenant_id: int, db: Session = Depends(get_db), _: U
 
 @router.post("/locations", response_model=PosLocationRead)
 def create_location(payload: PosLocationCreate, db: Session = Depends(get_db), _: User = Depends(get_current_user)):
+    try:
+        enforce_branch_limit_for_tenant(db, payload.tenant_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
     row = PosLocation(**payload.model_dump())
     db.add(row)
     db.commit()

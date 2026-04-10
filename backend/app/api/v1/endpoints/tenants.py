@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
 from app.db.session import get_db
-from app.models.models import Banner, Plan, StorefrontConfig, Tenant, TenantBranding
+from app.models.models import Banner, CommercialClientAccount, Plan, StorefrontConfig, Tenant, TenantBranding
 from app.models.models import User
 from app.schemas.storefront import StorefrontSnapshot
 from app.schemas.tenant import TenantCreate, TenantRead, TenantUpdate
@@ -18,6 +18,7 @@ from app.services.tenant_config_service import (
     normalize_subscription_plan,
 )
 from app.services.commercial_plan_service import apply_plan_to_tenant
+from app.services.commercial_account_guard_service import enforce_brand_limit_for_account
 
 router = APIRouter()
 
@@ -71,6 +72,11 @@ def create_tenant(
     )
     values["subscription_plan_json"] = json.dumps(normalize_subscription_plan(values.get("subscription_plan_json")))
     values.setdefault("commercial_plan_status", "not_purchased")
+    if values.get("commercial_client_account_id"):
+        account = db.get(CommercialClientAccount, int(values["commercial_client_account_id"]))
+        if not account:
+            raise HTTPException(status_code=404, detail="cliente comercial no encontrado")
+        enforce_brand_limit_for_account(db, account)
     tenant = Tenant(**values)
     if values.get("commercial_plan_key"):
         try:
@@ -155,6 +161,12 @@ def update_tenant(
             )
         except ValueError as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
+    if "commercial_client_account_id" in changes and changes.get("commercial_client_account_id"):
+        account = db.get(CommercialClientAccount, int(changes["commercial_client_account_id"]))
+        if not account:
+            raise HTTPException(status_code=404, detail="cliente comercial no encontrado")
+        if tenant.commercial_client_account_id != account.id:
+            enforce_brand_limit_for_account(db, account)
     if "ai_tokens_locked" in changes and changes["ai_tokens_locked"] is not None:
         tenant.ai_tokens_locked = bool(changes["ai_tokens_locked"])
     if "ai_tokens_lock_reason" in changes:
