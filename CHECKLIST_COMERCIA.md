@@ -318,6 +318,19 @@
 - [x] Diagnostico comercial movido a subflujo modal (ya no barra suelta)
 - [x] CTAs de landing alineados: abrir Lía, abrir diagnostico, abrir contáctanos, ver paquetes
 - [x] Copy "Dolor" eliminado y reemplazado por etiqueta comercial "Reto actual"
+
+## Entregables ejecucion 45 (Wizard oficial de alta/configuracion)
+- [x] Wizard consolidado como flujo oficial de onboarding de marca (no demo)
+- [x] Plan pagado desde Stripe integrado como fuente oficial de billing/comision/limites/creditos
+- [x] Bloqueo de edicion manual de `billing_model` y comision en wizard (override explicito via backend)
+- [x] Entitlements visibles en wizard: marcas, usuarios, agentes IA, productos, sucursales, creditos IA y add-ons
+- [x] Advertencias y bloqueos por exceso de limites en flujo de aprobacion/publicacion
+- [x] Plantillas oficiales forzadas en wizard (`approved_landing_v1`, `approved_public_v1`, `approved_b2b_v1`)
+- [x] Caso landing externa resuelto sin romper preview interno ni regeneracion tenant-aware
+- [x] Botones/rutas corregidos en wizard para landing/publico/distribuidores (ver, preview, regenerar)
+- [x] Resumen final ejecutivo del wizard con branding, plan, plantillas, rutas y estado general
+- [x] Estado final del wizard visible: `borrador`, `en configuracion`, `lista para revision`, `lista para publicacion`, `publicada`
+- [x] Validacion tecnica ejecutada: `npm run build` (frontend) y `python -m compileall backend/app` (backend)
 - [x] Modulo interno "Inbox comercial" para leads/mensajes/diagnosticos con filtros y cambio de estatus
 - [x] Endpoint REINPIA para actualizar estatus de contacto (`PUT /api/v1/reinpia/customer-contact-leads/{id}`)
 - [x] Seeds demo ampliados con leads de canales `lia_widget`, `contacto`, `diagnostico`, `whatsapp`

@@ -318,6 +318,32 @@ Nuevos bloques:
 Se guardan en `StorefrontConfig.config_json` para mantener compatibilidad local sin romper migraciones actuales:
 - `current_step`
 - estado por paso (`pending`, `in_progress`, `approved`)
+
+## 24) Wizard oficial como orquestador de onboarding comercial
+Arquitectura aplicada:
+1. Backend `brand_setup` expone un `workflow` enriquecido con:
+- `plan_snapshot` (plan comercial oficial, limites, metricas, creditos IA, add-ons).
+- `channel_routes` (rutas reales de landing/publico/distribuidores/POS preview).
+- `channel_runtime` (landing externa, modo revision, ultima regeneracion por canal).
+- `wizard_status` (estado final operativo del onboarding).
+- `blocking_issues` (bloqueos de publicacion por plan/limites).
+2. El plan pagado manda:
+- `billing_model` y comision se resuelven desde tenant cuando el plan esta `paid`.
+- cambios manuales desde wizard quedan bloqueados salvo `force_plan_override`.
+3. Plantillas oficiales forzadas:
+- `approved_landing_v1`
+- `approved_public_v1`
+- `approved_b2b_v1`
+4. Landing externa sin ruptura:
+- URL externa se conserva como referencia comercial.
+- preview interno tenant-aware siempre operativo.
+- regeneracion interna disponible incluso con `has_existing_landing=true`.
+5. Entitlements visibles y accionables:
+- metricas de uso/limite para marcas, usuarios, agentes IA, productos, sucursales y creditos IA.
+- advertencias y bloqueos cuando hay exceso.
+6. Publicacion controlada:
+- solo publica cuando pasos previos estan aprobados y no hay `blocking_issues`.
+- estados de ciclo: `borrador` -> `en configuracion` -> `lista para revision` -> `lista para publicacion` -> `publicada`.
 - `identity_data`, `generated_content`, `landing_draft`, `ecommerce_data`, `pos_setup_data`
 
 Frontend nuevo:

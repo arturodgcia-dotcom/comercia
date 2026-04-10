@@ -8,6 +8,32 @@ Plataforma SaaS multitenant para landing, ecommerce, growth comercial y operacio
 - `docs/`: arquitectura y modulos
 - `infra/`: base Docker local
 
+## Wizard oficial de alta/configuracion de marcas
+- Ruta oficial: `/reinpia/brands/:tenantId/setup` (solo `reinpia_admin`).
+- El wizard ya no es demo: persiste identidad, branding, plantillas oficiales, estado por paso y estado final de publicacion.
+- Plan comercial del tenant:
+  - fuente oficial = Stripe/tenant (`commercial_plan_key`, `commercial_plan_status`, `billing_model`, comision, limites, creditos IA).
+  - en wizard es solo lectura por defecto (sin editar `billing_model`, comision ni limites base).
+  - override manual solo con `force_plan_override=true` en backend.
+- Plantillas oficiales forzadas en flujo principal:
+  - `landing_template=approved_landing_v1`
+  - `public_store_template=approved_public_v1`
+  - `distributor_store_template=approved_b2b_v1`
+- Landing externa:
+  - registrar URL externa no rompe el flujo.
+  - siempre hay preview interno tenant-aware.
+  - regeneracion interna disponible y con timestamp visible.
+- Entitlements visibles en wizard:
+  - marcas, usuarios, agentes IA, productos, sucursales y creditos IA.
+  - add-ons activos (si existen).
+  - advertencias/bloqueos cuando hay exceso de limites.
+- Estados finales del wizard:
+  - `borrador`
+  - `en configuracion`
+  - `lista para revision`
+  - `lista para publicacion`
+  - `publicada`
+
 ## Arranque local
 
 ### Arranque unificado (1 comando)

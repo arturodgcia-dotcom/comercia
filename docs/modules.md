@@ -318,6 +318,30 @@ Nuevos endpoints:
 - Wizard y panel de marca | Estado: funcional
   - Wizard muestra plan pagado desde Stripe y estado de creditos IA
   - Detalle global de marca muestra plan comercial, estado y metricas de creditos
+
+## Actualizacion wizard oficial de alta/configuracion (Ejecucion 45)
+- Wizard de setup de marca | Estado: oficial funcional
+  - flujo oficial de alta/configuracion (no demo) con pasos reales de operacion.
+  - estados finales visibles: `borrador`, `en configuracion`, `lista para revision`, `lista para publicacion`, `publicada`.
+- Plan y facturacion en wizard | Estado: oficial funcional
+  - fuente oficial: plan pagado desde Stripe (`commercial_plan_*`, `billing_model`, comision, limites, creditos IA).
+  - edicion manual bloqueada por defecto en wizard para `billing_model`, comision y limites base.
+  - soporte de override explicito via backend (`force_plan_override`).
+- Entitlements y limites | Estado: oficial funcional
+  - visibles en wizard: marcas, usuarios, agentes IA, productos, sucursales, creditos IA y add-ons activos.
+  - bloqueos/advertencias cuando existen excesos de limites.
+- Plantillas oficiales | Estado: oficial funcional
+  - wizard persiste y fuerza: `approved_landing_v1`, `approved_public_v1`, `approved_b2b_v1`.
+  - flujo principal sin plantillas legacy.
+- Landing externa + preview interno | Estado: oficial funcional
+  - URL externa registrada no rompe wizard.
+  - preview interno tenant-aware siempre disponible.
+  - regeneracion interna con timestamp por canal.
+- Botones y rutas de canales | Estado: oficial funcional
+  - landing: ver, preview, regenerar.
+  - ecommerce publico: ver, preview, regenerar plantilla.
+  - ecommerce distribuidores: ver, preview, regenerar plantilla.
+  - sin rutas vacias ni templates legacy en flujo principal.
 - Landing COMERCIA (seccion marketing por bloques) | Estado: parcial (bloque 1 implementado)
   - Nueva seccion `#marketing-diagnostico` en `ComerciaLandingPage`
   - Enfocada en captacion comercial y solicitud de interes
