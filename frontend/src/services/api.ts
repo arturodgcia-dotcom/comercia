@@ -277,6 +277,7 @@ export const api = {
       commission_enabled?: boolean;
       commission_scope?: string;
       commission_notes?: string;
+      force_plan_override?: boolean;
       flow_type?: string;
       steps?: BrandSetupStepState[];
       identity_data?: BrandIdentityData;

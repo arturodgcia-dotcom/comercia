@@ -12,10 +12,12 @@ from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user, get_reinpia_admin
 from app.db.session import get_db
-from app.models.models import CatalogImportJob, Category, MercadoPagoSettings, Product, ServiceOffering, StorefrontConfig, Tenant, TenantBranding, User
+from app.models.models import CatalogImportJob, Category, MercadoPagoSettings, PosLocation, Product, ServiceOffering, StorefrontConfig, Tenant, TenantBranding, User
 from app.schemas.brand_setup import (
     BrandChannelSettingsRead,
     BrandChannelSettingsUpdate,
+    BrandChannelRoutesRead,
+    BrandChannelRuntimeRead,
     BrandSetupAssetRead,
     BrandGenerateContentRequest,
     BrandGenerateLandingRequest,
@@ -24,12 +26,17 @@ from app.schemas.brand_setup import (
     BrandEcommerceData,
     BrandIdentityData,
     BrandLandingDraft,
+    BrandPlanAddonRead,
+    BrandPlanMetricRead,
+    BrandPlanSnapshotRead,
     BrandPosSetupData,
     BrandSetupStepState,
     BrandSetupWorkflowRead,
     BrandSetupWorkflowUpdate,
 )
 from app.services.brand_setup_generator import generate_brand_content, generate_landing_draft
+from app.services.commercial_account_guard_service import build_account_usage_payload, get_tenant_commercial_account
+from app.services.commercial_plan_service import COMMERCIAL_ADDONS, parse_limits
 from app.services.tenant_config_service import normalize_billing_config
 
 router = APIRouter()
@@ -46,6 +53,7 @@ DEFAULT_STEPS_WITHOUT_LANDING = [
 
 DEFAULT_STEPS_WITH_EXISTING_LANDING = [
     {"code": "brand_identity", "title": "Identidad de marca", "status": "pending", "approved": False},
+    {"code": "landing_setup", "title": "Landing", "status": "pending", "approved": False},
     {"code": "ecommerce_setup", "title": "Ecommerce publico", "status": "pending", "approved": False},
     {"code": "distributors_setup", "title": "Ecommerce distribuidores", "status": "pending", "approved": False},
     {"code": "pos_setup", "title": "POS / WebApp", "status": "pending", "approved": False},
@@ -109,6 +117,10 @@ def get_brand_setup_workflow(tenant_id: int, db: Session = Depends(get_db)) -> B
     ecommerce_data = _parse_ecommerce_data(payload)
     pos_setup_data = _parse_pos_setup_data(payload)
     billing_config = _resolve_billing_config(payload, tenant)
+    plan_snapshot, blocking_issues = _resolve_plan_snapshot(db, tenant)
+    channel_runtime = _resolve_channel_runtime(payload, identity_data)
+    channel_routes = _build_channel_routes(tenant.slug)
+    wizard_status = _resolve_wizard_status(steps=steps, is_published=bool(workflow.get("is_published", False)), blocking_issues=blocking_issues)
 
     return BrandSetupWorkflowRead(
         tenant_id=tenant.id,
@@ -130,6 +142,11 @@ def get_brand_setup_workflow(tenant_id: int, db: Session = Depends(get_db)) -> B
         commercial_plan_status=tenant.commercial_plan_status,
         ai_tokens_balance=int(tenant.ai_tokens_balance or 0),
         ai_tokens_locked=bool(tenant.ai_tokens_locked),
+        wizard_status=wizard_status,
+        plan_snapshot=plan_snapshot,
+        channel_runtime=channel_runtime,
+        channel_routes=channel_routes,
+        blocking_issues=blocking_issues,
         flow_type=flow_type,
         steps=steps,
         assets=assets,
@@ -158,11 +175,12 @@ def update_brand_setup_workflow(
     for key in ("current_step", "is_published", "prompt_master"):
         if key in update_data:
             workflow[key] = update_data[key]
+    force_plan_override = bool(update_data.get("force_plan_override"))
     billing_updates = {}
     for key in ("billing_model", "commission_percentage", "commission_enabled", "commission_scope", "commission_notes"):
         if key in update_data:
             billing_updates[key] = update_data[key]
-    if billing_updates:
+    if billing_updates and force_plan_override:
         billing_config = normalize_billing_config(
             billing_model=billing_updates.get("billing_model", billing_config["billing_model"]),
             commission_percentage=billing_updates.get("commission_percentage", billing_config["commission_percentage"]),
@@ -174,6 +192,9 @@ def update_brand_setup_workflow(
         )
         _apply_billing_config(raw_payload, billing_config)
         _sync_tenant_billing(tenant, billing_config)
+    elif billing_updates:
+        # El wizard no puede alterar plan/comision sin override explicito de admin global.
+        billing_updates = {}
     workflow["selected_template"] = OFFICIAL_CHANNEL_TEMPLATE_DEFAULTS["landing_template"]
     if "flow_type" in update_data and update_data["flow_type"] is not None:
         workflow["flow_type"] = update_data["flow_type"]
@@ -207,6 +228,7 @@ def update_brand_setup_workflow(
             else BrandLandingDraft(**update_data["landing_draft"])
         )
         raw_payload["landing_draft"] = landing_draft.model_dump()
+        _set_channel_regeneration(raw_payload, "landing")
     if "ecommerce_data" in update_data and update_data["ecommerce_data"] is not None:
         ecommerce_data: BrandEcommerceData = (
             update_data["ecommerce_data"]
@@ -214,6 +236,10 @@ def update_brand_setup_workflow(
             else BrandEcommerceData(**update_data["ecommerce_data"])
         )
         raw_payload["ecommerce_data"] = ecommerce_data.model_dump()
+    if "public_store_template" in update_data:
+        _set_channel_regeneration(raw_payload, "public")
+    if "distributor_store_template" in update_data:
+        _set_channel_regeneration(raw_payload, "distributors")
     if "pos_setup_data" in update_data and update_data["pos_setup_data"] is not None:
         pos_setup_data: BrandPosSetupData = (
             update_data["pos_setup_data"]
@@ -274,8 +300,6 @@ def generate_brand_setup_landing(
         raise HTTPException(status_code=400, detail="Primero completa la identidad de marca.")
     workflow = raw_payload.setdefault("workflow", {})
     flow_type = workflow.get("flow_type", "without_landing")
-    if flow_type == "with_existing_landing":
-        raise HTTPException(status_code=400, detail="La marca ya indico landing existente. Este paso no aplica.")
     prompt_master = (workflow.get("prompt_master") or "").strip()
     if not prompt_master and not generated:
         raise HTTPException(status_code=400, detail="Define el prompt maestro para generar la landing.")
@@ -290,6 +314,7 @@ def generate_brand_setup_landing(
     workflow["steps"] = [step.model_dump() for step in steps]
     workflow["current_step"] = "landing_setup"
     raw_payload["landing_draft"] = landing_draft.model_dump()
+    _set_channel_regeneration(raw_payload, "landing")
     _save_brand_payload(config, raw_payload, db)
     return get_brand_setup_workflow(tenant.id, db)
 
@@ -373,6 +398,15 @@ def apply_ecommerce_template(
     db: Session = Depends(get_db),
 ) -> BrandSetupWorkflowRead:
     tenant = _get_tenant_or_404(db, tenant_id)
+    plan_snapshot, _ = _resolve_plan_snapshot(db, tenant)
+    products_limit = _metric_limit(plan_snapshot.metrics, "products_max")
+    current_products = int(db.scalar(select(func.count()).select_from(Product).where(Product.tenant_id == tenant.id)) or 0)
+    projected_products = current_products + 3
+    if products_limit > 0 and projected_products > products_limit:
+        raise HTTPException(
+            status_code=400,
+            detail=f"El plan activo permite {products_limit} productos y la regeneracion proyecta {projected_products}. Solicita add-on o upgrade.",
+        )
 
     category_specs = [
         {"name": "Paquetes destacados", "description": "Ofertas base para venta publica y distribuidores."},
@@ -510,6 +544,8 @@ def apply_ecommerce_template(
     ecommerce_data.distributor_catalog_ready = True
     ecommerce_data.volume_rules_ready = True
     payload["ecommerce_data"] = ecommerce_data.model_dump()
+    _set_channel_regeneration(payload, "public")
+    _set_channel_regeneration(payload, "distributors")
 
     workflow = payload.setdefault("workflow", {})
     flow_type = workflow.get("flow_type", "without_landing")
@@ -689,18 +725,34 @@ def _resolve_billing_config(payload: dict, tenant: Tenant) -> dict[str, str | bo
     billing_payload = payload.get("billing_config", {})
     if not isinstance(billing_payload, dict):
         billing_payload = {}
-    resolved = normalize_billing_config(
-        billing_model=payload.get("billing_model") or billing_payload.get("billing_model") or tenant.billing_model,
-        commission_percentage=payload.get("commission_percentage") or billing_payload.get("commission_percentage") or tenant.commission_percentage,
-        commission_enabled=payload.get("commission_enabled")
+    has_paid_plan = (tenant.commercial_plan_status or "").lower() == "paid" and bool((tenant.commercial_plan_key or "").strip())
+    source_billing_model = tenant.billing_model if has_paid_plan else (payload.get("billing_model") or billing_payload.get("billing_model") or tenant.billing_model)
+    source_commission_percentage = (
+        tenant.commission_percentage
+        if has_paid_plan
+        else payload.get("commission_percentage") or billing_payload.get("commission_percentage") or tenant.commission_percentage
+    )
+    source_commission_enabled = tenant.commission_enabled if has_paid_plan else (
+        payload.get("commission_enabled")
         if payload.get("commission_enabled") is not None
         else billing_payload.get("commission_enabled")
         if billing_payload.get("commission_enabled") is not None
-        else tenant.commission_enabled,
-        commission_scope=payload.get("commission_scope") or billing_payload.get("commission_scope") or tenant.commission_scope,
-        commission_notes=payload.get("commission_notes") or billing_payload.get("commission_notes") or tenant.commission_notes,
+        else tenant.commission_enabled
+    )
+    source_commission_scope = tenant.commission_scope if has_paid_plan else (
+        payload.get("commission_scope") or billing_payload.get("commission_scope") or tenant.commission_scope
+    )
+    source_commission_notes = tenant.commission_notes if has_paid_plan else (
+        payload.get("commission_notes") or billing_payload.get("commission_notes") or tenant.commission_notes
+    )
+    resolved = normalize_billing_config(
+        billing_model=source_billing_model,
+        commission_percentage=source_commission_percentage,
+        commission_enabled=source_commission_enabled,
+        commission_scope=source_commission_scope,
+        commission_notes=source_commission_notes,
         tenant_plan_type=tenant.plan_type,
-        plan_commission_enabled=False,
+        plan_commission_enabled=bool(tenant.commission_enabled),
     )
     for key, fallback in DEFAULT_BILLING_CONFIG.items():
         if resolved.get(key) in (None, ""):
@@ -742,6 +794,192 @@ def _sync_tenant_billing(tenant: Tenant, config: dict[str, str | bool | None]) -
         tenant.commission_rules_json = json.dumps(
             {"tiers": [{"up_to": None, "rate": "0", "label": "Sin comision"}], "minimum_per_operation": None}
         )
+
+
+def _parse_json_dict(raw: str | None) -> dict:
+    if not raw:
+        return {}
+    try:
+        parsed = json.loads(raw)
+    except Exception:
+        return {}
+    return parsed if isinstance(parsed, dict) else {}
+
+
+def _resolve_plan_snapshot(db: Session, tenant: Tenant) -> tuple[BrandPlanSnapshotRead, list[str]]:
+    account = get_tenant_commercial_account(db, tenant.id)
+    limits = parse_limits(tenant)
+    usage = {
+        "brands_used": 1,
+        "users_used": int(db.scalar(select(func.count(User.id)).where(User.tenant_id == tenant.id)) or 0),
+        "products_used": int(db.scalar(select(func.count(Product.id)).where(Product.tenant_id == tenant.id)) or 0),
+        "branches_used": int(db.scalar(select(func.count(PosLocation.id)).where(PosLocation.tenant_id == tenant.id)) or 0),
+        "ai_tokens_included": int(tenant.ai_tokens_included or 0),
+        "ai_tokens_used": int(tenant.ai_tokens_used or 0),
+        "ai_tokens_balance": int(tenant.ai_tokens_balance or 0),
+    }
+    addon_quantities: dict[str, int] = {}
+    if account:
+        usage = build_account_usage_payload(db, account)
+        account_limits = _parse_json_dict(account.commercial_limits_json)
+        if account_limits:
+            limits = account_limits
+        addon_quantities = _parse_json_dict(account.addons_json)
+    else:
+        addon_quantities = {}
+
+    active_addons: list[BrandPlanAddonRead] = []
+    addon_name_map = {str(row["id"]): str(row["name"]) for row in COMMERCIAL_ADDONS}
+    for addon_id, qty in addon_quantities.items():
+        try:
+            quantity = int(qty)
+        except Exception:
+            quantity = 0
+        if quantity <= 0:
+            continue
+        active_addons.append(BrandPlanAddonRead(id=str(addon_id), name=addon_name_map.get(str(addon_id), str(addon_id)), quantity=quantity))
+
+    ai_agents_base = int(limits.get("ai_agents_max") or 0)
+    ai_agents_limit = ai_agents_base + max(0, int(addon_quantities.get("extra_ai_agent", 0) or 0))
+    ai_agents_used = 0
+
+    metrics = [
+        _build_metric("brands_max", "Marcas permitidas", int(usage.get("brands_limit") or limits.get("brands_max") or 0), int(usage.get("brands_used") or 0)),
+        _build_metric("users_max", "Usuarios permitidos", int(usage.get("users_limit") or limits.get("users_max") or 0), int(usage.get("users_used") or 0)),
+        _build_metric("ai_agents_max", "Agentes IA permitidos", ai_agents_limit, ai_agents_used),
+        _build_metric("products_max", "Productos permitidos", int(usage.get("products_limit") or limits.get("products_max") or 0), int(usage.get("products_used") or 0)),
+        _build_metric("branches_max", "Sucursales permitidas", int(usage.get("branches_limit") or limits.get("branches_max") or 0), int(usage.get("branches_used") or 0)),
+        _build_metric(
+            "ia_tokens_total",
+            "Creditos IA incluidos",
+            int(usage.get("ai_tokens_included") or limits.get("ia_tokens_total") or tenant.ai_tokens_included or 0),
+            int(usage.get("ai_tokens_used") or tenant.ai_tokens_used or 0),
+        ),
+    ]
+
+    blocking_issues: list[str] = []
+    if (tenant.commercial_plan_status or "").lower() != "paid" or not tenant.commercial_plan_key:
+        blocking_issues.append("La marca no tiene un plan pagado confirmado desde Stripe.")
+    for metric in metrics:
+        if metric.is_exceeded:
+            blocking_issues.append(f"{metric.label}: limite excedido ({metric.used}/{metric.limit}).")
+    if bool(tenant.ai_tokens_locked):
+        blocking_issues.append("La llave de creditos IA esta bloqueada.")
+
+    snapshot = BrandPlanSnapshotRead(
+        commercial_plan_key=tenant.commercial_plan_key,
+        commercial_plan_status=tenant.commercial_plan_status or "not_purchased",
+        commercial_plan_source=tenant.commercial_plan_source,
+        billing_model=tenant.billing_model or "fixed_subscription",
+        commission_enabled=bool(tenant.commission_enabled),
+        commission_percentage=float(Decimal(str(tenant.commission_percentage or 0))),
+        limits=limits,
+        metrics=metrics,
+        addons=active_addons,
+        ai_tokens_included=int(usage.get("ai_tokens_included") or tenant.ai_tokens_included or 0),
+        ai_tokens_balance=int(usage.get("ai_tokens_balance") or tenant.ai_tokens_balance or 0),
+        ai_tokens_used=int(usage.get("ai_tokens_used") or tenant.ai_tokens_used or 0),
+        ai_tokens_locked=bool(tenant.ai_tokens_locked),
+        is_paid_plan=(tenant.commercial_plan_status or "").lower() == "paid",
+    )
+    return snapshot, blocking_issues
+
+
+def _build_metric(key: str, label: str, limit: int, used: int) -> BrandPlanMetricRead:
+    safe_limit = max(0, int(limit))
+    safe_used = max(0, int(used))
+    remaining = safe_limit - safe_used
+    return BrandPlanMetricRead(
+        key=key,
+        label=label,
+        limit=safe_limit,
+        used=safe_used,
+        remaining=remaining,
+        is_exceeded=safe_limit > 0 and safe_used > safe_limit,
+    )
+
+
+def _metric_limit(metrics: list[BrandPlanMetricRead], key: str) -> int:
+    for metric in metrics:
+        if metric.key == key:
+            return int(metric.limit)
+    return 0
+
+
+def _build_channel_routes(tenant_slug: str) -> BrandChannelRoutesRead:
+    safe_slug = tenant_slug or "sin-slug"
+    landing = f"/store/{safe_slug}/landing"
+    public = f"/store/{safe_slug}"
+    distributors = f"/store/{safe_slug}/distribuidores"
+    return BrandChannelRoutesRead(
+        landing_url=landing,
+        landing_preview_url=f"{landing}?preview=1",
+        public_url=public,
+        public_preview_url=f"{public}?preview=1",
+        distributors_url=distributors,
+        distributors_preview_url=f"{distributors}?preview=1",
+        pos_preview_url=f"/templates/pos?tenant_slug={safe_slug}",
+    )
+
+
+def _parse_iso_datetime(raw: str | None) -> datetime | None:
+    if not raw:
+        return None
+    try:
+        normalized = raw.replace("Z", "+00:00")
+        return datetime.fromisoformat(normalized)
+    except Exception:
+        return None
+
+
+def _resolve_channel_runtime(payload: dict, identity: BrandIdentityData | None) -> BrandChannelRuntimeRead:
+    runtime = payload.get("channel_runtime", {})
+    if not isinstance(runtime, dict):
+        runtime = {}
+    external_url = None
+    external_registered = False
+    if identity:
+        external_url = (identity.existing_landing_url or "").strip() or None
+        external_registered = bool(identity.has_existing_landing and external_url)
+    return BrandChannelRuntimeRead(
+        landing_external_registered=external_registered,
+        landing_external_url=external_url,
+        landing_preview_internal_available=True,
+        landing_review_mode="externa_con_preview_interno" if external_registered else "interno",
+        landing_last_regenerated_at=_parse_iso_datetime(runtime.get("landing_last_regenerated_at")),
+        public_last_regenerated_at=_parse_iso_datetime(runtime.get("public_last_regenerated_at")),
+        distributors_last_regenerated_at=_parse_iso_datetime(runtime.get("distributors_last_regenerated_at")),
+    )
+
+
+def _set_channel_regeneration(payload: dict, channel: str) -> None:
+    runtime = payload.setdefault("channel_runtime", {})
+    if not isinstance(runtime, dict):
+        runtime = {}
+        payload["channel_runtime"] = runtime
+    now = datetime.utcnow().isoformat()
+    if channel == "landing":
+        runtime["landing_last_regenerated_at"] = now
+    elif channel == "public":
+        runtime["public_last_regenerated_at"] = now
+    elif channel == "distributors":
+        runtime["distributors_last_regenerated_at"] = now
+
+
+def _resolve_wizard_status(*, steps: list[BrandSetupStepState], is_published: bool, blocking_issues: list[str]) -> str:
+    if is_published:
+        return "publicada"
+    final_step = next((step for step in steps if step.code == "final_review"), None)
+    non_final = [step for step in steps if step.code != "final_review"]
+    if final_step and final_step.approved:
+        return "lista para publicacion"
+    if non_final and all(step.approved for step in non_final):
+        if blocking_issues:
+            return "lista para revision"
+        return "lista para publicacion"
+    if any(step.approved or step.status == "in_progress" for step in steps):
+        return "en configuracion"
+    return "borrador"
 
 
 def _parse_identity(payload: dict) -> BrandIdentityData | None:

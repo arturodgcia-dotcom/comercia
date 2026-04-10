@@ -95,6 +95,58 @@ class BrandPosSetupData(BaseModel):
     notes: str | None = None
 
 
+class BrandPlanAddonRead(BaseModel):
+    id: str
+    name: str
+    quantity: int
+
+
+class BrandPlanMetricRead(BaseModel):
+    key: str
+    label: str
+    limit: int
+    used: int
+    remaining: int
+    is_exceeded: bool = False
+
+
+class BrandPlanSnapshotRead(BaseModel):
+    commercial_plan_key: str | None = None
+    commercial_plan_status: str = "not_purchased"
+    commercial_plan_source: str | None = None
+    billing_model: str = "fixed_subscription"
+    commission_enabled: bool = False
+    commission_percentage: float = 0.0
+    limits: dict = Field(default_factory=dict)
+    metrics: list[BrandPlanMetricRead] = Field(default_factory=list)
+    addons: list[BrandPlanAddonRead] = Field(default_factory=list)
+    ai_tokens_included: int = 0
+    ai_tokens_balance: int = 0
+    ai_tokens_used: int = 0
+    ai_tokens_locked: bool = False
+    is_paid_plan: bool = False
+
+
+class BrandChannelRuntimeRead(BaseModel):
+    landing_external_registered: bool = False
+    landing_external_url: str | None = None
+    landing_preview_internal_available: bool = True
+    landing_review_mode: str = "interno"
+    landing_last_regenerated_at: datetime | None = None
+    public_last_regenerated_at: datetime | None = None
+    distributors_last_regenerated_at: datetime | None = None
+
+
+class BrandChannelRoutesRead(BaseModel):
+    landing_url: str
+    landing_preview_url: str
+    public_url: str
+    public_preview_url: str
+    distributors_url: str
+    distributors_preview_url: str
+    pos_preview_url: str
+
+
 class BrandSetupWorkflowRead(BaseModel):
     tenant_id: int
     tenant_name: str
@@ -115,6 +167,11 @@ class BrandSetupWorkflowRead(BaseModel):
     commercial_plan_status: str | None = None
     ai_tokens_balance: int | None = None
     ai_tokens_locked: bool | None = None
+    wizard_status: str = "borrador"
+    plan_snapshot: BrandPlanSnapshotRead | None = None
+    channel_runtime: BrandChannelRuntimeRead | None = None
+    channel_routes: BrandChannelRoutesRead | None = None
+    blocking_issues: list[str] = Field(default_factory=list)
     flow_type: str = "without_landing"
     steps: list[BrandSetupStepState]
     assets: list[BrandSetupAssetRead]
@@ -139,6 +196,7 @@ class BrandSetupWorkflowUpdate(BaseModel):
     commission_enabled: bool | None = None
     commission_scope: str | None = None
     commission_notes: str | None = None
+    force_plan_override: bool | None = None
     flow_type: str | None = None
     steps: list[BrandSetupStepState] | None = None
     identity_data: BrandIdentityData | None = None

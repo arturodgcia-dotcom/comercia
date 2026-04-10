@@ -193,6 +193,11 @@ export interface BrandSetupWorkflow {
   commercial_plan_status?: string | null;
   ai_tokens_balance?: number | null;
   ai_tokens_locked?: boolean | null;
+  wizard_status?: string;
+  plan_snapshot?: BrandPlanSnapshot | null;
+  channel_runtime?: BrandChannelRuntime | null;
+  channel_routes?: BrandChannelRoutes | null;
+  blocking_issues?: string[];
   flow_type: "with_existing_landing" | "without_landing" | string;
   steps: BrandSetupStepState[];
   assets: BrandSetupAsset[];
@@ -202,6 +207,58 @@ export interface BrandSetupWorkflow {
   ecommerce_data?: BrandEcommerceData | null;
   ecommerce_public_summary?: EcommercePublicSummary | null;
   pos_setup_data?: BrandPosSetupData | null;
+}
+
+export interface BrandPlanAddon {
+  id: string;
+  name: string;
+  quantity: number;
+}
+
+export interface BrandPlanMetric {
+  key: string;
+  label: string;
+  limit: number;
+  used: number;
+  remaining: number;
+  is_exceeded: boolean;
+}
+
+export interface BrandPlanSnapshot {
+  commercial_plan_key?: string | null;
+  commercial_plan_status: string;
+  commercial_plan_source?: string | null;
+  billing_model: string;
+  commission_enabled: boolean;
+  commission_percentage: number;
+  limits: Record<string, number>;
+  metrics: BrandPlanMetric[];
+  addons: BrandPlanAddon[];
+  ai_tokens_included: number;
+  ai_tokens_balance: number;
+  ai_tokens_used: number;
+  ai_tokens_locked: boolean;
+  is_paid_plan: boolean;
+}
+
+export interface BrandChannelRuntime {
+  landing_external_registered: boolean;
+  landing_external_url?: string | null;
+  landing_preview_internal_available: boolean;
+  landing_review_mode: string;
+  landing_last_regenerated_at?: string | null;
+  public_last_regenerated_at?: string | null;
+  distributors_last_regenerated_at?: string | null;
+}
+
+export interface BrandChannelRoutes {
+  landing_url: string;
+  landing_preview_url: string;
+  public_url: string;
+  public_preview_url: string;
+  distributors_url: string;
+  distributors_preview_url: string;
+  pos_preview_url: string;
 }
 
 export interface BrandIdentityData {

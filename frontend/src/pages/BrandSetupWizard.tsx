@@ -10,16 +10,19 @@ import {
 } from "../branding/officialChannelTemplates";
 import {
   BrandChannelSettings,
+  BrandChannelRoutes,
   BrandEcommerceData,
   BrandGeneratedContent,
   BrandIdentityData,
   BrandLandingDraft,
+  BrandPlanMetric,
   BrandPosSetupData,
   BrandSetupAsset,
   BrandSetupStepState,
   BrandSetupWorkflow,
   CatalogImportErrorRow,
 } from "../types/domain";
+import { buildBrandChannelUrls } from "../utils/brandChannelUrls";
 
 
 type StepCode =
@@ -94,14 +97,6 @@ const defaultPosSetup: BrandPosSetupData = {
 
 type ImportRow = Record<string, string>;
 
-type BillingSetupData = {
-  billing_model: "fixed_subscription" | "commission_based";
-  commission_percentage: number;
-  commission_enabled: boolean;
-  commission_scope: string;
-  commission_notes: string;
-};
-
 const REQUIRED_COLUMNS = [
   "nombre",
   "descripcion",
@@ -129,14 +124,6 @@ const OFFICIAL_CHANNEL_TEMPLATE_PAYLOAD = {
   distributor_store_template: OFFICIAL_DISTRIBUTOR_STORE_TEMPLATE,
 } as const;
 
-const defaultBillingSetup: BillingSetupData = {
-  billing_model: "fixed_subscription",
-  commission_percentage: 3,
-  commission_enabled: false,
-  commission_scope: "ventas_online_pagadas",
-  commission_notes: "",
-};
-
 function isStepCode(value: string): value is StepCode {
   return ["brand_identity", "landing_setup", "ecommerce_setup", "distributors_setup", "pos_setup", "final_review"].includes(value);
 }
@@ -153,6 +140,28 @@ function toAssetUrl(fileUrl?: string | null): string | null {
   return `${api.getBaseUrl()}${fileUrl}`;
 }
 
+function billingModelLabel(value?: string | null): string {
+  return value === "commission_based" ? "Comision por venta" : "Cuota fija";
+}
+
+function metricLabelValue(metrics: BrandPlanMetric[] | undefined, key: string): string {
+  const metric = metrics?.find((row) => row.key === key);
+  if (!metric) return "Sin dato";
+  return `${metric.used}/${metric.limit}`;
+}
+
+function toAbsoluteUrl(path: string): string {
+  if (path.startsWith("http://") || path.startsWith("https://")) return path;
+  return `${window.location.origin}${path}`;
+}
+
+function formatDateLabel(iso?: string | null): string {
+  if (!iso) return "Sin registro";
+  const parsed = new Date(iso);
+  if (Number.isNaN(parsed.getTime())) return "Sin registro";
+  return parsed.toLocaleString("es-MX");
+}
+
 export function BrandSetupWizard() {
   const { token } = useAuth();
   const { tenantId } = useParams();
@@ -165,8 +174,6 @@ export function BrandSetupWizard() {
   const [landingDraft, setLandingDraft] = useState<BrandLandingDraft>(defaultLanding);
   const [ecommerceData, setEcommerceData] = useState<BrandEcommerceData>(defaultEcommerce);
   const [posSetupData, setPosSetupData] = useState<BrandPosSetupData>(defaultPosSetup);
-  const [billingSetup, setBillingSetup] = useState<BillingSetupData>(defaultBillingSetup);
-
   const [selectedStep, setSelectedStep] = useState<StepCode>("brand_identity");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -201,14 +208,6 @@ export function BrandSetupWizard() {
         massive_upload_enabled: summary ? summary.last_import_valid_rows > 0 : (workflowData.ecommerce_data?.massive_upload_enabled ?? false),
       });
       setPosSetupData(workflowData.pos_setup_data ?? defaultPosSetup);
-      setBillingSetup({
-        billing_model: workflowData.billing_model === "commission_based" ? "commission_based" : "fixed_subscription",
-        commission_percentage: Number(workflowData.commission_percentage ?? defaultBillingSetup.commission_percentage),
-        commission_enabled: Boolean(workflowData.commission_enabled ?? (workflowData.billing_model === "commission_based")),
-        commission_scope: workflowData.commission_scope ?? defaultBillingSetup.commission_scope,
-        commission_notes: workflowData.commission_notes ?? "",
-      });
-
       const nextStep = workflowData.current_step;
       if (isStepCode(nextStep)) {
         setSelectedStep(nextStep);
@@ -242,6 +241,20 @@ export function BrandSetupWizard() {
   }, [steps]);
   const wizardAssets = workflow?.assets ?? [];
   const ecommerceSummary = workflow?.ecommerce_public_summary ?? null;
+  const planSnapshot = workflow?.plan_snapshot ?? null;
+  const planMetrics = planSnapshot?.metrics ?? [];
+  const channelRuntime = workflow?.channel_runtime ?? null;
+  const fallbackRoutes = buildBrandChannelUrls(workflow?.tenant_slug ?? "");
+  const channelRoutes: BrandChannelRoutes = workflow?.channel_routes ?? {
+    landing_url: fallbackRoutes.landingInternalUrl,
+    landing_preview_url: fallbackRoutes.landingPreviewInternalUrl,
+    public_url: fallbackRoutes.publicUrl,
+    public_preview_url: fallbackRoutes.publicPreviewUrl,
+    distributors_url: fallbackRoutes.distributorsUrl,
+    distributors_preview_url: fallbackRoutes.distributorsPreviewUrl,
+    pos_preview_url: fallbackRoutes.posPreviewUrl,
+  };
+  const hasBlockingIssues = Boolean(workflow?.blocking_issues?.length);
 
   const assetsById = useMemo(() => {
     const map = new Map<string, BrandSetupAsset>();
@@ -442,6 +455,13 @@ export function BrandSetupWizard() {
 
   const generateEcommerceTemplate = async () => {
     if (!token || !workflow) return;
+    const productsMetric = planMetrics.find((metric) => metric.key === "products_max");
+    if (productsMetric && productsMetric.limit > 0 && productsMetric.used + 3 > productsMetric.limit) {
+      setError(
+        `No se puede regenerar plantilla: limite de productos del plan (${productsMetric.used}/${productsMetric.limit}) alcanzado.`
+      );
+      return;
+    }
     try {
       setSaving(true);
       setError("");
@@ -467,6 +487,38 @@ export function BrandSetupWizard() {
     }
   };
 
+  const regeneratePublicTemplate = async () => {
+    if (!token || !workflow) return;
+    try {
+      setSaving(true);
+      setError("");
+      setMessage("");
+      const updated = await api.applyBrandEcommerceTemplate(token, workflow.tenant_id);
+      setWorkflow(updated);
+      setMessage("Plantilla ecommerce publica regenerada con datos tenant-aware.");
+    } catch (err) {
+      setError(toUiError(err, "No fue posible regenerar la plantilla publica."));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const regenerateDistributorTemplate = async () => {
+    if (!token || !workflow) return;
+    try {
+      setSaving(true);
+      setError("");
+      setMessage("");
+      const updated = await api.applyBrandEcommerceTemplate(token, workflow.tenant_id);
+      setWorkflow(updated);
+      setMessage("Plantilla ecommerce distribuidores regenerada con datos tenant-aware.");
+    } catch (err) {
+      setError(toUiError(err, "No fue posible regenerar la plantilla distribuidor."));
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const saveIdentity = async (event: FormEvent) => {
     event.preventDefault();
     if (!token || !workflow) return;
@@ -483,10 +535,6 @@ export function BrandSetupWizard() {
       setError("Si indicas landing existente, debes capturar su URL.");
       return;
     }
-    if (billingSetup.billing_model === "commission_based" && !(billingSetup.commission_percentage > 0)) {
-      setError("Para modelo por comision debes indicar un porcentaje mayor a 0.");
-      return;
-    }
 
     try {
       setSaving(true);
@@ -496,11 +544,6 @@ export function BrandSetupWizard() {
         identity_data: identity,
         prompt_master: generated.prompt_master,
         flow_type: flowType,
-        billing_model: billingSetup.billing_model,
-        commission_enabled: billingSetup.billing_model === "commission_based",
-        commission_percentage: billingSetup.billing_model === "commission_based" ? billingSetup.commission_percentage : 0,
-        commission_scope: billingSetup.commission_scope,
-        commission_notes: billingSetup.commission_notes || "",
         selected_template: OFFICIAL_LANDING_TEMPLATE,
         ...OFFICIAL_CHANNEL_TEMPLATE_PAYLOAD,
       });
@@ -666,6 +709,10 @@ export function BrandSetupWizard() {
       setError("Debes aprobar todos los pasos previos antes de publicar.");
       return;
     }
+    if (workflow.blocking_issues?.length) {
+      setError(`No puedes publicar: ${workflow.blocking_issues.join(" | ")}`);
+      return;
+    }
     try {
       setSaving(true);
       setError("");
@@ -733,6 +780,53 @@ export function BrandSetupWizard() {
             </button>
           ))}
         </div>
+      </article>
+
+      <article className="card">
+        <h3>Plan oficial y entitlements del tenant</h3>
+        <p>
+          Estado wizard: <strong>{workflow.wizard_status ?? "borrador"}</strong>
+        </p>
+        <p>
+          Plan activo Stripe: <strong>{planSnapshot?.commercial_plan_key ?? workflow.commercial_plan_key ?? "Sin plan"}</strong>
+          {" | "}Estatus: {planSnapshot?.commercial_plan_status ?? workflow.commercial_plan_status ?? "not_purchased"}
+        </p>
+        <p>
+          Modelo de cobro: {billingModelLabel(planSnapshot?.billing_model ?? workflow.billing_model)}
+          {" | "}Comision: {planSnapshot?.commission_enabled ? `${Number(planSnapshot.commission_percentage ?? 0).toFixed(2)}%` : "No aplica"}
+        </p>
+        <p>
+          Creditos IA: {planSnapshot?.ai_tokens_balance ?? workflow.ai_tokens_balance ?? 0}/{planSnapshot?.ai_tokens_included ?? 0}
+          {" | "}Llave IA: {(planSnapshot?.ai_tokens_locked ?? workflow.ai_tokens_locked) ? "Bloqueada" : "Disponible"}
+        </p>
+        <p>
+          Marcas: {metricLabelValue(planMetrics, "brands_max")}
+          {" | "}Usuarios: {metricLabelValue(planMetrics, "users_max")}
+          {" | "}Agentes IA: {metricLabelValue(planMetrics, "ai_agents_max")}
+          {" | "}Productos: {metricLabelValue(planMetrics, "products_max")}
+          {" | "}Sucursales: {metricLabelValue(planMetrics, "branches_max")}
+        </p>
+        <p>
+          Add-ons activos: {planSnapshot?.addons?.length ? planSnapshot.addons.map((addon) => `${addon.name} x${addon.quantity}`).join(", ") : "Sin add-ons"}
+        </p>
+        {planMetrics.filter((metric) => metric.is_exceeded).length ? (
+          <ul className="marketing-list">
+            {planMetrics
+              .filter((metric) => metric.is_exceeded)
+              .map((metric) => (
+                <li key={metric.key}>
+                  Limite excedido en {metric.label}: {metric.used}/{metric.limit}
+                </li>
+              ))}
+          </ul>
+        ) : null}
+        {workflow.blocking_issues?.length ? (
+          <ul className="marketing-list">
+            {workflow.blocking_issues.map((issue) => (
+              <li key={issue}>{issue}</li>
+            ))}
+          </ul>
+        ) : null}
       </article>
 
       {selectedStep === "brand_identity" ? (
@@ -811,59 +905,15 @@ export function BrandSetupWizard() {
             </select>
           </label>
 
-          <label>
-            Modelo comercial
-            <select
-              value={billingSetup.billing_model}
-              onChange={(event) =>
-                setBillingSetup((prev) => ({
-                  ...prev,
-                  billing_model: event.target.value as BillingSetupData["billing_model"],
-                  commission_enabled: event.target.value === "commission_based",
-                  commission_percentage: event.target.value === "commission_based" ? Math.max(prev.commission_percentage, 1) : 0,
-                }))
-              }
-            >
-              <option value="fixed_subscription">Cuota fija</option>
-              <option value="commission_based">Comision por venta</option>
-            </select>
-          </label>
-          {workflow?.commercial_plan_key ? (
-            <p className="muted">
-              Plan pagado desde Stripe: <strong>{workflow.commercial_plan_key}</strong> ({workflow.commercial_plan_status ?? "sin estado"})
-              {" | "}Creditos IA: {workflow.ai_tokens_balance ?? 0}
-              {" | "}Llave IA: {workflow.ai_tokens_locked ? "Cerrada" : "Abierta"}
-            </p>
-          ) : null}
-          {billingSetup.billing_model === "commission_based" ? (
-            <>
-              <label>
-                Porcentaje de comision (%)
-                <input
-                  type="number"
-                  min={0.1}
-                  step={0.1}
-                  value={billingSetup.commission_percentage}
-                  onChange={(event) =>
-                    setBillingSetup((prev) => ({
-                      ...prev,
-                      commission_percentage: Number(event.target.value || 0),
-                      commission_enabled: true,
-                    }))
-                  }
-                />
-              </label>
-              <label>
-                Notas internas de comision (opcional)
-                <textarea
-                  value={billingSetup.commission_notes}
-                  onChange={(event) => setBillingSetup((prev) => ({ ...prev, commission_notes: event.target.value }))}
-                />
-              </label>
-            </>
-          ) : (
-            <p className="muted">Este modelo no aplica porcentaje sobre venta.</p>
-          )}
+          <p className="muted">
+            Modelo comercial oficial (solo lectura desde Stripe):{" "}
+            <strong>{billingModelLabel(planSnapshot?.billing_model ?? workflow.billing_model)}</strong>.
+            {" "}Comision:{" "}
+            <strong>{planSnapshot?.commission_enabled ? `${Number(planSnapshot.commission_percentage ?? 0).toFixed(2)}%` : "No aplica"}</strong>.
+          </p>
+          <p className="muted">
+            El wizard no permite editar billing_model, porcentaje de comision ni limites base del plan.
+          </p>
 
           <label>
             Prompt maestro de la marca
@@ -921,6 +971,15 @@ export function BrandSetupWizard() {
         <article className="card">
           <h3>Paso Landing: generacion, edicion y aprobacion</h3>
           {error ? <p className="error">{error}</p> : null}
+          <p className="muted">
+            Landing externa registrada: {channelRuntime?.landing_external_registered ? "Si" : "No"}
+            {" | "}Preview interno disponible: {channelRuntime?.landing_preview_internal_available ? "Si" : "Si"}
+            {" | "}Modo de revision: {channelRuntime?.landing_review_mode ?? "interno"}
+            {" | "}Ultima regeneracion: {formatDateLabel(channelRuntime?.landing_last_regenerated_at)}
+          </p>
+          {channelRuntime?.landing_external_registered ? (
+            <p className="muted">URL externa registrada: {channelRuntime.landing_external_url}</p>
+          ) : null}
           <div className="row-gap">
             <button className="button" type="button" onClick={() => generateLanding(false)} disabled={saving}>
               Generar landing
@@ -964,8 +1023,15 @@ export function BrandSetupWizard() {
           </label>
 
           <div className="row-gap">
-            <Link className="button button-outline" to={`/store/${workflow.tenant_slug}/landing`}>Ver landing oficial</Link>
-            <Link className="button button-outline" to={`/store/${workflow.tenant_slug}/landing?preview=1`}>Ver preview</Link>
+            <a className="button button-outline" href={toAbsoluteUrl(channelRoutes.landing_url)} target="_blank" rel="noreferrer">
+              Ver landing
+            </a>
+            <a className="button button-outline" href={toAbsoluteUrl(channelRoutes.landing_preview_url)} target="_blank" rel="noreferrer">
+              Ver preview landing
+            </a>
+            <button className="button button-outline" type="button" onClick={() => generateLanding(true)} disabled={saving}>
+              Regenerar landing
+            </button>
             <button className="button" type="button" onClick={approveLanding} disabled={saving}>
               Aprobar y continuar
             </button>
@@ -977,6 +1043,11 @@ export function BrandSetupWizard() {
         <article className="card">
           <h3>Paso Ecommerce publico</h3>
           {error ? <p className="error">{error}</p> : null}
+          <p className="muted">
+            Plantilla oficial activa: {workflow.public_store_template ?? OFFICIAL_PUBLIC_STORE_TEMPLATE}
+            {" | "}Ruta publica real: {toAbsoluteUrl(channelRoutes.public_url)}
+            {" | "}Ultima regeneracion: {formatDateLabel(channelRuntime?.public_last_regenerated_at)}
+          </p>
           {ecommerceSummary ? (
             <>
               <section className="card-grid">
@@ -1114,9 +1185,18 @@ export function BrandSetupWizard() {
             <textarea value={ecommerceData.notes ?? ""} onChange={(event) => setEcommerceData((prev) => ({ ...prev, notes: event.target.value }))} />
           </label>
           <div className="row-gap">
+            <a className="button button-outline" href={toAbsoluteUrl(channelRoutes.public_url)} target="_blank" rel="noreferrer">
+              Ver ecommerce publico
+            </a>
+            <a className="button button-outline" href={toAbsoluteUrl(channelRoutes.public_preview_url)} target="_blank" rel="noreferrer">
+              Ver preview ecommerce publico
+            </a>
             <Link className="button button-outline" to={`/products?tenant_id=${workflow.tenant_id}`}>Productos</Link>
             <Link className="button button-outline" to={`/categories?tenant_id=${workflow.tenant_id}`}>Categorias</Link>
             <Link className="button button-outline" to={`/admin/catalog/bulk-upload${scopedCatalogQuery}`}>Carga masiva</Link>
+            <button className="button button-outline" type="button" onClick={regeneratePublicTemplate} disabled={saving || csvImporting}>
+              Regenerar plantilla publica
+            </button>
             <button className="button button-outline" type="button" onClick={generateEcommerceTemplate} disabled={saving || csvImporting}>
               Generar plantilla ecommerce
             </button>
@@ -1142,6 +1222,11 @@ export function BrandSetupWizard() {
         <article className="card">
           <h3>Paso Ecommerce distribuidores</h3>
           {error ? <p className="error">{error}</p> : null}
+          <p className="muted">
+            Plantilla oficial activa: {workflow.distributor_store_template ?? OFFICIAL_DISTRIBUTOR_STORE_TEMPLATE}
+            {" | "}Ruta B2B real: {toAbsoluteUrl(channelRoutes.distributors_url)}
+            {" | "}Ultima regeneracion: {formatDateLabel(channelRuntime?.distributors_last_regenerated_at)}
+          </p>
           <label className="checkbox">
             <input type="checkbox" checked={ecommerceData.distributor_catalog_ready} onChange={(event) => setEcommerceData((prev) => ({ ...prev, distributor_catalog_ready: event.target.checked }))} />
             Catalogo distribuidor listo
@@ -1155,6 +1240,15 @@ export function BrandSetupWizard() {
             Compra recurrente habilitada
           </label>
           <div className="row-gap">
+            <a className="button button-outline" href={toAbsoluteUrl(channelRoutes.distributors_url)} target="_blank" rel="noreferrer">
+              Ver ecommerce distribuidores
+            </a>
+            <a className="button button-outline" href={toAbsoluteUrl(channelRoutes.distributors_preview_url)} target="_blank" rel="noreferrer">
+              Ver preview distribuidores
+            </a>
+            <button className="button button-outline" type="button" onClick={regenerateDistributorTemplate} disabled={saving}>
+              Regenerar plantilla distribuidor
+            </button>
             <Link className="button button-outline" to="/admin/distributors">Distribuidores</Link>
             <button className="button" type="button" onClick={saveDistributors} disabled={saving}>
               Aprobar canal distribuidor
@@ -1167,6 +1261,10 @@ export function BrandSetupWizard() {
         <article className="card">
           <h3>Paso POS / WebApp</h3>
           {error ? <p className="error">{error}</p> : null}
+          <p className="muted">
+            Sucursales plan: {metricLabelValue(planMetrics, "branches_max")}
+            {" | "}Ruta POS preview: {toAbsoluteUrl(channelRoutes.pos_preview_url)}
+          </p>
           <label className="checkbox">
             <input type="checkbox" checked={posSetupData.pos_enabled} onChange={(event) => setPosSetupData((prev) => ({ ...prev, pos_enabled: event.target.checked }))} />
             POS habilitado
@@ -1211,6 +1309,9 @@ export function BrandSetupWizard() {
           </label>
           <div className="row-gap">
             <Link className="button button-outline" to="/pos">Abrir POS</Link>
+            <a className="button button-outline" href={toAbsoluteUrl(channelRoutes.pos_preview_url)} target="_blank" rel="noreferrer">
+              Ver preview POS
+            </a>
             <Link className="button button-outline" to="/admin/settings/payments/mercadopago">Configurar Mercado Pago</Link>
             <button className="button" type="button" onClick={savePos} disabled={saving}>
               Aprobar POS / WebApp
@@ -1223,6 +1324,26 @@ export function BrandSetupWizard() {
         <article className="card">
           <h3>Revision final y publicacion</h3>
           {error ? <p className="error">{error}</p> : null}
+          <p>
+            Estado final actual: <strong>{workflow.wizard_status ?? "borrador"}</strong>
+          </p>
+          <p>
+            Branding: {identity.brand_name || workflow.tenant_name} | Color primario {identity.primary_color} | Color secundario {identity.secondary_color}
+          </p>
+          <p>
+            Plan: {planSnapshot?.commercial_plan_key ?? workflow.commercial_plan_key ?? "Sin plan"} | Modelo{" "}
+            {billingModelLabel(planSnapshot?.billing_model ?? workflow.billing_model)} | Creditos IA{" "}
+            {planSnapshot?.ai_tokens_balance ?? workflow.ai_tokens_balance ?? 0}/{planSnapshot?.ai_tokens_included ?? 0}
+          </p>
+          <p>
+            Plantillas activas: landing={workflow.landing_template ?? OFFICIAL_LANDING_TEMPLATE}, publico=
+            {workflow.public_store_template ?? OFFICIAL_PUBLIC_STORE_TEMPLATE}, distribuidores=
+            {workflow.distributor_store_template ?? OFFICIAL_DISTRIBUTOR_STORE_TEMPLATE}
+          </p>
+          <p>
+            Rutas: landing={toAbsoluteUrl(channelRoutes.landing_url)} | publico={toAbsoluteUrl(channelRoutes.public_url)} | distribuidores=
+            {toAbsoluteUrl(channelRoutes.distributors_url)}
+          </p>
           <ul className="marketing-list">
             {steps.map((row) => {
               const code = row.code as StepCode;
@@ -1233,11 +1354,24 @@ export function BrandSetupWizard() {
               );
             })}
           </ul>
+          {workflow.blocking_issues?.length ? (
+            <ul className="marketing-list">
+              {workflow.blocking_issues.map((issue) => (
+                <li key={issue}>{issue}</li>
+              ))}
+            </ul>
+          ) : null}
           <div className="row-gap">
-            <Link className="button button-outline" to={`/store/${workflow.tenant_slug}`}>
-              Preview final
-            </Link>
-            <button className="button" type="button" onClick={publishBrand} disabled={saving}>
+            <a className="button button-outline" href={toAbsoluteUrl(channelRoutes.landing_url)} target="_blank" rel="noreferrer">
+              Ver landing
+            </a>
+            <a className="button button-outline" href={toAbsoluteUrl(channelRoutes.public_url)} target="_blank" rel="noreferrer">
+              Ver ecommerce publico
+            </a>
+            <a className="button button-outline" href={toAbsoluteUrl(channelRoutes.distributors_url)} target="_blank" rel="noreferrer">
+              Ver ecommerce distribuidores
+            </a>
+            <button className="button" type="button" onClick={publishBrand} disabled={saving || hasBlockingIssues}>
               Publicar marca
             </button>
           </div>
