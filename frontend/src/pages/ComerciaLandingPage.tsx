@@ -171,11 +171,16 @@ const SEGMENTS = [
 const FALLBACK_COMMERCIAL_PLANS: CommercialPlan[] = [
   {
     id: "fixed_subscription_basic",
-    name: "Plan Basico",
+    code: "basic_fixed",
+    display_name: "Basico sin comision",
+    name: "Basico sin comision",
     tier: "basic",
     billing_model: "fixed_subscription",
     commission_enabled: false,
     commission_percentage: "0.00",
+    monthly_price_mxn: "3500.00",
+    total_price_mxn: "4060.00",
+    stripe_price_id: "",
     support: "48h por correo",
     limits: { brands_max: 1, users_max: 2, ai_agents_max: 1, products_max: 50, branches_max: 1, ia_tokens_total: 200 },
     price_without_tax_mxn: "3500.00",
@@ -185,11 +190,16 @@ const FALLBACK_COMMERCIAL_PLANS: CommercialPlan[] = [
   },
   {
     id: "fixed_subscription_growth",
-    name: "Plan Growth",
+    code: "growth_fixed",
+    display_name: "Growth sin comision",
+    name: "Growth sin comision",
     tier: "growth",
     billing_model: "fixed_subscription",
     commission_enabled: false,
     commission_percentage: "0.00",
+    monthly_price_mxn: "5990.00",
+    total_price_mxn: "6948.40",
+    stripe_price_id: "",
     support: "Prioritario 24h por Chat Agente IA",
     limits: { brands_max: 3, users_max: 5, ai_agents_max: 3, products_max: 300, branches_max: 3, ia_tokens_total: 1050 },
     price_without_tax_mxn: "5990.00",
@@ -199,11 +209,16 @@ const FALLBACK_COMMERCIAL_PLANS: CommercialPlan[] = [
   },
   {
     id: "fixed_subscription_premium",
-    name: "Plan Premium",
+    code: "premium_fixed",
+    display_name: "Premium sin comision",
+    name: "Premium sin comision",
     tier: "premium",
     billing_model: "fixed_subscription",
     commission_enabled: false,
     commission_percentage: "0.00",
+    monthly_price_mxn: "9990.00",
+    total_price_mxn: "11588.40",
+    stripe_price_id: "",
     support: "Premium 24h/7 por Chat Agente IA",
     limits: { brands_max: 10, users_max: 10, ai_agents_max: 5, products_max: 1000, branches_max: 10, ia_tokens_total: 5000 },
     price_without_tax_mxn: "9990.00",
@@ -213,11 +228,16 @@ const FALLBACK_COMMERCIAL_PLANS: CommercialPlan[] = [
   },
   {
     id: "commission_based_basic",
-    name: "Plan Basico",
+    code: "basic_commission",
+    display_name: "Basico con comision",
+    name: "Basico con comision",
     tier: "basic",
     billing_model: "commission_based",
     commission_enabled: true,
     commission_percentage: "5.00",
+    monthly_price_mxn: "990.00",
+    total_price_mxn: "1148.40",
+    stripe_price_id: "",
     support: "48h por correo",
     limits: { brands_max: 1, users_max: 2, ai_agents_max: 1, products_max: 50, branches_max: 1, ia_tokens_total: 100 },
     price_without_tax_mxn: "990.00",
@@ -227,11 +247,16 @@ const FALLBACK_COMMERCIAL_PLANS: CommercialPlan[] = [
   },
   {
     id: "commission_based_growth",
-    name: "Plan Growth",
+    code: "growth_commission",
+    display_name: "Growth con comision",
+    name: "Growth con comision",
     tier: "growth",
     billing_model: "commission_based",
     commission_enabled: true,
     commission_percentage: "4.50",
+    monthly_price_mxn: "1690.00",
+    total_price_mxn: "1960.40",
+    stripe_price_id: "",
     support: "Prioritario 24h por Chat Agente IA",
     limits: { brands_max: 2, users_max: 5, ai_agents_max: 3, products_max: 200, branches_max: 2, ia_tokens_total: 200 },
     price_without_tax_mxn: "1690.00",
@@ -241,11 +266,16 @@ const FALLBACK_COMMERCIAL_PLANS: CommercialPlan[] = [
   },
   {
     id: "commission_based_premium",
-    name: "Plan Premium",
+    code: "premium_commission",
+    display_name: "Premium con comision",
+    name: "Premium con comision",
     tier: "premium",
     billing_model: "commission_based",
     commission_enabled: true,
     commission_percentage: "4.00",
+    monthly_price_mxn: "2990.00",
+    total_price_mxn: "3468.40",
+    stripe_price_id: "",
     support: "Premium 24h/7 por Chat Agente IA",
     limits: { brands_max: 3, users_max: 10, ai_agents_max: 5, products_max: 450, branches_max: 5, ia_tokens_total: 450 },
     price_without_tax_mxn: "2990.00",
@@ -256,13 +286,13 @@ const FALLBACK_COMMERCIAL_PLANS: CommercialPlan[] = [
 ];
 
 const FALLBACK_COMMERCIAL_ADDONS: CommercialAddon[] = [
-  { id: "extra_user", name: "Usuario extra", price_without_tax_mxn: "199.00", tax_rate: "0.16", tax_amount_mxn: "31.84", price_with_tax_mxn: "230.84" },
-  { id: "extra_ai_agent", name: "Agente IA extra", price_without_tax_mxn: "490.00", tax_rate: "0.16", tax_amount_mxn: "78.40", price_with_tax_mxn: "568.40" },
-  { id: "extra_brand", name: "Marca extra", price_without_tax_mxn: "990.00", tax_rate: "0.16", tax_amount_mxn: "158.40", price_with_tax_mxn: "1148.40" },
-  { id: "extra_100_products", name: "100 productos extra", price_without_tax_mxn: "490.00", tax_rate: "0.16", tax_amount_mxn: "78.40", price_with_tax_mxn: "568.40" },
-  { id: "extra_branch", name: "Sucursal extra", price_without_tax_mxn: "790.00", tax_rate: "0.16", tax_amount_mxn: "126.40", price_with_tax_mxn: "916.40" },
-  { id: "extra_500_tokens", name: "500 creditos IA extra", price_without_tax_mxn: "490.00", tax_rate: "0.16", tax_amount_mxn: "78.40", price_with_tax_mxn: "568.40" },
-  { id: "premium_support", name: "Soporte premium", price_without_tax_mxn: "990.00", tax_rate: "0.16", tax_amount_mxn: "158.40", price_with_tax_mxn: "1148.40" },
+  { id: "extra_user", code: "extra_user", display_name: "Usuario extra", name: "Usuario extra", billing_model: "addon", commission_enabled: false, commission_percentage: "0.00", monthly_price_mxn: "199.00", total_price_mxn: "230.84", stripe_price_id: "", price_without_tax_mxn: "199.00", tax_rate: "0.16", tax_amount_mxn: "31.84", price_with_tax_mxn: "230.84" },
+  { id: "extra_ai_agent", code: "extra_ai_agent", display_name: "Agente IA extra", name: "Agente IA extra", billing_model: "addon", commission_enabled: false, commission_percentage: "0.00", monthly_price_mxn: "490.00", total_price_mxn: "568.40", stripe_price_id: "", price_without_tax_mxn: "490.00", tax_rate: "0.16", tax_amount_mxn: "78.40", price_with_tax_mxn: "568.40" },
+  { id: "extra_brand", code: "extra_brand", display_name: "Marca extra", name: "Marca extra", billing_model: "addon", commission_enabled: false, commission_percentage: "0.00", monthly_price_mxn: "990.00", total_price_mxn: "1148.40", stripe_price_id: "", price_without_tax_mxn: "990.00", tax_rate: "0.16", tax_amount_mxn: "158.40", price_with_tax_mxn: "1148.40" },
+  { id: "extra_100_products", code: "extra_100_products", display_name: "100 productos extra", name: "100 productos extra", billing_model: "addon", commission_enabled: false, commission_percentage: "0.00", monthly_price_mxn: "490.00", total_price_mxn: "568.40", stripe_price_id: "", price_without_tax_mxn: "490.00", tax_rate: "0.16", tax_amount_mxn: "78.40", price_with_tax_mxn: "568.40" },
+  { id: "extra_branch", code: "extra_branch", display_name: "Sucursal extra", name: "Sucursal extra", billing_model: "addon", commission_enabled: false, commission_percentage: "0.00", monthly_price_mxn: "790.00", total_price_mxn: "916.40", stripe_price_id: "", price_without_tax_mxn: "790.00", tax_rate: "0.16", tax_amount_mxn: "126.40", price_with_tax_mxn: "916.40" },
+  { id: "extra_500_tokens", code: "extra_500_ai_credits", display_name: "500 creditos IA extra", name: "500 creditos IA extra", billing_model: "addon", commission_enabled: false, commission_percentage: "0.00", monthly_price_mxn: "490.00", total_price_mxn: "568.40", stripe_price_id: "", price_without_tax_mxn: "490.00", tax_rate: "0.16", tax_amount_mxn: "78.40", price_with_tax_mxn: "568.40" },
+  { id: "premium_support", code: "premium_support", display_name: "Soporte premium", name: "Soporte premium", billing_model: "addon", commission_enabled: false, commission_percentage: "0.00", monthly_price_mxn: "990.00", total_price_mxn: "1148.40", stripe_price_id: "", price_without_tax_mxn: "990.00", tax_rate: "0.16", tax_amount_mxn: "158.40", price_with_tax_mxn: "1148.40" },
 ];
 
 const AI_PROMPTS = [
@@ -449,6 +479,8 @@ export function ComerciaLandingPage() {
   const [marketingSuccess, setMarketingSuccess] = useState("");
   const [commercialPlans, setCommercialPlans] = useState<CommercialPlan[]>(FALLBACK_COMMERCIAL_PLANS);
   const [commercialAddons, setCommercialAddons] = useState<CommercialAddon[]>(FALLBACK_COMMERCIAL_ADDONS);
+  const [checkoutItemLoading, setCheckoutItemLoading] = useState<string>("");
+  const [checkoutError, setCheckoutError] = useState("");
 
   const activeDemoView = useMemo(
     () => DEMO_VIEWS.find((view) => view.code === activeDemo) ?? DEMO_VIEWS[0],
@@ -466,6 +498,27 @@ export function ComerciaLandingPage() {
   const limitValue = (plan: CommercialPlan, key: string) => {
     const raw = plan.limits?.[key];
     return typeof raw === "number" ? raw : Number(raw || 0);
+  };
+  const checkoutStatus = searchParams.get("checkout");
+  const checkoutItemCode = searchParams.get("item") ?? "";
+
+  const startCommercialCheckout = async (itemCode: string) => {
+    try {
+      setCheckoutError("");
+      setCheckoutItemLoading(itemCode);
+      const successUrl = `${window.location.origin}/comercia?checkout=success&item=${encodeURIComponent(itemCode)}`;
+      const cancelUrl = `${window.location.origin}/comercia?checkout=cancel&item=${encodeURIComponent(itemCode)}`;
+      const response = await api.createComerciaCommercialCheckoutSession({
+        item_code: itemCode,
+        success_url: successUrl,
+        cancel_url: cancelUrl,
+      });
+      window.location.href = response.checkout_url;
+    } catch {
+      setCheckoutError("No fue posible iniciar el checkout en este momento. Intenta nuevamente.");
+    } finally {
+      setCheckoutItemLoading("");
+    }
   };
 
   useEffect(() => {
@@ -1065,6 +1118,15 @@ export function ComerciaLandingPage() {
         <header className="cp-section-head">
           <p className="cp-kicker">6. Modelos de negocio</p>
           <h2>Planes oficiales por modelo comercial (sin comision y con comision)</h2>
+          {checkoutStatus === "success" ? (
+            <p className="cp-success">
+              Checkout completado en Stripe test para <strong>{checkoutItemCode || "tu seleccion"}</strong>. Te contactaremos para activacion.
+            </p>
+          ) : null}
+          {checkoutStatus === "cancel" ? (
+            <p className="muted">Checkout cancelado. Puedes retomar tu compra cuando quieras.</p>
+          ) : null}
+          {checkoutError ? <p className="error">{checkoutError}</p> : null}
         </header>
         <div className="cp-plan-group">
           <h3>Membresia sin porcentaje de cobro</h3>
@@ -1083,15 +1145,8 @@ export function ComerciaLandingPage() {
                   <li>Comision por venta: No aplica</li>
                   <li>Soporte: {plan.support}</li>
                 </ul>
-                <button
-                  type="button"
-                  className="button"
-                  onClick={() => {
-                    setLeadForm((prev) => ({ ...prev, selected_plan_code: plan.id }));
-                    openDiagnostic();
-                  }}
-                >
-                  Solicitar este plan
+                <button type="button" className="button" disabled={Boolean(checkoutItemLoading)} onClick={() => void startCommercialCheckout(plan.code)}>
+                  {checkoutItemLoading === plan.code ? "Iniciando checkout..." : "Comprar en Stripe test"}
                 </button>
               </article>
             ))}
@@ -1114,15 +1169,8 @@ export function ComerciaLandingPage() {
                   <li>Comision por venta: {plan.commission_percentage}%</li>
                   <li>Soporte: {plan.support}</li>
                 </ul>
-                <button
-                  type="button"
-                  className="button"
-                  onClick={() => {
-                    setLeadForm((prev) => ({ ...prev, selected_plan_code: plan.id }));
-                    openDiagnostic();
-                  }}
-                >
-                  Solicitar este plan
+                <button type="button" className="button" disabled={Boolean(checkoutItemLoading)} onClick={() => void startCommercialCheckout(plan.code)}>
+                  {checkoutItemLoading === plan.code ? "Iniciando checkout..." : "Comprar en Stripe test"}
                 </button>
               </article>
             ))}
@@ -1133,8 +1181,11 @@ export function ComerciaLandingPage() {
           <div className="cp-addons-grid">
             {commercialAddons.map((addon) => (
               <article key={addon.id} className="cp-addon-card">
-                <strong>{addon.name}</strong>
+                <strong>{addon.display_name || addon.name}</strong>
                 <span>${formatMoney(addon.price_with_tax_mxn)} MXN IVA incluido</span>
+                <button type="button" className="button button-outline" disabled={Boolean(checkoutItemLoading)} onClick={() => void startCommercialCheckout(addon.code)}>
+                  {checkoutItemLoading === addon.code ? "Iniciando checkout..." : "Comprar add-on"}
+                </button>
               </article>
             ))}
           </div>
