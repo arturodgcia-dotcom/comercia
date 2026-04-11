@@ -845,6 +845,39 @@
   gap: 10px;
 }
 
+.cp-form-block {
+  border: 1px solid #cfe0fb;
+  border-radius: 14px;
+  background: #ffffff;
+  padding: 14px;
+  display: grid;
+  gap: 10px;
+}
+
+.cp-form-block h3 {
+  margin: 0;
+  font-size: 16px;
+  color: #12356f;
+}
+
+.cp-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.cp-form-grid .checkbox {
+  margin: 0;
+  min-height: 42px;
+  border: 1px solid #d8e4fb;
+  border-radius: 10px;
+  padding: 8px 10px;
+  background: #f8fbff;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .cp-simple-form label {
   margin: 0;
 }
@@ -904,6 +937,10 @@
   }
 
   .cp-simple-form {
+    grid-template-columns: 1fr;
+  }
+
+  .cp-form-grid {
     grid-template-columns: 1fr;
   }
 
