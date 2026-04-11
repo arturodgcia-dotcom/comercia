@@ -839,6 +839,42 @@
   line-height: 1.55;
 }
 
+.cp-seo-list {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--cp-muted);
+  line-height: 1.55;
+}
+
+.cp-seo-list li {
+  margin-bottom: 4px;
+}
+
+.cp-service-stack {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 12px;
+}
+
+.cp-service-card {
+  border: 1px solid #cfe0fb;
+  border-radius: 14px;
+  background: linear-gradient(155deg, #ffffff 0%, #f6faff 100%);
+  padding: 16px;
+  display: grid;
+  gap: 8px;
+}
+
+.cp-service-card h3 {
+  margin: 0;
+}
+
+.cp-service-card p {
+  margin: 0;
+  color: var(--cp-muted);
+  line-height: 1.55;
+}
+
 .cp-simple-form {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

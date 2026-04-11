@@ -32,10 +32,79 @@ const PLANES_RESUMEN = [
 ];
 
 const SERVICIOS_EXTRA = [
-  "Logistica para recoleccion, entrega y control operativo.",
-  "Jornada laboral y agenda para equipos de servicio.",
-  "NFC software, venta de equipos y paquetes de tarjetas.",
+  {
+    nombre: "Logistica comercial",
+    descripcion: "Operacion de recoleccion y entrega con visibilidad por marca y sucursal.",
+    puntos: [
+      "Solicitudes de recoleccion y entregas",
+      "Seguimiento operativo por evento",
+      "Control por sucursal",
+      "Operacion propia o asistida",
+    ],
+  },
+  {
+    nombre: "Jornada laboral",
+    descripcion: "Organiza equipos, turnos e incidencias para mejorar ejecucion diaria.",
+    puntos: [
+      "Gestion de empleados",
+      "Control de asistencia",
+      "Turnos y cobertura operativa",
+      "Incidencias y reportes",
+    ],
+  },
+  {
+    nombre: "NFC para operacion",
+    descripcion: "Infraestructura NFC para identificacion, tarjetas y control comercial.",
+    puntos: [
+      "Software por sucursal",
+      "Grabado y programacion NFC",
+      "Control de tarjetas",
+      "Impresion y equipos compatibles",
+    ],
+  },
 ];
+
+const RESPUESTAS_RAPIDAS = [
+  {
+    pregunta: "Que hace ComerCia por una marca que quiere vender en linea?",
+    respuesta: "Centraliza landing, ecommerce, distribuidores y POS para convertir mas y operar con menos friccion.",
+  },
+  {
+    pregunta: "ComerCia solo vende software?",
+    respuesta: "No. Tambien integra servicios complementarios de logistica, jornada laboral y NFC segun tu etapa comercial.",
+  },
+  {
+    pregunta: "Puede activarse por fases?",
+    respuesta: "Si. Puedes iniciar con plan base y escalar con add-ons y consultoria comercial segun crecimiento.",
+  },
+];
+
+const FAQ_JSON_LD = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: RESPUESTAS_RAPIDAS.map((item) => ({
+    "@type": "Question",
+    name: item.pregunta,
+    acceptedAnswer: {
+      "@type": "Answer",
+      text: item.respuesta,
+    },
+  })),
+};
+
+const SERVICES_JSON_LD = {
+  "@context": "https://schema.org",
+  "@type": "ItemList",
+  itemListElement: SERVICIOS_EXTRA.map((item, index) => ({
+    "@type": "ListItem",
+    position: index + 1,
+    item: {
+      "@type": "Service",
+      name: item.nombre,
+      description: item.descripcion,
+    },
+  })),
+};
 
 export function ComerciaLandingPage() {
   const navigate = useNavigate();
@@ -46,6 +115,8 @@ export function ComerciaLandingPage() {
   return (
     <main className="comercia-premium cp-animate-up">
       <CookieConsentBanner />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(FAQ_JSON_LD) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(SERVICES_JSON_LD) }} />
 
       <nav className="cp-nav">
         <div>
@@ -66,10 +137,10 @@ export function ComerciaLandingPage() {
       <section className="cp-hero">
         <article className="cp-hero-copy">
           <p className="cp-eyebrow">Plataforma SaaS comercial</p>
-          <h2>Convierte tu marca en una operacion digital ordenada, escalable y rentable.</h2>
+          <h2>Vende en linea, opera mejor y escala tus canales comerciales en una sola plataforma.</h2>
           <p>
-            ComerCia integra captacion, venta y operacion para que tu equipo ejecute con foco comercial y sin herramientas
-            dispersas.
+            ComerCia te ayuda a activar ecommerce, distribuidores y automatizacion comercial para crecer con estructura y
+            control real.
           </p>
           <div className="cp-cta-row">
             <Link className="button" to="/comercia/precios">Ver planes y add-ons</Link>
@@ -91,10 +162,9 @@ export function ComerciaLandingPage() {
       <section className="cp-section">
         <header className="cp-section-head">
           <p className="cp-kicker">Propuesta de valor</p>
-          <h2>Lo esencial, sin ruido operativo</h2>
+          <h2>Que resuelve ComerCia para crecimiento comercial</h2>
           <p>
-            Esta landing principal concentra la vision ejecutiva. El detalle de precios, marketing y consultoria vive en
-            subpaginas especializadas para mantener una experiencia clara.
+            ComerCia conecta venta, operacion y seguimiento para que tu negocio no dependa de herramientas aisladas.
           </p>
         </header>
         <div className="cp-simple-grid">
@@ -105,6 +175,15 @@ export function ComerciaLandingPage() {
             </article>
           ))}
         </div>
+        <article className="cp-simple-card">
+          <h3>Resultado esperado</h3>
+          <ul className="cp-seo-list">
+            <li>Vender en linea con embudo comercial claro.</li>
+            <li>Operar mejor con procesos, seguimiento y reportes.</li>
+            <li>Crecer con canales comerciales y distribuidores activos.</li>
+            <li>Conectar automatizacion comercial para acelerar conversion.</li>
+          </ul>
+        </article>
       </section>
 
       <section className="cp-section">
@@ -142,19 +221,44 @@ export function ComerciaLandingPage() {
 
       <section className="cp-section">
         <header className="cp-section-head">
-          <p className="cp-kicker">Servicios extra</p>
-          <h2>Capacidad adicional para operacion y crecimiento</h2>
+          <p className="cp-kicker">Servicios complementarios</p>
+          <h2>ComerCia tambien ofrece logistica, jornada laboral y NFC</h2>
+          <p>
+            Ademas del software comercial base, puedes integrar servicios complementarios para ampliar capacidad sin frenar
+            la operacion.
+          </p>
         </header>
-        <div className="cp-simple-grid">
+        <div className="cp-service-stack">
           {SERVICIOS_EXTRA.map((servicio) => (
-            <article key={servicio} className="cp-simple-card">
-              <h3>Add-on comercial</h3>
-              <p>{servicio}</p>
+            <article key={servicio.nombre} className="cp-service-card">
+              <h3>{servicio.nombre}</h3>
+              <p>{servicio.descripcion}</p>
+              <ul className="cp-seo-list">
+                {servicio.puntos.map((punto) => (
+                  <li key={`${servicio.nombre}-${punto}`}>{punto}</li>
+                ))}
+              </ul>
+              <div className="cp-cta-row">
+                <Link className="button button-outline" to="/comercia/precios">Ver opciones y precios</Link>
+                <Link className="button button-outline" to="/comercia/consultoria">Solicitar consulta</Link>
+              </div>
             </article>
           ))}
         </div>
-        <div className="cp-cta-row">
-          <Link className="button button-outline" to="/comercia/precios">Ver add-ons y servicios</Link>
+      </section>
+
+      <section className="cp-section">
+        <header className="cp-section-head">
+          <p className="cp-kicker">Preguntas frecuentes</p>
+          <h2>Respuestas rapidas para decision comercial</h2>
+        </header>
+        <div className="cp-simple-grid">
+          {RESPUESTAS_RAPIDAS.map((item) => (
+            <article key={item.pregunta} className="cp-simple-card">
+              <h3>{item.pregunta}</h3>
+              <p>{item.respuesta}</p>
+            </article>
+          ))}
         </div>
       </section>
 
