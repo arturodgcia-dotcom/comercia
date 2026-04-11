@@ -1018,3 +1018,20 @@ Variables backend (`backend/.env`):
   - wizard = creacion
   - panel global = administracion de activos creados
   - panel de marca = operacion diaria.
+
+## Actualizacion ejecucion 55 (Add-ons visibles por rol con activacion comercial)
+- Modulos add-on visibles siempre en panel de marca:
+  - `Logistica` (`/admin/logistics`)
+  - `Jornada laboral` (`/admin/appointments`)
+  - `NFC / grabado / impresion` (`/admin/addons/nfc`)
+- Comportamiento por rol:
+  - cliente/marca: ve modulo y estado comercial (`Disponible`, `No contratado`, `Requiere activacion`) con CTA de activacion/consulta.
+  - super admin: puede revisar modulo completo y actualizar estado/plan/scope por sucursal.
+- Gating operativo:
+  - si no esta contratado, el modulo se mantiene visible pero bloquea funciones operativas.
+  - no hay pantallas vacias ni rutas muertas; siempre se muestra resumen + CTA.
+- Panel global/super admin:
+  - backend de `brand-settings` ya permite gestion de add-ons tambien para rol `super_admin`.
+- Validacion ejecutada:
+  - `cd frontend && npm run build`
+  - `cd backend && .\\.venv\\Scripts\\python.exe -m compileall app`

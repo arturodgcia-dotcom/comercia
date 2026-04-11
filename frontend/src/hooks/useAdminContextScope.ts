@@ -6,7 +6,7 @@ const STORAGE_BRAND_KEY = "comercia_admin_brand_id";
 
 export function useAdminContextScope() {
   const { user } = useAuth();
-  const isGlobalAdmin = user?.role === "reinpia_admin";
+  const isGlobalAdmin = user?.role === "reinpia_admin" || user?.role === "super_admin";
   const storedMode = sessionStorage.getItem(STORAGE_MODE_KEY);
   const mode = isGlobalAdmin && storedMode === "global" ? "global" : "brand";
   const storedBrandId = Number(sessionStorage.getItem(STORAGE_BRAND_KEY) ?? "");

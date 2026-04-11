@@ -1071,3 +1071,36 @@ Resultado:
 - wizard = creacion
 - administracion global = gestion de activos ya creados y control comercial/operativo
 - panel de marca = operacion diaria.
+
+## Ejecucion 55: add-ons visibles por rol con bloqueo comercial
+Objetivo:
+- exponer Logistica, Jornada laboral y NFC como modulos add-on visibles para marca sin habilitarlos operativamente si no hay contrato.
+
+Arquitectura aplicada:
+1) Capa de visualizacion unificada
+- componente reusable: `AddonModuleAccessCard`.
+- muestra nombre, descripcion, beneficios, estado comercial, plan y scope por sucursal.
+- CTA para marca no contratada:
+  - `Activar add-on`
+  - `Consultar activacion`
+
+2) Gating operacional por contrato + rol
+- regla: `allowOperational = isSuperAdmin || feature_<addon>_enabled`.
+- si `allowOperational=false`:
+  - se renderiza pantalla informativa/CTA
+  - se bloquean acciones operativas del modulo.
+- si `allowOperational=true`:
+  - se habilitan flujos operativos existentes.
+
+3) Control administrativo global
+- `super_admin` y `reinpia_admin` pueden cambiar:
+  - `addon_*_status`
+  - `addon_*_plan`
+  - `addon_*_scope_branch_ids`
+- endpoint: `PUT /api/v1/admin/brand-settings/{tenant_id}`.
+- backend actualizado para aceptar tambien rol `super_admin` en estas operaciones.
+
+4) Navegacion de panel de marca
+- add-ons siempre visibles en menu de marca con estado comercial en etiqueta.
+- nueva ruta NFC dedicada:
+  - `/admin/addons/nfc`

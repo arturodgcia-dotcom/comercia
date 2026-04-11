@@ -535,3 +535,19 @@ Nuevos endpoints:
 - Limpieza de flujo principal | Estado: funcional
   - enlaces legacy de marcas hacia `/tenants/*` retirados del recorrido principal global
   - rutas duplicadas de comisionistas/comisiones eliminadas del router principal.
+
+## Actualizacion add-ons visibles por rol (Ejecucion 55)
+- Logistica | Estado: visible con gating comercial
+  - ruta: `/admin/logistics`
+  - cliente/marca: ve estado y CTA de activacion, sin operacion si no contratado
+  - super admin: puede operar y configurar estado/plan/scope
+- Jornada laboral | Estado: visible con gating comercial
+  - ruta: `/admin/appointments`
+  - cliente/marca: ve estado y CTA de activacion, sin operacion si no contratado
+  - super admin: puede operar y configurar estado/plan/scope
+- NFC / grabado / impresion | Estado: visible con activacion comercial
+  - ruta: `/admin/addons/nfc`
+  - cliente/marca: resumen + beneficios + CTA
+  - super admin: control de estado/plan/scope y acceso operativo base
+- Navegacion de marca | Estado: funcional
+  - los tres add-ons quedan siempre visibles con etiqueta de estado comercial en menu.

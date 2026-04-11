@@ -50,6 +50,7 @@ import { LogisticsAdminPage } from "../pages/LogisticsAdminPage";
 import { LoyaltyProgramAdminPage } from "../pages/LoyaltyProgramAdminPage";
 import { MembershipPlansAdminPage } from "../pages/MembershipPlansAdminPage";
 import { MercadoPagoSettingsPage } from "../pages/MercadoPagoSettingsPage";
+import { NfcAddonPage } from "../pages/NfcAddonPage";
 import { PaymentsAdminPage } from "../pages/PaymentsAdminPage";
 import { PlansPage } from "../pages/PlansPage";
 import { PosCustomersPage } from "../pages/PosCustomersPage";
@@ -173,6 +174,7 @@ export function AppRouter() {
             <Route path="admin/inventory" element={<InventoryPage />} />
             <Route path="admin/feedback" element={<FeedbackModerationPage />} />
             <Route path="admin/appointments" element={<AppointmentsAdminPage />} />
+            <Route path="admin/addons/nfc" element={<NfcAddonPage />} />
             <Route path="admin/distributor-applications" element={<DistributorApplicationsAdminPage />} />
             <Route path="admin/distributors" element={<DistributorsAdminPage />} />
             <Route path="admin/recurring-orders" element={<RecurringOrdersAdminPage />} />

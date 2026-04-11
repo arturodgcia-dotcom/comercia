@@ -70,7 +70,7 @@ def _get_or_create_platform_settings(db: Session) -> PlatformSettings:
 
 
 def _assert_tenant_scope_access(current_user: User, tenant_id: int) -> None:
-    if current_user.role == "reinpia_admin":
+    if current_user.role in {"reinpia_admin", "super_admin"}:
         return
     if current_user.tenant_id != tenant_id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="sin acceso a esta marca")
@@ -293,7 +293,7 @@ def update_brand_settings(
         "feature_workday_enabled",
         "feature_nfc_operations_enabled",
     }
-    if current_user.role != "reinpia_admin" and any(field in update_data for field in protected_fields):
+    if current_user.role not in {"reinpia_admin", "super_admin"} and any(field in update_data for field in protected_fields):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="solo ComerCia global puede activar add-ons e internacional por marca",

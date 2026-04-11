@@ -643,3 +643,14 @@
 - [x] Limpieza de duplicados de rutas globales (`commission-agents` y `reports/commissions`)
 - [x] Enlaces legacy `/tenants/*` retirados del flujo principal global de marcas
 - [x] Validacion ejecutada: backend compile + frontend build
+
+## Entregables ejecucion 55 (Add-ons visibles por rol con activacion comercial)
+- [x] Logistica, Jornada laboral y NFC visibles siempre en panel de marca
+- [x] Cliente/marca ve estado comercial y CTA de activacion sin acceso operativo si no contratado
+- [x] Super admin puede revisar y operar modulos add-on completos
+- [x] Super admin puede habilitar/deshabilitar y definir plan/scope por marca/sucursal
+- [x] Nueva ruta NFC dedicada (`/admin/addons/nfc`) sin pantalla vacia
+- [x] Navegacion de marca con etiquetas de estado comercial por add-on
+- [x] Backend `brand-settings` habilitado para gestion de add-ons por rol `super_admin`
+- [x] Rutas sin ruptura y modulo deshabilitado con UX informativa (no error/blank)
+- [x] Validacion ejecutada: backend compile + frontend build

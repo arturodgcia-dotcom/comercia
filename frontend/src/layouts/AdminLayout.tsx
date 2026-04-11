@@ -39,6 +39,14 @@ function humanizePath(part: string): string {
   return normalized;
 }
 
+function addonStatusLabel(status: string | undefined): string {
+  const normalized = (status ?? "deshabilitado").toLowerCase();
+  if (normalized === "activo") return "Disponible";
+  if (normalized === "configurando") return "Requiere activacion";
+  if (normalized === "suspendido") return "Suspendido";
+  return "No contratado";
+}
+
 export function AdminLayout() {
   const { logout, user, token } = useAuth();
   const location = useLocation();
@@ -111,8 +119,10 @@ export function AdminLayout() {
   const activeBrand = useMemo(() => tenants.find((item) => item.id === selectedBrandId) ?? null, [tenants, selectedBrandId]);
   const brandId = isSuperAdmin ? (selectedBrandId ?? 0) : (user?.tenant_id ?? 0);
   const featureLogisticsEnabled = Boolean(brandSettings?.feature_logistics_enabled);
-  const featureWorkdayEnabled = Boolean(brandSettings?.feature_workday_enabled);
   const featureNfcEnabled = Boolean(brandSettings?.feature_nfc_operations_enabled);
+  const logisticsLabel = `Logistica (${addonStatusLabel(brandSettings?.addon_logistics_status)})`;
+  const workdayLabel = `Jornada laboral (${addonStatusLabel(brandSettings?.addon_workday_status)})`;
+  const nfcLabel = `NFC / grabado / impresion (${addonStatusLabel(brandSettings?.addon_nfc_status)})`;
 
   const modeTitle = mode === "global" ? "Administración General de ComerCia" : "Panel de Operación de Marca";
   const modeHint = mode === "global" ? "Modo actual: Global ComerCia" : "Modo actual: Operación de Marca";
@@ -227,9 +237,8 @@ export function AdminLayout() {
       title: "OPERACIÓN",
       roles: ADMIN_ROLES,
       items: [
-        ...(featureLogisticsEnabled ? [{ label: "Logística", to: "/admin/logistics" }] : []),
-        ...(featureLogisticsEnabled ? [{ label: "Almacenes", to: "/admin/logistics" }] : []),
-        ...(featureWorkdayEnabled ? [{ label: "Jornada laboral", to: "/admin/appointments" }] : []),
+        { label: logisticsLabel, to: "/admin/logistics" },
+        { label: workdayLabel, to: "/admin/appointments" },
         { label: "Citas", to: "/admin/appointments" },
         { label: "Recurrencia", to: "/admin/recurring-orders" },
         ...(featureLogisticsEnabled ? [{ label: "Pedidos / entregas", to: "/admin/logistics" }] : []),
@@ -257,6 +266,7 @@ export function AdminLayout() {
         { label: "Moneda de operación", to: "/admin/currency", roles: ["tenant_admin", "reinpia_admin"] },
         { label: "Idioma de la tienda", to: "/admin/language", roles: ["tenant_admin", "reinpia_admin", "tenant_staff"] },
         { label: "Configuración internacional", to: "/admin/language", roles: ["tenant_admin", "reinpia_admin", "tenant_staff"] },
+        { label: nfcLabel, to: "/admin/addons/nfc", roles: ["tenant_admin", "reinpia_admin", "super_admin", "tenant_staff"] },
         ...(featureNfcEnabled ? [{ label: "NFC operativo", to: "/admin/channels/pos", roles: ["tenant_admin", "reinpia_admin"] }] : []),
         { label: "Automatización de marca", to: "/admin/automation", roles: ["tenant_admin", "reinpia_admin"] },
       ],
@@ -273,7 +283,14 @@ export function AdminLayout() {
         { label: "POS", to: "/pos/sales" },
       ],
     },
-  ], [brandSettings]);
+  ], [
+    brandSettings,
+    featureLogisticsEnabled,
+    featureNfcEnabled,
+    logisticsLabel,
+    workdayLabel,
+    nfcLabel,
+  ]);
 
   const visibleSections = mode === "global" && isGlobalOperator ? globalSections : brandSections;
   const homePath = mode === "global" && isGlobalOperator ? "/reinpia/payments" : "/";
