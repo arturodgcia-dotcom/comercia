@@ -208,8 +208,8 @@ export function DashboardPage() {
   return (
     <section>
       <PageHeader
-        title="Dashboard de marca"
-        subtitle="Panel gobernado por plan contratado: capacidad, consumo, soporte, comision y expansion."
+        title="Resumen de marca"
+        subtitle="Operación y consumo del plan: canales, límites, soporte, add-ons y alertas."
       />
       {error ? <p className="error">{error}</p> : null}
       {message ? <p>{message}</p> : null}

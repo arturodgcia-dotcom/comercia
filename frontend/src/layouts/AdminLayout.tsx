@@ -117,8 +117,6 @@ export function AdminLayout() {
 
   const activeBrand = useMemo(() => tenants.find((item) => item.id === selectedBrandId) ?? null, [tenants, selectedBrandId]);
   const brandId = isSuperAdmin ? (selectedBrandId ?? 0) : (user?.tenant_id ?? 0);
-  const featureLogisticsEnabled = Boolean(brandSettings?.feature_logistics_enabled);
-  const featureNfcEnabled = Boolean(brandSettings?.feature_nfc_operations_enabled);
   const logisticsLabel = `Logistica (${addonStatusLabel(brandSettings?.addon_logistics_status)})`;
   const workdayLabel = `Jornada laboral (${addonStatusLabel(brandSettings?.addon_workday_status)})`;
   const nfcLabel = `NFC / grabado / impresion (${addonStatusLabel(brandSettings?.addon_nfc_status)})`;
@@ -192,110 +190,73 @@ export function AdminLayout() {
 
   const brandSections: NavSection[] = useMemo(() => [
     {
-      title: "INICIO DE MARCA",
+      title: "RESUMEN",
       roles: ADMIN_ROLES,
       items: [
-        { label: "Dashboard marca", to: "/" },
-        { label: "Límites y consumo", to: "/" },
-        { label: "Soporte y add-ons", to: "/" },
+        { label: "Resumen de marca", to: "/" },
+        { label: "Plan activo y soporte", to: "/" },
       ],
     },
     {
-      title: "COMERCIAL",
+      title: "CANALES",
       roles: ADMIN_ROLES,
       items: [
-        { label: "Landing de la marca", to: "/admin/channels/landing", roles: ["tenant_admin", "reinpia_admin"] },
+        { label: "Landing", to: "/admin/channels/landing", roles: ["tenant_admin", "reinpia_admin"] },
         { label: "Ecommerce público", to: "/admin/channels/public", roles: ["tenant_admin", "reinpia_admin"] },
         { label: "Ecommerce distribuidores", to: "/admin/channels/distributors", roles: ["tenant_admin", "reinpia_admin"] },
-        { label: "Diagnóstico inteligente", to: "/admin/diagnostico-inteligente", roles: ["tenant_admin", "reinpia_admin"] },
-        { label: "Banners", to: "/admin/banners", roles: ["tenant_admin", "reinpia_admin"] },
-        { label: "Cupones", to: "/admin/coupons", roles: ["tenant_admin", "reinpia_admin"] },
-        { label: "Promociones", to: "/admin/banners", roles: ["tenant_admin", "reinpia_admin"] },
-        { label: "Retroalimentación", to: "/admin/feedback" },
-      ],
-    },
-    {
-      title: "CATÁLOGO",
-      roles: ADMIN_ROLES,
-      items: [
-        { label: "Productos", to: "/products" },
-        { label: "Servicios", to: "/admin/services" },
-        { label: "Categorías", to: "/categories" },
-        { label: "Precios", to: "/admin/payments", roles: ["tenant_admin", "reinpia_admin"] },
-        { label: "Carga masiva", to: "/admin/catalog/bulk-upload" },
-        { label: "Stock", to: "/admin/inventory" },
-        { label: "Sincronización Stripe", to: "/admin/settings/payments/stripe", roles: ["tenant_admin", "reinpia_admin"] },
-      ],
-    },
-    {
-      title: "CLIENTES",
-      roles: ADMIN_ROLES,
-      items: [
-        { label: "Público", to: "/pos/customers" },
-        { label: "Distribuidores", to: "/admin/distributors" },
-        { label: "Membresías", to: "/admin/memberships", roles: ["tenant_admin", "reinpia_admin"] },
-        { label: "Credenciales", to: "/admin/loyalty", roles: ["tenant_admin", "reinpia_admin"] },
-        { label: "Historial / solicitudes", to: "/admin/distributor-applications" },
+        { label: "WebApp / POS", to: "/admin/channels/pos", roles: ["tenant_admin", "reinpia_admin"] },
       ],
     },
     {
       title: "OPERACIÓN",
       roles: ADMIN_ROLES,
       items: [
+        { label: "Productos", to: "/products" },
+        { label: "Categorías", to: "/categories" },
+        { label: "Banners y promociones", to: "/admin/banners", roles: ["tenant_admin", "reinpia_admin"] },
+        { label: "Cupones", to: "/admin/coupons", roles: ["tenant_admin", "reinpia_admin"] },
+        { label: "Distribuidores", to: "/admin/distributors" },
+        { label: "Ventas POS", to: "/pos/sales" },
+        { label: "Fidelización", to: "/admin/loyalty", roles: ["tenant_admin", "reinpia_admin"] },
+        { label: "Configuración local", to: "/admin/currency", roles: ["tenant_admin", "reinpia_admin"] },
+      ],
+    },
+    {
+      title: "CONSUMO Y LÍMITES",
+      roles: ADMIN_ROLES,
+      items: [
+        { label: "Consumo del plan", to: "/" },
+        { label: "Usuarios", to: "/admin/users", roles: ["tenant_admin", "reinpia_admin", "tenant_staff"] },
+        { label: "Carga masiva y stock", to: "/admin/catalog/bulk-upload" },
+      ],
+    },
+    {
+      title: "SOPORTE",
+      roles: ADMIN_ROLES,
+      items: [
+        { label: "Soporte del plan", to: "/" },
+        { label: "Diagnóstico inteligente", to: "/admin/diagnostico-inteligente", roles: ["tenant_admin", "reinpia_admin"] },
+      ],
+    },
+    {
+      title: "ADD-ONS",
+      roles: ADMIN_ROLES,
+      items: [
+        { label: "Expandir capacidad", to: "/" },
         { label: logisticsLabel, to: "/admin/logistics" },
         { label: workdayLabel, to: "/admin/appointments" },
-        { label: "Citas", to: "/admin/appointments" },
-        { label: "Recurrencia", to: "/admin/recurring-orders" },
-        ...(featureLogisticsEnabled ? [{ label: "Pedidos / entregas", to: "/admin/logistics" }] : []),
-      ],
-    },
-    {
-      title: "POS / WEBAPP",
-      roles: ADMIN_ROLES,
-      items: [
-        { label: "POS / WebApp", to: "/admin/channels/pos", roles: ["tenant_admin", "reinpia_admin"] },
-        { label: "Puntos de venta", to: "/pos/locations" },
-        { label: "Caja POS", to: "/pos" },
-        { label: "Empleados", to: "/pos/locations" },
-        { label: "Ventas POS", to: "/pos/sales" },
-      ],
-    },
-    {
-      title: "CONFIGURACIÓN DE MARCA",
-      roles: ADMIN_ROLES,
-      items: [
-        { label: "Branding", to: "/admin/branding", roles: ["tenant_admin", "reinpia_admin"] },
-        { label: "Usuarios", to: "/admin/users", roles: ["tenant_admin", "reinpia_admin", "tenant_staff"] },
-        { label: "Pagos online (Stripe)", to: "/admin/settings/payments/stripe", roles: ["tenant_admin", "reinpia_admin"] },
-        { label: "Pagos POS (Mercado Pago)", to: "/admin/settings/payments/mercadopago", roles: ["tenant_admin", "reinpia_admin"] },
-        { label: "Moneda de operación", to: "/admin/currency", roles: ["tenant_admin", "reinpia_admin"] },
-        { label: "Idioma de la tienda", to: "/admin/language", roles: ["tenant_admin", "reinpia_admin", "tenant_staff"] },
-        { label: "Configuración internacional", to: "/admin/language", roles: ["tenant_admin", "reinpia_admin", "tenant_staff"] },
         { label: nfcLabel, to: "/admin/addons/nfc", roles: ["tenant_admin", "reinpia_admin", "super_admin", "tenant_staff"] },
-        ...(featureNfcEnabled ? [{ label: "NFC operativo", to: "/admin/channels/pos", roles: ["tenant_admin", "reinpia_admin"] }] : []),
-        { label: "Automatización de marca", to: "/admin/automation", roles: ["tenant_admin", "reinpia_admin"] },
       ],
     },
     {
-      title: "REPORTES DE MARCA",
+      title: "ALERTAS",
       roles: ADMIN_ROLES,
       items: [
-        { label: "Ventas", to: "/admin/reports/sales", roles: ["tenant_admin", "reinpia_admin"] },
-        { label: "Marketing", to: "/admin/reports/marketing", roles: ["tenant_admin", "reinpia_admin"] },
-        { label: "Fidelización", to: "/admin/reports/loyalty", roles: ["tenant_admin", "reinpia_admin"] },
-        { label: "Distribuidores", to: "/admin/reports/distributors", roles: ["tenant_admin", "reinpia_admin"] },
-        ...(featureLogisticsEnabled ? [{ label: "Operación", to: "/admin/reports/logistics", roles: ["tenant_admin", "reinpia_admin"] }] : []),
-        { label: "POS", to: "/pos/sales" },
+        { label: "Alertas principales", to: "/" },
+        { label: "Alertas operativas", to: "/admin/automation", roles: ["tenant_admin", "reinpia_admin"] },
       ],
     },
-  ], [
-    brandSettings,
-    featureLogisticsEnabled,
-    featureNfcEnabled,
-    logisticsLabel,
-    workdayLabel,
-    nfcLabel,
-  ]);
+  ], [logisticsLabel, workdayLabel, nfcLabel]);
 
   const visibleSections = mode === "global" && isGlobalOperator ? globalSections : brandSections;
   const homePath = mode === "global" && isGlobalOperator ? "/reinpia/dashboard" : "/";
