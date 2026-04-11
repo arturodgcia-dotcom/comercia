@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 from app.models.models import AiBrandCreditAllocation, AiCreditMovement, CommercialClientAccount, Tenant
 from app.services.commercial_account_guard_service import get_tenant_commercial_account
 
-WARNING_RATIO = 0.85
+WARNING_RATIO = 0.80
 
 
 @dataclass

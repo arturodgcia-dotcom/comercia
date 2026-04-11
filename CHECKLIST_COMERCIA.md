@@ -600,3 +600,14 @@
 - [x] UI de comisionistas en modo lectura para contador (sin edicion directa)
 - [x] Roles preparados en gestion de usuarios globales: `super_admin`, `contador`, `soporte`
 - [x] Validacion ejecutada: `python -m compileall app` y `npm run build`
+
+## Entregables ejecucion 51 (Alertas por capacidad critica)
+- [x] Umbrales 80/90/100 aplicados a capacidades criticas.
+- [x] Alertas para productos, usuarios, agentes IA, sucursales y creditos IA.
+- [x] Dashboard de marca con barras y semaforo visual (verde/amarillo/rojo).
+- [x] Mensajes claros de consumo por capacidad (ej. uso actual vs limite).
+- [x] CTA por alerta: agregar capacidad / comprar add-on / actualizar plan.
+- [x] Checkout de add-on Stripe test disparado desde alertas de marca.
+- [x] Bloqueo controlado mantenido para altas nuevas sin romper operacion existente.
+- [x] Replica de alertas al panel global y base de escalamiento interno (email/Telegram/bot).
+- [x] Validacion ejecutada: backend compile + frontend build.

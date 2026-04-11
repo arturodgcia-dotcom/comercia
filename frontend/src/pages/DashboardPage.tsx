@@ -13,13 +13,32 @@ type CapacityCard = {
   limit: number;
 };
 
-const WARNING_RATIO = 0.8;
+const PREVENTIVE_RATIO = 0.8;
+const STRONG_RATIO = 0.9;
 
 function statusLabel(used: number, limit: number): string {
   if (limit <= 0) return "Sin limite";
-  if (used > limit) return "Excedido";
-  if (used >= Math.ceil(limit * WARNING_RATIO)) return "Cerca del limite";
+  if (used >= limit) return "Limite alcanzado";
+  if (used >= Math.ceil(limit * STRONG_RATIO)) return "Alerta fuerte";
+  if (used >= Math.ceil(limit * PREVENTIVE_RATIO)) return "Alerta preventiva";
   return "Disponible";
+}
+
+function statusColor(used: number, limit: number): string {
+  if (limit <= 0) return "#22c55e";
+  if (used >= limit) return "#ef4444";
+  if (used >= Math.ceil(limit * PREVENTIVE_RATIO)) return "#f59e0b";
+  return "#22c55e";
+}
+
+function usageRatio(used: number, limit: number): number {
+  if (limit <= 0) return 0;
+  return Math.max(0, Math.min((used / Math.max(limit, 1)) * 100, 100));
+}
+
+function usageMessage(label: string, used: number, limit: number): string {
+  if (limit <= 0) return `No hay limite configurado para ${label.toLowerCase()}.`;
+  return `Estas usando ${used} de ${limit} ${label.toLowerCase()} disponibles en tu plan.`;
 }
 
 function supportChannel(support: string | null | undefined): "correo" | "chat" {
@@ -41,6 +60,7 @@ export function DashboardPage() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [loadingAction, setLoadingAction] = useState("");
+  const [loadingCheckout, setLoadingCheckout] = useState("");
 
   useEffect(() => {
     if (!token || !tenantId) return;
@@ -119,6 +139,35 @@ export function DashboardPage() {
     }
   };
 
+  const handleAddonCheckout = async (itemCode: string) => {
+    if (!token) return;
+    try {
+      setLoadingCheckout(itemCode);
+      setError("");
+      const baseUrl = window.location.origin;
+      const response = await api.createCommercialPlanCheckoutSession(token, {
+        item_code: itemCode,
+        success_url: `${baseUrl}/?checkout=success`,
+        cancel_url: `${baseUrl}/?checkout=cancel`,
+      });
+      window.location.assign(response.checkout_url);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "No fue posible iniciar checkout de add-on.");
+    } finally {
+      setLoadingCheckout("");
+    }
+  };
+
+  const mapAlertToAddon = (alertCode?: string | null): string | null => {
+    const code = String(alertCode || "");
+    if (code.includes("capacity_products")) return "extra_100_products";
+    if (code.includes("capacity_users")) return "extra_user";
+    if (code.includes("capacity_ai_agents")) return "extra_ai_agent";
+    if (code.includes("capacity_branches")) return "extra_branch";
+    if (code.includes("capacity_ai_credits")) return "extra_500_ai_credits";
+    return null;
+  };
+
   return (
     <section>
       <PageHeader
@@ -165,13 +214,18 @@ export function DashboardPage() {
         <div className="card-grid">
           {capacityCards.map((item) => {
             const available = item.limit > 0 ? item.limit - item.used : 0;
+            const color = statusColor(item.used, item.limit);
             return (
               <article key={item.key} className="card">
                 <h4>{item.label}</h4>
                 <p>Usados: {item.used}</p>
                 <p>Permitidos: {item.limit}</p>
                 <p>Disponibles: {available}</p>
-                <p><strong>Estatus:</strong> {statusLabel(item.used, item.limit)}</p>
+                <p><strong>Estatus:</strong> <span style={{ color }}>{statusLabel(item.used, item.limit)}</span></p>
+                <p>{usageMessage(item.label, item.used, item.limit)}</p>
+                <div style={{ height: "10px", borderRadius: "999px", background: "#e5e7eb", overflow: "hidden" }}>
+                  <div style={{ width: `${usageRatio(item.used, item.limit)}%`, background: color, height: "100%" }} />
+                </div>
               </article>
             );
           })}
@@ -185,7 +239,16 @@ export function DashboardPage() {
             <p>Restantes: {commercialUsage?.ai_tokens_remaining ?? commercialUsage?.ai_tokens_balance ?? 0}</p>
             <p><strong>Estado llave IA:</strong> {commercialUsage?.ai_key_state ?? "abierta"}</p>
             <p><strong>Consumo:</strong> {Number(commercialUsage?.ai_tokens_consumption_percentage ?? 0).toFixed(2)}%</p>
-            <progress value={commercialUsage?.ai_tokens_used ?? 0} max={Math.max(commercialUsage?.ai_tokens_assigned ?? 1, 1)} />
+            <div style={{ height: "12px", borderRadius: "999px", background: "#e5e7eb", overflow: "hidden" }}>
+              <div
+                style={{
+                  width: `${Number(commercialUsage?.ai_tokens_consumption_percentage ?? 0)}%`,
+                  background: statusColor(commercialUsage?.ai_tokens_used ?? 0, Math.max(commercialUsage?.ai_tokens_assigned ?? 1, 1)),
+                  height: "100%",
+                }}
+              />
+            </div>
+            <p>{usageMessage("creditos IA", commercialUsage?.ai_tokens_used ?? 0, Math.max(commercialUsage?.ai_tokens_assigned ?? 0, 0))}</p>
           </article>
           <article className="card">
             <h4>Sucursales (detalle)</h4>
@@ -233,7 +296,7 @@ export function DashboardPage() {
 
       <article className="card">
         <h3>Expandir capacidad</h3>
-        <p>Recursos cerca del limite: {capacityCards.filter((item) => item.limit > 0 && item.used >= Math.ceil(item.limit * WARNING_RATIO)).map((x) => x.label).join(", ") || "Sin alertas de capacidad"}</p>
+        <p>Recursos cerca del limite: {capacityCards.filter((item) => item.limit > 0 && item.used >= Math.ceil(item.limit * PREVENTIVE_RATIO)).map((x) => x.label).join(", ") || "Sin alertas de capacidad"}</p>
         <div className="card-grid">
           {addonsCatalog.map((addon) => (
             <article key={addon.id} className="card">
@@ -334,6 +397,40 @@ export function DashboardPage() {
               <h4>{alert.title}</h4>
               <p>{alert.message}</p>
               <p>{new Date(alert.created_at).toLocaleString("es-MX")}</p>
+              <div className="row-gap">
+                <button
+                  className="button button-outline"
+                  type="button"
+                  disabled={!mapAlertToAddon(alert.related_entity_type) || Boolean(loadingCheckout)}
+                  onClick={() => {
+                    const addon = mapAlertToAddon(alert.related_entity_type);
+                    if (!addon) return;
+                    void handleAddonCheckout(addon);
+                  }}
+                >
+                  {loadingCheckout && mapAlertToAddon(alert.related_entity_type) ? "Redirigiendo..." : "Agregar capacidad"}
+                </button>
+                <button
+                  className="button button-outline"
+                  type="button"
+                  disabled={!mapAlertToAddon(alert.related_entity_type) || Boolean(loadingCheckout)}
+                  onClick={() => {
+                    const addon = mapAlertToAddon(alert.related_entity_type);
+                    if (!addon) return;
+                    void handleAddonCheckout(addon);
+                  }}
+                >
+                  Comprar Add-on
+                </button>
+                <button
+                  className="button"
+                  type="button"
+                  disabled={Boolean(loadingAction)}
+                  onClick={() => void handlePlanRequest({ request_type: "upgrade", target_plan_key: "fixed_subscription_growth", notes: "Solicitud de upgrade desde alerta de capacidad." })}
+                >
+                  {loadingAction === "fixed_subscription_growth" ? "Enviando..." : "Actualizar plan"}
+                </button>
+              </div>
             </article>
           ))}
           {!operationalAlerts.length ? <p>Sin alertas operativas activas.</p> : null}

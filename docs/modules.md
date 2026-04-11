@@ -485,3 +485,13 @@ Nuevos endpoints:
   - `super_admin`: acceso global completo
   - `contador`: lectura de pagos/comisiones/comisionistas
   - `soporte`: sin visibilidad financiera
+
+## Actualizacion alertas de capacidad critica (Ejecucion 51)
+- Centinela de limites | Estado: funcional
+  - 80% preventiva, 90% fuerte, 100% critica.
+- Dashboard de marca | Estado: funcional
+  - barras de consumo por capacidad y mensajes explicitos de uso.
+- Accion directa desde alerta | Estado: funcional
+  - checkout add-on Stripe test o solicitud de upgrade.
+- Notificacion interna | Estado: funcional
+  - alertas para marca y panel global, con base para email/Telegram/bot interno.

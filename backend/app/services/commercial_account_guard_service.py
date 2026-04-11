@@ -57,6 +57,16 @@ def _effective_branches_limit(account: CommercialClientAccount) -> int:
     return _base_limit(account, "branches_max") + _addon_qty(account, ADDON_BRANCH_ID)
 
 
+def _tenant_limit(tenant: Tenant | None, key: str) -> int:
+    if not tenant:
+        return 0
+    limits = _parse_json_dict(tenant.commercial_limits_json)
+    try:
+        return max(0, int(limits.get(key, 0)))
+    except Exception:
+        return 0
+
+
 def get_tenant_commercial_account(db: Session, tenant_id: int) -> CommercialClientAccount | None:
     tenant = db.get(Tenant, tenant_id)
     if not tenant or not tenant.commercial_client_account_id:
@@ -75,35 +85,44 @@ def enforce_brand_limit_for_account(db: Session, account: CommercialClientAccoun
 
 def enforce_user_limit_for_tenant(db: Session, tenant_id: int) -> None:
     account = get_tenant_commercial_account(db, tenant_id)
-    if not account:
-        return
-    tenant_ids = [row[0] for row in db.execute(select(Tenant.id).where(Tenant.commercial_client_account_id == account.id)).all()]
-    used = int(db.scalar(select(func.count(User.id)).where(User.tenant_id.in_(tenant_ids))) or 0) if tenant_ids else 0
-    allowed = _effective_users_limit(account)
+    tenant = db.get(Tenant, tenant_id)
+    if account:
+        tenant_ids = [row[0] for row in db.execute(select(Tenant.id).where(Tenant.commercial_client_account_id == account.id)).all()]
+        used = int(db.scalar(select(func.count(User.id)).where(User.tenant_id.in_(tenant_ids))) or 0) if tenant_ids else 0
+        allowed = _effective_users_limit(account)
+    else:
+        used = int(db.scalar(select(func.count(User.id)).where(User.tenant_id == tenant_id, User.is_active.is_(True))) or 0)
+        allowed = _tenant_limit(tenant, "users_max")
     if allowed > 0 and used >= allowed:
-        raise ValueError("limite de usuarios alcanzado para este cliente comercial")
+        raise ValueError("limite de usuarios alcanzado para este plan")
 
 
 def enforce_product_limit_for_tenant(db: Session, tenant_id: int) -> None:
     account = get_tenant_commercial_account(db, tenant_id)
-    if not account:
-        return
-    tenant_ids = [row[0] for row in db.execute(select(Tenant.id).where(Tenant.commercial_client_account_id == account.id)).all()]
-    used = int(db.scalar(select(func.count(Product.id)).where(Product.tenant_id.in_(tenant_ids))) or 0) if tenant_ids else 0
-    allowed = _effective_products_limit(account)
+    tenant = db.get(Tenant, tenant_id)
+    if account:
+        tenant_ids = [row[0] for row in db.execute(select(Tenant.id).where(Tenant.commercial_client_account_id == account.id)).all()]
+        used = int(db.scalar(select(func.count(Product.id)).where(Product.tenant_id.in_(tenant_ids))) or 0) if tenant_ids else 0
+        allowed = _effective_products_limit(account)
+    else:
+        used = int(db.scalar(select(func.count(Product.id)).where(Product.tenant_id == tenant_id)) or 0)
+        allowed = _tenant_limit(tenant, "products_max")
     if allowed > 0 and used >= allowed:
-        raise ValueError("limite de productos alcanzado para este cliente comercial")
+        raise ValueError("limite de productos alcanzado para este plan")
 
 
 def enforce_branch_limit_for_tenant(db: Session, tenant_id: int) -> None:
     account = get_tenant_commercial_account(db, tenant_id)
-    if not account:
-        return
-    tenant_ids = [row[0] for row in db.execute(select(Tenant.id).where(Tenant.commercial_client_account_id == account.id)).all()]
-    used = int(db.scalar(select(func.count(PosLocation.id)).where(PosLocation.tenant_id.in_(tenant_ids))) or 0) if tenant_ids else 0
-    allowed = _effective_branches_limit(account)
+    tenant = db.get(Tenant, tenant_id)
+    if account:
+        tenant_ids = [row[0] for row in db.execute(select(Tenant.id).where(Tenant.commercial_client_account_id == account.id)).all()]
+        used = int(db.scalar(select(func.count(PosLocation.id)).where(PosLocation.tenant_id.in_(tenant_ids))) or 0) if tenant_ids else 0
+        allowed = _effective_branches_limit(account)
+    else:
+        used = int(db.scalar(select(func.count(PosLocation.id)).where(PosLocation.tenant_id == tenant_id)) or 0)
+        allowed = _tenant_limit(tenant, "branches_max")
     if allowed > 0 and used >= allowed:
-        raise ValueError("limite de sucursales alcanzado para este cliente comercial")
+        raise ValueError("limite de sucursales alcanzado para este plan")
 
 
 def build_account_usage_payload(db: Session, account: CommercialClientAccount) -> dict:

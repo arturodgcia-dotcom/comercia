@@ -949,3 +949,10 @@ Variables backend (`backend/.env`):
   - `super_admin`: acceso global total
   - `contador`: acceso de lectura a pagos/comisiones/comisionistas financieros
   - `soporte`: sin permisos financieros
+
+## Actualizacion ejecucion 51 (Alertas por capacidad critica)
+- Umbrales centinela ajustados a 80% (preventiva), 90% (fuerte) y 100% (critica) para productos, usuarios, agentes IA, sucursales y creditos IA.
+- Dashboard de marca con barras de consumo y semaforo visual (verde/amarillo/rojo) + mensajes de uso claros.
+- Cada alerta operativa incluye CTA de accion directa: Agregar capacidad, Comprar Add-on (Stripe test) y Actualizar plan.
+- Bloqueo controlado reforzado: al llegar al limite no permite nuevos registros (productos/usuarios/sucursales/creditos IA) sin afectar operacion existente.
+- Alertas internas tambien se replican a nivel cliente principal y panel global con base de escalamiento (email/Telegram/bot interno).

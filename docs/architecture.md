@@ -990,3 +990,10 @@ Frontend:
 - `ReinpiaCommissionAgentsPage`:
   - contador en solo lectura
   - super admin/reinpia admin con edicion y asignaciones
+
+## Ejecucion 51: alertas de capacidad critica y accion directa
+- El servicio operational_alerts_service ahora usa umbrales 80/90/100 para capacidad.
+- Se emiten alertas de capacidad para: productos, usuarios, agentes IA, sucursales y creditos IA.
+- Las alertas de marca se reflejan tambien en nivel cliente principal para visibilidad contable/global.
+- Se registra evento de escalamiento interno (sentinel_operational_alert) con canales preparados: email, Telegram y bot interno.
+- En dashboard de marca, cada alerta incorpora CTAs para checkout de add-on (Stripe test) o upgrade de plan.
