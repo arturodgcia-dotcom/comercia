@@ -344,6 +344,23 @@ Arquitectura aplicada:
 6. Publicacion controlada:
 - solo publica cuando pasos previos estan aprobados y no hay `blocking_issues`.
 - estados de ciclo: `borrador` -> `en configuracion` -> `lista para revision` -> `lista para publicacion` -> `publicada`.
+
+## 25) Arquitectura de checkout comercial publico (Stripe test)
+1. Configuracion segura:
+- `price_id` de planes/add-ons en `backend/.env` y `backend/.env.example`.
+- cargados por `Settings` (`core/config.py`).
+2. Catalogo comercial central:
+- `commercial_plan_service.py` concentra definiciones de planes/add-ons y resuelve `stripe_price_id`.
+- compatibilidad mantenida con llaves legacy de planes para flujos internos existentes.
+3. Resolucion de compra:
+- frontend landing envia solo `item_code` + `success_url` + `cancel_url`.
+- backend resuelve `stripe_price_id` y crea sesion Stripe (modo test) con `line_items.price`.
+4. Endpoints:
+- `GET /api/v1/comercia/commercial-plans/catalog` (publico).
+- `POST /api/v1/commercial-plans/create-checkout-session` (planes y add-ons).
+5. Seguridad:
+- sin hardcode de `price_id` en componentes de UI.
+- logica Stripe concentrada en backend para evitar dispersion en frontend.
 - `identity_data`, `generated_content`, `landing_draft`, `ecommerce_data`, `pos_setup_data`
 
 Frontend nuevo:

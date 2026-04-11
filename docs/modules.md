@@ -342,6 +342,28 @@ Nuevos endpoints:
   - ecommerce publico: ver, preview, regenerar plantilla.
   - ecommerce distribuidores: ver, preview, regenerar plantilla.
   - sin rutas vacias ni templates legacy en flujo principal.
+
+## Actualizacion checkout comercial publico Stripe test (Ejecucion 46)
+- Catalogo comercial oficial | Estado: funcional
+  - planes y add-ons ahora exponen:
+    - `code`
+    - `display_name`
+    - `billing_model`
+    - `commission_enabled`
+    - `commission_percentage`
+    - `monthly_price_mxn`
+    - `total_price_mxn`
+    - `stripe_price_id`
+  - mapeo centralizado desde variables de entorno backend.
+- Checkout comercial | Estado: funcional
+  - endpoint: `POST /api/v1/commercial-plans/create-checkout-session`
+  - soporta planes y add-ons con `item_code`.
+  - backend resuelve `stripe_price_id` de forma segura y crea sesion Stripe test.
+- Landing comercial publica | Estado: funcional
+  - botones de planes y add-ons conectados a checkout real de Stripe test.
+  - UX con loading, manejo de error y estado de regreso `success/cancel`.
+  - mensaje de error unificado:
+    - "No fue posible iniciar el checkout en este momento. Intenta nuevamente."
 - Landing COMERCIA (seccion marketing por bloques) | Estado: parcial (bloque 1 implementado)
   - Nueva seccion `#marketing-diagnostico` en `ComerciaLandingPage`
   - Enfocada en captacion comercial y solicitud de interes

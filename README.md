@@ -34,6 +34,18 @@ Plataforma SaaS multitenant para landing, ecommerce, growth comercial y operacio
   - `lista para publicacion`
   - `publicada`
 
+## Checkout comercial de COMERCIA (Stripe test)
+- Landing publica: `/comercia`.
+- Catalogo comercial publico: `GET /api/v1/comercia/commercial-plans/catalog`.
+- Checkout comercial (planes y add-ons): `POST /api/v1/commercial-plans/create-checkout-session`.
+- Resolucion de `price_id`:
+  - centralizada en backend (`commercial_plan_service` + `core/config`).
+  - usando variables de entorno en `backend/.env` y `backend/.env.example`.
+  - sin hardcode de `price_id` en componentes frontend.
+- Item codes oficiales soportados:
+  - Planes: `basic_fixed`, `growth_fixed`, `premium_fixed`, `basic_commission`, `growth_commission`, `premium_commission`.
+  - Add-ons: `extra_user`, `extra_ai_agent`, `extra_brand`, `extra_100_products`, `extra_branch`, `extra_500_ai_credits`, `premium_support`.
+
 ## Arranque local
 
 ### Arranque unificado (1 comando)

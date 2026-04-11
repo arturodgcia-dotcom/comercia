@@ -331,6 +331,19 @@
 - [x] Resumen final ejecutivo del wizard con branding, plan, plantillas, rutas y estado general
 - [x] Estado final del wizard visible: `borrador`, `en configuracion`, `lista para revision`, `lista para publicacion`, `publicada`
 - [x] Validacion tecnica ejecutada: `npm run build` (frontend) y `python -m compileall backend/app` (backend)
+
+## Entregables ejecucion 46 (Landing comercial + Stripe test checkout)
+- [x] Variables de entorno para `price_id` de planes y add-ons agregadas en backend
+- [x] Catalogo comercial central actualizado con `code/display_name/stripe_price_id` y precios totales
+- [x] Endpoint `POST /api/v1/commercial-plans/create-checkout-session` habilitado para planes y add-ons por `item_code`
+- [x] Resolucion de `stripe_price_id` centralizada en backend (sin hardcode en frontend)
+- [x] Landing publica `/comercia` conectada a checkout real de Stripe test para 6 planes
+- [x] Add-ons conectados a checkout real de Stripe test desde landing
+- [x] UX de compra con loading, error claro y retorno por `success/cancel`
+- [x] Validaciones ejecutadas:
+  - `npm run build` (frontend)
+  - `python -m compileall app` (backend)
+  - prueba funcional de endpoint de checkout (plan + add-on) con mock de Stripe
 - [x] Modulo interno "Inbox comercial" para leads/mensajes/diagnosticos con filtros y cambio de estatus
 - [x] Endpoint REINPIA para actualizar estatus de contacto (`PUT /api/v1/reinpia/customer-contact-leads/{id}`)
 - [x] Seeds demo ampliados con leads de canales `lia_widget`, `contacto`, `diagnostico`, `whatsapp`
