@@ -183,8 +183,8 @@ export function ReinpiaTenantDetailPage() {
         <Link className="button button-outline" to="/reinpia/tenants">
           Volver a tenants
         </Link>
-        <Link className="button button-outline" to={`/tenants/${tenant.id}/branding`}>
-          Editar branding tenant
+        <Link className="button button-outline" to="/reinpia/canales-creados">
+          Ver canales creados
         </Link>
         <Link className="button button-outline" to={`/reinpia/brands/${tenant.id}/setup`}>
           Abrir workflow de setup

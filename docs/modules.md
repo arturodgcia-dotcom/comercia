@@ -518,3 +518,20 @@ Nuevos endpoints:
 - Aplicacion post-compra | Estado: funcional
   - webhook Stripe aplica add-on en tenant/cuenta comercial
   - recalcula capacidad y alertas despues del pago
+
+## Actualizacion arquitectura global alrededor del wizard (Ejecucion 54)
+- Wizard oficial de creacion | Estado: conservado
+  - `BrandSetupWizard` permanece como motor principal de alta/configuracion inicial.
+- Navegacion global por dominios | Estado: funcional
+  - separacion explicita en sidebar:
+    - Creacion global
+    - Administracion global
+    - Vision ejecutiva
+    - Configuracion global
+- Modulo administrativo unico de canales creados | Estado: funcional
+  - ruta: `/reinpia/canales-creados`
+  - pagina: `ReinpiaCreatedChannelsPage`
+  - consolida vista por cliente/marca de landing/publico/distribuidores/WebApp.
+- Limpieza de flujo principal | Estado: funcional
+  - enlaces legacy de marcas hacia `/tenants/*` retirados del recorrido principal global
+  - rutas duplicadas de comisionistas/comisiones eliminadas del router principal.

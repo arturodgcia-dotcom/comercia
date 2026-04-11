@@ -76,6 +76,7 @@ import { ReinpiaGrowthReportPage } from "../pages/ReinpiaGrowthReportPage";
 import { ReinpiaCommissionsReportPage } from "../pages/ReinpiaCommissionsReportPage";
 import { ReinpiaLeadsReportPage } from "../pages/ReinpiaLeadsReportPage";
 import { ReinpiaMarketingOpportunitiesPage } from "../pages/ReinpiaMarketingOpportunitiesPage";
+import { ReinpiaCreatedChannelsPage } from "../pages/ReinpiaCreatedChannelsPage";
 import { ReinpiaSecurityAlertsPage } from "../pages/ReinpiaSecurityAlertsPage";
 import { ReinpiaSecurityDashboardPage } from "../pages/ReinpiaSecurityDashboardPage";
 import { ReinpiaSecurityRulesPage } from "../pages/ReinpiaSecurityRulesPage";
@@ -227,16 +228,15 @@ export function AppRouter() {
               <Route path="reinpia/language" element={<LanguageAdminPage />} />
               <Route path="reinpia/currency" element={<CurrencyAdminPage />} />
               <Route path="reinpia/tenants/:tenantId" element={<ReinpiaTenantDetailPage />} />
+              <Route path="reinpia/canales-creados" element={<ReinpiaCreatedChannelsPage />} />
               <Route path="reinpia/diagnosticos" element={<ReinpiaDiagnosticsPage />} />
               <Route path="reinpia/operations" element={<ReinpiaOperationsPage />} />
               <Route path="reinpia/logistics-services" element={<ReinpiaLogisticsServicesPage />} />
               <Route path="reinpia/reports" element={<ReinpiaReportsPage />} />
               <Route path="reinpia/reports/overview" element={<ReinpiaReportsOverviewPage />} />
               <Route path="reinpia/reports/growth" element={<ReinpiaGrowthReportPage />} />
-              <Route path="reinpia/reports/commissions" element={<ReinpiaCommissionsReportPage />} />
               <Route path="reinpia/reports/leads" element={<ReinpiaLeadsReportPage />} />
               <Route path="reinpia/reports/marketing-opportunities" element={<ReinpiaMarketingOpportunitiesPage />} />
-              <Route path="reinpia/commission-agents" element={<ReinpiaCommissionAgentsPage />} />
               <Route path="reinpia/commercial-inbox" element={<ReinpiaCommercialInboxPage />} />
               <Route path="reinpia/clientes-comerciales" element={<ReinpiaCommercialClientsPage />} />
               <Route path="reinpia/marketing/prospectos" element={<ReinpiaMarketingProspectsPage />} />

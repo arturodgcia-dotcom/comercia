@@ -113,10 +113,10 @@ export function ReinpiaTenantsPage() {
                 <td>
                   <div className="row-gap">
                     <Link className="button button-outline" to={`/reinpia/brands/${row.tenant_id}/setup`}>
-                      Workflow
+                      Wizard creación
                     </Link>
-                    <Link className="button button-outline" to={`/tenants/${row.tenant_id}`}>
-                      Editar
+                    <Link className="button button-outline" to={`/reinpia/canales-creados`}>
+                      Canales creados
                     </Link>
                   </div>
                 </td>

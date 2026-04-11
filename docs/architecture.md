@@ -1036,3 +1036,38 @@ Arquitectura aplicada:
   - CTA de mejora de plan en riesgo alto
 - panel global de clientes:
   - tarjetas de "marcas en riesgo operativo" con add-on/upgrade inmediato.
+
+## Ejecucion 54: reorganizacion global sin rehacer wizard
+Objetivo:
+- mantener el wizard intacto como flujo oficial de creacion y reordenar arquitectura alrededor de el.
+
+Arquitectura aplicada:
+1) Encapsulamiento del wizard
+- `BrandSetupWizard` permanece como motor oficial de setup inicial.
+- no se reescribe su persistencia ni su logica profunda.
+
+2) Separacion de dominios en navegacion global
+- se reorganiza `AdminLayout` para distinguir:
+  - Creacion global
+  - Administracion global
+  - Vision ejecutiva
+  - Configuracion global
+
+3) Capa administrativa de activos creados
+- nuevo modulo `ReinpiaCreatedChannelsPage` (`/reinpia/canales-creados`) que consolida:
+  - cliente principal
+  - marca
+  - estado de landing/publico/distribuidores/WebApp
+  - rutas activas por canal
+- reduce dependencia de vistas fragmentadas para revisar activos ya creados.
+
+4) Reduccion de duplicados en flujo principal
+- se eliminan definiciones duplicadas de rutas globales para:
+  - `reinpia/commission-agents`
+  - `reinpia/reports/commissions`
+- se remueven enlaces globales hacia rutas legacy `/tenants/*` en el flujo principal.
+
+Resultado:
+- wizard = creacion
+- administracion global = gestion de activos ya creados y control comercial/operativo
+- panel de marca = operacion diaria.

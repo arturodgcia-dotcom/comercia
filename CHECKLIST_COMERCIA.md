@@ -633,3 +633,13 @@
 - [x] Recalculo de snapshot IA y alertas operativas post-compra
 - [x] Mensaje de error UX unificado: "No fue posible iniciar la compra en este momento. Intenta nuevamente."
 - [x] Validacion ejecutada: backend compile + frontend build
+
+## Entregables ejecucion 54 (Reorganizacion arquitectura global alrededor del wizard)
+- [x] Wizard conservado como flujo oficial de creacion (sin rehacer logica interna)
+- [x] Sidebar global reorganizado por dominios (Creacion / Administracion / Vision ejecutiva / Configuracion)
+- [x] Nuevo modulo global `Canales creados` (`/reinpia/canales-creados`)
+- [x] Vista consolidada por cliente y marca para landing/publico/distribuidores/WebApp
+- [x] Acceso directo a rutas activas de canales desde modulo administrativo unico
+- [x] Limpieza de duplicados de rutas globales (`commission-agents` y `reports/commissions`)
+- [x] Enlaces legacy `/tenants/*` retirados del flujo principal global de marcas
+- [x] Validacion ejecutada: backend compile + frontend build

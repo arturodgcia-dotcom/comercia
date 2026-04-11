@@ -995,3 +995,26 @@ Variables backend (`backend/.env`):
   - actualiza capacidad (tenant o cuenta comercial segun corresponda)
   - recalcula snapshot IA y alertas operativas
   - registra evento de historial operativo.
+
+## Actualizacion ejecucion 54 (Arquitectura global alrededor del wizard)
+- Se conserva `BrandSetupWizard` como motor oficial de creacion (sin rehacer su flujo interno).
+- Se reorganiza la arquitectura de navegacion global en dominios claros:
+  - Creacion global
+  - Administracion global
+  - Vision ejecutiva
+  - Configuracion global
+- Nuevo modulo global administrativo `Canales creados`:
+  - ruta: `/reinpia/canales-creados`
+  - vista por cliente principal y marca de:
+    - landing creada
+    - ecommerce publico creado
+    - ecommerce distribuidores creado
+    - WebApp/POS creada
+  - acceso directo a rutas activas y acceso a wizard cuando se requiere ajuste de setup.
+- Se reducen duplicidades en flujo principal:
+  - se eliminan rutas duplicadas en router para `commission-agents` y `reports/commissions`.
+  - se retiran enlaces globales legacy hacia `/tenants/*` del flujo principal de marcas.
+- La separacion de responsabilidades queda explicitada:
+  - wizard = creacion
+  - panel global = administracion de activos creados
+  - panel de marca = operacion diaria.
