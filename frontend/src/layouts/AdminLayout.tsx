@@ -3,7 +3,7 @@ import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../app/AuthContext";
 import { LanguageSelector } from "../components/LanguageSelector";
 import { api } from "../services/api";
-import { Tenant } from "../types/domain";
+import { BrandAdminSettings, Tenant } from "../types/domain";
 
 type AppMode = "global" | "brand";
 type NavItem = { label: string; to: string; roles?: string[] };
@@ -50,6 +50,7 @@ export function AdminLayout() {
 
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [selectedBrandId, setSelectedBrandId] = useState<number | null>(null);
+  const [brandSettings, setBrandSettings] = useState<BrandAdminSettings | null>(null);
   const [mode, setMode] = useState<AppMode>(() => {
     const saved = sessionStorage.getItem(STORAGE_MODE_KEY);
     return saved === "global" || saved === "brand" ? saved : "brand";
@@ -85,6 +86,13 @@ export function AdminLayout() {
   }, [isSuperAdmin, location.pathname]);
 
   useEffect(() => {
+    if (!token) return;
+    const targetTenantId = isSuperAdmin ? selectedBrandId : user?.tenant_id;
+    if (!targetTenantId) return;
+    api.getBrandAdminSettings(token, targetTenantId).then(setBrandSettings).catch(() => setBrandSettings(null));
+  }, [token, isSuperAdmin, selectedBrandId, user?.tenant_id]);
+
+  useEffect(() => {
     if (!isSuperAdmin) return;
     sessionStorage.setItem(STORAGE_MODE_KEY, mode);
   }, [isSuperAdmin, mode]);
@@ -96,6 +104,9 @@ export function AdminLayout() {
 
   const activeBrand = useMemo(() => tenants.find((item) => item.id === selectedBrandId) ?? null, [tenants, selectedBrandId]);
   const brandId = isSuperAdmin ? (selectedBrandId ?? 0) : (user?.tenant_id ?? 0);
+  const featureLogisticsEnabled = Boolean(brandSettings?.feature_logistics_enabled);
+  const featureWorkdayEnabled = Boolean(brandSettings?.feature_workday_enabled);
+  const featureNfcEnabled = Boolean(brandSettings?.feature_nfc_operations_enabled);
 
   const modeTitle = mode === "global" ? "Administración General de ComerCia" : "Panel de Operación de Marca";
   const modeHint = mode === "global" ? "Modo actual: Global ComerCia" : "Modo actual: Operación de Marca";
@@ -187,11 +198,15 @@ export function AdminLayout() {
     },
   ];
 
-  const brandSections: NavSection[] = [
+  const brandSections: NavSection[] = useMemo(() => [
     {
       title: "INICIO DE MARCA",
       roles: ADMIN_ROLES,
-      items: [{ label: "Dashboard marca", to: "/" }],
+      items: [
+        { label: "Dashboard marca", to: "/" },
+        { label: "Límites y consumo", to: "/" },
+        { label: "Soporte y add-ons", to: "/" },
+      ],
     },
     {
       title: "COMERCIAL",
@@ -204,7 +219,8 @@ export function AdminLayout() {
         { label: "Banners", to: "/admin/banners", roles: ["tenant_admin", "reinpia_admin"] },
         { label: "Cupones", to: "/admin/coupons", roles: ["tenant_admin", "reinpia_admin"] },
         { label: "Promociones", to: "/admin/banners", roles: ["tenant_admin", "reinpia_admin"] },
-        { label: "Retroalimentación", to: "/admin/feedback" },      ],
+        { label: "Retroalimentación", to: "/admin/feedback" },
+      ],
     },
     {
       title: "CATÁLOGO",
@@ -234,11 +250,12 @@ export function AdminLayout() {
       title: "OPERACIÓN",
       roles: ADMIN_ROLES,
       items: [
-        { label: "Logística", to: "/admin/logistics" },
-        { label: "Almacenes", to: "/admin/logistics" },
+        ...(featureLogisticsEnabled ? [{ label: "Logística", to: "/admin/logistics" }] : []),
+        ...(featureLogisticsEnabled ? [{ label: "Almacenes", to: "/admin/logistics" }] : []),
+        ...(featureWorkdayEnabled ? [{ label: "Jornada laboral", to: "/admin/appointments" }] : []),
         { label: "Citas", to: "/admin/appointments" },
         { label: "Recurrencia", to: "/admin/recurring-orders" },
-        { label: "Pedidos / entregas", to: "/admin/logistics" },
+        ...(featureLogisticsEnabled ? [{ label: "Pedidos / entregas", to: "/admin/logistics" }] : []),
       ],
     },
     {
@@ -262,6 +279,8 @@ export function AdminLayout() {
         { label: "Pagos POS (Mercado Pago)", to: "/admin/settings/payments/mercadopago", roles: ["tenant_admin", "reinpia_admin"] },
         { label: "Moneda de operación", to: "/admin/currency", roles: ["tenant_admin", "reinpia_admin"] },
         { label: "Idioma de la tienda", to: "/admin/language", roles: ["tenant_admin", "reinpia_admin", "tenant_staff"] },
+        { label: "Configuración internacional", to: "/admin/language", roles: ["tenant_admin", "reinpia_admin", "tenant_staff"] },
+        ...(featureNfcEnabled ? [{ label: "NFC operativo", to: "/admin/channels/pos", roles: ["tenant_admin", "reinpia_admin"] }] : []),
         { label: "Automatización de marca", to: "/admin/automation", roles: ["tenant_admin", "reinpia_admin"] },
       ],
     },
@@ -273,11 +292,11 @@ export function AdminLayout() {
         { label: "Marketing", to: "/admin/reports/marketing", roles: ["tenant_admin", "reinpia_admin"] },
         { label: "Fidelización", to: "/admin/reports/loyalty", roles: ["tenant_admin", "reinpia_admin"] },
         { label: "Distribuidores", to: "/admin/reports/distributors", roles: ["tenant_admin", "reinpia_admin"] },
-        { label: "Operación", to: "/admin/reports/logistics", roles: ["tenant_admin", "reinpia_admin"] },
+        ...(featureLogisticsEnabled ? [{ label: "Operación", to: "/admin/reports/logistics", roles: ["tenant_admin", "reinpia_admin"] }] : []),
         { label: "POS", to: "/pos/sales" },
       ],
     },
-  ];
+  ], [brandSettings]);
 
   const visibleSections = mode === "global" && isSuperAdmin ? globalSections : brandSections;
   const homePath = mode === "global" && isSuperAdmin ? "/reinpia/dashboard" : "/";

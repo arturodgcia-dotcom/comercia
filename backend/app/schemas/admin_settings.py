@@ -30,6 +30,12 @@ class BrandAdminSettingsRead(BaseModel):
     language_primary: str
     language_visible: list[str]
     market_profile: str = Field(default="latam_es_usd")
+    country_code: str = Field(default="MX")
+    expansion_enabled: bool = False
+    cross_border_enabled: bool = False
+    feature_logistics_enabled: bool = False
+    feature_workday_enabled: bool = False
+    feature_nfc_operations_enabled: bool = False
 
 
 class BrandAdminSettingsUpdate(BaseModel):
@@ -39,3 +45,9 @@ class BrandAdminSettingsUpdate(BaseModel):
     language_primary: str | None = None
     language_visible: list[str] | None = None
     market_profile: str | None = None
+    country_code: str | None = None
+    expansion_enabled: bool | None = None
+    cross_border_enabled: bool | None = None
+    feature_logistics_enabled: bool | None = None
+    feature_workday_enabled: bool | None = None
+    feature_nfc_operations_enabled: bool | None = None

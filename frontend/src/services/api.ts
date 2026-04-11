@@ -83,6 +83,7 @@ import {
   TenantReportUsers,
   Tenant,
   TenantCommercialStatus,
+  TenantCommercialUsage,
   TenantBranding,
   TenantConfig,
   User,
@@ -359,6 +360,8 @@ export const api = {
     ),
   getTenantCommercialStatus: (token: string, tenantId: number) =>
     request<TenantCommercialStatus>(`/api/v1/commercial-plans/tenant/${tenantId}/status`, {}, token),
+  getTenantCommercialUsage: (token: string, tenantId: number) =>
+    request<TenantCommercialUsage>(`/api/v1/commercial-plans/tenant/${tenantId}/usage`, {}, token),
   consumeTenantAiTokens: (token: string, tenantId: number, payload: { tokens: number; reason?: string }) =>
     request<TenantCommercialStatus>(
       `/api/v1/commercial-plans/tenant/${tenantId}/tokens/consume`,

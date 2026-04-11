@@ -893,3 +893,56 @@ Migraciones:
   - crea tablas nuevas necesarias
   - agrega columnas nuevas en `tenants`
   - idempotente para no romper bases con tablas ya existentes.
+
+## Ejecucion 49: dashboard de marca gobernado por plan contratado
+Objetivo:
+- alinear el panel de marca al plan comercial real del tenant y su consumo operativo.
+- separar claramente capacidades de marca vs administracion global ComerCia.
+
+Arquitectura aplicada:
+1) Fuente comercial por tenant
+- `tenant_plan_status_payload` expone:
+  - `plan_display_name`
+  - `support`
+  - `plan_activated_at`
+- origen: estado comercial persistido en `Tenant` + catalogo comercial central.
+
+2) Capa de uso/capacidad
+- nuevo endpoint:
+  - `GET /api/v1/commercial-plans/tenant/{tenant_id}/usage`
+- agrega metrica de consumo real por tenant:
+  - marcas, usuarios, agentes IA, productos, sucursales
+  - sucursales activas/inactivas
+  - creditos IA incluidos/usados/restantes
+  - add-ons activos y cantidad.
+
+3) Configuracion administrativa de marca
+- `admin_settings` incorpora dos bloques nuevos en `StorefrontConfig.config_json`:
+  - `international`:
+    - `country_code`
+    - `expansion_enabled`
+    - `cross_border_enabled`
+  - `features`:
+    - `logistics_enabled`
+    - `workday_enabled`
+    - `nfc_operations_enabled`
+- estos flags gobiernan visibilidad de modulos avanzados en panel de marca.
+
+4) Separacion de paneles
+- Global REINPIA mantiene:
+  - pagos, planes, add-ons, alertas, configuracion internacional, marketing prospectos.
+- Panel de marca mantiene:
+  - dashboard de plan/consumo, soporte, add-ons y operacion de su tenant.
+- `Prospectos MKT` queda solo en contexto global.
+
+5) UI de dashboard de marca
+- bloque ejecutivo:
+  - plan contratado, estado, activacion, soporte.
+- bloque de capacidad:
+  - usados/permitidos/disponibles por recurso.
+- bloque comision:
+  - estado activo/desactivado, porcentaje y ventas sujetas.
+- bloque soporte:
+  - canal correo/chat y base de escalamiento.
+- bloque expansion:
+  - solicitud de add-ons y mejora de plan.

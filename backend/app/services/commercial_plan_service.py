@@ -367,6 +367,16 @@ def parse_limits(tenant: Tenant) -> dict[str, Any]:
 
 def tenant_plan_status_payload(tenant: Tenant) -> dict[str, Any]:
     limits = parse_limits(tenant)
+    plan_display_name = None
+    support = None
+    try:
+        if tenant.commercial_plan_key:
+            plan = get_plan_definition(str(tenant.commercial_plan_key))
+            plan_display_name = str(plan.get("name") or "")
+            support = str(plan.get("support") or "")
+    except Exception:
+        plan_display_name = str(tenant.commercial_plan_key or "")
+        support = None
     return {
         "tenant_id": tenant.id,
         "commercial_plan_key": tenant.commercial_plan_key,
@@ -381,6 +391,9 @@ def tenant_plan_status_payload(tenant: Tenant) -> dict[str, Any]:
         "ai_tokens_used": int(tenant.ai_tokens_used or 0),
         "ai_tokens_locked": bool(tenant.ai_tokens_locked),
         "ai_tokens_lock_reason": tenant.ai_tokens_lock_reason,
+        "plan_display_name": plan_display_name,
+        "support": support,
+        "plan_activated_at": tenant.ai_tokens_last_reset_at.isoformat() if tenant.ai_tokens_last_reset_at else None,
     }
 
 

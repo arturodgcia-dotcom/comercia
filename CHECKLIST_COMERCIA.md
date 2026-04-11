@@ -573,3 +573,17 @@
 - [x] Alerta interna `commercial_plan_request` al crear solicitud
 - [x] Migracion Alembic idempotente aplicada sin borrar data (`20260409_22`)
 - [x] Validacion: `alembic upgrade head`, `python -m compileall app`, `npm run build`
+
+## Entregables ejecucion 49 (Dashboard de marca por plan, consumo, soporte y add-ons)
+- [x] Dashboard de marca alineado al plan contratado real del tenant
+- [x] Bloque visible de plan: nombre, tipo, estado, activacion y soporte incluido
+- [x] Bloques de capacidad/consumo: marcas, usuarios, agentes IA, productos, sucursales y creditos IA
+- [x] Detalle de creditos IA: incluidos, extra, consumidos y restantes con medidor visual
+- [x] Bloque de comision por venta visible (activa o desactivada)
+- [x] Bloque de soporte por plan visible (correo/chat)
+- [x] Bloque "Expandir capacidad" con add-ons y CTA de mejora de plan
+- [x] Endpoint de uso comercial por tenant implementado (`GET /api/v1/commercial-plans/tenant/{tenant_id}/usage`)
+- [x] Modulos avanzados (logistica/jornada/NFC) ocultos por defecto y condicionados por flags de contrato
+- [x] Separacion de paneles reforzada: "Prospectos MKT" solo en panel global REINPIA
+- [x] Configuracion internacional base visible por marca (pais, moneda, idioma, expansion, cross-border)
+- [x] Validacion ejecutada: `npm run build` (frontend) y `python -m compileall app` (backend)

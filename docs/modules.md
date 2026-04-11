@@ -440,3 +440,26 @@ Nuevos endpoints:
   - `BrandChannelPages` agrega acciones para:
     - solicitar upgrade a Growth/Premium
     - solicitar add-ons (usuario extra, sucursal extra, 500 creditos IA).
+
+## Actualizacion dashboard de marca por plan y consumo (Ejecucion 49)
+- Dashboard de marca | Estado: funcional
+  - resumen ejecutivo de plan contratado, estado, activacion y soporte.
+  - KPIs de ventas/comision/neto segun modelo comercial.
+- Consumo y limites | Estado: funcional
+  - tarjetas de uso/capacidad para marcas, usuarios, agentes IA, productos y sucursales.
+  - detalle de sucursales activas/inactivas y creditos IA con medidor.
+  - endpoint: `GET /api/v1/commercial-plans/tenant/{tenant_id}/usage`.
+- Comision por venta | Estado: funcional
+  - bloque siempre visible (activa o desactivada), porcentaje y ventas sujetas.
+- Soporte por plan | Estado: funcional
+  - canal por correo o chat segun plan.
+  - base visual para escalamiento a persona (sin Telegram productivo en esta fase).
+- Add-ons en panel de marca | Estado: funcional
+  - bloque "Expandir capacidad" con deteccion de recursos cerca del limite.
+  - CTAs: solicitar add-on y mejorar plan.
+- Paneles global vs marca | Estado: funcional
+  - `Prospectos MKT` queda exclusivo de panel global REINPIA.
+  - panel de marca enfocado en operacion, consumo y soporte de su tenant.
+- Modulos avanzados por contrato | Estado: funcional
+  - Logistica, Jornada laboral y NFC operativo ocultos por defecto.
+  - solo visibles cuando flags de `admin_settings.features` estan habilitados.

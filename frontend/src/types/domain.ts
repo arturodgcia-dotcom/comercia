@@ -898,6 +898,35 @@ export interface TenantCommercialStatus {
   ai_tokens_used: number;
   ai_tokens_locked: boolean;
   ai_tokens_lock_reason?: string | null;
+  plan_display_name?: string | null;
+  support?: string | null;
+  plan_activated_at?: string | null;
+}
+
+export interface TenantAddonUsage {
+  addon_id: string;
+  addon_name: string;
+  quantity: number;
+}
+
+export interface TenantCommercialUsage {
+  tenant_id: number;
+  brands_used: number;
+  brands_limit: number;
+  users_used: number;
+  users_limit: number;
+  ai_agents_used: number;
+  ai_agents_limit: number;
+  products_used: number;
+  products_limit: number;
+  branches_used: number;
+  branches_limit: number;
+  branches_active: number;
+  branches_inactive: number;
+  ai_tokens_included: number;
+  ai_tokens_used: number;
+  ai_tokens_balance: number;
+  addons: TenantAddonUsage[];
 }
 
 export interface CommercialClientAccount {
@@ -1166,6 +1195,12 @@ export interface BrandAdminSettings {
   language_primary: string;
   language_visible: string[];
   market_profile: string;
+  country_code: string;
+  expansion_enabled: boolean;
+  cross_border_enabled: boolean;
+  feature_logistics_enabled: boolean;
+  feature_workday_enabled: boolean;
+  feature_nfc_operations_enabled: boolean;
 }
 
 export interface AdminUser {

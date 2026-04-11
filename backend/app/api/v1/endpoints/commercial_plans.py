@@ -1,24 +1,31 @@
+import json
+
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user, get_reinpia_admin
 from app.db.session import get_db
-from app.models.models import CommercialPlanRequest, StripeConfig, Tenant, User
+from app.models.models import CommercialPlanRequest, PosLocation, Product, StripeConfig, Tenant, User
 from app.schemas.commercial_accounts import CommercialPlanRequestCreate, CommercialPlanRequestRead
 from app.schemas.commercial_plan import (
     CommercialPlanCatalogRead,
     CommercialPlanCheckoutRequest,
     CommercialPlanCheckoutResponse,
+    TenantAddonUsageRead,
     TenantCommercialStatusRead,
+    TenantCommercialUsageRead,
     TokenConsumeRequest,
     TokenLockRequest,
     TokenTopupRequest,
 )
+from app.services.commercial_account_guard_service import build_account_usage_payload, get_tenant_commercial_account
 from app.services.commercial_plan_service import (
+    COMMERCIAL_ADDONS,
     apply_plan_to_tenant,
     consume_tokens,
     get_catalog_payload,
+    parse_limits,
     resolve_checkout_item,
     set_tokens_lock,
     tenant_plan_status_payload,
@@ -46,6 +53,99 @@ def get_tenant_commercial_status(
         raise HTTPException(status_code=404, detail="marca no encontrada")
     _assert_scope(current_user, tenant_id)
     return TenantCommercialStatusRead.model_validate(tenant_plan_status_payload(tenant))
+
+
+@router.get("/tenant/{tenant_id}/usage", response_model=TenantCommercialUsageRead)
+def get_tenant_commercial_usage(
+    tenant_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> TenantCommercialUsageRead:
+    tenant = db.get(Tenant, tenant_id)
+    if not tenant:
+        raise HTTPException(status_code=404, detail="marca no encontrada")
+    _assert_scope(current_user, tenant_id)
+
+    account = get_tenant_commercial_account(db, tenant.id)
+    limits = parse_limits(tenant)
+    addons_map: dict[str, int] = {}
+    if account:
+        usage = build_account_usage_payload(db, account)
+        try:
+            parsed_addons = json.loads(account.addons_json or "{}")
+            addons_map = parsed_addons if isinstance(parsed_addons, dict) else {}
+        except Exception:
+            addons_map = {}
+        brands_limit = int(usage.get("brands_limit") or 0)
+        users_limit = int(usage.get("users_limit") or 0)
+        products_limit = int(usage.get("products_limit") or 0)
+        branches_limit = int(usage.get("branches_limit") or 0)
+        brands_used = int(usage.get("brands_used") or 0)
+        users_used = int(usage.get("users_used") or 0)
+        products_used = int(usage.get("products_used") or 0)
+        branches_used = int(usage.get("branches_used") or 0)
+        ai_tokens_included = int(usage.get("ai_tokens_included") or tenant.ai_tokens_included or 0)
+        ai_tokens_used = int(usage.get("ai_tokens_used") or tenant.ai_tokens_used or 0)
+        ai_tokens_balance = int(usage.get("ai_tokens_balance") or tenant.ai_tokens_balance or 0)
+    else:
+        brands_limit = int(limits.get("brands_max") or 0)
+        users_limit = int(limits.get("users_max") or 0)
+        products_limit = int(limits.get("products_max") or 0)
+        branches_limit = int(limits.get("branches_max") or 0)
+        brands_used = 1
+        users_used = int(db.scalar(select(func.count(User.id)).where(User.tenant_id == tenant.id, User.is_active.is_(True))) or 0)
+        products_used = int(db.scalar(select(func.count(Product.id)).where(Product.tenant_id == tenant.id)) or 0)
+        branches_used = int(db.scalar(select(func.count(PosLocation.id)).where(PosLocation.tenant_id == tenant.id)) or 0)
+        ai_tokens_included = int(tenant.ai_tokens_included or 0)
+        ai_tokens_used = int(tenant.ai_tokens_used or 0)
+        ai_tokens_balance = int(tenant.ai_tokens_balance or 0)
+
+    branches_active = int(
+        db.scalar(select(func.count(PosLocation.id)).where(PosLocation.tenant_id == tenant.id, PosLocation.is_active.is_(True))) or 0
+    )
+    branches_inactive = max(branches_used - branches_active, 0)
+
+    ai_agents_base = int(limits.get("ai_agents_max") or 0)
+    ai_agents_extra = int(addons_map.get("extra_ai_agent") or 0)
+    ai_agents_limit = ai_agents_base + max(ai_agents_extra, 0)
+    ai_agents_used = 0
+
+    addon_name_by_id = {str(item["id"]): str(item["name"]) for item in COMMERCIAL_ADDONS}
+    addons: list[TenantAddonUsageRead] = []
+    for addon_id, qty in addons_map.items():
+        try:
+            quantity = int(qty)
+        except Exception:
+            quantity = 0
+        if quantity <= 0:
+            continue
+        addons.append(
+            TenantAddonUsageRead(
+                addon_id=str(addon_id),
+                addon_name=addon_name_by_id.get(str(addon_id), str(addon_id)),
+                quantity=quantity,
+            )
+        )
+
+    return TenantCommercialUsageRead(
+        tenant_id=tenant.id,
+        brands_used=brands_used,
+        brands_limit=brands_limit,
+        users_used=users_used,
+        users_limit=users_limit,
+        ai_agents_used=ai_agents_used,
+        ai_agents_limit=ai_agents_limit,
+        products_used=products_used,
+        products_limit=products_limit,
+        branches_used=branches_used,
+        branches_limit=branches_limit,
+        branches_active=branches_active,
+        branches_inactive=branches_inactive,
+        ai_tokens_included=ai_tokens_included,
+        ai_tokens_used=ai_tokens_used,
+        ai_tokens_balance=ai_tokens_balance,
+        addons=addons,
+    )
 
 
 @router.post(

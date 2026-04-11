@@ -119,6 +119,8 @@ def get_brand_settings(
     admin_settings = config_json.get("admin_settings", {}) if isinstance(config_json, dict) else {}
     language_cfg = admin_settings.get("language", {}) if isinstance(admin_settings, dict) else {}
     currency_cfg = admin_settings.get("currency", {}) if isinstance(admin_settings, dict) else {}
+    international_cfg = admin_settings.get("international", {}) if isinstance(admin_settings, dict) else {}
+    feature_cfg = admin_settings.get("features", {}) if isinstance(admin_settings, dict) else {}
 
     default_languages = json.loads(platform.platform_enabled_languages_json or '["es","en"]')
     default_primary = platform.platform_default_language or "es"
@@ -131,6 +133,12 @@ def get_brand_settings(
         language_primary=str(language_cfg.get("primary", default_primary)).lower(),
         language_visible=_normalize_codes(language_cfg.get("visible"), default_visible),
         market_profile=str(language_cfg.get("market_profile", "latam_es_usd")),
+        country_code=str(international_cfg.get("country_code", "MX")).upper(),
+        expansion_enabled=bool(international_cfg.get("expansion_enabled", False)),
+        cross_border_enabled=bool(international_cfg.get("cross_border_enabled", False)),
+        feature_logistics_enabled=bool(feature_cfg.get("logistics_enabled", False)),
+        feature_workday_enabled=bool(feature_cfg.get("workday_enabled", False)),
+        feature_nfc_operations_enabled=bool(feature_cfg.get("nfc_operations_enabled", False)),
     )
 
 
@@ -165,6 +173,8 @@ def update_brand_settings(
     if not isinstance(base_config, dict):
         base_config = {}
     admin_settings = base_config.get("admin_settings", {}) if isinstance(base_config.get("admin_settings"), dict) else {}
+    existing_international = admin_settings.get("international", {}) if isinstance(admin_settings.get("international"), dict) else {}
+    existing_features = admin_settings.get("features", {}) if isinstance(admin_settings.get("features"), dict) else {}
 
     inherit_global = bool(payload.currency_inherit_global)
     if inherit_global:
@@ -184,6 +194,12 @@ def update_brand_settings(
     language_primary = str(payload.language_primary or platform_primary_lang).lower()
     language_visible = _normalize_codes(payload.language_visible, [language_primary])
     market_profile = str(payload.market_profile or "latam_es_usd")
+    country_code = str(payload.country_code or existing_international.get("country_code") or "MX").upper()
+    expansion_enabled = bool(payload.expansion_enabled) if payload.expansion_enabled is not None else bool(existing_international.get("expansion_enabled", False))
+    cross_border_enabled = bool(payload.cross_border_enabled) if payload.cross_border_enabled is not None else bool(existing_international.get("cross_border_enabled", False))
+    feature_logistics_enabled = bool(payload.feature_logistics_enabled) if payload.feature_logistics_enabled is not None else bool(existing_features.get("logistics_enabled", False))
+    feature_workday_enabled = bool(payload.feature_workday_enabled) if payload.feature_workday_enabled is not None else bool(existing_features.get("workday_enabled", False))
+    feature_nfc_operations_enabled = bool(payload.feature_nfc_operations_enabled) if payload.feature_nfc_operations_enabled is not None else bool(existing_features.get("nfc_operations_enabled", False))
 
     admin_settings["currency"] = {
         "inherit_global": inherit_global,
@@ -192,6 +208,16 @@ def update_brand_settings(
         "primary": language_primary,
         "visible": language_visible,
         "market_profile": market_profile,
+    }
+    admin_settings["international"] = {
+        "country_code": country_code,
+        "expansion_enabled": expansion_enabled,
+        "cross_border_enabled": cross_border_enabled,
+    }
+    admin_settings["features"] = {
+        "logistics_enabled": feature_logistics_enabled,
+        "workday_enabled": feature_workday_enabled,
+        "nfc_operations_enabled": feature_nfc_operations_enabled,
     }
     base_config["admin_settings"] = admin_settings
     storefront.config_json = json.dumps(base_config)
@@ -205,4 +231,10 @@ def update_brand_settings(
         language_primary=language_primary,
         language_visible=language_visible,
         market_profile=market_profile,
+        country_code=country_code,
+        expansion_enabled=expansion_enabled,
+        cross_border_enabled=cross_border_enabled,
+        feature_logistics_enabled=feature_logistics_enabled,
+        feature_workday_enabled=feature_workday_enabled,
+        feature_nfc_operations_enabled=feature_nfc_operations_enabled,
     )

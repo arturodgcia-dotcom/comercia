@@ -74,6 +74,35 @@ class TenantCommercialStatusRead(BaseModel):
     ai_tokens_used: int
     ai_tokens_locked: bool
     ai_tokens_lock_reason: str | None
+    plan_display_name: str | None = None
+    support: str | None = None
+    plan_activated_at: str | None = None
+
+
+class TenantAddonUsageRead(BaseModel):
+    addon_id: str
+    addon_name: str
+    quantity: int
+
+
+class TenantCommercialUsageRead(BaseModel):
+    tenant_id: int
+    brands_used: int
+    brands_limit: int
+    users_used: int
+    users_limit: int
+    ai_agents_used: int
+    ai_agents_limit: int
+    products_used: int
+    products_limit: int
+    branches_used: int
+    branches_limit: int
+    branches_active: int
+    branches_inactive: int
+    ai_tokens_included: int
+    ai_tokens_used: int
+    ai_tokens_balance: int
+    addons: list[TenantAddonUsageRead] = Field(default_factory=list)
 
 
 class TokenConsumeRequest(BaseModel):

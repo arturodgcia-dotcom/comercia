@@ -905,3 +905,21 @@ Variables backend (`backend/.env`):
 - Migracion Alembic segura e idempotente:
   - `20260409_22_commercial_client_accounts_and_limits.py`
   - compatible con bases que ya tengan tablas creadas parcialmente.
+
+## Actualizacion ejecucion 49 (Dashboard de marca gobernado por plan)
+- Dashboard de marca reestructurado con enfoque ejecutivo y operativo:
+  - plan contratado (nombre, tipo, estado, activacion, soporte)
+  - capacidad/consumo por limite (marcas, usuarios, agentes IA, productos, sucursales, creditos IA)
+  - bloque de comision por venta (activa/desactivada) con ventas sujetas y acumulado
+  - bloque de soporte por plan (correo o chat)
+  - bloque "Expandir capacidad" con add-ons y solicitud de mejora de plan
+- Nuevo endpoint de uso comercial por marca:
+  - `GET /api/v1/commercial-plans/tenant/{tenant_id}/usage`
+- Separacion de paneles reforzada:
+  - `Prospectos MKT` solo en panel global ComerCia
+  - panel de marca sin acceso a prospectos globales
+- Modulos avanzados controlados por contrato/flags:
+  - Logistica, Jornada laboral y NFC operativo ocultos por defecto
+  - visibles solo cuando `admin_settings.features.*` esta habilitado
+- Configuracion internacional base por marca visible en dashboard:
+  - pais, moneda, idioma, expansion y operacion fuera de Mexico
