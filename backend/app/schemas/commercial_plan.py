@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from pydantic import BaseModel, Field
 
 
@@ -102,11 +104,20 @@ class TenantCommercialUsageRead(BaseModel):
     ai_tokens_included: int
     ai_tokens_used: int
     ai_tokens_balance: int
+    ai_tokens_extra: int = 0
+    ai_tokens_assigned: int = 0
+    ai_tokens_reserved: int = 0
+    ai_tokens_remaining: int = 0
+    ai_tokens_consumption_percentage: float = 0
+    ai_key_state: str = "abierta"
+    ai_override_active: bool = False
+    ai_override_reason: str | None = None
     addons: list[TenantAddonUsageRead] = Field(default_factory=list)
 
 
 class TokenConsumeRequest(BaseModel):
     tokens: int = Field(ge=1)
+    source: str = Field(default="otras_acciones_ia")
     reason: str | None = None
 
 
@@ -118,3 +129,16 @@ class TokenTopupRequest(BaseModel):
 class TokenLockRequest(BaseModel):
     locked: bool
     reason: str | None = None
+
+
+class AiCreditMovementRead(BaseModel):
+    id: int
+    tenant_id: int
+    commercial_client_account_id: int | None = None
+    source: str
+    action: str
+    tokens_delta: int
+    balance_after: int
+    notes: str | None = None
+    created_by_user_id: int | None = None
+    created_at: datetime

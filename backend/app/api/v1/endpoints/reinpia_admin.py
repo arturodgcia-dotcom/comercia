@@ -26,12 +26,15 @@ from app.schemas.marketing_prospects import MarketingProspectRead, MarketingPros
 from app.schemas.reinpia import SubscriptionRead
 from app.schemas.commercial_accounts import (
     AssignTenantToCommercialAccountPayload,
+    CommercialAccountAiCreditDistributionUpdate,
+    CommercialAccountAiCreditsRead,
     CommercialAccountUsageRead,
     CommercialClientAccountCreate,
     CommercialClientAccountRead,
     CommercialClientAccountUpdate,
     CommercialPlanRequestCreate,
     CommercialPlanRequestRead,
+    TenantAiCreditOverrideUpdate,
 )
 from app.schemas.logistics_additional import (
     LogisticsAdditionalServiceCreate,
@@ -74,6 +77,13 @@ from app.services.marketing_prospects_service import (
     update_marketing_prospect,
 )
 from app.services.commercial_account_guard_service import build_account_usage_payload, enforce_brand_limit_for_account
+from app.services.ai_credit_service import (
+    build_account_ai_credit_payload,
+    build_brand_credit_snapshot,
+    ensure_account_distribution,
+    set_manual_account_distribution,
+    set_tenant_override,
+)
 from app.services.internal_alerts_service import create_internal_alert
 from app.services.export_service import (
     export_commission_agents_csv,
@@ -662,7 +672,97 @@ def get_commercial_client_account_usage(account_id: int, db: Session = Depends(g
         from fastapi import HTTPException
 
         raise HTTPException(status_code=404, detail="cliente comercial no encontrado")
-    return CommercialAccountUsageRead.model_validate(build_account_usage_payload(db, account))
+    base_payload = build_account_usage_payload(db, account)
+    ai_payload = build_account_ai_credit_payload(db, account)
+    return CommercialAccountUsageRead.model_validate(
+        {
+            **base_payload,
+            "ai_tokens_extra": ai_payload["total_tokens_extra"],
+            "ai_tokens_reserved": ai_payload["total_tokens_reserved"],
+            "ai_tokens_remaining": ai_payload["total_tokens_remaining"],
+            "brands_warning": ai_payload["brands_warning"],
+            "brands_blocked": ai_payload["brands_blocked"],
+            "brands_override": ai_payload["brands_override"],
+        }
+    )
+
+
+@router.get("/commercial-client-accounts/{account_id}/ai-credits", response_model=CommercialAccountAiCreditsRead)
+def get_commercial_client_account_ai_credits(account_id: int, db: Session = Depends(get_db)):
+    account = db.get(CommercialClientAccount, account_id)
+    if not account:
+        from fastapi import HTTPException
+
+        raise HTTPException(status_code=404, detail="cliente comercial no encontrado")
+    payload = build_account_ai_credit_payload(db, account)
+    db.commit()
+    return CommercialAccountAiCreditsRead.model_validate(payload)
+
+
+@router.put("/commercial-client-accounts/{account_id}/ai-credits/auto", response_model=CommercialAccountAiCreditsRead)
+def auto_distribute_commercial_client_account_ai_credits(account_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_reinpia_admin)):
+    account = db.get(CommercialClientAccount, account_id)
+    if not account:
+        from fastapi import HTTPException
+
+        raise HTTPException(status_code=404, detail="cliente comercial no encontrado")
+    ensure_account_distribution(db, account, force_auto=True)
+    payload = build_account_ai_credit_payload(db, account)
+    db.commit()
+    return CommercialAccountAiCreditsRead.model_validate(payload)
+
+
+@router.put("/commercial-client-accounts/{account_id}/ai-credits/distribution", response_model=CommercialAccountAiCreditsRead)
+def update_commercial_client_account_ai_credit_distribution(
+    account_id: int,
+    payload: CommercialAccountAiCreditDistributionUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_reinpia_admin),
+):
+    account = db.get(CommercialClientAccount, account_id)
+    if not account:
+        from fastapi import HTTPException
+
+        raise HTTPException(status_code=404, detail="cliente comercial no encontrado")
+    try:
+        set_manual_account_distribution(
+            db,
+            account=account,
+            allocations=[item.model_dump() for item in payload.allocations],
+            actor_user_id=current_user.id,
+        )
+    except ValueError as exc:
+        from fastapi import HTTPException
+
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    payload_out = build_account_ai_credit_payload(db, account)
+    db.commit()
+    return CommercialAccountAiCreditsRead.model_validate(payload_out)
+
+
+@router.put("/tenants/{tenant_id}/ai-credits/override", response_model=TenantRead)
+def update_tenant_ai_credit_override(
+    tenant_id: int,
+    payload: TenantAiCreditOverrideUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_reinpia_admin),
+):
+    tenant = db.get(Tenant, tenant_id)
+    if not tenant:
+        from fastapi import HTTPException
+
+        raise HTTPException(status_code=404, detail="marca no encontrada")
+    set_tenant_override(
+        db,
+        tenant=tenant,
+        active=payload.active,
+        reason=payload.reason,
+        actor_user_id=current_user.id,
+    )
+    db.add(tenant)
+    db.commit()
+    db.refresh(tenant)
+    return tenant
 
 
 @router.get("/commercial-plan-requests", response_model=list[CommercialPlanRequestRead])

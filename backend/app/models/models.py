@@ -168,6 +168,43 @@ class CommercialPlanRequest(Base, TimestampMixin):
     requested_by_user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True, index=True)
 
 
+class AiBrandCreditAllocation(Base, TimestampMixin):
+    __tablename__ = "ai_brand_credit_allocations"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    commercial_client_account_id: Mapped[int] = mapped_column(
+        ForeignKey("commercial_client_accounts.id"),
+        nullable=False,
+        index=True,
+    )
+    tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id"), nullable=False, index=True)
+    assigned_tokens: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    reserved_tokens: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    manual_assignment: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    override_active: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    override_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+    override_by_user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True, index=True)
+
+
+class AiCreditMovement(Base):
+    __tablename__ = "ai_credit_movements"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id"), nullable=False, index=True)
+    commercial_client_account_id: Mapped[int | None] = mapped_column(
+        ForeignKey("commercial_client_accounts.id"),
+        nullable=True,
+        index=True,
+    )
+    source: Mapped[str] = mapped_column(String(40), default="otras_acciones_ia", nullable=False, index=True)
+    action: Mapped[str] = mapped_column(String(30), default="consume", nullable=False, index=True)
+    tokens_delta: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    balance_after: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_by_user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True, index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+
+
 class Subscription(Base, TimestampMixin):
     __tablename__ = "subscriptions"
 

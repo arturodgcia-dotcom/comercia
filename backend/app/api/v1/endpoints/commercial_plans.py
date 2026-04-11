@@ -9,6 +9,7 @@ from app.db.session import get_db
 from app.models.models import CommercialPlanRequest, PosLocation, Product, StripeConfig, Tenant, User
 from app.schemas.commercial_accounts import CommercialPlanRequestCreate, CommercialPlanRequestRead
 from app.schemas.commercial_plan import (
+    AiCreditMovementRead,
     CommercialPlanCatalogRead,
     CommercialPlanCheckoutRequest,
     CommercialPlanCheckoutResponse,
@@ -20,16 +21,21 @@ from app.schemas.commercial_plan import (
     TokenTopupRequest,
 )
 from app.services.commercial_account_guard_service import build_account_usage_payload, get_tenant_commercial_account
+from app.services.ai_credit_service import (
+    build_brand_credit_snapshot,
+    consume_tenant_credits,
+    list_tenant_credit_movements,
+    record_credit_movement,
+    topup_tenant_credits,
+)
 from app.services.commercial_plan_service import (
     COMMERCIAL_ADDONS,
     apply_plan_to_tenant,
-    consume_tokens,
     get_catalog_payload,
     parse_limits,
     resolve_checkout_item,
     set_tokens_lock,
     tenant_plan_status_payload,
-    topup_tokens,
 )
 from app.services.stripe_service import create_checkout_session_plan1
 from app.services.internal_alerts_service import create_internal_alert
@@ -127,6 +133,8 @@ def get_tenant_commercial_usage(
             )
         )
 
+    credit_snapshot = build_brand_credit_snapshot(db, tenant)
+
     return TenantCommercialUsageRead(
         tenant_id=tenant.id,
         brands_used=brands_used,
@@ -143,7 +151,15 @@ def get_tenant_commercial_usage(
         branches_inactive=branches_inactive,
         ai_tokens_included=ai_tokens_included,
         ai_tokens_used=ai_tokens_used,
-        ai_tokens_balance=ai_tokens_balance,
+        ai_tokens_balance=credit_snapshot.remaining_tokens,
+        ai_tokens_extra=credit_snapshot.extra_assigned,
+        ai_tokens_assigned=credit_snapshot.assigned_tokens,
+        ai_tokens_reserved=credit_snapshot.reserved_tokens,
+        ai_tokens_remaining=credit_snapshot.remaining_tokens,
+        ai_tokens_consumption_percentage=credit_snapshot.percentage_consumed,
+        ai_key_state=credit_snapshot.key_state,
+        ai_override_active=credit_snapshot.override_active,
+        ai_override_reason=credit_snapshot.override_reason,
         addons=addons,
     )
 
@@ -205,13 +221,21 @@ def consume_tenant_tokens(
     tenant_id: int,
     payload: TokenConsumeRequest,
     db: Session = Depends(get_db),
-    _: User = Depends(get_reinpia_admin),
+    current_user: User = Depends(get_reinpia_admin),
 ) -> TenantCommercialStatusRead:
     tenant = db.get(Tenant, tenant_id)
     if not tenant:
         raise HTTPException(status_code=404, detail="marca no encontrada")
     try:
-        status_payload = consume_tokens(tenant, payload.tokens, reason=payload.reason)
+        consume_tenant_credits(
+            db,
+            tenant=tenant,
+            amount=payload.tokens,
+            source=(payload.source or "").strip() or "otras_acciones_ia",
+            notes=payload.reason,
+            created_by_user_id=current_user.id if current_user else None,
+        )
+        status_payload = tenant_plan_status_payload(tenant)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     db.add(tenant)
@@ -224,13 +248,20 @@ def topup_tenant_tokens(
     tenant_id: int,
     payload: TokenTopupRequest,
     db: Session = Depends(get_db),
-    _: User = Depends(get_reinpia_admin),
+    current_user: User = Depends(get_reinpia_admin),
 ) -> TenantCommercialStatusRead:
     tenant = db.get(Tenant, tenant_id)
     if not tenant:
         raise HTTPException(status_code=404, detail="marca no encontrada")
     try:
-        status_payload = topup_tokens(tenant, payload.tokens, reason=payload.reason)
+        topup_tenant_credits(
+            db,
+            tenant=tenant,
+            amount=payload.tokens,
+            reason=payload.reason,
+            created_by_user_id=current_user.id if current_user else None,
+        )
+        status_payload = tenant_plan_status_payload(tenant)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     db.add(tenant)
@@ -243,15 +274,54 @@ def set_tenant_tokens_lock(
     tenant_id: int,
     payload: TokenLockRequest,
     db: Session = Depends(get_db),
-    _: User = Depends(get_reinpia_admin),
+    current_user: User = Depends(get_reinpia_admin),
 ) -> TenantCommercialStatusRead:
     tenant = db.get(Tenant, tenant_id)
     if not tenant:
         raise HTTPException(status_code=404, detail="marca no encontrada")
     status_payload = set_tokens_lock(tenant, payload.locked, reason=payload.reason)
+    record_credit_movement(
+        db,
+        tenant=tenant,
+        action="lock" if payload.locked else "unlock",
+        source="admin_lock",
+        tokens_delta=0,
+        balance_after=int(tenant.ai_tokens_balance or 0),
+        notes=payload.reason,
+        created_by_user_id=current_user.id if current_user else None,
+    )
     db.add(tenant)
     db.commit()
     return TenantCommercialStatusRead.model_validate(status_payload)
+
+
+@router.get("/tenant/{tenant_id}/tokens/movements", response_model=list[AiCreditMovementRead])
+def get_tenant_token_movements(
+    tenant_id: int,
+    limit: int = 20,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> list[AiCreditMovementRead]:
+    tenant = db.get(Tenant, tenant_id)
+    if not tenant:
+        raise HTTPException(status_code=404, detail="marca no encontrada")
+    _assert_scope(current_user, tenant_id)
+    rows = list_tenant_credit_movements(db, tenant_id=tenant_id, limit=limit)
+    return [
+        AiCreditMovementRead(
+            id=row.id,
+            tenant_id=row.tenant_id,
+            commercial_client_account_id=row.commercial_client_account_id,
+            source=row.source,
+            action=row.action,
+            tokens_delta=int(row.tokens_delta or 0),
+            balance_after=int(row.balance_after or 0),
+            notes=row.notes,
+            created_by_user_id=row.created_by_user_id,
+            created_at=row.created_at,
+        )
+        for row in rows
+    ]
 
 
 @router.post("/requests", response_model=CommercialPlanRequestRead)

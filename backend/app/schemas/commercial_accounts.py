@@ -61,6 +61,57 @@ class CommercialAccountUsageRead(BaseModel):
     ai_tokens_included: int
     ai_tokens_used: int
     ai_tokens_balance: int
+    ai_tokens_extra: int = 0
+    ai_tokens_reserved: int = 0
+    ai_tokens_remaining: int = 0
+    brands_warning: int = 0
+    brands_blocked: int = 0
+    brands_override: int = 0
+
+
+class BrandAiCreditRead(BaseModel):
+    tenant_id: int
+    tenant_name: str
+    assigned_tokens: int
+    reserved_tokens: int
+    consumed_tokens: int
+    remaining_tokens: int
+    percentage_consumed: float
+    key_state: str
+    override_active: bool
+    override_reason: str | None = None
+    included_by_plan: int = 0
+    extra_assigned: int = 0
+
+
+class CommercialAccountAiCreditsRead(BaseModel):
+    account_id: int
+    total_tokens_included: int
+    total_tokens_extra: int
+    total_tokens_capacity: int
+    total_tokens_assigned: int
+    total_tokens_consumed: int
+    total_tokens_reserved: int
+    total_tokens_remaining: int
+    brands_warning: int
+    brands_blocked: int
+    brands_override: int
+    brands: list[BrandAiCreditRead]
+
+
+class CommercialAccountAiCreditDistributionItem(BaseModel):
+    tenant_id: int
+    assigned_tokens: int
+    reserved_tokens: int = 0
+
+
+class CommercialAccountAiCreditDistributionUpdate(BaseModel):
+    allocations: list[CommercialAccountAiCreditDistributionItem]
+
+
+class TenantAiCreditOverrideUpdate(BaseModel):
+    active: bool
+    reason: str | None = None
 
 
 class CommercialPlanRequestCreate(BaseModel):
