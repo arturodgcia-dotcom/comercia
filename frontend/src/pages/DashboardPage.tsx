@@ -265,6 +265,7 @@ export function DashboardPage() {
       <article className="card">
         <h3>Configuracion internacional (base)</h3>
         <p>Pais activo: {brandSettings?.country_code ?? "MX"}</p>
+        <p>Paises habilitados: {brandSettings?.countries_enabled?.join(", ") || "MX"}</p>
         <p>Moneda base: {brandSettings?.currency_base_currency ?? "MXN"}</p>
         <p>Idioma principal: {brandSettings?.language_primary ?? "es"}</p>
         <p>Expansion habilitada: {brandSettings?.expansion_enabled ? "Si" : "No"}</p>
@@ -285,6 +286,43 @@ export function DashboardPage() {
           <p>{brandSettings?.feature_nfc_operations_enabled ? "Habilitado por contrato" : "Deshabilitado por defecto. Requiere activacion global ComerCia."}</p>
         </article>
       </div>
+
+      <article className="card" style={{ marginTop: "12px" }}>
+        <h3>Add-ons contratables y estado comercial</h3>
+        <p>Estos módulos permanecen deshabilitados por defecto y solo ComerCia global puede activarlos.</p>
+        <div className="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Add-on</th>
+                <th>Estado</th>
+                <th>Plan</th>
+                <th>Sucursales scope</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Logística</td>
+                <td>{brandSettings?.addon_logistics_status ?? "deshabilitado"}</td>
+                <td>{brandSettings?.addon_logistics_plan || "-"}</td>
+                <td>{brandSettings?.addon_logistics_scope_branch_ids?.join(", ") || "-"}</td>
+              </tr>
+              <tr>
+                <td>Jornada laboral</td>
+                <td>{brandSettings?.addon_workday_status ?? "deshabilitado"}</td>
+                <td>{brandSettings?.addon_workday_plan || "-"}</td>
+                <td>{brandSettings?.addon_workday_scope_branch_ids?.join(", ") || "-"}</td>
+              </tr>
+              <tr>
+                <td>NFC</td>
+                <td>{brandSettings?.addon_nfc_status ?? "deshabilitado"}</td>
+                <td>{brandSettings?.addon_nfc_plan || "-"}</td>
+                <td>{brandSettings?.addon_nfc_scope_branch_ids?.join(", ") || "-"}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </article>
 
       <article className="card" style={{ marginTop: "12px" }}>
         <h3>Alertas operativas centinela</h3>

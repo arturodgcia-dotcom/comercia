@@ -1253,8 +1253,26 @@ export interface BrandAdminSettings {
   language_visible: string[];
   market_profile: string;
   country_code: string;
+  countries_enabled: string[];
+  country_channels: Array<{
+    country_code: string;
+    currency: string;
+    language: string;
+    landing_enabled: boolean;
+    ecommerce_enabled: boolean;
+    webapp_enabled: boolean;
+  }>;
   expansion_enabled: boolean;
   cross_border_enabled: boolean;
+  addon_logistics_status: "deshabilitado" | "configurando" | "activo" | "suspendido" | string;
+  addon_logistics_plan?: string | null;
+  addon_logistics_scope_branch_ids: number[];
+  addon_workday_status: "deshabilitado" | "configurando" | "activo" | "suspendido" | string;
+  addon_workday_plan?: string | null;
+  addon_workday_scope_branch_ids: number[];
+  addon_nfc_status: "deshabilitado" | "configurando" | "activo" | "suspendido" | string;
+  addon_nfc_plan?: string | null;
+  addon_nfc_scope_branch_ids: number[];
   feature_logistics_enabled: boolean;
   feature_workday_enabled: boolean;
   feature_nfc_operations_enabled: boolean;
