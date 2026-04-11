@@ -31,6 +31,7 @@ import {
   PlatformSettings,
   BrandAdminSettings,
   CustomerContactLead,
+  FinanceDashboard,
   DistributorApplication,
   DistributorEmployee,
   DistributorProfile,
@@ -585,6 +586,16 @@ export const api = {
     ),
   getReinpiaPaymentsOrders: (token: string, query = "") =>
     request<Order[]>(`/api/v1/reinpia/payments/orders${query ? `?${query}` : ""}`, {}, token),
+  getReinpiaFinanceDashboard: (token: string, query = "") =>
+    request<FinanceDashboard>(`/api/v1/reinpia-finance/dashboard${query ? `?${query}` : ""}`, {}, token),
+  getReinpiaFinanceTenantsSummary: (token: string, query = "") =>
+    request<Array<{ tenant_id: number; tenant_name: string }>>(`/api/v1/reinpia-finance/tenants/summary${query ? `?${query}` : ""}`, {}, token),
+  getReinpiaFinanceCommercialClientAccounts: (token: string) =>
+    request<CommercialClientAccount[]>("/api/v1/reinpia-finance/commercial-client-accounts", {}, token),
+  getReinpiaFinanceCommissionAgents: (token: string) =>
+    request<SalesCommissionAgent[]>("/api/v1/reinpia-finance/commission-agents", {}, token),
+  getReinpiaFinanceCommissionAgentSummary: (token: string, id: number, query = "") =>
+    request<Record<string, number | string>>(`/api/v1/reinpia-finance/commission-agents/${id}/summary${query ? `?${query}` : ""}`, {}, token),
   getReinpiaAppointmentsSummary: (token: string, query = "") =>
     request<ReinpiaSummaryByStatus>(`/api/v1/reinpia/appointments/summary${query ? `?${query}` : ""}`, {}, token),
   getReinpiaLogisticsSummary: (token: string, query = "") =>
@@ -670,6 +681,20 @@ export const api = {
     request<SalesCommissionAgent>("/api/v1/reinpia/commission-agents", { method: "POST", body: JSON.stringify(payload) }, token),
   updateReinpiaCommissionAgent: (token: string, id: number, payload: Record<string, unknown>) =>
     request<SalesCommissionAgent>(`/api/v1/reinpia/commission-agents/${id}`, { method: "PUT", body: JSON.stringify(payload) }, token),
+  createReinpiaCommissionSettlement: (
+    token: string,
+    payload: {
+      commission_agent_id: number;
+      amount_paid: number;
+      tenant_id?: number;
+      commercial_client_account_id?: number;
+      period_from?: string;
+      period_to?: string;
+      paid_at?: string;
+      notes?: string;
+    }
+  ) =>
+    request<Record<string, unknown>>("/api/v1/reinpia-finance/settlements", { method: "POST", body: JSON.stringify(payload) }, token),
   getReinpiaCommissionAgentSummary: (token: string, id: number, query = "") =>
     request<Record<string, number | string>>(`/api/v1/reinpia/commission-agents/${id}/summary${query ? `?${query}` : ""}`, {}, token),
   createReinpiaReferral: (token: string, payload: Record<string, unknown>) =>

@@ -32,7 +32,16 @@ export interface User {
   id: number;
   email: string;
   full_name: string;
-  role: "reinpia_admin" | "tenant_admin" | "tenant_staff" | "distributor_user" | "public_customer" | string;
+  role:
+    | "reinpia_admin"
+    | "super_admin"
+    | "contador"
+    | "soporte"
+    | "tenant_admin"
+    | "tenant_staff"
+    | "distributor_user"
+    | "public_customer"
+    | string;
   is_active: boolean;
   tenant_id: number | null;
   preferred_language?: string;
@@ -1058,6 +1067,9 @@ export interface SalesCommissionAgent {
   full_name: string;
   email: string;
   phone?: string | null;
+  agent_type: string;
+  commercial_client_account_id?: number | null;
+  tenant_id?: number | null;
   is_active: boolean;
   commission_percentage: number;
   valid_from?: string | null;
@@ -1065,6 +1077,55 @@ export interface SalesCommissionAgent {
   notes?: string | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface FinanceClientSummaryRow {
+  commercial_client_account_id?: number | null;
+  cliente_principal: string;
+  ventas_totales: number;
+  ventas_sujetas_comision: number;
+  comision_total_generada: number;
+  comision_reinpia: number;
+  comision_distribuida: number;
+}
+
+export interface FinanceCommissionAgentSummaryRow {
+  commission_agent_id: number;
+  nombre: string;
+  tipo: string;
+  marcas_asociadas: string[];
+  porcentaje: number;
+  comision_generada: number;
+  comision_pendiente: number;
+  comision_pagada: number;
+}
+
+export interface FinanceOperationDetailRow {
+  order_id: number;
+  tenant_id: number;
+  tenant_name: string;
+  commercial_client_account_id?: number | null;
+  cliente_principal: string;
+  status: string;
+  total_venta: number;
+  comision_reinpia: number;
+  comisionista_id?: number | null;
+  comisionista_nombre?: string | null;
+  comisionista_porcentaje: number;
+  comision_distribuida: number;
+  created_at: string;
+}
+
+export interface FinanceDashboard {
+  resumen_ejecutivo: FinanceClientSummaryRow[];
+  comisionistas: FinanceCommissionAgentSummaryRow[];
+  detalle_operaciones: FinanceOperationDetailRow[];
+  conciliacion: {
+    comisiones_generadas: number;
+    comisiones_distribuidas: number;
+    comisiones_pagadas: number;
+    comisiones_por_pagar: number;
+  };
 }
 
 export interface SalesReferral {

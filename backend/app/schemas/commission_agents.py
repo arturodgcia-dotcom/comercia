@@ -10,6 +10,9 @@ class SalesCommissionAgentCreate(BaseModel):
     full_name: str
     email: str
     phone: str | None = None
+    agent_type: str = "externo"
+    commercial_client_account_id: int | None = None
+    tenant_id: int | None = None
     is_active: bool = True
     commission_percentage: Decimal = Decimal("30")
     valid_from: datetime | None = None
@@ -21,6 +24,9 @@ class SalesCommissionAgentUpdate(BaseModel):
     full_name: str | None = None
     email: str | None = None
     phone: str | None = None
+    agent_type: str | None = None
+    commercial_client_account_id: int | None = None
+    tenant_id: int | None = None
     is_active: bool | None = None
     commission_percentage: Decimal | None = None
     valid_from: datetime | None = None
@@ -34,6 +40,9 @@ class SalesCommissionAgentRead(TimestampSchema):
     full_name: str
     email: str
     phone: str | None
+    agent_type: str
+    commercial_client_account_id: int | None
+    tenant_id: int | None
     is_active: bool
     commission_percentage: Decimal
     valid_from: datetime | None

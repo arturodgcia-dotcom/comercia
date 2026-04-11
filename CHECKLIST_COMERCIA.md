@@ -587,3 +587,16 @@
 - [x] Separacion de paneles reforzada: "Prospectos MKT" solo en panel global REINPIA
 - [x] Configuracion internacional base visible por marca (pais, moneda, idioma, expansion, cross-border)
 - [x] Validacion ejecutada: `npm run build` (frontend) y `python -m compileall app` (backend)
+
+## Entregables ejecucion 50 (Comisionistas y visibilidad contable)
+- [x] Capa de seguridad financiera por rol (`reinpia_admin|super_admin|contador`)
+- [x] Nuevo router financiero `/api/v1/reinpia-finance/*` para vistas contables
+- [x] Dashboard financiero con resumen ejecutivo y detalle por operacion
+- [x] Filtros por cliente, marca, comisionista y periodo
+- [x] Extensiones de comisionista: tipo interno/externo + asignacion cliente/marca
+- [x] Nueva entidad de conciliacion `CommissionAgentSettlement`
+- [x] Registro de liquidaciones restringido a super admin/reinpia admin
+- [x] UI de pagos/contador en español con conciliacion (generada, distribuida, pagada, por pagar)
+- [x] UI de comisionistas en modo lectura para contador (sin edicion directa)
+- [x] Roles preparados en gestion de usuarios globales: `super_admin`, `contador`, `soporte`
+- [x] Validacion ejecutada: `python -m compileall app` y `npm run build`

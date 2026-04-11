@@ -463,3 +463,25 @@ Nuevos endpoints:
 - Modulos avanzados por contrato | Estado: funcional
   - Logistica, Jornada laboral y NFC operativo ocultos por defecto.
   - solo visibles cuando flags de `admin_settings.features` estan habilitados.
+
+## Actualizacion contable y comisionistas (Ejecucion 50)
+- Panel `Pagos / Contador` | Estado: funcional
+  - resumen por cliente principal
+  - resumen por comisionista
+  - detalle por operacion
+  - conciliacion: generado, distribuido, pagado, por pagar
+- Filtros financieros | Estado: funcional
+  - cliente principal
+  - marca
+  - comisionista
+  - periodo
+- Comisionistas extendidos | Estado: funcional
+  - tipo `interno/externo`
+  - asignacion opcional por cliente principal y/o marca
+- Liquidaciones de comisionistas | Estado: funcional
+  - tabla `commission_agent_settlements`
+  - registro de pago restringido a rol global admin
+- Roles financieros | Estado: funcional
+  - `super_admin`: acceso global completo
+  - `contador`: lectura de pagos/comisiones/comisionistas
+  - `soporte`: sin visibilidad financiera

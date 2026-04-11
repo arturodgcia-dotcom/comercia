@@ -705,6 +705,13 @@ class SalesCommissionAgent(Base, TimestampMixin):
     full_name: Mapped[str] = mapped_column(String(180), nullable=False)
     email: Mapped[str] = mapped_column(String(180), nullable=False, index=True)
     phone: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    agent_type: Mapped[str] = mapped_column(String(20), default="externo", nullable=False)
+    commercial_client_account_id: Mapped[int | None] = mapped_column(
+        ForeignKey("commercial_client_accounts.id"),
+        nullable=True,
+        index=True,
+    )
+    tenant_id: Mapped[int | None] = mapped_column(ForeignKey("tenants.id"), nullable=True, index=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     commission_percentage: Mapped[Decimal] = mapped_column(Numeric(6, 2), default=30, nullable=False)
     valid_from: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
@@ -747,6 +754,25 @@ class PlanPurchaseLead(Base, TimestampMixin):
     needs_appointment: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     purchase_status: Mapped[str] = mapped_column(String(30), default="initiated", nullable=False)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+
+class CommissionAgentSettlement(Base, TimestampMixin):
+    __tablename__ = "commission_agent_settlements"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    commission_agent_id: Mapped[int] = mapped_column(ForeignKey("sales_commission_agents.id"), nullable=False, index=True)
+    commercial_client_account_id: Mapped[int | None] = mapped_column(
+        ForeignKey("commercial_client_accounts.id"),
+        nullable=True,
+        index=True,
+    )
+    tenant_id: Mapped[int | None] = mapped_column(ForeignKey("tenants.id"), nullable=True, index=True)
+    period_from: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    period_to: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    amount_paid: Mapped[Decimal] = mapped_column(Numeric(12, 2), default=0, nullable=False)
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    paid_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True, index=True)
+    created_by_user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True, index=True)
 
 
 class CustomerContactLead(Base, TimestampMixin):

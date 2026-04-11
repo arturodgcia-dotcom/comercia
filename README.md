@@ -144,7 +144,7 @@ npm run dev
 - Admin: `http://localhost:5175`
 - Landing ComerCia: `http://localhost:5175/comercia`
 - Storefront: `http://localhost:5175/store/{tenantSlug}`
-- Panel global REINPIA (solo reinpia_admin):
+- Panel global REINPIA (roles globales autorizados):
   - `http://localhost:5175/reinpia/dashboard`
   - `http://localhost:5175/reinpia/tenants`
   - `http://localhost:5175/reinpia/payments`
@@ -623,7 +623,9 @@ Scripts disponibles:
 
 ### Usuarios DEMO
 - `admin@reinpia.demo` / `Admin12345!` (`reinpia_admin`)
-- `superadmin@comercia.demo` / `Demo1234!` (`reinpia_admin`)
+- `superadmin@comercia.demo` / `Demo1234!` (`super_admin`)
+- `contador@comercia.demo` / `Admin12345!` (`contador`)
+- `soporte@comercia.demo` / `Admin12345!` (`soporte`)
 - `comercial.global@comercia.demo` / `Admin12345!` (`reinpia_admin`)
 - `logistica.global@comercia.demo` / `Admin12345!` (`reinpia_admin`)
 - `marketing.global@comercia.demo` / `Admin12345!` (`reinpia_admin`)
@@ -923,3 +925,27 @@ Variables backend (`backend/.env`):
   - visibles solo cuando `admin_settings.features.*` esta habilitado
 - Configuracion internacional base por marca visible en dashboard:
   - pais, moneda, idioma, expansion y operacion fuera de Mexico
+
+## Actualizacion ejecucion 50 (Comisionistas y visibilidad contable)
+- Nuevo panel financiero con foco contable:
+  - ruta: `/reinpia/payments`
+  - consume `GET /api/v1/reinpia-finance/dashboard`
+  - vista `resumen ejecutivo` y `detalle por operacion`
+  - filtros por cliente principal, marca, comisionista y periodo
+- Nueva capa backend de finanzas (`/api/v1/reinpia-finance/*`):
+  - `GET /dashboard`
+  - `GET /tenants/summary`
+  - `GET /commercial-client-accounts`
+  - `GET /commission-agents`
+  - `GET /commission-agents/{agent_id}/summary`
+  - `POST /settlements` (solo super admin / reinpia admin)
+- Comisionistas extendidos:
+  - `agent_type` (`interno` | `externo`)
+  - relacion opcional con cliente principal y/o marca
+- Conciliacion de comisiones:
+  - nueva entidad `CommissionAgentSettlement` para pagos a comisionistas
+  - calculo de `generada`, `pagada` y `pendiente` en dashboard financiero
+- Roles preparados:
+  - `super_admin`: acceso global total
+  - `contador`: acceso de lectura a pagos/comisiones/comisionistas financieros
+  - `soporte`: sin permisos financieros

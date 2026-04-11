@@ -399,7 +399,9 @@ def _seed_users(db: Session, tenants: list[Tenant]) -> None:
     tenant_map = {t.slug: t.id for t in tenants}
     users = [
         ("admin@reinpia.demo", "REINPIA Global Admin", "reinpia_admin", None),
-        ("superadmin@comercia.demo", "ComerCia Super Admin", "reinpia_admin", None),
+        ("superadmin@comercia.demo", "ComerCia Super Admin", "super_admin", None),
+        ("contador@comercia.demo", "ComerCia Contador", "contador", None),
+        ("soporte@comercia.demo", "ComerCia Soporte", "soporte", None),
         ("comercial.global@comercia.demo", "ComerCia Operador Comercial", "reinpia_admin", None),
         ("logistica.global@comercia.demo", "ComerCia Operador Logistica", "reinpia_admin", None),
         ("marketing.global@comercia.demo", "ComerCia Operador Marketing", "reinpia_admin", None),

@@ -9,7 +9,7 @@ type AppMode = "global" | "brand";
 type NavItem = { label: string; to: string; roles?: string[] };
 type NavSection = { title: string; items: NavItem[]; roles?: string[] };
 
-const ADMIN_ROLES = ["reinpia_admin", "tenant_admin", "tenant_staff"];
+const ADMIN_ROLES = ["reinpia_admin", "super_admin", "tenant_admin", "tenant_staff", "contador", "soporte"];
 const STORAGE_MODE_KEY = "comercia_admin_mode";
 const STORAGE_BRAND_KEY = "comercia_admin_brand_id";
 
@@ -45,7 +45,8 @@ export function AdminLayout() {
   const navigate = useNavigate();
 
   const userRole = user?.role;
-  const isSuperAdmin = userRole === "reinpia_admin";
+  const isSuperAdmin = userRole === "reinpia_admin" || userRole === "super_admin";
+  const isGlobalOperator = isSuperAdmin || userRole === "contador";
   const canAccessAdmin = ADMIN_ROLES.includes(userRole ?? "");
 
   const [tenants, setTenants] = useState<Tenant[]>([]);
@@ -57,9 +58,14 @@ export function AdminLayout() {
   });
 
   useEffect(() => {
-    if (!isSuperAdmin) {
+    if (!isGlobalOperator) {
       setMode("brand");
       setSelectedBrandId(user?.tenant_id ?? null);
+      return;
+    }
+    if (userRole === "contador") {
+      setMode("global");
+      setSelectedBrandId(null);
       return;
     }
     if (!token) return;
@@ -74,16 +80,16 @@ export function AdminLayout() {
       .catch(() => {
         setTenants([]);
       });
-  }, [isSuperAdmin, token, user?.tenant_id]);
+  }, [isGlobalOperator, token, user?.tenant_id, userRole]);
 
   useEffect(() => {
     const inferred = resolveModeFromPath(location.pathname);
     if (!inferred) return;
-    if (isSuperAdmin) {
+    if (isGlobalOperator) {
       setMode(inferred);
       sessionStorage.setItem(STORAGE_MODE_KEY, inferred);
     }
-  }, [isSuperAdmin, location.pathname]);
+  }, [isGlobalOperator, location.pathname]);
 
   useEffect(() => {
     if (!token) return;
@@ -93,9 +99,9 @@ export function AdminLayout() {
   }, [token, isSuperAdmin, selectedBrandId, user?.tenant_id]);
 
   useEffect(() => {
-    if (!isSuperAdmin) return;
+    if (!isGlobalOperator) return;
     sessionStorage.setItem(STORAGE_MODE_KEY, mode);
-  }, [isSuperAdmin, mode]);
+  }, [isGlobalOperator, mode]);
 
   useEffect(() => {
     if (!isSuperAdmin || !selectedBrandId) return;
@@ -119,12 +125,12 @@ export function AdminLayout() {
   const globalSections: NavSection[] = [
     {
       title: "INICIO GLOBAL",
-      roles: ["reinpia_admin"],
+      roles: ["reinpia_admin", "super_admin"],
       items: [{ label: "Dashboard global", to: "/reinpia/dashboard" }],
     },
     {
       title: "COMERCIAL GLOBAL",
-      roles: ["reinpia_admin"],
+      roles: ["reinpia_admin", "super_admin"],
       items: [
         { label: "Landing principal ComerCia", to: "/comercia" },
         { label: "Planes comerciales", to: "/plans" },
@@ -141,7 +147,7 @@ export function AdminLayout() {
     },
     {
       title: "MARCAS Y ACTIVACIÓN",
-      roles: ["reinpia_admin"],
+      roles: ["reinpia_admin", "super_admin"],
       items: [
         { label: "Nueva marca", to: "/reinpia/brands/new" },
         { label: "Marcas", to: "/reinpia/tenants" },
@@ -152,7 +158,7 @@ export function AdminLayout() {
     },
     {
       title: "OPERACIÓN GLOBAL",
-      roles: ["reinpia_admin"],
+      roles: ["reinpia_admin", "super_admin"],
       items: [
         { label: "Servicios logísticos", to: "/reinpia/logistics-services" },
         { label: "Operación global", to: "/reinpia/operations" },
@@ -162,17 +168,18 @@ export function AdminLayout() {
     },
     {
       title: "FINANZAS Y COBROS",
-      roles: ["reinpia_admin"],
+      roles: ["reinpia_admin", "super_admin", "contador"],
       items: [
         { label: "Global pagos", to: "/reinpia/payments" },
         { label: "Comisiones", to: "/reinpia/reports/commissions" },
-        { label: "Monedas y tipos de cambio", to: "/reinpia/currency" },
-        { label: "Facturación servicios adicionales", to: "/reinpia/logistics-services" },
+        { label: "Comisionistas", to: "/reinpia/commission-agents" },
+        { label: "Monedas y tipos de cambio", to: "/reinpia/currency", roles: ["reinpia_admin", "super_admin"] },
+        { label: "Facturación servicios adicionales", to: "/reinpia/logistics-services", roles: ["reinpia_admin", "super_admin"] },
       ],
     },
     {
       title: "CONFIGURACIÓN GENERAL",
-      roles: ["reinpia_admin"],
+      roles: ["reinpia_admin", "super_admin"],
       items: [
         { label: "Branding base", to: "/reinpia/brands/new" },
         { label: "Idiomas", to: "/reinpia/language" },
@@ -185,7 +192,7 @@ export function AdminLayout() {
     },
     {
       title: "REPORTES GLOBALES",
-      roles: ["reinpia_admin"],
+      roles: ["reinpia_admin", "super_admin"],
       items: [
         { label: "Reportes", to: "/reinpia/reports" },
         { label: "Crecimiento", to: "/reinpia/reports/growth" },
@@ -298,8 +305,8 @@ export function AdminLayout() {
     },
   ], [brandSettings]);
 
-  const visibleSections = mode === "global" && isSuperAdmin ? globalSections : brandSections;
-  const homePath = mode === "global" && isSuperAdmin ? "/reinpia/dashboard" : "/";
+  const visibleSections = mode === "global" && isGlobalOperator ? globalSections : brandSections;
+  const homePath = mode === "global" && isGlobalOperator ? "/reinpia/payments" : "/";
 
   const pathParts = location.pathname.split("/").filter(Boolean);
   const breadcrumbs = pathParts.map((part, index) => {

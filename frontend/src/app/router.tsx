@@ -165,7 +165,7 @@ export function AppRouter() {
 
       <Route element={<ProtectedRoute />}>
         <Route path="/" element={<AdminLayout />}>
-          <Route element={<RoleRoute allowedRoles={["tenant_admin", "reinpia_admin", "tenant_staff"]} />}>
+          <Route element={<RoleRoute allowedRoles={["tenant_admin", "reinpia_admin", "super_admin", "tenant_staff"]} />}>
             <Route index element={<DashboardPage />} />
             <Route path="admin/services" element={<ServicesAdminPage />} />
             <Route path="admin/catalog/bulk-upload" element={<CatalogBulkUploadPage />} />
@@ -184,7 +184,7 @@ export function AppRouter() {
             <Route path="products" element={<ProductsPage />} />
           </Route>
 
-          <Route element={<RoleRoute allowedRoles={["tenant_admin", "reinpia_admin"]} />}>
+          <Route element={<RoleRoute allowedRoles={["tenant_admin", "reinpia_admin", "super_admin", "contador"]} />}>
             <Route path="admin/channels/landing" element={<BrandLandingChannelPage />} />
             <Route path="admin/channels/public" element={<BrandPublicEcommerceChannelPage />} />
             <Route path="admin/channels/distributors" element={<BrandDistributorsChannelPage />} />
@@ -215,7 +215,7 @@ export function AppRouter() {
             <Route path="onboarding/sales" element={<OnboardingSalesPage />} />
             <Route path="onboarding/client" element={<OnboardingClientPage />} />
             <Route path="admin/automation" element={<AutomationAdminPage />} />
-            <Route element={<RoleRoute allowedRoles={["reinpia_admin"]} />}>
+            <Route element={<RoleRoute allowedRoles={["reinpia_admin", "super_admin"]} />}>
               <Route path="tenants" element={<TenantsPage />} />
               <Route path="tenants/:tenantId" element={<TenantDetailPage />} />
               <Route path="tenants/:tenantId/branding" element={<BrandingEditorPage />} />
@@ -228,7 +228,6 @@ export function AppRouter() {
               <Route path="reinpia/currency" element={<CurrencyAdminPage />} />
               <Route path="reinpia/tenants/:tenantId" element={<ReinpiaTenantDetailPage />} />
               <Route path="reinpia/diagnosticos" element={<ReinpiaDiagnosticsPage />} />
-              <Route path="reinpia/payments" element={<ReinpiaPaymentsPage />} />
               <Route path="reinpia/operations" element={<ReinpiaOperationsPage />} />
               <Route path="reinpia/logistics-services" element={<ReinpiaLogisticsServicesPage />} />
               <Route path="reinpia/reports" element={<ReinpiaReportsPage />} />
@@ -246,6 +245,11 @@ export function AppRouter() {
               <Route path="reinpia/security/alerts" element={<ReinpiaSecurityAlertsPage />} />
               <Route path="reinpia/security/rules" element={<ReinpiaSecurityRulesPage />} />
               <Route path="reinpia/security/blocked" element={<ReinpiaBlockedEntitiesPage />} />
+            </Route>
+            <Route element={<RoleRoute allowedRoles={["reinpia_admin", "super_admin", "contador"]} />}>
+              <Route path="reinpia/payments" element={<ReinpiaPaymentsPage />} />
+              <Route path="reinpia/commission-agents" element={<ReinpiaCommissionAgentsPage />} />
+              <Route path="reinpia/reports/commissions" element={<ReinpiaCommissionsReportPage />} />
             </Route>
           </Route>
           <Route path="*" element={<Navigate to="/comercia" replace />} />

@@ -946,3 +946,47 @@ Arquitectura aplicada:
   - canal correo/chat y base de escalamiento.
 - bloque expansion:
   - solicitud de add-ons y mejora de plan.
+
+## Ejecucion 50: arquitectura contable y comisionistas
+Objetivo:
+- dar visibilidad financiera real a contador y super admin sin abrir toda la administracion global.
+
+Capa de acceso:
+- `get_finance_view_user` habilita lectura financiera para:
+  - `reinpia_admin`
+  - `super_admin`
+  - `contador`
+- `get_reinpia_admin` mantiene operaciones de escritura restringidas para:
+  - `reinpia_admin`
+  - `super_admin`
+
+Router financiero dedicado:
+- `GET /api/v1/reinpia-finance/dashboard`
+- `GET /api/v1/reinpia-finance/tenants/summary`
+- `GET /api/v1/reinpia-finance/commercial-client-accounts`
+- `GET /api/v1/reinpia-finance/commission-agents`
+- `GET /api/v1/reinpia-finance/commission-agents/{agent_id}/summary`
+- `POST /api/v1/reinpia-finance/settlements` (solo admin global)
+
+Modelo de comisionistas:
+- `SalesCommissionAgent` extendido con:
+  - `agent_type` (`interno` | `externo`)
+  - `commercial_client_account_id`
+  - `tenant_id`
+
+Modelo de conciliacion:
+- nueva entidad `CommissionAgentSettlement` para registrar pagos realizados a comisionistas.
+- el dashboard financiero calcula:
+  - comision generada (desde ordenes pagadas)
+  - comision distribuida (segun porcentaje de comisionista asignado)
+  - comision pagada (desde liquidaciones)
+  - comision pendiente
+
+Frontend:
+- `ReinpiaPaymentsPage` se convierte en panel contable con:
+  - filtros por cliente/marca/comisionista/periodo
+  - alternancia entre resumen ejecutivo y detalle por operacion
+  - bloque de conciliacion
+- `ReinpiaCommissionAgentsPage`:
+  - contador en solo lectura
+  - super admin/reinpia admin con edicion y asignaciones

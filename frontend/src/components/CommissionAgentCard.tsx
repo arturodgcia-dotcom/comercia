@@ -14,8 +14,11 @@ export function CommissionAgentCard({
       <h3>{agent.full_name}</h3>
       <p>Clave: {agent.code}</p>
       <p>Email: {agent.email}</p>
-      <p>Comision: {agent.commission_percentage}%</p>
-      <p>Activo: {agent.is_active ? "Si" : "No"}</p>
+      <p>Tipo: {agent.agent_type}</p>
+      <p>Comisión: {agent.commission_percentage}%</p>
+      <p>Cliente principal: {agent.commercial_client_account_id ?? "No asignado"}</p>
+      <p>Marca asignada: {agent.tenant_id ?? "No asignada"}</p>
+      <p>Activo: {agent.is_active ? "Sí" : "No"}</p>
       {summary ? (
         <p>
           Leads: {summary.total_leads ?? 0} | Ventas comisionadas: {summary.commissioned_sales ?? 0}
@@ -29,4 +32,3 @@ export function CommissionAgentCard({
     </article>
   );
 }
-

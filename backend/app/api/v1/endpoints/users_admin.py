@@ -11,7 +11,7 @@ from app.services.commercial_account_guard_service import enforce_user_limit_for
 
 router = APIRouter()
 
-GLOBAL_ALLOWED_ROLES = {"reinpia_admin"}
+GLOBAL_ALLOWED_ROLES = {"reinpia_admin", "super_admin", "contador", "soporte"}
 BRAND_ALLOWED_ROLES = {"tenant_admin", "tenant_staff", "distributor_user"}
 
 
@@ -31,7 +31,7 @@ def _to_read(user: User) -> AdminUserRead:
 
 def _resolve_scope(current_user: User, scope: str, tenant_id: int | None) -> tuple[str, int | None]:
     requested_scope = scope.strip().lower()
-    if current_user.role == "reinpia_admin":
+    if current_user.role in {"reinpia_admin", "super_admin"}:
         if requested_scope == "global":
             return "global", None
         if requested_scope == "brand":
@@ -65,9 +65,7 @@ def list_admin_users(
 ):
     resolved_scope, resolved_tenant_id = _resolve_scope(current_user, scope, tenant_id)
     if resolved_scope == "global":
-        rows = db.scalars(
-            select(User).where(User.tenant_id.is_(None), User.role == "reinpia_admin").order_by(User.id.asc())
-        ).all()
+        rows = db.scalars(select(User).where(User.tenant_id.is_(None)).order_by(User.id.asc())).all()
         return [_to_read(row) for row in rows]
 
     rows = db.scalars(select(User).where(User.tenant_id == resolved_tenant_id).order_by(User.id.asc())).all()
@@ -82,7 +80,7 @@ def create_admin_user(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    if current_user.role not in {"reinpia_admin", "tenant_admin"}:
+    if current_user.role not in {"reinpia_admin", "super_admin", "tenant_admin"}:
         raise HTTPException(status_code=403, detail="sin permisos para crear usuarios")
     resolved_scope, resolved_tenant_id = _resolve_scope(current_user, scope, tenant_id)
     _validate_role_for_scope(resolved_scope, payload.role)
@@ -123,7 +121,7 @@ def update_admin_user(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    if current_user.role not in {"reinpia_admin", "tenant_admin"}:
+    if current_user.role not in {"reinpia_admin", "super_admin", "tenant_admin"}:
         raise HTTPException(status_code=403, detail="sin permisos para editar usuarios")
     resolved_scope, resolved_tenant_id = _resolve_scope(current_user, scope, tenant_id)
 
