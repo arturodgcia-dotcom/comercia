@@ -85,6 +85,7 @@ from app.services.ai_credit_service import (
     set_tenant_override,
 )
 from app.services.internal_alerts_service import create_internal_alert
+from app.services.operational_alerts_service import sync_operational_alerts_for_all_tenants
 from app.services.export_service import (
     export_commission_agents_csv,
     export_commissions_summary_csv,
@@ -816,9 +817,18 @@ def list_internal_alerts(
     alert_type: str | None = None,
     severity: str | None = None,
     is_read: bool | None = None,
+    tenant_id: int | None = None,
     db: Session = Depends(get_db),
 ):
-    return get_pending_internal_alerts(db, alert_type=alert_type, severity=severity, is_read=is_read)
+    sync_operational_alerts_for_all_tenants(db)
+    db.commit()
+    return get_pending_internal_alerts(
+        db,
+        alert_type=alert_type,
+        severity=severity,
+        is_read=is_read,
+        tenant_id=tenant_id,
+    )
 
 
 @router.put("/alerts/{alert_id}/read", response_model=InternalAlertRead)

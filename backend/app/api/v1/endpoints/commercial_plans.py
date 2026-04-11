@@ -20,6 +20,7 @@ from app.schemas.commercial_plan import (
     TokenLockRequest,
     TokenTopupRequest,
 )
+from app.schemas.commission_agents import InternalAlertRead
 from app.services.commercial_account_guard_service import build_account_usage_payload, get_tenant_commercial_account
 from app.services.ai_credit_service import (
     build_brand_credit_snapshot,
@@ -39,6 +40,8 @@ from app.services.commercial_plan_service import (
 )
 from app.services.stripe_service import create_checkout_session_plan1
 from app.services.internal_alerts_service import create_internal_alert
+from app.services.operational_alerts_service import sync_operational_alerts_for_tenant
+from app.services.commission_agents_service import get_pending_internal_alerts
 
 router = APIRouter()
 
@@ -322,6 +325,29 @@ def get_tenant_token_movements(
         )
         for row in rows
     ]
+
+
+@router.get("/tenant/{tenant_id}/alerts", response_model=list[InternalAlertRead])
+def get_tenant_operational_alerts(
+    tenant_id: int,
+    severity: str | None = None,
+    is_read: bool | None = None,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> list[InternalAlertRead]:
+    tenant = db.get(Tenant, tenant_id)
+    if not tenant:
+        raise HTTPException(status_code=404, detail="marca no encontrada")
+    _assert_scope(current_user, tenant_id)
+    sync_operational_alerts_for_tenant(db, tenant_id)
+    db.commit()
+    return get_pending_internal_alerts(
+        db,
+        alert_type="sentinel_operational",
+        severity=severity,
+        is_read=is_read,
+        tenant_id=tenant_id,
+    )
 
 
 @router.post("/requests", response_model=CommercialPlanRequestRead)

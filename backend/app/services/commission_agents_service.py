@@ -308,7 +308,11 @@ def get_commission_sales_kpis(db: Session, date_from: datetime | None = None, da
 
 
 def get_pending_internal_alerts(
-    db: Session, alert_type: str | None = None, severity: str | None = None, is_read: bool | None = None
+    db: Session,
+    alert_type: str | None = None,
+    severity: str | None = None,
+    is_read: bool | None = None,
+    tenant_id: int | None = None,
 ) -> list[InternalAlert]:
     filters = []
     if alert_type:
@@ -317,6 +321,8 @@ def get_pending_internal_alerts(
         filters.append(InternalAlert.severity == severity)
     if is_read is not None:
         filters.append(InternalAlert.is_read.is_(is_read))
+    if tenant_id is not None:
+        filters.append(InternalAlert.tenant_id == tenant_id)
     return db.scalars(select(InternalAlert).where(*filters).order_by(InternalAlert.id.desc())).all()
 
 
