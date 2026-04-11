@@ -1,5 +1,6 @@
 import {
   Appointment,
+  AiCreditMovement,
   AutomationEventLog,
   Banner,
   BrandDiagnostic,
@@ -21,6 +22,7 @@ import {
   CheckoutSessionResponse,
   ContractTemplate,
   CommercialAccountUsage,
+  CommercialAccountAiCredits,
   CommercialClientAccount,
   CommercialPlanCatalog,
   CommercialPlanRequest,
@@ -362,12 +364,14 @@ export const api = {
     request<TenantCommercialStatus>(`/api/v1/commercial-plans/tenant/${tenantId}/status`, {}, token),
   getTenantCommercialUsage: (token: string, tenantId: number) =>
     request<TenantCommercialUsage>(`/api/v1/commercial-plans/tenant/${tenantId}/usage`, {}, token),
-  consumeTenantAiTokens: (token: string, tenantId: number, payload: { tokens: number; reason?: string }) =>
+  consumeTenantAiTokens: (token: string, tenantId: number, payload: { tokens: number; source?: string; reason?: string }) =>
     request<TenantCommercialStatus>(
       `/api/v1/commercial-plans/tenant/${tenantId}/tokens/consume`,
       { method: "POST", body: JSON.stringify(payload) },
       token
     ),
+  getTenantAiCreditMovements: (token: string, tenantId: number, limit = 20) =>
+    request<AiCreditMovement[]>(`/api/v1/commercial-plans/tenant/${tenantId}/tokens/movements?limit=${limit}`, {}, token),
   topupTenantAiTokens: (token: string, tenantId: number, payload: { tokens: number; reason?: string }) =>
     request<TenantCommercialStatus>(
       `/api/v1/commercial-plans/tenant/${tenantId}/tokens/topup`,
@@ -692,6 +696,22 @@ export const api = {
     request<Tenant>(`/api/v1/reinpia/commercial-client-accounts/${accountId}/assign-tenant`, { method: "POST", body: JSON.stringify(payload) }, token),
   getReinpiaCommercialClientAccountUsage: (token: string, accountId: number) =>
     request<CommercialAccountUsage>(`/api/v1/reinpia/commercial-client-accounts/${accountId}/usage`, {}, token),
+  getReinpiaCommercialClientAccountAiCredits: (token: string, accountId: number) =>
+    request<CommercialAccountAiCredits>(`/api/v1/reinpia/commercial-client-accounts/${accountId}/ai-credits`, {}, token),
+  autoDistributeReinpiaCommercialClientAccountAiCredits: (token: string, accountId: number) =>
+    request<CommercialAccountAiCredits>(`/api/v1/reinpia/commercial-client-accounts/${accountId}/ai-credits/auto`, { method: "PUT" }, token),
+  updateReinpiaCommercialClientAccountAiCreditDistribution: (
+    token: string,
+    accountId: number,
+    payload: { allocations: Array<{ tenant_id: number; assigned_tokens: number; reserved_tokens: number }> }
+  ) =>
+    request<CommercialAccountAiCredits>(
+      `/api/v1/reinpia/commercial-client-accounts/${accountId}/ai-credits/distribution`,
+      { method: "PUT", body: JSON.stringify(payload) },
+      token
+    ),
+  updateReinpiaTenantAiCreditOverride: (token: string, tenantId: number, payload: { active: boolean; reason?: string }) =>
+    request<Tenant>(`/api/v1/reinpia/tenants/${tenantId}/ai-credits/override`, { method: "PUT", body: JSON.stringify(payload) }, token),
   getComerciaReferralValidation: (refCode: string) =>
     request<{ valid: boolean; code: string; agent_name?: string }>(`/api/v1/comercia/referral/${encodeURIComponent(refCode)}`),
   createComerciaPlanPurchaseLead: (payload: Record<string, unknown>) =>

@@ -2,7 +2,7 @@ import { FormEvent, useEffect, useState } from "react";
 import { useAuth } from "../app/AuthContext";
 import { PageHeader } from "../components/PageHeader";
 import { api } from "../services/api";
-import { CommercialAccountUsage, CommercialClientAccount, Tenant } from "../types/domain";
+import { CommercialAccountAiCredits, CommercialAccountUsage, CommercialClientAccount, Tenant } from "../types/domain";
 
 type NewAccountForm = {
   legal_name: string;
@@ -27,6 +27,8 @@ export function ReinpiaCommercialClientsPage() {
   const [rows, setRows] = useState<CommercialClientAccount[]>([]);
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [usage, setUsage] = useState<Record<number, CommercialAccountUsage>>({});
+  const [aiCredits, setAiCredits] = useState<Record<number, CommercialAccountAiCredits>>({});
+  const [draftDistribution, setDraftDistribution] = useState<Record<number, Record<number, { assigned_tokens: number; reserved_tokens: number }>>>({});
   const [selectedAccount, setSelectedAccount] = useState<number | null>(null);
   const [assignTenantId, setAssignTenantId] = useState<number>(0);
   const [assignAsParent, setAssignAsParent] = useState(false);
@@ -47,14 +49,99 @@ export function ReinpiaCommercialClientsPage() {
       ]);
       setRows(accounts);
       setTenants(tenantList);
-      const usagePairs = await Promise.all(
-        accounts.map(async (account) => [account.id, await api.getReinpiaCommercialClientAccountUsage(token, account.id)] as const)
-      );
+      const usagePairs = await Promise.all(accounts.map(async (account) => [account.id, await api.getReinpiaCommercialClientAccountUsage(token, account.id)] as const));
       setUsage(Object.fromEntries(usagePairs));
+      const creditsPairs = await Promise.all(
+        accounts.map(async (account) => [account.id, await api.getReinpiaCommercialClientAccountAiCredits(token, account.id)] as const)
+      );
+      const creditsMap = Object.fromEntries(creditsPairs);
+      setAiCredits(creditsMap);
+      const draft: Record<number, Record<number, { assigned_tokens: number; reserved_tokens: number }>> = {};
+      for (const [accountIdRaw, payload] of Object.entries(creditsMap)) {
+        const accountId = Number(accountIdRaw);
+        draft[accountId] = {};
+        for (const brand of payload.brands) {
+          draft[accountId][brand.tenant_id] = {
+            assigned_tokens: brand.assigned_tokens,
+            reserved_tokens: brand.reserved_tokens,
+          };
+        }
+      }
+      setDraftDistribution(draft);
     } catch (err) {
       setError(err instanceof Error ? err.message : "No fue posible cargar clientes comerciales.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const autoDistribute = async (accountId: number) => {
+    if (!token) return;
+    try {
+      setSaving(true);
+      setError("");
+      setMessage("");
+      await api.autoDistributeReinpiaCommercialClientAccountAiCredits(token, accountId);
+      setMessage("Distribucion automatica aplicada.");
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "No fue posible aplicar distribucion automatica.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const saveManualDistribution = async (accountId: number) => {
+    if (!token) return;
+    try {
+      setSaving(true);
+      setError("");
+      setMessage("");
+      const allocations = Object.entries(draftDistribution[accountId] ?? {}).map(([tenantId, values]) => ({
+        tenant_id: Number(tenantId),
+        assigned_tokens: Number(values.assigned_tokens || 0),
+        reserved_tokens: Number(values.reserved_tokens || 0),
+      }));
+      await api.updateReinpiaCommercialClientAccountAiCreditDistribution(token, accountId, { allocations });
+      setMessage("Distribucion manual guardada.");
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "No fue posible guardar distribucion manual.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const setDraftValue = (accountId: number, tenantId: number, key: "assigned_tokens" | "reserved_tokens", value: number) => {
+    setDraftDistribution((prev) => ({
+      ...prev,
+      [accountId]: {
+        ...(prev[accountId] ?? {}),
+        [tenantId]: {
+          assigned_tokens: prev[accountId]?.[tenantId]?.assigned_tokens ?? 0,
+          reserved_tokens: prev[accountId]?.[tenantId]?.reserved_tokens ?? 0,
+          [key]: Math.max(0, Number.isFinite(value) ? value : 0),
+        },
+      },
+    }));
+  };
+
+  const toggleOverride = async (tenantId: number, active: boolean) => {
+    if (!token) return;
+    try {
+      setSaving(true);
+      setError("");
+      setMessage("");
+      await api.updateReinpiaTenantAiCreditOverride(token, tenantId, {
+        active,
+        reason: active ? "override operativo REINPIA" : "cierre de override",
+      });
+      setMessage(active ? "Override IA activado." : "Override IA desactivado.");
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "No fue posible actualizar override.");
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -194,10 +281,11 @@ export function ReinpiaCommercialClientsPage() {
                 <th>Usuarios</th>
                 <th>Productos</th>
                 <th>Sucursales</th>
-                <th>Tokens IA</th>
-              </tr>
-            </thead>
-            <tbody>
+                    <th>Tokens IA</th>
+                    <th>Riesgo IA</th>
+                  </tr>
+                </thead>
+                <tbody>
               {rows.map((row) => {
                 const u = usage[row.id];
                 return (
@@ -208,19 +296,101 @@ export function ReinpiaCommercialClientsPage() {
                     <td>{u ? `${u.users_used}/${u.users_limit}` : "-"}</td>
                     <td>{u ? `${u.products_used}/${u.products_limit}` : "-"}</td>
                     <td>{u ? `${u.branches_used}/${u.branches_limit}` : "-"}</td>
-                    <td>{u ? `${u.ai_tokens_balance} disp / ${u.ai_tokens_included}` : "-"}</td>
+                    <td>{u ? `${u.ai_tokens_remaining} disp / ${u.ai_tokens_included + u.ai_tokens_extra}` : "-"}</td>
+                    <td>{u ? `Warn ${u.brands_warning} | Bloq ${u.brands_blocked} | Ovr ${u.brands_override}` : "-"}</td>
                   </tr>
                 );
               })}
               {!rows.length ? (
                 <tr>
-                  <td colSpan={7}>No hay clientes comerciales registrados.</td>
+                  <td colSpan={8}>No hay clientes comerciales registrados.</td>
                 </tr>
               ) : null}
             </tbody>
           </table>
         </div>
       </article>
+
+      {rows.map((row) => {
+        const credit = aiCredits[row.id];
+        if (!credit) return null;
+        return (
+          <article className="card" style={{ marginTop: "12px" }} key={`ai-${row.id}`}>
+            <h3>Creditos IA por marca - {row.legal_name}</h3>
+            <p>
+              Capacidad total: {credit.total_tokens_capacity} | Asignados: {credit.total_tokens_assigned} | Consumidos: {credit.total_tokens_consumed}
+              {" | "}Reservados: {credit.total_tokens_reserved} | Restantes: {credit.total_tokens_remaining}
+            </p>
+            <div className="row-gap" style={{ marginBottom: "8px" }}>
+              <button className="button button-outline" type="button" disabled={saving} onClick={() => void autoDistribute(row.id)}>
+                {saving ? "Procesando..." : "Distribucion automatica"}
+              </button>
+              <button className="button" type="button" disabled={saving} onClick={() => void saveManualDistribution(row.id)}>
+                {saving ? "Guardando..." : "Guardar distribucion manual"}
+              </button>
+            </div>
+            <div className="table-wrapper">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Marca</th>
+                    <th>Incluidos plan</th>
+                    <th>Extra asignados</th>
+                    <th>Asignados</th>
+                    <th>Reservados</th>
+                    <th>Consumidos</th>
+                    <th>Restantes</th>
+                    <th>% consumo</th>
+                    <th>Llave IA</th>
+                    <th>Override</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {credit.brands.map((brand) => (
+                    <tr key={`${row.id}-${brand.tenant_id}`}>
+                      <td>{brand.tenant_name}</td>
+                      <td>{brand.included_by_plan}</td>
+                      <td>{brand.extra_assigned}</td>
+                      <td>
+                        <input
+                          type="number"
+                          min={0}
+                          value={draftDistribution[row.id]?.[brand.tenant_id]?.assigned_tokens ?? brand.assigned_tokens}
+                          onChange={(e) => setDraftValue(row.id, brand.tenant_id, "assigned_tokens", Number(e.target.value))}
+                          style={{ width: "92px" }}
+                        />
+                      </td>
+                      <td>
+                        <input
+                          type="number"
+                          min={0}
+                          value={draftDistribution[row.id]?.[brand.tenant_id]?.reserved_tokens ?? brand.reserved_tokens}
+                          onChange={(e) => setDraftValue(row.id, brand.tenant_id, "reserved_tokens", Number(e.target.value))}
+                          style={{ width: "92px" }}
+                        />
+                      </td>
+                      <td>{brand.consumed_tokens}</td>
+                      <td>{brand.remaining_tokens}</td>
+                      <td>{brand.percentage_consumed.toFixed(2)}%</td>
+                      <td>{brand.key_state}</td>
+                      <td>
+                        <button
+                          className="button button-outline"
+                          type="button"
+                          disabled={saving}
+                          onClick={() => void toggleOverride(brand.tenant_id, !brand.override_active)}
+                        >
+                          {brand.override_active ? "Desactivar override" : "Activar override"}
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </article>
+        );
+      })}
     </section>
   );
 }

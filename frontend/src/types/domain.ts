@@ -926,7 +926,28 @@ export interface TenantCommercialUsage {
   ai_tokens_included: number;
   ai_tokens_used: number;
   ai_tokens_balance: number;
+  ai_tokens_extra: number;
+  ai_tokens_assigned: number;
+  ai_tokens_reserved: number;
+  ai_tokens_remaining: number;
+  ai_tokens_consumption_percentage: number;
+  ai_key_state: "abierta" | "advertencia" | "bloqueada" | "override_admin" | string;
+  ai_override_active: boolean;
+  ai_override_reason?: string | null;
   addons: TenantAddonUsage[];
+}
+
+export interface AiCreditMovement {
+  id: number;
+  tenant_id: number;
+  commercial_client_account_id?: number | null;
+  source: string;
+  action: string;
+  tokens_delta: number;
+  balance_after: number;
+  notes?: string | null;
+  created_by_user_id?: number | null;
+  created_at: string;
 }
 
 export interface CommercialClientAccount {
@@ -958,6 +979,42 @@ export interface CommercialAccountUsage {
   ai_tokens_included: number;
   ai_tokens_used: number;
   ai_tokens_balance: number;
+  ai_tokens_extra: number;
+  ai_tokens_reserved: number;
+  ai_tokens_remaining: number;
+  brands_warning: number;
+  brands_blocked: number;
+  brands_override: number;
+}
+
+export interface BrandAiCredit {
+  tenant_id: number;
+  tenant_name: string;
+  assigned_tokens: number;
+  reserved_tokens: number;
+  consumed_tokens: number;
+  remaining_tokens: number;
+  percentage_consumed: number;
+  key_state: "abierta" | "advertencia" | "bloqueada" | "override_admin" | string;
+  override_active: boolean;
+  override_reason?: string | null;
+  included_by_plan: number;
+  extra_assigned: number;
+}
+
+export interface CommercialAccountAiCredits {
+  account_id: number;
+  total_tokens_included: number;
+  total_tokens_extra: number;
+  total_tokens_capacity: number;
+  total_tokens_assigned: number;
+  total_tokens_consumed: number;
+  total_tokens_reserved: number;
+  total_tokens_remaining: number;
+  brands_warning: number;
+  brands_blocked: number;
+  brands_override: number;
+  brands: BrandAiCredit[];
 }
 
 export interface CommercialPlanRequest {

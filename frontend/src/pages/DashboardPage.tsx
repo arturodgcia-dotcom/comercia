@@ -4,7 +4,7 @@ import { useAuth } from "../app/AuthContext";
 import { KpiCard } from "../components/KpiCard";
 import { PageHeader } from "../components/PageHeader";
 import { api } from "../services/api";
-import { BrandAdminSettings, CommercialAddon, CommercialPlan, TenantCommercialStatus, TenantCommercialUsage } from "../types/domain";
+import { AiCreditMovement, BrandAdminSettings, CommercialAddon, CommercialPlan, TenantCommercialStatus, TenantCommercialUsage } from "../types/domain";
 
 type CapacityCard = {
   key: string;
@@ -35,6 +35,7 @@ export function DashboardPage() {
   const [planCatalog, setPlanCatalog] = useState<CommercialPlan[]>([]);
   const [addonsCatalog, setAddonsCatalog] = useState<CommercialAddon[]>([]);
   const [brandSettings, setBrandSettings] = useState<BrandAdminSettings | null>(null);
+  const [aiMovements, setAiMovements] = useState<AiCreditMovement[]>([]);
   const [metrics, setMetrics] = useState<{ sold: number; commission: number; net: number }>({ sold: 0, commission: 0, net: 0 });
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -49,12 +50,14 @@ export function DashboardPage() {
       api.getCommercialPlanCatalog(token).catch(() => null),
       api.getBrandAdminSettings(token, tenantId).catch(() => null),
       api.getPaymentsDashboard(token, tenantId).catch(() => null),
-    ]).then(([status, usage, catalog, adminSettings, payments]) => {
+      api.getTenantAiCreditMovements(token, tenantId, 8).catch(() => []),
+    ]).then(([status, usage, catalog, adminSettings, payments, movements]) => {
       setCommercialStatus(status);
       setCommercialUsage(usage);
       setPlanCatalog(catalog?.plans ?? []);
       setAddonsCatalog(catalog?.addons ?? []);
       setBrandSettings(adminSettings);
+      setAiMovements(movements ?? []);
       if (!payments) return;
       setMetrics({ sold: Number(payments.total_sold ?? 0), commission: Number(payments.total_commission ?? 0), net: Number(payments.total_net ?? 0) });
     }).catch((err) => {
@@ -171,11 +174,15 @@ export function DashboardPage() {
           })}
           <article className="card">
             <h4>Creditos IA</h4>
-            <p>Incluidos al mes: {commercialUsage?.ai_tokens_included ?? 0}</p>
-            <p>Extra comprados: {creditsExtra}</p>
+            <p>Incluidos por plan: {commercialUsage?.ai_tokens_included ?? 0}</p>
+            <p>Extra comprados: {commercialUsage?.ai_tokens_extra ?? creditsExtra}</p>
+            <p>Asignados a la marca: {commercialUsage?.ai_tokens_assigned ?? 0}</p>
+            <p>Reservados: {commercialUsage?.ai_tokens_reserved ?? 0}</p>
             <p>Consumidos: {commercialUsage?.ai_tokens_used ?? 0}</p>
-            <p>Restantes: {commercialUsage?.ai_tokens_balance ?? 0}</p>
-            <progress value={commercialUsage?.ai_tokens_balance ?? 0} max={Math.max((commercialUsage?.ai_tokens_included ?? 0) + creditsExtra, 1)} />
+            <p>Restantes: {commercialUsage?.ai_tokens_remaining ?? commercialUsage?.ai_tokens_balance ?? 0}</p>
+            <p><strong>Estado llave IA:</strong> {commercialUsage?.ai_key_state ?? "abierta"}</p>
+            <p><strong>Consumo:</strong> {Number(commercialUsage?.ai_tokens_consumption_percentage ?? 0).toFixed(2)}%</p>
+            <progress value={commercialUsage?.ai_tokens_used ?? 0} max={Math.max(commercialUsage?.ai_tokens_assigned ?? 1, 1)} />
           </article>
           <article className="card">
             <h4>Sucursales (detalle)</h4>
@@ -275,6 +282,42 @@ export function DashboardPage() {
           <p>{brandSettings?.feature_nfc_operations_enabled ? "Habilitado por contrato" : "Deshabilitado por defecto. Requiere activacion global ComerCia."}</p>
         </article>
       </div>
+
+      <article className="card" style={{ marginTop: "12px" }}>
+        <h3>Trazabilidad de consumo IA</h3>
+        <p>Se registra consumo por fuente para control operativo de creditos IA por marca.</p>
+        <div className="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Accion</th>
+                <th>Fuente</th>
+                <th>Delta</th>
+                <th>Saldo</th>
+                <th>Notas</th>
+              </tr>
+            </thead>
+            <tbody>
+              {aiMovements.map((row) => (
+                <tr key={row.id}>
+                  <td>{new Date(row.created_at).toLocaleString("es-MX")}</td>
+                  <td>{row.action}</td>
+                  <td>{row.source}</td>
+                  <td>{row.tokens_delta}</td>
+                  <td>{row.balance_after}</td>
+                  <td>{row.notes || "-"}</td>
+                </tr>
+              ))}
+              {!aiMovements.length ? (
+                <tr>
+                  <td colSpan={6}>Sin consumos IA registrados para esta marca.</td>
+                </tr>
+              ) : null}
+            </tbody>
+          </table>
+        </div>
+      </article>
     </section>
   );
 }
