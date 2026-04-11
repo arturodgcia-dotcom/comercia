@@ -364,6 +364,8 @@ export const api = {
     request<TenantCommercialStatus>(`/api/v1/commercial-plans/tenant/${tenantId}/status`, {}, token),
   getTenantCommercialUsage: (token: string, tenantId: number) =>
     request<TenantCommercialUsage>(`/api/v1/commercial-plans/tenant/${tenantId}/usage`, {}, token),
+  getTenantOperationalAlerts: (token: string, tenantId: number, query = "") =>
+    request<InternalAlert[]>(`/api/v1/commercial-plans/tenant/${tenantId}/alerts${query ? `?${query}` : ""}`, {}, token),
   consumeTenantAiTokens: (token: string, tenantId: number, payload: { tokens: number; source?: string; reason?: string }) =>
     request<TenantCommercialStatus>(
       `/api/v1/commercial-plans/tenant/${tenantId}/tokens/consume`,

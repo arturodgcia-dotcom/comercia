@@ -4,7 +4,7 @@ import { useAuth } from "../app/AuthContext";
 import { KpiCard } from "../components/KpiCard";
 import { PageHeader } from "../components/PageHeader";
 import { api } from "../services/api";
-import { AiCreditMovement, BrandAdminSettings, CommercialAddon, CommercialPlan, TenantCommercialStatus, TenantCommercialUsage } from "../types/domain";
+import { AiCreditMovement, BrandAdminSettings, CommercialAddon, CommercialPlan, InternalAlert, TenantCommercialStatus, TenantCommercialUsage } from "../types/domain";
 
 type CapacityCard = {
   key: string;
@@ -36,6 +36,7 @@ export function DashboardPage() {
   const [addonsCatalog, setAddonsCatalog] = useState<CommercialAddon[]>([]);
   const [brandSettings, setBrandSettings] = useState<BrandAdminSettings | null>(null);
   const [aiMovements, setAiMovements] = useState<AiCreditMovement[]>([]);
+  const [operationalAlerts, setOperationalAlerts] = useState<InternalAlert[]>([]);
   const [metrics, setMetrics] = useState<{ sold: number; commission: number; net: number }>({ sold: 0, commission: 0, net: 0 });
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -51,13 +52,15 @@ export function DashboardPage() {
       api.getBrandAdminSettings(token, tenantId).catch(() => null),
       api.getPaymentsDashboard(token, tenantId).catch(() => null),
       api.getTenantAiCreditMovements(token, tenantId, 8).catch(() => []),
-    ]).then(([status, usage, catalog, adminSettings, payments, movements]) => {
+      api.getTenantOperationalAlerts(token, tenantId, "is_read=false").catch(() => []),
+    ]).then(([status, usage, catalog, adminSettings, payments, movements, alerts]) => {
       setCommercialStatus(status);
       setCommercialUsage(usage);
       setPlanCatalog(catalog?.plans ?? []);
       setAddonsCatalog(catalog?.addons ?? []);
       setBrandSettings(adminSettings);
       setAiMovements(movements ?? []);
+      setOperationalAlerts(alerts ?? []);
       if (!payments) return;
       setMetrics({ sold: Number(payments.total_sold ?? 0), commission: Number(payments.total_commission ?? 0), net: Number(payments.total_net ?? 0) });
     }).catch((err) => {
@@ -282,6 +285,22 @@ export function DashboardPage() {
           <p>{brandSettings?.feature_nfc_operations_enabled ? "Habilitado por contrato" : "Deshabilitado por defecto. Requiere activacion global ComerCia."}</p>
         </article>
       </div>
+
+      <article className="card" style={{ marginTop: "12px" }}>
+        <h3>Alertas operativas centinela</h3>
+        <p>Alertas internas por límites, consumo IA y módulos críticos de esta marca.</p>
+        <div className="card-grid">
+          {operationalAlerts.map((alert) => (
+            <article key={alert.id} className="card">
+              <p className="marketing-tag">{alert.severity}</p>
+              <h4>{alert.title}</h4>
+              <p>{alert.message}</p>
+              <p>{new Date(alert.created_at).toLocaleString("es-MX")}</p>
+            </article>
+          ))}
+          {!operationalAlerts.length ? <p>Sin alertas operativas activas.</p> : null}
+        </div>
+      </article>
 
       <article className="card" style={{ marginTop: "12px" }}>
         <h3>Trazabilidad de consumo IA</h3>

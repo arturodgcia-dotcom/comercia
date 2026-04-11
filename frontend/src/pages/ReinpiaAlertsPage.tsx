@@ -8,7 +8,7 @@ import { InternalAlert } from "../types/domain";
 export function ReinpiaAlertsPage() {
   const { token } = useAuth();
   const [alerts, setAlerts] = useState<InternalAlert[]>([]);
-  const [filters, setFilters] = useState({ alert_type: "", severity: "", read: "" });
+  const [filters, setFilters] = useState({ alert_type: "", severity: "", read: "", tenant_id: "" });
   const [error, setError] = useState("");
 
   const query = useMemo(() => {
@@ -16,6 +16,7 @@ export function ReinpiaAlertsPage() {
     if (filters.alert_type) params.set("alert_type", filters.alert_type);
     if (filters.severity) params.set("severity", filters.severity);
     if (filters.read) params.set("is_read", filters.read);
+    if (filters.tenant_id) params.set("tenant_id", filters.tenant_id);
     return params.toString();
   }, [filters]);
 
@@ -36,7 +37,7 @@ export function ReinpiaAlertsPage() {
 
   return (
     <section>
-      <PageHeader title="REINPIA Alerts" subtitle="Alertas internas comerciales y contables para seguimiento." />
+      <PageHeader title="Alertas REINPIA" subtitle="Alertas internas operativas, comerciales y de límites para todas las marcas." />
       {error ? <p className="error">{error}</p> : null}
       <div className="inline-form">
         <input
@@ -50,6 +51,11 @@ export function ReinpiaAlertsPage() {
           <option value="warning">warning</option>
           <option value="high">high</option>
         </select>
+        <input
+          placeholder="Tenant ID"
+          value={filters.tenant_id}
+          onChange={(e) => setFilters((p) => ({ ...p, tenant_id: e.target.value }))}
+        />
         <select value={filters.read} onChange={(e) => setFilters((p) => ({ ...p, read: e.target.value }))}>
           <option value="">Leidas y no leidas</option>
           <option value="false">No leidas</option>
@@ -60,4 +66,3 @@ export function ReinpiaAlertsPage() {
     </section>
   );
 }
-
