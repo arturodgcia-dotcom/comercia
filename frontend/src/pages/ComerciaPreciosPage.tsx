@@ -78,24 +78,100 @@ const FALLBACK_ADDONS: CommercialAddon[] = [
 
 const EXTRAS_SERVICIO = [
   {
-    titulo: "Logistica",
-    detalle: "Recoleccion, entrega y control operativo para escalar sin friccion.",
+    titulo: "Logistica Basica",
+    precio: "$579 MXN mensuales IVA incluido",
+    detalle: "Seguimiento operativo base para entregas y control inicial.",
   },
   {
-    titulo: "Jornada laboral",
-    detalle: "Agenda, seguimiento de citas y control por equipo.",
+    titulo: "Logistica Pro",
+    precio: "$1,159 MXN mensuales IVA incluido",
+    detalle: "Mayor control de eventos logistico-comerciales y trazabilidad ampliada.",
   },
   {
-    titulo: "NFC software",
-    detalle: "Activacion de modulo NFC para credenciales y operacion comercial.",
+    titulo: "Logistica Enterprise",
+    precio: "$2,319 MXN mensuales IVA incluido",
+    detalle: "Operacion avanzada para equipos con mayor volumen y multiples rutas.",
   },
   {
-    titulo: "Equipos NFC",
-    detalle: "Venta de equipos para grabado y operacion en sucursal.",
+    titulo: "Implementacion Logistica",
+    precio: "$1,740 MXN pago unico IVA incluido",
+    detalle: "Configuracion inicial y puesta en marcha del flujo logistico.",
+  },
+];
+
+const JORNADA_OFERTAS = [
+  {
+    titulo: "Jornada Base",
+    precio: "$695 MXN mensuales IVA incluido",
+    detalle: "Agenda comercial y control basico de jornada de trabajo.",
   },
   {
-    titulo: "Paquetes de tarjetas",
-    detalle: "Tarjetas NFC para membresias, identificacion o flujos de fidelizacion.",
+    titulo: "Jornada Pro",
+    precio: "$1,391 MXN mensuales IVA incluido",
+    detalle: "Seguimiento operativo por equipo con mayor control de cumplimiento.",
+  },
+  {
+    titulo: "Jornada Enterprise",
+    precio: "$2,319 MXN mensuales IVA incluido",
+    detalle: "Operacion avanzada de jornada para estructuras multi-sucursal.",
+  },
+  {
+    titulo: "Implementacion Jornada",
+    precio: "$2,900 MXN pago unico IVA incluido",
+    detalle: "Configuracion inicial de turnos, equipo y flujo operativo.",
+  },
+];
+
+const NFC_SOFTWARE = [
+  {
+    titulo: "NFC Operativo",
+    precio: "$463 MXN mensuales IVA incluido por sucursal",
+    detalle: "Software base para identificacion y operaciones NFC por sucursal.",
+  },
+  {
+    titulo: "NFC Corporativo",
+    precio: "$695 MXN mensuales IVA incluido por sucursal",
+    detalle: "Control corporativo NFC para marcas con mayor complejidad operativa.",
+  },
+];
+
+const NFC_EQUIPOS = [
+  {
+    titulo: "Grabador / lector NFC",
+    precio: "$990 MXN IVA incluido",
+    detalle: "Equipo para grabado y lectura de tarjetas NFC en operacion.",
+  },
+  {
+    titulo: "Impresora de tarjetas con instalacion incluida",
+    precio: "$81,200 MXN IVA incluido",
+    detalle: "Equipo profesional para impresion de tarjetas con puesta en marcha.",
+  },
+];
+
+const NFC_PAQUETES_TARJETAS = [
+  {
+    segmento: "Empleados",
+    paquetes: [
+      { nombre: "Paquete 50 tarjetas", precio: "$1,740 MXN IVA incluido" },
+      { nombre: "Paquete 100 tarjetas", precio: "$2,900 MXN IVA incluido" },
+      { nombre: "Paquete 250 tarjetas", precio: "$6,380 MXN IVA incluido" },
+    ],
+  },
+  {
+    segmento: "Empleados de distribuidores",
+    paquetes: [
+      { nombre: "Paquete 50 tarjetas", precio: "$2,030 MXN IVA incluido" },
+      { nombre: "Paquete 100 tarjetas", precio: "$3,480 MXN IVA incluido" },
+      { nombre: "Paquete 250 tarjetas", precio: "$7,540 MXN IVA incluido" },
+    ],
+  },
+  {
+    segmento: "Clientes / membresias",
+    paquetes: [
+      { nombre: "Paquete 100 tarjetas", precio: "$4,060 MXN IVA incluido" },
+      { nombre: "Paquete 250 tarjetas", precio: "$8,120 MXN IVA incluido" },
+      { nombre: "Paquete 500 tarjetas", precio: "$14,500 MXN IVA incluido" },
+    ],
   },
 ];
 
@@ -250,16 +326,117 @@ export function ComerciaPreciosPage() {
 
       <section className="cp-section">
         <header className="cp-section-head">
-          <p className="cp-kicker">Servicios adicionales</p>
-          <h2>Logistica, jornada y NFC para operacion avanzada</h2>
-          <p>Estos servicios se contratan con activacion comercial asistida.</p>
+          <p className="cp-kicker">Add-ons comerciales</p>
+          <h2>Servicios avanzados para ampliar capacidad operativa</h2>
+          <p>Precios finales con IVA incluido para activacion comercial por bloque.</p>
+        </header>
+      </section>
+
+      <section className="cp-section">
+        <header className="cp-section-head">
+          <p className="cp-kicker">Logistica</p>
+          <h2>Planes de logistica para crecer con control de entrega</h2>
         </header>
         <div className="cp-simple-grid">
           {EXTRAS_SERVICIO.map((item) => (
             <article key={item.titulo} className="cp-simple-card">
               <h3>{item.titulo}</h3>
+              <p><strong>{item.precio}</strong></p>
               <p>{item.detalle}</p>
-              <Link className="button button-outline" to="/comercia/consultoria">Solicitar activacion</Link>
+              <div className="cp-cta-row">
+                <Link className="button button-outline" to="/comercia/consultoria">Solicitar activacion</Link>
+                <Link className="button button-outline" to="/comercia/consultoria">Consultar implementacion</Link>
+                <Link className="button button-outline" to="/comercia/consultoria">Hablar con un asesor</Link>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="cp-section">
+        <header className="cp-section-head">
+          <p className="cp-kicker">Jornada laboral</p>
+          <h2>Control de agenda y cumplimiento para equipos comerciales</h2>
+        </header>
+        <div className="cp-simple-grid">
+          {JORNADA_OFERTAS.map((item) => (
+            <article key={item.titulo} className="cp-simple-card">
+              <h3>{item.titulo}</h3>
+              <p><strong>{item.precio}</strong></p>
+              <p>{item.detalle}</p>
+              <div className="cp-cta-row">
+                <Link className="button button-outline" to="/comercia/consultoria">Solicitar activacion</Link>
+                <Link className="button button-outline" to="/comercia/consultoria">Consultar implementacion</Link>
+                <Link className="button button-outline" to="/comercia/consultoria">Hablar con un asesor</Link>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="cp-section">
+        <header className="cp-section-head">
+          <p className="cp-kicker">NFC software</p>
+          <h2>Activacion NFC por sucursal para operacion comercial</h2>
+        </header>
+        <div className="cp-simple-grid">
+          {NFC_SOFTWARE.map((item) => (
+            <article key={item.titulo} className="cp-simple-card">
+              <h3>{item.titulo}</h3>
+              <p><strong>{item.precio}</strong></p>
+              <p>{item.detalle}</p>
+              <div className="cp-cta-row">
+                <Link className="button button-outline" to="/comercia/consultoria">Solicitar activacion</Link>
+                <Link className="button button-outline" to="/comercia/consultoria">Consultar implementacion</Link>
+                <Link className="button button-outline" to="/comercia/consultoria">Hablar con un asesor</Link>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="cp-section">
+        <header className="cp-section-head">
+          <p className="cp-kicker">Equipos NFC</p>
+          <h2>Venta de hardware para operacion y personalizacion de tarjetas</h2>
+        </header>
+        <div className="cp-simple-grid">
+          {NFC_EQUIPOS.map((item) => (
+            <article key={item.titulo} className="cp-simple-card">
+              <h3>{item.titulo}</h3>
+              <p><strong>{item.precio}</strong></p>
+              <p>{item.detalle}</p>
+              <div className="cp-cta-row">
+                <Link className="button button-outline" to="/comercia/consultoria">Solicitar activacion</Link>
+                <Link className="button button-outline" to="/comercia/consultoria">Consultar implementacion</Link>
+                <Link className="button button-outline" to="/comercia/consultoria">Hablar con un asesor</Link>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="cp-section">
+        <header className="cp-section-head">
+          <p className="cp-kicker">Paquetes de tarjetas NFC</p>
+          <h2>Paquetes por tipo de operacion</h2>
+        </header>
+        <div className="cp-simple-grid">
+          {NFC_PAQUETES_TARJETAS.map((bloque) => (
+            <article key={bloque.segmento} className="cp-simple-card">
+              <h3>{bloque.segmento}</h3>
+              <ul className="marketing-list">
+                {bloque.paquetes.map((paquete) => (
+                  <li key={`${bloque.segmento}-${paquete.nombre}`}>
+                    {paquete.nombre}: <strong>{paquete.precio}</strong>
+                  </li>
+                ))}
+              </ul>
+              <div className="cp-cta-row">
+                <Link className="button button-outline" to="/comercia/consultoria">Solicitar activacion</Link>
+                <Link className="button button-outline" to="/comercia/consultoria">Consultar implementacion</Link>
+                <Link className="button button-outline" to="/comercia/consultoria">Hablar con un asesor</Link>
+              </div>
             </article>
           ))}
         </div>
