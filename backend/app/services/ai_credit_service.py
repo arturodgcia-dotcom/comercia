@@ -48,7 +48,9 @@ def _addon_qty(account: CommercialClientAccount, addon_id: str) -> int:
 
 
 def _account_extra_tokens(account: CommercialClientAccount) -> int:
-    return _addon_qty(account, "extra_500_tokens") * 500
+    qty_legacy = _addon_qty(account, "extra_500_tokens")
+    qty_official = _addon_qty(account, "extra_500_ai_credits")
+    return max(qty_legacy, qty_official) * 500
 
 
 def _derive_key_state(*, override_active: bool, locked: bool, remaining_tokens: int, assigned_tokens: int, consumed_tokens: int) -> str:

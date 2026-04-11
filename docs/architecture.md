@@ -1003,3 +1003,36 @@ Frontend:
 - Se aplican umbrales de estado en frontend para saldo restante (30% advertencia, 10% critica).
 - El CTA 'Comprar más créditos' dispara checkout comercial Stripe test del add-on extra_500_ai_credits.
 - Al llegar a 0 creditos se comunica bloqueo de funciones IA no criticas, manteniendo acceso a panel, ventas y operacion basica.
+
+## Ejecucion 53: add-ons en 1 clic desde alertas y dashboards
+Objetivo:
+- convertir alertas de capacidad en acciones comerciales directas sin romper operacion.
+
+Arquitectura aplicada:
+1) Mapeo central de sugerencias comerciales
+- backend: `LIMIT_ADDON_SUGGESTIONS` en `commercial_plan_service`.
+- frontend: `resolveCapacitySuggestion` en `frontend/src/utils/capacityActions.ts`.
+- evita reglas duplicadas dispersas en componentes.
+
+2) Checkout con contexto trazable
+- `CommercialPlanCheckoutRequest` extiende payload con:
+  - `client_account_id`
+  - `add_on_code`
+  - `resource_origin`
+  - `ui_origin`
+- metadata Stripe conserva origen de compra para analitica y auditoria.
+
+3) Aplicacion post-compra add-on
+- webhook detecta `metadata.kind=tenant_commercial_addon`.
+- si la marca pertenece a cliente comercial:
+  - incrementa `addons_json` de `CommercialClientAccount`.
+- si es marca sin cuenta comercial:
+  - aplica incremento directo en limites/token del tenant.
+- despues sincroniza snapshot IA + alertas operativas.
+
+4) Capa UI accionable
+- dashboard de marca:
+  - CTA de add-on por bloque de capacidad (80%+)
+  - CTA de mejora de plan en riesgo alto
+- panel global de clientes:
+  - tarjetas de "marcas en riesgo operativo" con add-on/upgrade inmediato.

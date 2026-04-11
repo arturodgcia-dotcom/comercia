@@ -157,7 +157,7 @@ def _capacity_alert_message(*, label: str, used: int, limit: int, escalation: st
         return f"{label}: {used}/{limit}. {escalation}"
     base = f"Estas usando {used} de {limit} {label.lower()} disponibles en tu plan."
     if used >= limit:
-        return f"{base} Se alcanzo el limite: se activa bloqueo controlado para nuevos registros. {escalation}"
+        return f"Has alcanzado tu limite de {label.lower()}. {base} Puedes ampliar tu capacidad sin cambiar toda tu operacion. {escalation}"
     if used >= int(limit * 0.9):
         return f"{base} Alerta fuerte: estas al 90% o mas del limite. {escalation}"
     return f"{base} Alerta preventiva: estas al 80% o mas del limite. {escalation}"

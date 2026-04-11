@@ -2,7 +2,8 @@ import { FormEvent, useEffect, useState } from "react";
 import { useAuth } from "../app/AuthContext";
 import { PageHeader } from "../components/PageHeader";
 import { api } from "../services/api";
-import { CommercialAccountAiCredits, CommercialAccountUsage, CommercialClientAccount, Tenant } from "../types/domain";
+import { CommercialAccountAiCredits, CommercialAccountUsage, CommercialClientAccount, InternalAlert, Tenant } from "../types/domain";
+import { resolveCapacitySuggestion } from "../utils/capacityActions";
 
 type NewAccountForm = {
   legal_name: string;
@@ -28,6 +29,7 @@ export function ReinpiaCommercialClientsPage() {
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [usage, setUsage] = useState<Record<number, CommercialAccountUsage>>({});
   const [aiCredits, setAiCredits] = useState<Record<number, CommercialAccountAiCredits>>({});
+  const [tenantAlerts, setTenantAlerts] = useState<Record<number, InternalAlert[]>>({});
   const [draftDistribution, setDraftDistribution] = useState<Record<number, Record<number, { assigned_tokens: number; reserved_tokens: number }>>>({});
   const [selectedAccount, setSelectedAccount] = useState<number | null>(null);
   const [assignTenantId, setAssignTenantId] = useState<number>(0);
@@ -35,6 +37,7 @@ export function ReinpiaCommercialClientsPage() {
   const [form, setForm] = useState<NewAccountForm>(DEFAULT_FORM);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [loadingCheckout, setLoadingCheckout] = useState("");
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
 
@@ -54,6 +57,10 @@ export function ReinpiaCommercialClientsPage() {
       const creditsPairs = await Promise.all(
         accounts.map(async (account) => [account.id, await api.getReinpiaCommercialClientAccountAiCredits(token, account.id)] as const)
       );
+      const alertPairs = await Promise.all(
+        tenantList.map(async (tenant) => [tenant.id, await api.getTenantOperationalAlerts(token, tenant.id, "is_read=false").catch(() => [])] as const)
+      );
+      setTenantAlerts(Object.fromEntries(alertPairs));
       const creditsMap = Object.fromEntries(creditsPairs);
       setAiCredits(creditsMap);
       const draft: Record<number, Record<number, { assigned_tokens: number; reserved_tokens: number }>> = {};
@@ -191,6 +198,33 @@ export function ReinpiaCommercialClientsPage() {
     }
   };
 
+  const handleAddonCheckout = async (
+    addonCode: string,
+    context: { tenantId: number; accountId: number; resourceOrigin: string; uiOrigin: "dashboard_global" | "alert" },
+  ) => {
+    if (!token) return;
+    try {
+      setLoadingCheckout(`${context.tenantId}:${addonCode}`);
+      setError("");
+      const baseUrl = window.location.origin;
+      const response = await api.createCommercialPlanCheckoutSession(token, {
+        tenant_id: context.tenantId,
+        client_account_id: context.accountId,
+        item_code: addonCode,
+        add_on_code: addonCode,
+        resource_origin: context.resourceOrigin,
+        ui_origin: context.uiOrigin,
+        success_url: `${baseUrl}/reinpia/clientes-comerciales?checkout=success`,
+        cancel_url: `${baseUrl}/reinpia/clientes-comerciales?checkout=cancel`,
+      });
+      window.location.assign(response.checkout_url);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "No fue posible iniciar la compra en este momento. Intenta nuevamente.");
+    } finally {
+      setLoadingCheckout("");
+    }
+  };
+
   return (
     <section>
       <PageHeader
@@ -308,6 +342,66 @@ export function ReinpiaCommercialClientsPage() {
               ) : null}
             </tbody>
           </table>
+        </div>
+      </article>
+
+      <article className="card" style={{ marginTop: "12px" }}>
+        <h3>Marcas en riesgo operativo</h3>
+        <p>Acciones rapidas para ampliar capacidad o sugerir upgrade de plan sin salir del panel global.</p>
+        <div className="card-grid">
+          {tenants.map((tenant) => {
+            const accountId = Number(tenant.commercial_client_account_id || 0);
+            if (!accountId) return null;
+            const account = rows.find((row) => row.id === accountId);
+            const alerts = (tenantAlerts[tenant.id] || []).filter((item) => String(item.related_entity_type || "").includes("capacity_"));
+            if (!alerts.length) return null;
+            const alert = alerts[0];
+            const suggestion = resolveCapacitySuggestion(alert.related_entity_type);
+            const showUpgrade = String(alert.severity || "").toLowerCase() !== "info";
+            return (
+              <article className="card" key={`risk-${tenant.id}`}>
+                <p className="marketing-tag">{alert.severity}</p>
+                <h4>{tenant.name}</h4>
+                <p>{alert.message}</p>
+                <p><strong>Cliente:</strong> {account?.legal_name || "Sin cliente principal"}</p>
+                <div className="row-gap">
+                  {suggestion ? (
+                    <button
+                      className="button button-outline"
+                      type="button"
+                      disabled={Boolean(loadingCheckout)}
+                      onClick={() => void handleAddonCheckout(suggestion.addonCode, {
+                        tenantId: tenant.id,
+                        accountId,
+                        resourceOrigin: suggestion.resource,
+                        uiOrigin: "dashboard_global",
+                      })}
+                    >
+                      {loadingCheckout === `${tenant.id}:${suggestion.addonCode}` ? "Redirigiendo..." : suggestion.addonLabel}
+                    </button>
+                  ) : null}
+                  {showUpgrade ? (
+                    <button
+                      className="button"
+                      type="button"
+                      disabled={Boolean(saving)}
+                      onClick={() => void api.createCommercialPlanRequest(token || "", {
+                        tenant_id: tenant.id,
+                        request_type: "upgrade",
+                        target_plan_key: "growth_fixed",
+                        notes: `Solicitud de upgrade desde panel global por alerta ${alert.related_entity_type || "capacidad"}.`,
+                      }).then(() => setMessage("Solicitud de mejora de plan registrada.")).catch((err) => setError(err instanceof Error ? err.message : "No fue posible registrar la solicitud de upgrade."))}
+                    >
+                      Mejorar plan
+                    </button>
+                  ) : null}
+                </div>
+              </article>
+            );
+          })}
+          {!tenants.some((tenant) => (tenantAlerts[tenant.id] || []).some((item) => String(item.related_entity_type || "").includes("capacity_"))) ? (
+            <p>Sin marcas en riesgo de capacidad en este momento.</p>
+          ) : null}
         </div>
       </article>
 

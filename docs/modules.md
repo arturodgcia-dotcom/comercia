@@ -501,3 +501,20 @@ Nuevos endpoints:
 - Alerta 30% / critica 10% en dashboard | Estado: funcional
 - Compra directa de creditos IA (extra_500_ai_credits) | Estado: funcional
 - Mensaje de bloqueo inteligente de funciones IA no criticas al agotar saldo | Estado: funcional
+
+## Actualizacion add-ons 1 clic por capacidad (Ejecucion 53)
+- Mapeo central de capacidad -> add-on | Estado: funcional
+  - `frontend/src/utils/capacityActions.ts`
+  - usuarios, agentes IA, marcas, productos, sucursales, creditos IA
+- Dashboard de marca | Estado: funcional
+  - botones contextuales de compra add-on por bloque de consumo (80%+)
+  - sugerencia de upgrade en escenarios de riesgo alto
+  - alertas operativas con CTA directo de compra
+- Panel global de clientes comerciales | Estado: funcional
+  - bloque "Marcas en riesgo operativo" con compra add-on y mejora de plan
+- Checkout comercial add-ons | Estado: funcional
+  - endpoint unificado `POST /api/v1/commercial-plans/create-checkout-session`
+  - contexto comercial trazable (`tenant_id`, `client_account_id`, `resource_origin`, `ui_origin`)
+- Aplicacion post-compra | Estado: funcional
+  - webhook Stripe aplica add-on en tenant/cuenta comercial
+  - recalcula capacidad y alertas despues del pago

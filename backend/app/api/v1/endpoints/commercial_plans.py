@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user, get_reinpia_admin
 from app.db.session import get_db
-from app.models.models import CommercialPlanRequest, PosLocation, Product, StripeConfig, Tenant, User
+from app.models.models import CommercialClientAccount, CommercialPlanRequest, PosLocation, Product, StripeConfig, Tenant, User
 from app.schemas.commercial_accounts import CommercialPlanRequestCreate, CommercialPlanRequestRead
 from app.schemas.commercial_plan import (
     AiCreditMovementRead,
@@ -32,6 +32,7 @@ from app.services.ai_credit_service import (
 from app.services.commercial_plan_service import (
     COMMERCIAL_ADDONS,
     apply_plan_to_tenant,
+    get_limit_addon_suggestion,
     get_catalog_payload,
     parse_limits,
     resolve_checkout_item,
@@ -119,7 +120,12 @@ def get_tenant_commercial_usage(
     ai_agents_limit = ai_agents_base + max(ai_agents_extra, 0)
     ai_agents_used = 0
 
-    addon_name_by_id = {str(item["id"]): str(item["name"]) for item in COMMERCIAL_ADDONS}
+    addon_name_by_id: dict[str, str] = {}
+    for item in COMMERCIAL_ADDONS:
+        addon_name_by_id[str(item["id"])] = str(item["name"])
+        addon_name_by_id[str(item["code"])] = str(item["name"])
+        for legacy in item.get("legacy_keys", []):
+            addon_name_by_id[str(legacy)] = str(item["name"])
     addons: list[TenantAddonUsageRead] = []
     for addon_id, qty in addons_map.items():
         try:
@@ -176,7 +182,7 @@ def create_commercial_plan_checkout_session(
     payload: CommercialPlanCheckoutRequest,
     db: Session = Depends(get_db),
 ) -> CommercialPlanCheckoutResponse:
-    item_code = (payload.item_code or payload.plan_key or "").strip().lower()
+    item_code = (payload.item_code or payload.add_on_code or payload.plan_key or "").strip().lower()
     if not item_code:
         raise HTTPException(status_code=400, detail="item_code es obligatorio")
     try:
@@ -189,15 +195,29 @@ def create_commercial_plan_checkout_session(
 
     tenant = db.get(Tenant, int(payload.tenant_id)) if payload.tenant_id else None
     stripe_config = _resolve_checkout_stripe_config(db, tenant_id=tenant.id if tenant else None)
+    account: CommercialClientAccount | None = None
+    if payload.client_account_id:
+        account = db.get(CommercialClientAccount, int(payload.client_account_id))
+    elif tenant and tenant.commercial_client_account_id:
+        account = db.get(CommercialClientAccount, int(tenant.commercial_client_account_id))
+
     metadata = {
-        "kind": "tenant_commercial_plan" if (checkout_item["item_type"] == "plan" and tenant) else "comercia_catalog_checkout",
+        "kind": "comercia_catalog_checkout",
         "tenant_id": str(tenant.id) if tenant else "",
+        "client_account_id": str(account.id) if account else "",
         "plan_key": str(checkout_item["item_code"]) if checkout_item["item_type"] == "plan" else "",
         "item_code": str(checkout_item["item_code"]),
         "item_type": str(checkout_item["item_type"]),
         "billing_model": str(checkout_item["billing_model"]),
         "commission_percentage": str(checkout_item["commission_percentage"]),
+        "add_on_code": str(checkout_item["item_code"]) if checkout_item["item_type"] == "addon" else "",
+        "resource_origin": str(payload.resource_origin or ""),
+        "ui_origin": str(payload.ui_origin or ""),
     }
+    if checkout_item["item_type"] == "plan" and tenant:
+        metadata["kind"] = "tenant_commercial_plan"
+    elif checkout_item["item_type"] == "addon" and tenant:
+        metadata["kind"] = "tenant_commercial_addon"
     session = create_checkout_session_plan1(
         secret_key=stripe_config.secret_key,
         line_items=[{"price": stripe_price_id, "quantity": 1}],
@@ -341,13 +361,20 @@ def get_tenant_operational_alerts(
     _assert_scope(current_user, tenant_id)
     sync_operational_alerts_for_tenant(db, tenant_id)
     db.commit()
-    return get_pending_internal_alerts(
+    alerts = get_pending_internal_alerts(
         db,
         alert_type="sentinel_operational",
         severity=severity,
         is_read=is_read,
         tenant_id=tenant_id,
     )
+    enriched: list[InternalAlertRead] = []
+    for row in alerts:
+        suggestion = get_limit_addon_suggestion(row.related_entity_type)
+        if suggestion:
+            row.message = f"{row.message} CTA sugerido: {suggestion['label']}."
+        enriched.append(row)
+    return enriched
 
 
 @router.post("/requests", response_model=CommercialPlanRequestRead)

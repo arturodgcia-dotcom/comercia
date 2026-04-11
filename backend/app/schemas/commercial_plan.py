@@ -48,8 +48,12 @@ class CommercialPlanCatalogRead(BaseModel):
 
 class CommercialPlanCheckoutRequest(BaseModel):
     tenant_id: int | None = None
+    client_account_id: int | None = None
     plan_key: str | None = None
     item_code: str | None = None
+    add_on_code: str | None = None
+    resource_origin: str | None = None
+    ui_origin: str | None = None
     success_url: str
     cancel_url: str
 

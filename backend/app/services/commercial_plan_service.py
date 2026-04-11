@@ -6,7 +6,7 @@ from decimal import Decimal, ROUND_HALF_UP
 from typing import Any
 
 from app.core.config import get_settings
-from app.models.models import Tenant
+from app.models.models import CommercialClientAccount, Tenant
 
 IVA_RATE = Decimal("0.16")
 
@@ -167,6 +167,33 @@ COMMERCIAL_ADDONS: list[dict[str, Any]] = [
     {"id": "premium_support", "code": "premium_support", "name": "Soporte premium", "monthly_price_mxn": Decimal("990.00"), "stripe_price_env": "stripe_price_addon_premium_support"},
 ]
 
+LIMIT_ADDON_SUGGESTIONS: dict[str, dict[str, str]] = {
+    "capacity_users": {
+        "add_on_code": "extra_user",
+        "label": "Agregar usuario",
+    },
+    "capacity_ai_agents": {
+        "add_on_code": "extra_ai_agent",
+        "label": "Agregar agente IA",
+    },
+    "capacity_brands": {
+        "add_on_code": "extra_brand",
+        "label": "Agregar marca",
+    },
+    "capacity_products": {
+        "add_on_code": "extra_100_products",
+        "label": "Agregar 100 productos",
+    },
+    "capacity_branches": {
+        "add_on_code": "extra_branch",
+        "label": "Agregar sucursal",
+    },
+    "capacity_ai_credits": {
+        "add_on_code": "extra_500_ai_credits",
+        "label": "Comprar mas creditos",
+    },
+}
+
 
 def _money(value: Decimal) -> str:
     return str(value.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP))
@@ -293,6 +320,70 @@ def resolve_checkout_item(item_code: str) -> dict[str, Any]:
     }
 
 
+def get_limit_addon_suggestion(limit_code: str) -> dict[str, str] | None:
+    key = str(limit_code or "").strip().lower()
+    if not key:
+        return None
+    if key in LIMIT_ADDON_SUGGESTIONS:
+        return dict(LIMIT_ADDON_SUGGESTIONS[key])
+    for candidate, payload in LIMIT_ADDON_SUGGESTIONS.items():
+        if candidate in key:
+            return dict(payload)
+    return None
+
+
+def _json_dict(raw: str | None) -> dict[str, Any]:
+    if not raw:
+        return {}
+    try:
+        parsed = json.loads(raw)
+    except Exception:
+        return {}
+    return parsed if isinstance(parsed, dict) else {}
+
+
+def _save_json(value: dict[str, Any]) -> str:
+    return json.dumps(value, ensure_ascii=False)
+
+
+def _bump_addon_count(container: dict[str, Any], *keys: str) -> None:
+    valid_keys = [str(key).strip() for key in keys if str(key).strip()]
+    current_value = 0
+    for key in valid_keys:
+        try:
+            current_value = max(current_value, int(container.get(key, 0)))
+        except Exception:
+            continue
+    new_value = current_value + 1
+    for key in valid_keys:
+        container[key] = new_value
+
+
+def _apply_addon_to_account(account: CommercialClientAccount, addon_def: dict[str, Any]) -> None:
+    addons = _json_dict(account.addons_json)
+    addon_id = str(addon_def.get("id") or "")
+    addon_code = str(addon_def.get("code") or "")
+    legacy_keys = [str(item).strip() for item in addon_def.get("legacy_keys", []) if str(item).strip()]
+    _bump_addon_count(addons, addon_id, addon_code, *legacy_keys)
+    account.addons_json = _save_json(addons)
+
+
+def _apply_addon_to_tenant_limits(tenant: Tenant, addon_code: str) -> None:
+    limits = _json_dict(tenant.commercial_limits_json)
+    if addon_code == "extra_user":
+        limits["users_max"] = int(limits.get("users_max") or 0) + 1
+    elif addon_code == "extra_ai_agent":
+        limits["ai_agents_max"] = int(limits.get("ai_agents_max") or 0) + 1
+    elif addon_code == "extra_brand":
+        limits["brands_max"] = int(limits.get("brands_max") or 0) + 1
+    elif addon_code == "extra_100_products":
+        limits["products_max"] = int(limits.get("products_max") or 0) + 100
+    elif addon_code == "extra_branch":
+        limits["branches_max"] = int(limits.get("branches_max") or 0) + 1
+    if limits:
+        tenant.commercial_limits_json = _save_json(limits)
+
+
 def _build_commission_rules(commission_enabled: bool, commission_percentage: Decimal) -> str:
     if not commission_enabled:
         return json.dumps({"tiers": [{"up_to": None, "rate": "0", "label": "Sin comision"}], "minimum_per_operation": None})
@@ -352,6 +443,21 @@ def apply_plan_to_tenant(
     tenant.ai_tokens_lock_reason = None
     tenant.ai_tokens_last_reset_at = datetime.utcnow()
     return serialized
+
+
+def apply_addon_to_tenant(tenant: Tenant, *, addon_code: str) -> dict[str, Any]:
+    addon = get_addon_definition(addon_code)
+    addon_serialized = serialize_addon(addon)
+    normalized_code = str(addon_serialized["code"])
+    if normalized_code == "extra_500_ai_credits":
+        tenant.ai_tokens_included = int(tenant.ai_tokens_included or 0) + 500
+        tenant.ai_tokens_balance = int(tenant.ai_tokens_balance or 0) + 500
+        tenant.ai_tokens_locked = False
+        tenant.ai_tokens_lock_reason = None
+        tenant.ai_tokens_last_reset_at = datetime.utcnow()
+    else:
+        _apply_addon_to_tenant_limits(tenant, normalized_code)
+    return addon_serialized
 
 
 def parse_limits(tenant: Tenant) -> dict[str, Any]:

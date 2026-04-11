@@ -5,6 +5,7 @@ import { KpiCard } from "../components/KpiCard";
 import { PageHeader } from "../components/PageHeader";
 import { api } from "../services/api";
 import { AiCreditMovement, BrandAdminSettings, CommercialAddon, CommercialPlan, InternalAlert, TenantCommercialStatus, TenantCommercialUsage } from "../types/domain";
+import { resolveCapacitySuggestion, shouldSuggestUpgrade } from "../utils/capacityActions";
 
 type CapacityCard = {
   key: string;
@@ -39,6 +40,15 @@ function usageRatio(used: number, limit: number): number {
 function usageMessage(label: string, used: number, limit: number): string {
   if (limit <= 0) return `No hay limite configurado para ${label.toLowerCase()}.`;
   return `Estas usando ${used} de ${limit} ${label.toLowerCase()} disponibles en tu plan.`;
+}
+
+function capacityCodeForCard(cardKey: string): string | null {
+  if (cardKey === "products") return "capacity_products";
+  if (cardKey === "users") return "capacity_users";
+  if (cardKey === "ai_agents") return "capacity_ai_agents";
+  if (cardKey === "branches") return "capacity_branches";
+  if (cardKey === "brands") return "capacity_brands";
+  return null;
 }
 
 function creditState(remainingPercentage: number): "ok" | "warning" | "critical" {
@@ -166,33 +176,33 @@ export function DashboardPage() {
     }
   };
 
-  const handleAddonCheckout = async (itemCode: string) => {
+  const handleAddonCheckout = async (
+    itemCode: string,
+    context?: {
+      resourceOrigin?: string | null;
+      uiOrigin?: "alert" | "dashboard_brand" | "dashboard_global";
+    },
+  ) => {
     if (!token) return;
     try {
       setLoadingCheckout(itemCode);
       setError("");
       const baseUrl = window.location.origin;
       const response = await api.createCommercialPlanCheckoutSession(token, {
+        tenant_id: tenantId ?? undefined,
         item_code: itemCode,
+        add_on_code: itemCode,
+        resource_origin: context?.resourceOrigin || undefined,
+        ui_origin: context?.uiOrigin || "dashboard_brand",
         success_url: `${baseUrl}/?checkout=success`,
         cancel_url: `${baseUrl}/?checkout=cancel`,
       });
       window.location.assign(response.checkout_url);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "No fue posible iniciar checkout de add-on.");
+      setError(err instanceof Error ? err.message : "No fue posible iniciar la compra en este momento. Intenta nuevamente.");
     } finally {
       setLoadingCheckout("");
     }
-  };
-
-  const mapAlertToAddon = (alertCode?: string | null): string | null => {
-    const code = String(alertCode || "");
-    if (code.includes("capacity_products")) return "extra_100_products";
-    if (code.includes("capacity_users")) return "extra_user";
-    if (code.includes("capacity_ai_agents")) return "extra_ai_agent";
-    if (code.includes("capacity_branches")) return "extra_branch";
-    if (code.includes("capacity_ai_credits")) return "extra_500_ai_credits";
-    return null;
   };
 
   return (
@@ -242,6 +252,11 @@ export function DashboardPage() {
           {capacityCards.map((item) => {
             const available = item.limit > 0 ? item.limit - item.used : 0;
             const color = statusColor(item.used, item.limit);
+            const capacityCode = capacityCodeForCard(item.key);
+            const suggestion = resolveCapacitySuggestion(capacityCode);
+            const ratio = item.limit > 0 ? item.used / Math.max(item.limit, 1) : 0;
+            const showAction = ratio >= PREVENTIVE_RATIO;
+            const showUpgrade = shouldSuggestUpgrade(item.used, item.limit, suggestion?.thresholdUpgradeRatio ?? 0.95);
             return (
               <article key={item.key} className="card">
                 <h4>{item.label}</h4>
@@ -253,6 +268,28 @@ export function DashboardPage() {
                 <div style={{ height: "10px", borderRadius: "999px", background: "#e5e7eb", overflow: "hidden" }}>
                   <div style={{ width: `${usageRatio(item.used, item.limit)}%`, background: color, height: "100%" }} />
                 </div>
+                {showAction && suggestion ? (
+                  <div className="row-gap" style={{ marginTop: "8px" }}>
+                    <button
+                      className="button button-outline"
+                      type="button"
+                      disabled={Boolean(loadingCheckout)}
+                      onClick={() => void handleAddonCheckout(suggestion.addonCode, { resourceOrigin: suggestion.resource, uiOrigin: "dashboard_brand" })}
+                    >
+                      {loadingCheckout === suggestion.addonCode ? "Redirigiendo..." : suggestion.addonLabel}
+                    </button>
+                    {showUpgrade ? (
+                      <button
+                        className="button"
+                        type="button"
+                        disabled={Boolean(loadingAction)}
+                        onClick={() => void handlePlanRequest({ request_type: "upgrade", target_plan_key: "growth_fixed", notes: `Solicitud de upgrade por limite en ${item.label.toLowerCase()}.` })}
+                      >
+                        {loadingAction === "growth_fixed" ? "Enviando..." : "Mejorar plan"}
+                      </button>
+                    ) : null}
+                  </div>
+                ) : null}
               </article>
             );
           })}
@@ -290,7 +327,7 @@ export function DashboardPage() {
               className="button"
               type="button"
               disabled={Boolean(loadingCheckout)}
-              onClick={() => void handleAddonCheckout("extra_500_ai_credits")}
+              onClick={() => void handleAddonCheckout("extra_500_ai_credits", { resourceOrigin: "capacity_ai_credits", uiOrigin: "dashboard_brand" })}
             >
               {loadingCheckout === "extra_500_ai_credits" ? "Redirigiendo..." : "Comprar más créditos"}
             </button>
@@ -355,10 +392,10 @@ export function DashboardPage() {
               <button
                 className="button button-outline"
                 type="button"
-                disabled={Boolean(loadingAction)}
-                onClick={() => void handlePlanRequest({ request_type: "addon", addon_id: addon.id, notes: `Solicitud desde dashboard de marca: ${addon.id}` })}
+                disabled={Boolean(loadingCheckout)}
+                onClick={() => void handleAddonCheckout(addon.code, { resourceOrigin: addon.code, uiOrigin: "dashboard_brand" })}
               >
-                {loadingAction === addon.id ? "Enviando..." : "Adquirir add-ons"}
+                {loadingCheckout === addon.code ? "Redirigiendo..." : "Adquirir add-ons"}
               </button>
             </article>
           ))}
@@ -368,7 +405,7 @@ export function DashboardPage() {
             className="button"
             type="button"
             disabled={Boolean(loadingAction)}
-            onClick={() => void handlePlanRequest({ request_type: "upgrade", target_plan_key: "fixed_subscription_growth", notes: "Solicitud de mejora de plan desde dashboard de marca." })}
+            onClick={() => void handlePlanRequest({ request_type: "upgrade", target_plan_key: "growth_fixed", notes: "Solicitud de mejora de plan desde dashboard de marca." })}
           >
             Mejorar plan
           </button>
@@ -442,46 +479,41 @@ export function DashboardPage() {
         <p>Alertas internas por límites, consumo IA y módulos críticos de esta marca.</p>
         <div className="card-grid">
           {operationalAlerts.map((alert) => (
-            <article key={alert.id} className="card">
-              <p className="marketing-tag">{alert.severity}</p>
-              <h4>{alert.title}</h4>
-              <p>{alert.message}</p>
-              <p>{new Date(alert.created_at).toLocaleString("es-MX")}</p>
-              <div className="row-gap">
-                <button
-                  className="button button-outline"
-                  type="button"
-                  disabled={!mapAlertToAddon(alert.related_entity_type) || Boolean(loadingCheckout)}
-                  onClick={() => {
-                    const addon = mapAlertToAddon(alert.related_entity_type);
-                    if (!addon) return;
-                    void handleAddonCheckout(addon);
-                  }}
-                >
-                  {loadingCheckout && mapAlertToAddon(alert.related_entity_type) ? "Redirigiendo..." : "Agregar capacidad"}
-                </button>
-                <button
-                  className="button button-outline"
-                  type="button"
-                  disabled={!mapAlertToAddon(alert.related_entity_type) || Boolean(loadingCheckout)}
-                  onClick={() => {
-                    const addon = mapAlertToAddon(alert.related_entity_type);
-                    if (!addon) return;
-                    void handleAddonCheckout(addon);
-                  }}
-                >
-                  Comprar Add-on
-                </button>
-                <button
-                  className="button"
-                  type="button"
-                  disabled={Boolean(loadingAction)}
-                  onClick={() => void handlePlanRequest({ request_type: "upgrade", target_plan_key: "fixed_subscription_growth", notes: "Solicitud de upgrade desde alerta de capacidad." })}
-                >
-                  {loadingAction === "fixed_subscription_growth" ? "Enviando..." : "Actualizar plan"}
-                </button>
-              </div>
-            </article>
+            (() => {
+              const suggestion = resolveCapacitySuggestion(alert.related_entity_type);
+              const severity = String(alert.severity || "").toLowerCase();
+              const mustSuggestUpgrade = severity === "high" || severity === "warning";
+              return (
+                <article key={alert.id} className="card">
+                  <p className="marketing-tag">{alert.severity}</p>
+                  <h4>{alert.title}</h4>
+                  <p>{alert.message}</p>
+                  <p>{new Date(alert.created_at).toLocaleString("es-MX")}</p>
+                  <div className="row-gap">
+                    {suggestion ? (
+                      <button
+                        className="button button-outline"
+                        type="button"
+                        disabled={Boolean(loadingCheckout)}
+                        onClick={() => void handleAddonCheckout(suggestion.addonCode, { resourceOrigin: suggestion.resource, uiOrigin: "alert" })}
+                      >
+                        {loadingCheckout === suggestion.addonCode ? "Redirigiendo..." : suggestion.addonLabel}
+                      </button>
+                    ) : null}
+                    {mustSuggestUpgrade ? (
+                      <button
+                        className="button"
+                        type="button"
+                        disabled={Boolean(loadingAction)}
+                        onClick={() => void handlePlanRequest({ request_type: "upgrade", target_plan_key: "growth_fixed", notes: "Solicitud de upgrade desde alerta de capacidad." })}
+                      >
+                        {loadingAction === "growth_fixed" ? "Enviando..." : "Mejorar plan"}
+                      </button>
+                    ) : null}
+                  </div>
+                </article>
+              );
+            })()
           ))}
           {!operationalAlerts.length ? <p>Sin alertas operativas activas.</p> : null}
         </div>

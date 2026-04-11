@@ -965,3 +965,33 @@ Variables backend (`backend/.env`):
   - menor o igual a 10%: alerta critica
 - Boton directo 'Comprar más créditos' conectado a checkout Stripe test del add-on extra_500_ai_credits.
 - Bloqueo inteligente visible: al agotar creditos IA se muestra mensaje de limite sin bloquear panel, ventas ni operacion basica.
+
+## Actualizacion ejecucion 53 (Add-ons en 1 clic desde alertas y dashboards)
+- Checkout de add-ons con trazabilidad ampliada:
+  - `POST /api/v1/commercial-plans/create-checkout-session` ahora acepta contexto:
+    - `tenant_id`
+    - `client_account_id`
+    - `add_on_code`
+    - `resource_origin`
+    - `ui_origin` (`alert`, `dashboard_brand`, `dashboard_global`)
+  - metadata Stripe centralizada para rastrear origen comercial.
+- Mapeo oficial alerta -> add-on centralizado:
+  - usuarios -> `extra_user`
+  - agentes IA -> `extra_ai_agent`
+  - marcas -> `extra_brand`
+  - productos -> `extra_100_products`
+  - sucursales -> `extra_branch`
+  - creditos IA -> `extra_500_ai_credits`
+- Dashboard de marca:
+  - CTAs directos por bloque de consumo al 80%+ (compra add-on).
+  - CTA de upgrade cuando el riesgo es alto.
+  - Alertas centinela con compra de add-on y mejora de plan.
+- Panel global ComerCia:
+  - nueva vista de marcas en riesgo con accion rapida:
+    - compra add-on
+    - mejorar plan
+- Webhook Stripe:
+  - aplica compras de add-on (`tenant_commercial_addon`)
+  - actualiza capacidad (tenant o cuenta comercial segun corresponda)
+  - recalcula snapshot IA y alertas operativas
+  - registra evento de historial operativo.

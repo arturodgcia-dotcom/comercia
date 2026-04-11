@@ -618,5 +618,18 @@
 - [x] Mensaje de saldo mensual ('Te quedan X de Y creditos este mes')
 - [x] Umbral de advertencia al 30% de saldo restante
 - [x] Umbral critico al 10% de saldo restante
-- [x] Boton 'Comprar más créditos' conectado a checkout add-on extra_500_ai_credits`n- [x] Mensaje de bloqueo inteligente al agotar creditos IA sin cortar operacion basica
+- [x] Boton 'Comprar más créditos' conectado a checkout add-on extra_500_ai_credits
+- [x] Mensaje de bloqueo inteligente al agotar creditos IA sin cortar operacion basica
+- [x] Validacion ejecutada: backend compile + frontend build
+
+## Entregables ejecucion 53 (Compra de add-ons en 1 clic por alertas/capacidad)
+- [x] Mapeo central alerta/capacidad -> add-on oficial
+- [x] Alertas de capacidad en dashboard de marca con CTA de compra add-on
+- [x] Dashboard de marca con CTA contextual por bloque de consumo (80%+)
+- [x] Panel global con bloque "marcas en riesgo" y CTA rapido add-on/upgrade
+- [x] Checkout add-on reutiliza endpoint comercial unificado (Stripe test)
+- [x] Checkout add-on envia contexto trazable: tenant, cuenta cliente, recurso origen, origen UI
+- [x] Webhook Stripe aplica add-on comprado a tenant o cuenta comercial segun contexto
+- [x] Recalculo de snapshot IA y alertas operativas post-compra
+- [x] Mensaje de error UX unificado: "No fue posible iniciar la compra en este momento. Intenta nuevamente."
 - [x] Validacion ejecutada: backend compile + frontend build

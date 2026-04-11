@@ -354,7 +354,17 @@ export const api = {
     request<CommercialPlanRequest>("/api/v1/commercial-plans/requests", { method: "POST", body: JSON.stringify(payload) }, token),
   createCommercialPlanCheckoutSession: (
     token: string,
-    payload: { tenant_id?: number; plan_key?: string; item_code?: string; success_url: string; cancel_url: string }
+    payload: {
+      tenant_id?: number;
+      client_account_id?: number;
+      plan_key?: string;
+      item_code?: string;
+      add_on_code?: string;
+      resource_origin?: string;
+      ui_origin?: "alert" | "dashboard_brand" | "dashboard_global" | string;
+      success_url: string;
+      cancel_url: string;
+    }
   ) =>
     request<{ item_code: string; item_type: string; session_id: string; checkout_url: string; total_price_mxn: string }>(
       "/api/v1/commercial-plans/create-checkout-session",
@@ -749,6 +759,9 @@ export const api = {
     request<CommercialPlanCatalog>("/api/v1/comercia/commercial-plans/catalog"),
   createComerciaCommercialCheckoutSession: (payload: {
     item_code: string;
+    add_on_code?: string;
+    resource_origin?: string;
+    ui_origin?: "alert" | "dashboard_brand" | "dashboard_global" | string;
     success_url: string;
     cancel_url: string;
   }) =>

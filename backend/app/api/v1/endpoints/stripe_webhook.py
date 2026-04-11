@@ -7,7 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
-from app.models.models import Appointment, Coupon, Order, ServiceOffering, StripeConfig, Tenant
+from app.models.models import Appointment, CommercialClientAccount, Coupon, Order, ServiceOffering, StripeConfig, Tenant
 from app.services.coupon_service import increment_coupon_usage
 from app.services.email_service import send_purchase_receipt
 from app.services.loyalty_service import apply_points_for_order, consume_points
@@ -15,7 +15,9 @@ from app.services.notifications_service import send_email_notification, send_wha
 from app.services.security_hooks import on_checkout_payment_failed, on_webhook_verification_failed
 from app.services.stripe_service import construct_webhook_event
 from app.services.automation_service import log_automation_event
-from app.services.commercial_plan_service import apply_plan_to_tenant
+from app.services.commercial_plan_service import apply_addon_to_tenant, apply_plan_to_tenant
+from app.services.ai_credit_service import build_brand_credit_snapshot
+from app.services.operational_alerts_service import sync_operational_alerts_for_tenant
 
 router = APIRouter()
 
@@ -33,6 +35,9 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)) -> dic
     if event_type == "checkout.session.completed":
         if _is_commercial_plan_session(data_object):
             _apply_commercial_plan_checkout(db, data_object)
+            return {"received": True}
+        if _is_commercial_addon_session(data_object):
+            _apply_commercial_addon_checkout(db, data_object)
             return {"received": True}
         order = _find_order_from_checkout_session(db, data_object)
         if order:
@@ -98,6 +103,11 @@ def _is_commercial_plan_session(session_obj: dict) -> bool:
     return str(metadata.get("kind") or "").strip().lower() == "tenant_commercial_plan"
 
 
+def _is_commercial_addon_session(session_obj: dict) -> bool:
+    metadata = session_obj.get("metadata", {})
+    return str(metadata.get("kind") or "").strip().lower() == "tenant_commercial_addon"
+
+
 def _apply_commercial_plan_checkout(db: Session, session_obj: dict) -> None:
     metadata = session_obj.get("metadata", {})
     tenant_id = metadata.get("tenant_id")
@@ -112,6 +122,82 @@ def _apply_commercial_plan_checkout(db: Session, session_obj: dict) -> None:
         plan_key=str(plan_key),
         source="stripe_checkout",
         checkout_session_id=str(session_obj.get("id") or ""),
+    )
+    db.add(tenant)
+    db.commit()
+
+
+def _parse_addons_json(raw: str | None) -> dict:
+    if not raw:
+        return {}
+    try:
+        parsed = json.loads(raw)
+    except Exception:
+        return {}
+    return parsed if isinstance(parsed, dict) else {}
+
+
+def _set_addon_counter(account: CommercialClientAccount, addon_code: str) -> None:
+    addons = _parse_addons_json(account.addons_json)
+    keys = [addon_code]
+    if addon_code == "extra_500_ai_credits":
+        keys.append("extra_500_tokens")
+    current = 0
+    for key in keys:
+        try:
+            current = max(current, int(addons.get(key, 0)))
+        except Exception:
+            continue
+    next_qty = current + 1
+    for key in keys:
+        addons[key] = next_qty
+    account.addons_json = json.dumps(addons, ensure_ascii=False)
+
+
+def _apply_commercial_addon_checkout(db: Session, session_obj: dict) -> None:
+    metadata = session_obj.get("metadata", {})
+    tenant_id = metadata.get("tenant_id")
+    addon_code = metadata.get("add_on_code") or metadata.get("item_code")
+    if not tenant_id or not addon_code:
+        return
+    tenant = db.get(Tenant, int(tenant_id))
+    if not tenant:
+        return
+
+    account_id = metadata.get("client_account_id")
+    account: CommercialClientAccount | None = None
+    if account_id:
+        account = db.get(CommercialClientAccount, int(account_id))
+    elif tenant.commercial_client_account_id:
+        account = db.get(CommercialClientAccount, int(tenant.commercial_client_account_id))
+
+    if account:
+        addon = {"code": str(addon_code)}
+    else:
+        addon = apply_addon_to_tenant(tenant, addon_code=str(addon_code))
+    if account:
+        _set_addon_counter(account, str(addon_code))
+        db.add(account)
+
+    build_brand_credit_snapshot(db, tenant)
+    sync_operational_alerts_for_tenant(db, tenant.id)
+    log_automation_event(
+        db,
+        event_type="commercial_addon_checkout_applied",
+        tenant_id=tenant.id,
+        related_entity_type="stripe_checkout_session",
+        related_entity_id=tenant.id,
+        payload_json=json.dumps(
+            {
+                "session_id": str(session_obj.get("id") or ""),
+                "addon_code": str(addon.get("code") or addon_code),
+                "resource_origin": str(metadata.get("resource_origin") or ""),
+                "ui_origin": str(metadata.get("ui_origin") or ""),
+                "client_account_id": str(account.id) if account else "",
+            },
+            ensure_ascii=False,
+        ),
+        auto_commit=False,
     )
     db.add(tenant)
     db.commit()
