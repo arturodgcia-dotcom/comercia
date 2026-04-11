@@ -1145,3 +1145,45 @@ Arquitectura aplicada:
   - Precios
   - Marketing
   - Consultoria
+
+## Ejecucion 57: arquitectura de panel global por dominios funcionales
+Objetivo:
+- separar responsabilidades de creacion, administracion, finanzas y operacion interna sin duplicar wizard ni panel de marca.
+
+Arquitectura aplicada:
+1) Dominio INICIO
+- acceso unico a `Dashboard global`.
+
+2) Dominio CREACIÓN
+- Clientes
+- Marcas
+- Nueva marca
+- Wizard de configuracion
+- alcance exclusivo de setup inicial (sin pagos/soporte/alertas).
+
+3) Dominio ADMINISTRACIÓN
+- Clientes comerciales
+- Marcas activas
+- Canales creados
+- Configuracion internacional
+- alcance exclusivo de gestion posterior a la creacion (sin lanzar wizard como flujo principal).
+
+4) Dominio FINANZAS
+- Pagos
+- Comisiones
+- Planes y Add-ons
+- Tokens IA
+- base preparada para rol `contador`.
+
+5) Dominio OPERACIÓN INTERNA
+- Soporte
+- Alertas / Centinela
+- Seguridad
+- Prospectos de Marketing
+- Usuarios internos
+- base preparada para roles `soporte`, `comercial interno` y `operaciones`.
+
+6) Limpieza de flujo principal
+- menu global sin accesos legacy mezclados.
+- se evita empujar flujo principal a `/tenants/:tenantId/branding`; selector de marca vuelve al dashboard de marca.
+- rutas legacy pueden permanecer en código, pero fuera de la navegacion principal.

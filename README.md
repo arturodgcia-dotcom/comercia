@@ -1056,3 +1056,22 @@ Variables backend (`backend/.env`):
   - `/comercia/consultoria`
     - diagnostico comercial, revision operativa, automatizacion y formulario de contacto
 - Navegacion publica reforzada en header/footer entre Inicio, Precios, Marketing y Consultoria.
+
+## Actualizacion ejecucion 57 (Panel Global por dominios funcionales)
+- Se reorganiza el menu global de ComerCia en 4 dominios claros:
+  - `CREACIÓN`
+  - `ADMINISTRACIÓN`
+  - `FINANZAS`
+  - `OPERACIÓN INTERNA`
+- Estructura final en sidebar global:
+  - `INICIO`: Dashboard global
+  - `CREACIÓN`: Clientes, Marcas, Nueva marca, Wizard de configuracion
+  - `ADMINISTRACIÓN`: Clientes comerciales, Marcas activas, Canales creados, Configuracion internacional
+  - `FINANZAS`: Pagos, Comisiones, Planes y Add-ons, Tokens IA
+  - `OPERACIÓN INTERNA`: Soporte, Alertas/Centinela, Seguridad, Prospectos de Marketing, Usuarios internos
+- Limpieza de flujo principal:
+  - se retiran del menu principal global accesos legacy y vistas mezcladas.
+  - `onChangeBrand` deja de navegar a ruta legacy `/tenants/:tenantId/branding` y vuelve al dashboard de marca (`/`).
+- Wizard conservado:
+  - no se toca su logica interna ni persistencia.
+  - continua operativo en rutas `/reinpia/brands/:tenantId/setup`.

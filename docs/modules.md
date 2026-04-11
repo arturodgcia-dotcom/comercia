@@ -566,3 +566,23 @@ Nuevos endpoints:
   - diagnostico, revision operativa, automatizacion y solicitud de contacto.
 - Navegacion publica | Estado: funcional
   - header/footer conectan Inicio, Precios, Marketing y Consultoria.
+
+## Actualizacion panel global por dominios (Ejecucion 57)
+- Navegacion global de ComerCia | Estado: funcional
+  - agrupada por dominios:
+    - `INICIO`
+    - `CREACIÓN`
+    - `ADMINISTRACIÓN`
+    - `FINANZAS`
+    - `OPERACIÓN INTERNA`
+- Dominio CREACIÓN | Estado: funcional
+  - Clientes, Marcas, Nueva marca, Wizard de configuracion.
+- Dominio ADMINISTRACIÓN | Estado: funcional
+  - Clientes comerciales, Marcas activas, Canales creados, Configuracion internacional.
+- Dominio FINANZAS | Estado: funcional
+  - Pagos, Comisiones, Planes y Add-ons, Tokens IA.
+- Dominio OPERACIÓN INTERNA | Estado: funcional
+  - Soporte, Alertas/Centinela, Seguridad, Prospectos de Marketing, Usuarios internos.
+- Limpieza de flujo principal | Estado: funcional
+  - rutas legacy/global mezcladas fuera del menu principal.
+  - selector de marca ya no redirige a `/tenants/:tenantId/branding` en flujo principal.

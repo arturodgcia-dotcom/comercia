@@ -663,3 +663,13 @@
 - [x] Navegacion publica integrada entre Inicio, Precios, Marketing y Consultoria
 - [x] Contenido de detalle movido desde landing principal a subpaginas
 - [x] Validacion ejecutada: frontend build + backend compile
+
+## Entregables ejecucion 57 (Panel global por dominios funcionales)
+- [x] Menu global reorganizado en `INICIO`, `CREACIÓN`, `ADMINISTRACIÓN`, `FINANZAS`, `OPERACIÓN INTERNA`
+- [x] Dominio `CREACIÓN` limitado a Clientes, Marcas, Nueva marca y Wizard
+- [x] Dominio `ADMINISTRACIÓN` limitado a Clientes comerciales, Marcas activas, Canales creados y Configuracion internacional
+- [x] Dominio `FINANZAS` agrupado con Pagos, Comisiones, Planes/Add-ons y Tokens IA
+- [x] Dominio `OPERACIÓN INTERNA` agrupado con Soporte, Alertas/Centinela, Seguridad, Prospectos y Usuarios internos
+- [x] Limpieza de navegacion principal para sacar flujo legacy/mezclado
+- [x] Wizard preservado y funcional sin rehacer logica
+- [x] Validacion ejecutada: frontend build + backend compile

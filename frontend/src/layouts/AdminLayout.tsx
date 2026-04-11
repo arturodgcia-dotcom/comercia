@@ -25,8 +25,7 @@ function resolveModeFromPath(pathname: string): AppMode | null {
     pathname.startsWith("/admin") ||
     pathname.startsWith("/pos") ||
     pathname.startsWith("/categories") ||
-    pathname.startsWith("/products") ||
-    pathname.startsWith("/tenants")
+    pathname.startsWith("/products")
   ) {
     return "brand";
   }
@@ -134,53 +133,59 @@ export function AdminLayout() {
 
   const globalSections: NavSection[] = [
     {
-      title: "CREACIÓN GLOBAL",
+      title: "INICIO",
+      roles: ["reinpia_admin", "super_admin", "contador"],
+      items: [{ label: "Dashboard global", to: "/reinpia/dashboard", roles: ["reinpia_admin", "super_admin"] }],
+    },
+    {
+      title: "CREACIÓN",
       roles: ["reinpia_admin", "super_admin"],
       items: [
-        { label: "Clientes principales (alta)", to: "/reinpia/clientes-comerciales" },
+        { label: "Clientes", to: "/reinpia/clientes-comerciales?domain=creacion" },
+        { label: "Marcas", to: "/reinpia/tenants?domain=creacion" },
         { label: "Nueva marca", to: "/reinpia/brands/new" },
-        { label: "Marcas en creación", to: "/reinpia/tenants" },
+        { label: "Wizard de configuración", to: "/reinpia/tenants?domain=wizard" },
       ],
     },
     {
-      title: "ADMINISTRACIÓN GLOBAL",
+      title: "ADMINISTRACIÓN",
+      roles: ["reinpia_admin", "super_admin"],
+      items: [
+        { label: "Clientes comerciales", to: "/reinpia/clientes-comerciales" },
+        { label: "Marcas activas", to: "/reinpia/tenants?status=active" },
+        { label: "Canales creados", to: "/reinpia/canales-creados" },
+        { label: "Configuración internacional", to: "/reinpia/currency" },
+      ],
+    },
+    {
+      title: "FINANZAS",
       roles: ["reinpia_admin", "super_admin", "contador"],
       items: [
-        { label: "Dashboard global", to: "/reinpia/dashboard", roles: ["reinpia_admin", "super_admin"] },
-        { label: "Clientes principales", to: "/reinpia/clientes-comerciales", roles: ["reinpia_admin", "super_admin"] },
-        { label: "Marcas", to: "/reinpia/tenants", roles: ["reinpia_admin", "super_admin"] },
-        { label: "Canales creados", to: "/reinpia/canales-creados", roles: ["reinpia_admin", "super_admin"] },
-        { label: "Pagos / Contador", to: "/reinpia/payments" },
-        { label: "Comisionistas", to: "/reinpia/commission-agents" },
+        { label: "Pagos", to: "/reinpia/payments" },
         { label: "Comisiones", to: "/reinpia/reports/commissions" },
-        { label: "Inbox comercial y soporte", to: "/reinpia/commercial-inbox", roles: ["reinpia_admin", "super_admin"] },
-        { label: "Alertas operativas", to: "/reinpia/alerts", roles: ["reinpia_admin", "super_admin"] },
-        { label: "Seguridad y bloqueos", to: "/reinpia/security", roles: ["reinpia_admin", "super_admin"] },
-        { label: "Idiomas globales", to: "/reinpia/language", roles: ["reinpia_admin", "super_admin"] },
-        { label: "Monedas globales", to: "/reinpia/currency", roles: ["reinpia_admin", "super_admin"] },
-        { label: "Marketing prospectos", to: "/reinpia/marketing/prospectos", roles: ["reinpia_admin", "super_admin"] },
+        { label: "Planes y Add-ons", to: "/reinpia/clientes-comerciales?tab=planes-addons" },
+        { label: "Tokens IA", to: "/reinpia/clientes-comerciales?tab=tokens-ia" },
       ],
     },
     {
-      title: "VISIÓN EJECUTIVA",
+      title: "OPERACIÓN INTERNA",
       roles: ["reinpia_admin", "super_admin"],
       items: [
-        { label: "Operación global", to: "/reinpia/operations" },
-        { label: "Servicios logísticos", to: "/reinpia/logistics-services" },
-        { label: "Reportes", to: "/reinpia/reports" },
-        { label: "Crecimiento", to: "/reinpia/reports/growth" },
-        { label: "Leads", to: "/reinpia/reports/leads" },
-        { label: "Oportunidades marketing", to: "/reinpia/reports/marketing-opportunities" },
-      ],
-    },
-    {
-      title: "CONFIGURACIÓN GLOBAL",
-      roles: ["reinpia_admin", "super_admin"],
-      items: [
+        { label: "Soporte", to: "/reinpia/commercial-inbox" },
+        { label: "Alertas / Centinela", to: "/reinpia/alerts" },
+        { label: "Seguridad", to: "/reinpia/security" },
+        { label: "Prospectos de Marketing", to: "/reinpia/marketing/prospectos" },
         { label: "Usuarios internos", to: "/reinpia/users" },
-        { label: "Roles y reglas", to: "/reinpia/security/rules" },
-        { label: "Entidades bloqueadas", to: "/reinpia/security/blocked" },
-        { label: "Políticas y legales", to: "/legal/privacidad" },
+      ],
+    },
+    {
+      title: "ROLES FUTUROS",
+      roles: ["reinpia_admin", "super_admin"],
+      items: [
+        { label: "Contador (base lista)", to: "/reinpia/payments" },
+        { label: "Soporte (base lista)", to: "/reinpia/commercial-inbox" },
+        { label: "Comercial interno (base lista)", to: "/reinpia/marketing/prospectos" },
+        { label: "Operaciones (base lista)", to: "/reinpia/alerts" },
       ],
     },
   ];
@@ -293,7 +298,7 @@ export function AdminLayout() {
   ]);
 
   const visibleSections = mode === "global" && isGlobalOperator ? globalSections : brandSections;
-  const homePath = mode === "global" && isGlobalOperator ? "/reinpia/payments" : "/";
+  const homePath = mode === "global" && isGlobalOperator ? "/reinpia/dashboard" : "/";
 
   const pathParts = location.pathname.split("/").filter(Boolean);
   const breadcrumbs = pathParts.map((part, index) => {
@@ -316,7 +321,7 @@ export function AdminLayout() {
   const onChangeBrand = (nextBrandId: number) => {
     setSelectedBrandId(nextBrandId);
     if (mode === "brand") {
-      navigate(`/tenants/${nextBrandId}/branding`);
+      navigate("/");
     }
   };
 
