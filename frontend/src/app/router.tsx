@@ -80,6 +80,7 @@ import { ReinpiaGrowthReportPage } from "../pages/ReinpiaGrowthReportPage";
 import { ReinpiaCommissionsReportPage } from "../pages/ReinpiaCommissionsReportPage";
 import { ReinpiaLeadsReportPage } from "../pages/ReinpiaLeadsReportPage";
 import { ReinpiaMarketingOpportunitiesPage } from "../pages/ReinpiaMarketingOpportunitiesPage";
+import { ReinpiaCreatedChannelDetailPage } from "../pages/ReinpiaCreatedChannelDetailPage";
 import { ReinpiaCreatedChannelsPage } from "../pages/ReinpiaCreatedChannelsPage";
 import { ReinpiaSecurityAlertsPage } from "../pages/ReinpiaSecurityAlertsPage";
 import { ReinpiaSecurityDashboardPage } from "../pages/ReinpiaSecurityDashboardPage";
@@ -237,6 +238,7 @@ export function AppRouter() {
               <Route path="reinpia/currency" element={<CurrencyAdminPage />} />
               <Route path="reinpia/tenants/:tenantId" element={<ReinpiaTenantDetailPage />} />
               <Route path="reinpia/canales-creados" element={<ReinpiaCreatedChannelsPage />} />
+              <Route path="reinpia/canales-creados/:tenantId/:channelKey" element={<ReinpiaCreatedChannelDetailPage />} />
               <Route path="reinpia/diagnosticos" element={<ReinpiaDiagnosticsPage />} />
               <Route path="reinpia/operations" element={<ReinpiaOperationsPage />} />
               <Route path="reinpia/logistics-services" element={<ReinpiaLogisticsServicesPage />} />
