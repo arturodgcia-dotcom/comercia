@@ -956,3 +956,12 @@ Variables backend (`backend/.env`):
 - Cada alerta operativa incluye CTA de accion directa: Agregar capacidad, Comprar Add-on (Stripe test) y Actualizar plan.
 - Bloqueo controlado reforzado: al llegar al limite no permite nuevos registros (productos/usuarios/sucursales/creditos IA) sin afectar operacion existente.
 - Alertas internas tambien se replican a nivel cliente principal y panel global con base de escalamiento (email/Telegram/bot interno).
+
+## Actualizacion ejecucion 52 (UX de creditos IA + alerta/compra + bloqueo inteligente)
+- Dashboard de marca: medidor tipo gasolina para creditos IA con totales, consumidos y restantes.
+- Mensaje operativo visible: 'Te quedan X de Y creditos este mes'.
+- Umbrales en UI para creditos IA:
+  - menor o igual a 30%: advertencia
+  - menor o igual a 10%: alerta critica
+- Boton directo 'Comprar más créditos' conectado a checkout Stripe test del add-on extra_500_ai_credits.
+- Bloqueo inteligente visible: al agotar creditos IA se muestra mensaje de limite sin bloquear panel, ventas ni operacion basica.

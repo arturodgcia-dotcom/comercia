@@ -41,6 +41,18 @@ function usageMessage(label: string, used: number, limit: number): string {
   return `Estas usando ${used} de ${limit} ${label.toLowerCase()} disponibles en tu plan.`;
 }
 
+function creditState(remainingPercentage: number): "ok" | "warning" | "critical" {
+  if (remainingPercentage <= 10) return "critical";
+  if (remainingPercentage <= 30) return "warning";
+  return "ok";
+}
+
+function creditStateColor(state: "ok" | "warning" | "critical"): string {
+  if (state === "critical") return "#ef4444";
+  if (state === "warning") return "#f59e0b";
+  return "#22c55e";
+}
+
 function supportChannel(support: string | null | undefined): "correo" | "chat" {
   const normalized = String(support || "").toLowerCase();
   return normalized.includes("chat") ? "chat" : "correo";
@@ -107,10 +119,25 @@ export function DashboardPage() {
   const creditsExtra = useMemo(() => {
     if (!commercialUsage) return 0;
     return commercialUsage.addons.reduce((acc, addon) => {
-      if (addon.addon_id === "extra_500_tokens") return acc + (addon.quantity * 500);
+      if (addon.addon_id === "extra_500_ai_credits") return acc + (addon.quantity * 500);
       return acc;
     }, 0);
   }, [commercialUsage]);
+
+  const aiCreditsTotal = useMemo(() => {
+    if (!commercialUsage) return 0;
+    return Math.max(
+      Number(commercialUsage.ai_tokens_assigned ?? 0),
+      Number((commercialUsage.ai_tokens_included ?? 0) + (commercialUsage.ai_tokens_extra ?? 0)),
+    );
+  }, [commercialUsage]);
+
+  const aiCreditsUsed = Number(commercialUsage?.ai_tokens_used ?? 0);
+  const aiCreditsRemaining = Number(commercialUsage?.ai_tokens_remaining ?? commercialUsage?.ai_tokens_balance ?? 0);
+  const aiCreditsRemainingPercentage = aiCreditsTotal > 0 ? Math.max(0, (aiCreditsRemaining / aiCreditsTotal) * 100) : 0;
+  const aiCreditVisualState = creditState(aiCreditsRemainingPercentage);
+  const aiCreditVisualColor = creditStateColor(aiCreditVisualState);
+  const aiCreditsLocked = aiCreditsRemaining <= 0 || commercialUsage?.ai_key_state === "bloqueada";
 
   const estimatedSubscriptionSavings = useMemo(() => {
     if (!commercialStatus?.commission_enabled) return 0;
@@ -231,24 +258,47 @@ export function DashboardPage() {
           })}
           <article className="card">
             <h4>Creditos IA</h4>
+            <p>Creditos totales: {aiCreditsTotal}</p>
+            <p>Creditos consumidos: {aiCreditsUsed}</p>
+            <p>Creditos restantes: {aiCreditsRemaining}</p>
+            <p>Te quedan {aiCreditsRemaining} de {aiCreditsTotal} creditos este mes.</p>
             <p>Incluidos por plan: {commercialUsage?.ai_tokens_included ?? 0}</p>
             <p>Extra comprados: {commercialUsage?.ai_tokens_extra ?? creditsExtra}</p>
-            <p>Asignados a la marca: {commercialUsage?.ai_tokens_assigned ?? 0}</p>
+            <p>Asignados a la marca: {commercialUsage?.ai_tokens_assigned ?? aiCreditsTotal}</p>
             <p>Reservados: {commercialUsage?.ai_tokens_reserved ?? 0}</p>
-            <p>Consumidos: {commercialUsage?.ai_tokens_used ?? 0}</p>
-            <p>Restantes: {commercialUsage?.ai_tokens_remaining ?? commercialUsage?.ai_tokens_balance ?? 0}</p>
+            <p>Consumidos: {aiCreditsUsed}</p>
+            <p>Restantes: {aiCreditsRemaining}</p>
             <p><strong>Estado llave IA:</strong> {commercialUsage?.ai_key_state ?? "abierta"}</p>
             <p><strong>Consumo:</strong> {Number(commercialUsage?.ai_tokens_consumption_percentage ?? 0).toFixed(2)}%</p>
+            {aiCreditVisualState === "warning" ? (
+              <p style={{ color: "#f59e0b" }}><strong>Advertencia:</strong> te queda menos del 30% de créditos IA.</p>
+            ) : null}
+            {aiCreditVisualState === "critical" ? (
+              <p style={{ color: "#ef4444" }}><strong>Alerta crítica:</strong> te queda menos del 10% de créditos IA.</p>
+            ) : null}
             <div style={{ height: "12px", borderRadius: "999px", background: "#e5e7eb", overflow: "hidden" }}>
               <div
                 style={{
-                  width: `${Number(commercialUsage?.ai_tokens_consumption_percentage ?? 0)}%`,
-                  background: statusColor(commercialUsage?.ai_tokens_used ?? 0, Math.max(commercialUsage?.ai_tokens_assigned ?? 1, 1)),
+                  width: `${Math.max(0, Math.min(100, 100 - Number(commercialUsage?.ai_tokens_consumption_percentage ?? 0)))}%`,
+                  background: aiCreditVisualColor,
                   height: "100%",
                 }}
               />
             </div>
-            <p>{usageMessage("creditos IA", commercialUsage?.ai_tokens_used ?? 0, Math.max(commercialUsage?.ai_tokens_assigned ?? 0, 0))}</p>
+            <p>{usageMessage("creditos IA", aiCreditsUsed, Math.max(aiCreditsTotal, 0))}</p>
+            <button
+              className="button"
+              type="button"
+              disabled={Boolean(loadingCheckout)}
+              onClick={() => void handleAddonCheckout("extra_500_ai_credits")}
+            >
+              {loadingCheckout === "extra_500_ai_credits" ? "Redirigiendo..." : "Comprar más créditos"}
+            </button>
+            {aiCreditsLocked ? (
+              <p style={{ color: "#ef4444", marginTop: "8px" }}>
+                Has alcanzado tu límite de uso de IA. Puedes adquirir más créditos para continuar.
+              </p>
+            ) : null}
           </article>
           <article className="card">
             <h4>Sucursales (detalle)</h4>

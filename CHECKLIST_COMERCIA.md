@@ -611,3 +611,12 @@
 - [x] Bloqueo controlado mantenido para altas nuevas sin romper operacion existente.
 - [x] Replica de alertas al panel global y base de escalamiento interno (email/Telegram/bot).
 - [x] Validacion ejecutada: backend compile + frontend build.
+
+## Entregables ejecucion 52 (Creditos IA: UX, alerta y bloqueo inteligente)
+- [x] Medidor tipo gasolina para creditos IA en dashboard de marca
+- [x] Visualizacion de creditos totales, consumidos y restantes
+- [x] Mensaje de saldo mensual ('Te quedan X de Y creditos este mes')
+- [x] Umbral de advertencia al 30% de saldo restante
+- [x] Umbral critico al 10% de saldo restante
+- [x] Boton 'Comprar más créditos' conectado a checkout add-on extra_500_ai_credits`n- [x] Mensaje de bloqueo inteligente al agotar creditos IA sin cortar operacion basica
+- [x] Validacion ejecutada: backend compile + frontend build

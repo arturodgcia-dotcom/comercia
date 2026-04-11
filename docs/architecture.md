@@ -997,3 +997,9 @@ Frontend:
 - Las alertas de marca se reflejan tambien en nivel cliente principal para visibilidad contable/global.
 - Se registra evento de escalamiento interno (sentinel_operational_alert) con canales preparados: email, Telegram y bot interno.
 - En dashboard de marca, cada alerta incorpora CTAs para checkout de add-on (Stripe test) o upgrade de plan.
+
+## Ejecucion 52: UX de creditos IA y continuidad operativa
+- El dashboard de marca implementa una capa de lectura operativa de creditos IA con medidor visual tipo gasolina.
+- Se aplican umbrales de estado en frontend para saldo restante (30% advertencia, 10% critica).
+- El CTA 'Comprar más créditos' dispara checkout comercial Stripe test del add-on extra_500_ai_credits.
+- Al llegar a 0 creditos se comunica bloqueo de funciones IA no criticas, manteniendo acceso a panel, ventas y operacion basica.

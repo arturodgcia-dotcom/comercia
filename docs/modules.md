@@ -495,3 +495,9 @@ Nuevos endpoints:
   - checkout add-on Stripe test o solicitud de upgrade.
 - Notificacion interna | Estado: funcional
   - alertas para marca y panel global, con base para email/Telegram/bot interno.
+
+## Actualizacion UX creditos IA (Ejecucion 52)
+- Medidor de creditos IA en dashboard | Estado: funcional
+- Alerta 30% / critica 10% en dashboard | Estado: funcional
+- Compra directa de creditos IA (extra_500_ai_credits) | Estado: funcional
+- Mensaje de bloqueo inteligente de funciones IA no criticas al agotar saldo | Estado: funcional
