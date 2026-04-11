@@ -30,7 +30,10 @@ import { BrandingEditorPage } from "../pages/BrandingEditorPage";
 import { BannersAdminPage } from "../pages/BannersAdminPage";
 import { CatalogBulkUploadPage } from "../pages/CatalogBulkUploadPage";
 import { CategoriesPage } from "../pages/CategoriesPage";
+import { ComerciaConsultoriaPage } from "../pages/ComerciaConsultoriaPage";
 import { ComerciaLandingPage } from "../pages/ComerciaLandingPage";
+import { ComerciaMarketingPage } from "../pages/ComerciaMarketingPage";
+import { ComerciaPreciosPage } from "../pages/ComerciaPreciosPage";
 import { CurrencyAdminPage } from "../pages/CurrencyAdminPage";
 import { LanguageAdminPage } from "../pages/LanguageAdminPage";
 import { ContractsAdminPage } from "../pages/ContractsAdminPage";
@@ -120,6 +123,9 @@ export function AppRouter() {
   return (
     <Routes>
       <Route path="/comercia" element={<ComerciaLandingPage />} />
+      <Route path="/comercia/precios" element={<ComerciaPreciosPage />} />
+      <Route path="/comercia/marketing" element={<ComerciaMarketingPage />} />
+      <Route path="/comercia/consultoria" element={<ComerciaConsultoriaPage />} />
       <Route path="/legal/privacidad" element={<PrivacyPolicyPage />} />
       <Route path="/legal/cookies" element={<CookiesPolicyPage />} />
       <Route path="/legal/proteccion-datos" element={<DataProtectionPolicyPage />} />

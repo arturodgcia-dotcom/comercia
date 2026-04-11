@@ -708,6 +708,45 @@
   font-size: 13px;
 }
 
+.cp-simple-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.cp-simple-card {
+  border: 1px solid #cfe0fb;
+  border-radius: 14px;
+  background: #ffffff;
+  padding: 16px;
+  display: grid;
+  gap: 8px;
+}
+
+.cp-simple-card h3 {
+  margin: 0;
+}
+
+.cp-simple-card p {
+  margin: 0;
+  color: var(--cp-muted);
+  line-height: 1.55;
+}
+
+.cp-simple-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.cp-simple-form label {
+  margin: 0;
+}
+
+.cp-field-full {
+  grid-column: 1 / -1;
+}
+
 @media (max-width: 980px) {
   .cp-hero {
     grid-template-columns: 1fr;
@@ -750,6 +789,14 @@
   .cp-marketing-form .checkbox,
   .cp-marketing-form textarea,
   .cp-marketing-form button {
+    grid-column: span 1;
+  }
+
+  .cp-simple-form {
+    grid-template-columns: 1fr;
+  }
+
+  .cp-field-full {
     grid-column: span 1;
   }
 }

@@ -1104,3 +1104,44 @@ Arquitectura aplicada:
 - add-ons siempre visibles en menu de marca con estado comercial en etiqueta.
 - nueva ruta NFC dedicada:
   - `/admin/addons/nfc`
+
+## Ejecucion 56: arquitectura publica de landing por dominios
+Objetivo:
+- reducir saturacion en `/comercia` y separar contenido comercial en subpaginas especializadas.
+
+Arquitectura aplicada:
+1) Capa principal ligera
+- `/comercia` queda como pagina de entrada ejecutiva:
+  - hero
+  - propuesta de valor
+  - problemas resueltos
+  - segmentos de negocio
+  - resumen de planes y servicios extra
+  - CTAs hacia dominios especializados.
+
+2) Dominio de precios
+- `/comercia/precios` centraliza:
+  - planes base
+  - add-ons
+  - checkout comercial Stripe test
+  - oferta extendida de logistica, jornada y NFC (software/equipos/tarjetas).
+
+3) Dominio de marketing
+- `/comercia/marketing` concentra servicio de mercadotecnia digital:
+  - beneficios comerciales
+  - formulario de solicitud
+  - sin metodologia interna sensible ni precotizacion publica.
+
+4) Dominio de consultoria
+- `/comercia/consultoria` concentra:
+  - diagnostico comercial
+  - revision operativa
+  - automatizacion
+  - contacto consultivo.
+
+5) Navegacion transversal
+- header y footer de las paginas publicas conectan:
+  - Inicio
+  - Precios
+  - Marketing
+  - Consultoria

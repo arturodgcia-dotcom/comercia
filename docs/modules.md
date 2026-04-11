@@ -551,3 +551,18 @@ Nuevos endpoints:
   - super admin: control de estado/plan/scope y acceso operativo base
 - Navegacion de marca | Estado: funcional
   - los tres add-ons quedan siempre visibles con etiqueta de estado comercial en menu.
+
+## Actualizacion landing comercial modular (Ejecucion 56)
+- Landing principal `/comercia` | Estado: funcional
+  - version ligera orientada a claridad ejecutiva y conversion.
+  - evita saturacion de detalle tecnico/comercial en una sola pagina.
+- Subpagina `/comercia/precios` | Estado: funcional
+  - planes base + add-ons con CTA de checkout.
+  - incluye oferta comercial de logistica, jornada laboral y NFC (software/equipos/tarjetas).
+- Subpagina `/comercia/marketing` | Estado: funcional
+  - bloque dedicado a mercadotecnia digital con formulario y CTA.
+  - sin exponer metodologia interna sensible ni precotizacion publica.
+- Subpagina `/comercia/consultoria` | Estado: funcional
+  - diagnostico, revision operativa, automatizacion y solicitud de contacto.
+- Navegacion publica | Estado: funcional
+  - header/footer conectan Inicio, Precios, Marketing y Consultoria.

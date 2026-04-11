@@ -654,3 +654,12 @@
 - [x] Backend `brand-settings` habilitado para gestion de add-ons por rol `super_admin`
 - [x] Rutas sin ruptura y modulo deshabilitado con UX informativa (no error/blank)
 - [x] Validacion ejecutada: backend compile + frontend build
+
+## Entregables ejecucion 56 (Landing principal ligera y subpaginas comerciales)
+- [x] `/comercia` simplificada para vista ejecutiva sin saturacion
+- [x] Subpagina `/comercia/precios` creada con planes, add-ons y CTA comerciales
+- [x] Subpagina `/comercia/marketing` creada con beneficios y formulario
+- [x] Subpagina `/comercia/consultoria` creada con diagnostico/revision/automatizacion y contacto
+- [x] Navegacion publica integrada entre Inicio, Precios, Marketing y Consultoria
+- [x] Contenido de detalle movido desde landing principal a subpaginas
+- [x] Validacion ejecutada: frontend build + backend compile

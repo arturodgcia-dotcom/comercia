@@ -1035,3 +1035,24 @@ Variables backend (`backend/.env`):
 - Validacion ejecutada:
   - `cd frontend && npm run build`
   - `cd backend && .\\.venv\\Scripts\\python.exe -m compileall app`
+
+## Actualizacion ejecucion 56 (Landing principal ligera + subpaginas comerciales)
+- Reorganizacion de capa publica `/comercia` sin tocar wizard ni panel de marca.
+- Landing principal simplificada:
+  - hero principal
+  - propuesta de valor
+  - problemas que resuelve
+  - tipos de negocio atendidos
+  - resumen corto de planes
+  - resumen corto de servicios extra
+  - CTA claros a subpaginas
+- Nuevas subpaginas:
+  - `/comercia/precios`
+    - planes base, add-ons, CTA de checkout Stripe test
+    - seccion comercial para logistica, jornada laboral, NFC software, equipos NFC y paquetes de tarjetas
+  - `/comercia/marketing`
+    - explicacion del servicio, beneficios y formulario de solicitud
+    - sin metodologia sensible ni precotizacion publica
+  - `/comercia/consultoria`
+    - diagnostico comercial, revision operativa, automatizacion y formulario de contacto
+- Navegacion publica reforzada en header/footer entre Inicio, Precios, Marketing y Consultoria.
