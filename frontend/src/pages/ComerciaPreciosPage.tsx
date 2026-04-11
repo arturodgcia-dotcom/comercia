@@ -27,6 +27,63 @@ const FALLBACK_PLANS: CommercialPlan[] = [
     price_with_tax_mxn: "4060.00",
   },
   {
+    id: "commission_subscription_basic",
+    code: "basic_commission",
+    display_name: "Basico con comision",
+    name: "Basico con comision",
+    tier: "basic",
+    billing_model: "commission_based",
+    commission_enabled: true,
+    commission_percentage: "5.00",
+    monthly_price_mxn: "2290.00",
+    total_price_mxn: "2656.40",
+    stripe_price_id: "",
+    support: "48h por correo",
+    limits: { products_max: 50, users_max: 2, branches_max: 1, ia_tokens_total: 200 },
+    price_without_tax_mxn: "2290.00",
+    tax_rate: "0.16",
+    tax_amount_mxn: "366.40",
+    price_with_tax_mxn: "2656.40",
+  },
+  {
+    id: "commission_subscription_growth",
+    code: "growth_commission",
+    display_name: "Growth con comision",
+    name: "Growth con comision",
+    tier: "growth",
+    billing_model: "commission_based",
+    commission_enabled: true,
+    commission_percentage: "4.50",
+    monthly_price_mxn: "4290.00",
+    total_price_mxn: "4976.40",
+    stripe_price_id: "",
+    support: "Prioritario 24h",
+    limits: { products_max: 300, users_max: 5, branches_max: 3, ia_tokens_total: 1050 },
+    price_without_tax_mxn: "4290.00",
+    tax_rate: "0.16",
+    tax_amount_mxn: "686.40",
+    price_with_tax_mxn: "4976.40",
+  },
+  {
+    id: "commission_subscription_premium",
+    code: "premium_commission",
+    display_name: "Premium con comision",
+    name: "Premium con comision",
+    tier: "premium",
+    billing_model: "commission_based",
+    commission_enabled: true,
+    commission_percentage: "4.00",
+    monthly_price_mxn: "7290.00",
+    total_price_mxn: "8456.40",
+    stripe_price_id: "",
+    support: "Premium 24/7",
+    limits: { products_max: 1000, users_max: 10, branches_max: 10, ia_tokens_total: 5000 },
+    price_without_tax_mxn: "7290.00",
+    tax_rate: "0.16",
+    tax_amount_mxn: "1166.40",
+    price_with_tax_mxn: "8456.40",
+  },
+  {
     id: "fixed_subscription_growth",
     code: "growth_fixed",
     display_name: "Growth sin comision",
@@ -185,12 +242,27 @@ function limitValue(plan: CommercialPlan, key: string) {
   return typeof value === "number" ? value : String(value);
 }
 
+function tierRank(plan: CommercialPlan) {
+  if (plan.tier === "basic") return 1;
+  if (plan.tier === "growth") return 2;
+  if (plan.tier === "premium") return 3;
+  return 99;
+}
+
+function formatCommission(percentage: string | number | null | undefined) {
+  const value = Number(percentage ?? 0);
+  if (!Number.isFinite(value)) return "0%";
+  const text = Number.isInteger(value) ? `${value}` : value.toFixed(1);
+  return `+ ${text}%`;
+}
+
 export function ComerciaPreciosPage() {
   const [plans, setPlans] = useState<CommercialPlan[]>(FALLBACK_PLANS);
   const [addons, setAddons] = useState<CommercialAddon[]>(FALLBACK_ADDONS);
   const [loadingCode, setLoadingCode] = useState("");
   const [error, setError] = useState("");
   const [status, setStatus] = useState("");
+  const [pricingTab, setPricingTab] = useState<"all" | "fixed" | "commission">("all");
 
   useEffect(() => {
     api
@@ -202,8 +274,14 @@ export function ComerciaPreciosPage() {
       .catch(() => null);
   }, []);
 
-  const fixedPlans = useMemo(() => plans.filter((item) => item.code.includes("fixed")), [plans]);
-  const commissionPlans = useMemo(() => plans.filter((item) => item.code.includes("commission")), [plans]);
+  const fixedPlans = useMemo(
+    () => plans.filter((item) => item.code.includes("fixed")).sort((a, b) => tierRank(a) - tierRank(b)),
+    [plans]
+  );
+  const commissionPlans = useMemo(
+    () => plans.filter((item) => item.code.includes("commission")).sort((a, b) => tierRank(a) - tierRank(b)),
+    [plans]
+  );
 
   const startCheckout = async (itemCode: string) => {
     try {
@@ -245,59 +323,99 @@ export function ComerciaPreciosPage() {
       </nav>
 
       <section className="cp-section">
-        <header className="cp-section-head">
-          <p className="cp-kicker">Planes base</p>
-          <h2>Modelos sin comision y con comision</h2>
-          <p>Precios mensuales con IVA incluido y activacion por Stripe test.</p>
+        <header className="cp-section-head cp-pricing-head">
+          <div className="cp-pricing-badge">Oferta comercial oficial</div>
+          <p className="cp-kicker">Planes base ComerCia</p>
+          <h2>Elige entre esquema fijo o esquema con comision</h2>
+          <p>Todos los precios son finales con IVA incluido. Activa en minutos con checkout Stripe test.</p>
+          <div className="cp-pricing-tabs" role="tablist" aria-label="Tipo de planes">
+            <button
+              type="button"
+              className={`cp-pricing-tab ${pricingTab === "all" ? "is-active" : ""}`}
+              onClick={() => setPricingTab("all")}
+            >
+              Ver todos
+            </button>
+            <button
+              type="button"
+              className={`cp-pricing-tab ${pricingTab === "fixed" ? "is-active" : ""}`}
+              onClick={() => setPricingTab("fixed")}
+            >
+              Sin comision
+            </button>
+            <button
+              type="button"
+              className={`cp-pricing-tab ${pricingTab === "commission" ? "is-active" : ""}`}
+              onClick={() => setPricingTab("commission")}
+            >
+              Con comision
+            </button>
+          </div>
           {status ? <p className="cp-success">{status}</p> : null}
           {error ? <p className="error">{error}</p> : null}
         </header>
 
-        <article className="cp-plan-group">
-          <h3>Sin comision</h3>
-          <div className="cp-plans-grid">
-            {fixedPlans.map((plan) => (
-              <article key={plan.id} className="cp-plan-card">
-                <p className="cp-plan-name">{plan.display_name || plan.name}</p>
-                <p className="cp-plan-price">${formatMoney(plan.price_with_tax_mxn)} MXN IVA incluido</p>
-                <ul>
-                  <li>Productos: {limitValue(plan, "products_max")}</li>
-                  <li>Usuarios: {limitValue(plan, "users_max")}</li>
-                  <li>Sucursales: {limitValue(plan, "branches_max")}</li>
-                  <li>Creditos IA: {limitValue(plan, "ia_tokens_total")}</li>
-                  <li>Soporte: {plan.support}</li>
-                </ul>
-                <button className="button" type="button" disabled={Boolean(loadingCode)} onClick={() => void startCheckout(plan.code)}>
-                  {loadingCode === plan.code ? "Iniciando checkout..." : "Comprar plan"}
-                </button>
-              </article>
-            ))}
-          </div>
-        </article>
+        {(pricingTab === "all" || pricingTab === "fixed") && (
+          <article className="cp-plan-group">
+            <div className="cp-plan-group-head">
+              <h3>Sin comision</h3>
+              <p>Ideal para costos predecibles mensuales.</p>
+            </div>
+            <div className="cp-plans-grid">
+              {fixedPlans.map((plan) => (
+                <article key={plan.id} className={`cp-plan-card ${plan.tier === "growth" ? "is-highlight" : ""}`}>
+                  <div className="cp-plan-card-top">
+                    <p className="cp-plan-name">{plan.display_name || plan.name}</p>
+                    <span className="cp-plan-tag">Sin comision</span>
+                  </div>
+                  <p className="cp-plan-price">${formatMoney(plan.price_with_tax_mxn)} MXN</p>
+                  <p className="cp-plan-price-note">IVA incluido por mes</p>
+                  <ul>
+                    <li><strong>Productos:</strong> {limitValue(plan, "products_max")}</li>
+                    <li><strong>Usuarios:</strong> {limitValue(plan, "users_max")}</li>
+                    <li><strong>Sucursales:</strong> {limitValue(plan, "branches_max")}</li>
+                    <li><strong>Creditos IA:</strong> {limitValue(plan, "ia_tokens_total")}</li>
+                    <li><strong>Soporte:</strong> {plan.support}</li>
+                  </ul>
+                  <button className="button" type="button" disabled={Boolean(loadingCode)} onClick={() => void startCheckout(plan.code)}>
+                    {loadingCode === plan.code ? "Iniciando checkout..." : "Elegir este plan"}
+                  </button>
+                </article>
+              ))}
+            </div>
+          </article>
+        )}
 
-        <article className="cp-plan-group">
-          <h3>Con comision</h3>
-          <div className="cp-plans-grid">
-            {commissionPlans.map((plan) => (
-              <article key={plan.id} className="cp-plan-card">
-                <p className="cp-plan-name">{plan.display_name || plan.name}</p>
-                <p className="cp-plan-price">
-                  ${formatMoney(plan.price_with_tax_mxn)} MXN IVA incluido + {plan.commission_percentage}% por venta
-                </p>
-                <ul>
-                  <li>Productos: {limitValue(plan, "products_max")}</li>
-                  <li>Usuarios: {limitValue(plan, "users_max")}</li>
-                  <li>Sucursales: {limitValue(plan, "branches_max")}</li>
-                  <li>Creditos IA: {limitValue(plan, "ia_tokens_total")}</li>
-                  <li>Soporte: {plan.support}</li>
-                </ul>
-                <button className="button" type="button" disabled={Boolean(loadingCode)} onClick={() => void startCheckout(plan.code)}>
-                  {loadingCode === plan.code ? "Iniciando checkout..." : "Comprar plan"}
-                </button>
-              </article>
-            ))}
-          </div>
-        </article>
+        {(pricingTab === "all" || pricingTab === "commission") && (
+          <article className="cp-plan-group">
+            <div className="cp-plan-group-head">
+              <h3>Con comision</h3>
+              <p>Menor cuota base y porcentaje por venta completada.</p>
+            </div>
+            <div className="cp-plans-grid">
+              {commissionPlans.map((plan) => (
+                <article key={plan.id} className={`cp-plan-card cp-plan-card-commission ${plan.tier === "growth" ? "is-highlight" : ""}`}>
+                  <div className="cp-plan-card-top">
+                    <p className="cp-plan-name">{plan.display_name || plan.name}</p>
+                    <span className="cp-plan-tag cp-plan-tag-commission">{formatCommission(plan.commission_percentage)} por venta</span>
+                  </div>
+                  <p className="cp-plan-price">${formatMoney(plan.price_with_tax_mxn)} MXN</p>
+                  <p className="cp-plan-price-note">IVA incluido por mes</p>
+                  <ul>
+                    <li><strong>Productos:</strong> {limitValue(plan, "products_max")}</li>
+                    <li><strong>Usuarios:</strong> {limitValue(plan, "users_max")}</li>
+                    <li><strong>Sucursales:</strong> {limitValue(plan, "branches_max")}</li>
+                    <li><strong>Creditos IA:</strong> {limitValue(plan, "ia_tokens_total")}</li>
+                    <li><strong>Soporte:</strong> {plan.support}</li>
+                  </ul>
+                  <button className="button" type="button" disabled={Boolean(loadingCode)} onClick={() => void startCheckout(plan.code)}>
+                    {loadingCode === plan.code ? "Iniciando checkout..." : "Elegir este plan"}
+                  </button>
+                </article>
+              ))}
+            </div>
+          </article>
+        )}
       </section>
 
       <section className="cp-section">

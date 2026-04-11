@@ -221,6 +221,53 @@
   max-width: 920px;
 }
 
+.cp-pricing-head {
+  border: 1px solid #c9daf8;
+  border-radius: 16px;
+  padding: 18px;
+  background:
+    radial-gradient(circle at 85% -20%, rgba(64, 124, 229, 0.18), transparent 45%),
+    linear-gradient(145deg, #ffffff 0%, #f6faff 58%, #eff5ff 100%);
+}
+
+.cp-pricing-badge {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid #bfd4f7;
+  border-radius: 999px;
+  background: #eef5ff;
+  color: #0e3e8e;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 6px 10px;
+}
+
+.cp-pricing-tabs {
+  margin-top: 14px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.cp-pricing-tab {
+  border: 1px solid #bcd2f7;
+  background: #ffffff;
+  color: #1a4a96;
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.cp-pricing-tab.is-active {
+  border-color: #164893;
+  background: #164893;
+  color: #ffffff;
+}
+
 .cp-entry-grid,
 .cp-plans-grid,
 .cp-testimonial-grid,
@@ -452,6 +499,37 @@
   line-height: 1.5;
 }
 
+.cp-plan-card {
+  border-radius: 16px;
+  padding: 18px;
+  display: grid;
+  gap: 8px;
+}
+
+.cp-plan-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.cp-plan-tag {
+  border: 1px solid #b8cff7;
+  background: #edf4ff;
+  color: #0f418f;
+  border-radius: 999px;
+  padding: 5px 8px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
+.cp-plan-tag-commission {
+  border-color: #f2c898;
+  background: #fff4e7;
+  color: #9f4d09;
+}
+
 .cp-plan-name {
   margin: 0;
   font-size: 12px;
@@ -459,12 +537,21 @@
   letter-spacing: 0.08em;
   color: #1d58b0;
   font-weight: 700;
+  max-width: 240px;
 }
 
 .cp-plan-price {
-  margin: 8px 0 10px;
+  margin: 2px 0 0;
   color: var(--cp-text);
   font-weight: 700;
+  font-size: clamp(26px, 3.2vw, 34px);
+  letter-spacing: -0.02em;
+}
+
+.cp-plan-price-note {
+  margin: 0 0 4px;
+  color: #5d7294;
+  font-size: 13px;
 }
 
 .cp-plan-card.is-highlight {
@@ -473,13 +560,32 @@
 }
 
 .cp-plan-group {
-  margin-bottom: 14px;
+  margin-bottom: 18px;
 }
 
 .cp-plan-group h3 {
   margin: 0 0 10px;
   font-size: 18px;
   color: var(--cp-text);
+}
+
+.cp-plan-group-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.cp-plan-group-head p {
+  margin: 0;
+  color: #486086;
+  font-size: 14px;
+}
+
+.cp-plan-card-commission {
+  border-color: #f1d6b8;
+  background: linear-gradient(160deg, #fffdfa 0%, #fff5e9 100%);
 }
 
 .cp-addons-grid {
@@ -758,6 +864,11 @@
 
   .cp-marketing-grid {
     grid-template-columns: 1fr;
+  }
+
+  .cp-plan-group-head {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }
 
