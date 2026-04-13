@@ -46,6 +46,11 @@ function addonStatusLabel(status: string | undefined): string {
   return "No contratado";
 }
 
+function isAddonContracted(status: string | undefined): boolean {
+  const normalized = (status ?? "").toLowerCase();
+  return normalized === "activo" || normalized === "configurando" || normalized === "suspendido";
+}
+
 export function AdminLayout() {
   const { logout, user, token } = useAuth();
   const location = useLocation();
@@ -131,18 +136,43 @@ export function AdminLayout() {
 
   const globalSections: NavSection[] = [
     {
-      title: "INICIO",
+      title: "INICIO EJECUTIVO",
       roles: ["reinpia_admin", "super_admin", "contador"],
-      items: [{ label: "Dashboard global", to: "/reinpia/dashboard", roles: ["reinpia_admin", "super_admin"] }],
+      items: [
+        { label: "Dashboard global", to: "/reinpia/dashboard", roles: ["reinpia_admin", "super_admin"] },
+        { label: "Resumen de clientes activos", to: "/reinpia/clientes-comerciales?view=resumen" },
+        { label: "Marcas activas", to: "/reinpia/tenants?status=active" },
+        { label: "Alertas criticas", to: "/reinpia/alerts?severity=critical" },
+        { label: "Consumo global IA", to: "/reinpia/clientes-comerciales?tab=tokens-ia" },
+        { label: "Estado de soporte", to: "/reinpia/commercial-inbox" },
+      ],
+    },
+    {
+      title: "COMERCIAL Y CAPTACIÓN",
+      roles: ["reinpia_admin", "super_admin"],
+      items: [
+        { label: "Prospectos de Marketing", to: "/reinpia/marketing/prospectos" },
+        { label: "Precotizaciones internas", to: "/reinpia/clientes-comerciales?tab=prequotes" },
+        { label: "Clientes potenciales", to: "/reinpia/clientes-comerciales?status=prospect" },
+        { label: "Seguimiento comercial", to: "/reinpia/commercial-inbox?scope=comercial" },
+        { label: "Propuestas enviadas", to: "/reinpia/clientes-comerciales?tab=proposals" },
+        { label: "Estado de cierre", to: "/reinpia/clientes-comerciales?tab=pipeline" },
+        { label: "Comisionistas", to: "/reinpia/commission-agents" },
+        { label: "Comisiones por venta/comercial", to: "/reinpia/reports/commissions" },
+      ],
     },
     {
       title: "CREACIÓN",
       roles: ["reinpia_admin", "super_admin"],
       items: [
-        { label: "Clientes", to: "/reinpia/clientes-comerciales?domain=creacion" },
+        { label: "Clientes principales", to: "/reinpia/clientes-comerciales?domain=creacion" },
+        { label: "Nueva cuenta cliente", to: "/reinpia/clientes-comerciales?domain=creacion&action=new" },
         { label: "Marcas", to: "/reinpia/tenants?domain=creacion" },
         { label: "Nueva marca", to: "/reinpia/brands/new" },
         { label: "Wizard de configuración", to: "/reinpia/tenants?domain=wizard" },
+        { label: "Activos iniciales", to: "/reinpia/tenants?domain=wizard&step=assets" },
+        { label: "Branding inicial", to: "/reinpia/tenants?domain=wizard&step=branding" },
+        { label: "Setup inicial de canales", to: "/reinpia/tenants?domain=wizard&step=channels" },
       ],
     },
     {
@@ -152,111 +182,137 @@ export function AdminLayout() {
         { label: "Clientes comerciales", to: "/reinpia/clientes-comerciales" },
         { label: "Marcas activas", to: "/reinpia/tenants?status=active" },
         { label: "Canales creados", to: "/reinpia/canales-creados" },
+        { label: "Landing creadas", to: "/reinpia/canales-creados?channel=landing" },
+        { label: "Ecommerce publicos creados", to: "/reinpia/canales-creados?channel=public" },
+        { label: "Ecommerce distribuidores creados", to: "/reinpia/canales-creados?channel=distributors" },
+        { label: "WebApps / POS creadas", to: "/reinpia/canales-creados?channel=pos" },
+        { label: "Estados de publicación", to: "/reinpia/canales-creados?view=status" },
+        { label: "Paises habilitados", to: "/reinpia/tenants?tab=countries" },
         { label: "Configuración internacional", to: "/reinpia/currency" },
       ],
     },
     {
-      title: "FINANZAS",
+      title: "FINANZAS Y CONTROL",
       roles: ["reinpia_admin", "super_admin", "contador"],
       items: [
         { label: "Pagos", to: "/reinpia/payments" },
+        { label: "Suscripciones", to: "/reinpia/clientes-comerciales?tab=subscriptions" },
+        { label: "Planes activos", to: "/reinpia/clientes-comerciales?tab=planes-addons" },
+        { label: "Add-ons contratados", to: "/reinpia/clientes-comerciales?tab=addons" },
         { label: "Comisiones", to: "/reinpia/reports/commissions" },
-        { label: "Planes y Add-ons", to: "/reinpia/clientes-comerciales?tab=planes-addons" },
+        { label: "Facturación / contador", to: "/reinpia/payments?tab=accounting" },
+        { label: "Limites por cliente", to: "/reinpia/clientes-comerciales?tab=limits" },
         { label: "Tokens IA", to: "/reinpia/clientes-comerciales?tab=tokens-ia" },
+        { label: "Consumo IA", to: "/reinpia/clientes-comerciales?tab=ia-usage" },
+        { label: "Bloqueos / desbloqueos llave IA", to: "/reinpia/clientes-comerciales?tab=ia-keys" },
       ],
     },
     {
       title: "OPERACIÓN INTERNA",
       roles: ["reinpia_admin", "super_admin"],
       items: [
-        { label: "Soporte", to: "/reinpia/commercial-inbox" },
         { label: "Alertas / Centinela", to: "/reinpia/alerts" },
         { label: "Seguridad", to: "/reinpia/security" },
-        { label: "Prospectos de Marketing", to: "/reinpia/marketing/prospectos" },
+        { label: "Soporte", to: "/reinpia/commercial-inbox" },
+        { label: "Tickets", to: "/reinpia/commercial-inbox?tab=tickets" },
         { label: "Usuarios internos", to: "/reinpia/users" },
-      ],
-    },
-    {
-      title: "ROLES FUTUROS",
-      roles: ["reinpia_admin", "super_admin"],
-      items: [
-        { label: "Contador (base lista)", to: "/reinpia/payments" },
-        { label: "Soporte (base lista)", to: "/reinpia/commercial-inbox" },
-        { label: "Comercial interno (base lista)", to: "/reinpia/marketing/prospectos" },
-        { label: "Operaciones (base lista)", to: "/reinpia/alerts" },
+        { label: "Roles", to: "/reinpia/users?tab=roles" },
+        { label: "Configuración global", to: "/reinpia/language" },
+        { label: "Integraciones", to: "/reinpia/operations?tab=integrations" },
+        { label: "Logs / auditoria", to: "/reinpia/operations?tab=auditoria" },
       ],
     },
   ];
 
-  const brandSections: NavSection[] = useMemo(() => [
-    {
-      title: "RESUMEN",
-      roles: ADMIN_ROLES,
-      items: [
-        { label: "Resumen de marca", to: "/" },
-        { label: "Plan activo y soporte", to: "/" },
-      ],
-    },
-    {
-      title: "CANALES",
-      roles: ADMIN_ROLES,
-      items: [
-        { label: "Landing", to: "/admin/channels/landing", roles: ["tenant_admin", "reinpia_admin"] },
-        { label: "Ecommerce público", to: "/admin/channels/public", roles: ["tenant_admin", "reinpia_admin"] },
-        { label: "Ecommerce distribuidores", to: "/admin/channels/distributors", roles: ["tenant_admin", "reinpia_admin"] },
-        { label: "WebApp / POS", to: "/admin/channels/pos", roles: ["tenant_admin", "reinpia_admin"] },
-      ],
-    },
-    {
-      title: "OPERACIÓN",
-      roles: ADMIN_ROLES,
-      items: [
-        { label: "Productos", to: "/products" },
-        { label: "Categorías", to: "/categories" },
-        { label: "Banners y promociones", to: "/admin/banners", roles: ["tenant_admin", "reinpia_admin"] },
-        { label: "Cupones", to: "/admin/coupons", roles: ["tenant_admin", "reinpia_admin"] },
-        { label: "Distribuidores", to: "/admin/distributors" },
-        { label: "Ventas POS", to: "/pos/sales" },
-        { label: "Fidelización", to: "/admin/loyalty", roles: ["tenant_admin", "reinpia_admin"] },
-        { label: "Configuración local", to: "/admin/currency", roles: ["tenant_admin", "reinpia_admin"] },
-      ],
-    },
-    {
-      title: "CONSUMO Y LÍMITES",
-      roles: ADMIN_ROLES,
-      items: [
-        { label: "Consumo del plan", to: "/" },
-        { label: "Usuarios", to: "/admin/users", roles: ["tenant_admin", "reinpia_admin", "tenant_staff"] },
-        { label: "Carga masiva y stock", to: "/admin/catalog/bulk-upload" },
-      ],
-    },
-    {
-      title: "SOPORTE",
-      roles: ADMIN_ROLES,
-      items: [
-        { label: "Soporte del plan", to: "/" },
-        { label: "Diagnóstico inteligente", to: "/admin/diagnostico-inteligente", roles: ["tenant_admin", "reinpia_admin"] },
-      ],
-    },
-    {
-      title: "ADD-ONS",
-      roles: ADMIN_ROLES,
-      items: [
-        { label: "Expandir capacidad", to: "/" },
-        { label: logisticsLabel, to: "/admin/logistics" },
-        { label: workdayLabel, to: "/admin/appointments" },
-        { label: nfcLabel, to: "/admin/addons/nfc", roles: ["tenant_admin", "reinpia_admin", "super_admin", "tenant_staff"] },
-      ],
-    },
-    {
-      title: "ALERTAS",
-      roles: ADMIN_ROLES,
-      items: [
-        { label: "Alertas principales", to: "/" },
-        { label: "Alertas operativas", to: "/admin/automation", roles: ["tenant_admin", "reinpia_admin"] },
-      ],
-    },
-  ], [logisticsLabel, workdayLabel, nfcLabel]);
+  const brandSections: NavSection[] = useMemo(() => {
+    const addonItems: NavItem[] = [{ label: "Expandir capacidad", to: "/" }];
+    if (isAddonContracted(brandSettings?.addon_logistics_status)) {
+      addonItems.push({ label: logisticsLabel, to: "/admin/logistics" });
+    }
+    if (isAddonContracted(brandSettings?.addon_workday_status)) {
+      addonItems.push({ label: workdayLabel, to: "/admin/appointments" });
+    }
+    if (isAddonContracted(brandSettings?.addon_nfc_status)) {
+      addonItems.push({
+        label: nfcLabel,
+        to: "/admin/addons/nfc",
+        roles: ["tenant_admin", "reinpia_admin", "super_admin", "tenant_staff"],
+      });
+    }
+
+    return [
+      {
+        title: "RESUMEN",
+        roles: ADMIN_ROLES,
+        items: [
+          { label: "Resumen de marca", to: "/" },
+          { label: "Cliente principal (plan y comercial)", to: "/" },
+        ],
+      },
+      {
+        title: "MARCAS",
+        roles: ADMIN_ROLES,
+        items: [
+          { label: "Marcas hijas", to: "/reinpia/tenants?domain=administracion", roles: ["reinpia_admin", "super_admin"] },
+          { label: "Ficha de marca activa", to: "/" },
+        ],
+      },
+      {
+        title: "CANALES",
+        roles: ADMIN_ROLES,
+        items: [
+          { label: "Landing", to: "/admin/channels/landing", roles: ["tenant_admin", "reinpia_admin"] },
+          { label: "Ecommerce público", to: "/admin/channels/public", roles: ["tenant_admin", "reinpia_admin"] },
+          { label: "Ecommerce distribuidores", to: "/admin/channels/distributors", roles: ["tenant_admin", "reinpia_admin"] },
+          { label: "WebApp / POS", to: "/admin/channels/pos", roles: ["tenant_admin", "reinpia_admin"] },
+        ],
+      },
+      {
+        title: "OPERACIÓN",
+        roles: ADMIN_ROLES,
+        items: [
+          { label: "Productos", to: "/products" },
+          { label: "Categorías", to: "/categories" },
+          { label: "Banners y promociones", to: "/admin/banners", roles: ["tenant_admin", "reinpia_admin"] },
+          { label: "Cupones", to: "/admin/coupons", roles: ["tenant_admin", "reinpia_admin"] },
+          { label: "Distribuidores", to: "/admin/distributors" },
+          { label: "Ventas POS", to: "/pos/sales" },
+          { label: "Fidelización", to: "/admin/loyalty", roles: ["tenant_admin", "reinpia_admin"] },
+          { label: "Configuración local", to: "/admin/currency", roles: ["tenant_admin", "reinpia_admin"] },
+        ],
+      },
+      {
+        title: "CONSUMO Y LÍMITES",
+        roles: ADMIN_ROLES,
+        items: [
+          { label: "Consumo del plan", to: "/" },
+          { label: "Usuarios", to: "/admin/users", roles: ["tenant_admin", "reinpia_admin", "tenant_staff"] },
+          { label: "Carga masiva y stock", to: "/admin/catalog/bulk-upload" },
+        ],
+      },
+      {
+        title: "SOPORTE",
+        roles: ADMIN_ROLES,
+        items: [
+          { label: "Soporte del plan", to: "/" },
+          { label: "Diagnóstico inteligente", to: "/admin/diagnostico-inteligente", roles: ["tenant_admin", "reinpia_admin"] },
+        ],
+      },
+      {
+        title: "ADD-ONS",
+        roles: ADMIN_ROLES,
+        items: addonItems,
+      },
+      {
+        title: "ALERTAS",
+        roles: ADMIN_ROLES,
+        items: [
+          { label: "Alertas principales", to: "/" },
+          { label: "Alertas operativas", to: "/admin/automation", roles: ["tenant_admin", "reinpia_admin"] },
+        ],
+      },
+    ];
+  }, [brandSettings?.addon_logistics_status, brandSettings?.addon_nfc_status, brandSettings?.addon_workday_status, logisticsLabel, nfcLabel, workdayLabel]);
 
   const visibleSections = mode === "global" && isGlobalOperator ? globalSections : brandSections;
   const homePath = mode === "global" && isGlobalOperator ? "/reinpia/dashboard" : "/";
