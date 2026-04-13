@@ -232,6 +232,24 @@ const NFC_PAQUETES_TARJETAS = [
   },
 ];
 
+const NAV_QUICK_ACCESS = [
+  {
+    to: "/comercia",
+    title: "Inicio",
+    detail: "Vista general",
+  },
+  {
+    to: "/comercia/marketing",
+    title: "Marketing",
+    detail: "Captacion y conversion",
+  },
+  {
+    to: "/comercia/consultoria",
+    title: "Consultoria",
+    detail: "Revision comercial guiada",
+  },
+];
+
 function formatMoney(value: string) {
   const amount = Number(value || 0);
   return Number.isFinite(amount) ? amount.toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "0.00";
@@ -315,10 +333,20 @@ export function ComerciaPreciosPage() {
           <p className="cp-brand-context">Selecciona plan base, expande capacidad y escala por etapas.</p>
         </div>
         <div className="cp-nav-actions">
-          <LanguageSelector />
-          <Link className="button button-outline" to="/comercia">Inicio</Link>
-          <Link className="button button-outline" to="/comercia/marketing">Marketing</Link>
-          <Link className="button button-outline" to="/comercia/consultoria">Consultoria</Link>
+          <div className="cp-nav-locale">
+            <LanguageSelector />
+          </div>
+          <div className="cp-nav-dock">
+            <p className="cp-nav-dock-label">Explora secciones</p>
+            <div className="cp-nav-dock-grid">
+              {NAV_QUICK_ACCESS.map((item) => (
+                <Link key={item.to} className="cp-nav-card" to={item.to}>
+                  <strong>{item.title}</strong>
+                  <span>{item.detail}</span>
+                </Link>
+              ))}
+            </div>
+          </div>
         </div>
       </nav>
 

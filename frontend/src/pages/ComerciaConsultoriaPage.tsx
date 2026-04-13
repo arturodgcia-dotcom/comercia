@@ -42,6 +42,24 @@ const DEFAULT_FORM: ConsultoriaForm = {
   message: "",
 };
 
+const NAV_QUICK_ACCESS = [
+  {
+    to: "/comercia",
+    title: "Inicio",
+    detail: "Vista general",
+  },
+  {
+    to: "/comercia/precios",
+    title: "Precios",
+    detail: "Planes y add-ons",
+  },
+  {
+    to: "/comercia/marketing",
+    title: "Marketing",
+    detail: "Captacion y conversion",
+  },
+];
+
 export function ComerciaConsultoriaPage() {
   const [form, setForm] = useState<ConsultoriaForm>(DEFAULT_FORM);
   const [loading, setLoading] = useState(false);
@@ -83,10 +101,20 @@ export function ComerciaConsultoriaPage() {
           <p className="cp-brand-context">Diagnostico, optimizacion operativa y automatizacion comercial guiada.</p>
         </div>
         <div className="cp-nav-actions">
-          <LanguageSelector />
-          <Link className="button button-outline" to="/comercia">Inicio</Link>
-          <Link className="button button-outline" to="/comercia/precios">Precios</Link>
-          <Link className="button button-outline" to="/comercia/marketing">Marketing</Link>
+          <div className="cp-nav-locale">
+            <LanguageSelector />
+          </div>
+          <div className="cp-nav-dock">
+            <p className="cp-nav-dock-label">Explora secciones</p>
+            <div className="cp-nav-dock-grid">
+              {NAV_QUICK_ACCESS.map((item) => (
+                <Link key={item.to} className="cp-nav-card" to={item.to}>
+                  <strong>{item.title}</strong>
+                  <span>{item.detail}</span>
+                </Link>
+              ))}
+            </div>
+          </div>
         </div>
       </nav>
 

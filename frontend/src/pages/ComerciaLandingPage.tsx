@@ -79,6 +79,24 @@ const RESPUESTAS_RAPIDAS = [
   },
 ];
 
+const NAV_QUICK_ACCESS = [
+  {
+    to: "/comercia/precios",
+    title: "Precios",
+    detail: "Planes y add-ons",
+  },
+  {
+    to: "/comercia/marketing",
+    title: "Marketing",
+    detail: "Captacion y conversion",
+  },
+  {
+    to: "/comercia/consultoria",
+    title: "Consultoria",
+    detail: "Revision comercial guiada",
+  },
+];
+
 const FAQ_JSON_LD = {
   "@context": "https://schema.org",
   "@type": "FAQPage",
@@ -127,10 +145,20 @@ export function ComerciaLandingPage() {
           </p>
         </div>
         <div className="cp-nav-actions">
-          <LanguageSelector />
-          <Link className="button button-outline" to="/comercia/precios">Precios</Link>
-          <Link className="button button-outline" to="/comercia/marketing">Marketing</Link>
-          <Link className="button button-outline" to="/comercia/consultoria">Consultoria</Link>
+          <div className="cp-nav-locale">
+            <LanguageSelector />
+          </div>
+          <div className="cp-nav-dock">
+            <p className="cp-nav-dock-label">Explora secciones</p>
+            <div className="cp-nav-dock-grid">
+              {NAV_QUICK_ACCESS.map((item) => (
+                <Link key={item.to} className="cp-nav-card" to={item.to}>
+                  <strong>{item.title}</strong>
+                  <span>{item.detail}</span>
+                </Link>
+              ))}
+            </div>
+          </div>
         </div>
       </nav>
 
