@@ -8,6 +8,7 @@ import { StorePOSTemplate } from "../pages/templates/StorePOSTemplate";
 import { TemplateFamilyDemoPage } from "../pages/templates/TemplateFamilyDemoPage";
 import { AppointmentsAdminPage } from "../pages/AppointmentsAdminPage";
 import { BrandingEditorPage } from "../pages/BrandingEditorPage";
+import { BrandChildBrandsPage } from "../pages/BrandChildBrandsPage";
 import { BannersAdminPage } from "../pages/BannersAdminPage";
 import { CatalogBulkUploadPage } from "../pages/CatalogBulkUploadPage";
 import { CategoriesPage } from "../pages/CategoriesPage";
@@ -158,6 +159,7 @@ export function AppRouter() {
             <Route path="admin/language" element={<LanguageAdminPage />} />
             <Route path="admin/currency" element={<CurrencyAdminPage />} />
             <Route path="admin/branding" element={<BrandingEditorPage />} />
+            <Route path="admin/brands/children" element={<BrandChildBrandsPage />} />
             <Route path="plans" element={<PlansPage />} />
             <Route path="admin/payments" element={<PaymentsAdminPage />} />
             <Route path="admin/loyalty" element={<LoyaltyProgramAdminPage />} />

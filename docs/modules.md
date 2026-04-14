@@ -617,3 +617,18 @@ Nuevos endpoints:
 - Limpieza de flujo principal | Estado: funcional
   - rutas legacy/global mezcladas fuera del menu principal.
   - selector de marca ya no redirige a `/tenants/:tenantId/branding` en flujo principal.
+## Panel cliente/marca - ajustes de contexto (2026-04-13)
+
+- `Dashboard de marca`:
+  - Botones de resumen activos: compra de créditos IA, soporte comercial local y mejora de plan.
+  - Se retiró el bloque separado de contexto comercial para evitar duplicidad en la vista principal.
+- `Marcas hijas`:
+  - Nuevo módulo local: `/admin/brands/children`.
+  - Muestra marca principal + hijas relacionadas con estado operativo y consumo por marca.
+  - Incluye CTAs de crecimiento: mejorar plan, add-on de marca, más créditos IA.
+- `Ficha de marca activa`:
+  - Ruta: `/admin/branding`.
+  - Permite cambiar de marca (principal/hija) para revisar salud operativa y branding básico.
+- `Navegación panel de marca`:
+  - Se eliminó el agrupador `Canales`.
+  - Los accesos de canal viven bajo `Operación`.

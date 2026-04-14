@@ -1222,3 +1222,15 @@ Arquitectura aplicada:
 - menu global sin accesos legacy mezclados.
 - se evita empujar flujo principal a `/tenants/:tenantId/branding`; selector de marca vuelve al dashboard de marca.
 - rutas legacy pueden permanecer en código, pero fuera de la navegacion principal.
+## Ajuste de arquitectura local marca (2026-04-13)
+
+- Se reforzó separación de contexto:
+  - Panel global para gobierno y administración central.
+  - Panel cliente/marca para operación local y decisiones de capacidad de su propia cuenta.
+- Flujo local agregado:
+  - `/admin/brands/children` como vista operativa de marca principal y marcas hijas relacionadas.
+  - `/admin/branding` como ficha de revisión por marca (selector de principal/hija).
+- Navegación:
+  - Se eliminó la sección `Canales` del menú de marca para simplificar IA/operación.
+  - Canales se mantienen operativos dentro de la sección `Operación`.
+- Las acciones de crecimiento y soporte del resumen de marca resuelven dentro del contexto local del tenant.

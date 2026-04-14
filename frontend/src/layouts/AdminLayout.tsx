@@ -217,7 +217,7 @@ export function AdminLayout() {
   ];
 
   const brandSections: NavSection[] = useMemo(() => {
-    const addonItems: NavItem[] = [{ label: "Expandir capacidad", to: "/" }];
+    const addonItems: NavItem[] = [{ label: "Expandir capacidad", to: "/plans" }];
     if (isAddonContracted(brandSettings?.addon_logistics_status)) {
       addonItems.push({ label: logisticsLabel, to: "/admin/logistics" });
     }
@@ -242,26 +242,21 @@ export function AdminLayout() {
         ],
       },
       {
-        title: "MARCAS",
+        title: "MARCAS HIJAS",
         roles: ADMIN_ROLES,
         items: [
+          { label: "Marcas hijas", to: "/admin/brands/children", roles: ["tenant_admin", "reinpia_admin"] },
           { label: "Ficha de marca activa", to: "/admin/branding", roles: ["tenant_admin", "reinpia_admin"] },
-        ],
-      },
-      {
-        title: "CANALES",
-        roles: ADMIN_ROLES,
-        items: [
-          { label: "Landing", to: "/admin/channels/landing", roles: ["tenant_admin", "reinpia_admin"] },
-          { label: "Ecommerce público", to: "/admin/channels/public", roles: ["tenant_admin", "reinpia_admin"] },
-          { label: "Ecommerce distribuidores", to: "/admin/channels/distributors", roles: ["tenant_admin", "reinpia_admin"] },
-          { label: "WebApp / POS", to: "/admin/channels/pos", roles: ["tenant_admin", "reinpia_admin"] },
         ],
       },
       {
         title: "OPERACIÓN",
         roles: ADMIN_ROLES,
         items: [
+          { label: "Landing", to: "/admin/channels/landing", roles: ["tenant_admin", "reinpia_admin"] },
+          { label: "Ecommerce público", to: "/admin/channels/public", roles: ["tenant_admin", "reinpia_admin"] },
+          { label: "Ecommerce distribuidores", to: "/admin/channels/distributors", roles: ["tenant_admin", "reinpia_admin"] },
+          { label: "WebApp / POS", to: "/admin/channels/pos", roles: ["tenant_admin", "reinpia_admin"] },
           { label: "Productos", to: "/products" },
           { label: "Categorías", to: "/categories" },
           { label: "Banners y promociones", to: "/admin/banners", roles: ["tenant_admin", "reinpia_admin"] },

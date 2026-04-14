@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../app/AuthContext";
 import { KpiCard } from "../components/KpiCard";
 import { PageHeader } from "../components/PageHeader";
@@ -63,13 +63,9 @@ function creditStateColor(state: "ok" | "warning" | "critical"): string {
   return "#22c55e";
 }
 
-function supportChannel(support: string | null | undefined): "correo" | "chat" {
-  const normalized = String(support || "").toLowerCase();
-  return normalized.includes("chat") ? "chat" : "correo";
-}
-
 export function DashboardPage() {
   const { token, user } = useAuth();
+  const navigate = useNavigate();
   const tenantId = user?.tenant_id ?? null;
   const [commercialStatus, setCommercialStatus] = useState<TenantCommercialStatus | null>(null);
   const [commercialUsage, setCommercialUsage] = useState<TenantCommercialUsage | null>(null);
@@ -205,6 +201,10 @@ export function DashboardPage() {
     }
   };
 
+  const handleUpgradePlan = async (notes: string) => {
+    await handlePlanRequest({ request_type: "upgrade", target_plan_key: "growth_fixed", notes });
+  };
+
   return (
     <section>
       <PageHeader
@@ -227,6 +227,31 @@ export function DashboardPage() {
         <p>
           <strong>Soporte incluido:</strong> {commercialStatus?.support || activePlan?.support || "Soporte base"}
         </p>
+        <div className="row-gap">
+          <button
+            className="button button-outline"
+            type="button"
+            disabled={Boolean(loadingCheckout)}
+            onClick={() => void handleAddonCheckout("extra_500_ai_credits", { resourceOrigin: "capacity_ai_credits", uiOrigin: "dashboard_brand" })}
+          >
+            {loadingCheckout === "extra_500_ai_credits" ? "Redirigiendo..." : "Comprar más créditos"}
+          </button>
+          <button
+            className="button button-outline"
+            type="button"
+            onClick={() => navigate("/admin/contracts")}
+          >
+            Abrir soporte comercial
+          </button>
+          <button
+            className="button"
+            type="button"
+            disabled={Boolean(loadingAction)}
+            onClick={() => void handleUpgradePlan("Solicitud de mejora de plan desde resumen de marca.")}
+          >
+            {loadingAction === "growth_fixed" ? "Enviando..." : "Mejorar plan"}
+          </button>
+        </div>
       </article>
 
       <div className="card-grid" style={{ marginBottom: "1rem" }}>
@@ -346,41 +371,6 @@ export function DashboardPage() {
         </div>
       </article>
 
-      <article className="card-grid">
-        <article className="card">
-          <h3>Comision por venta</h3>
-          {commercialStatus?.commission_enabled ? (
-            <>
-              <p><strong>Comision sobre venta activa</strong></p>
-              <p>Porcentaje: {Number(commercialStatus.commission_percentage ?? 0).toFixed(2)}%</p>
-              <p>Scope: {user?.role === "tenant_admin" ? "ventas_online_pagadas" : "ventas_online_pagadas"}</p>
-              <p>Ventas sujetas a comision: ${metrics.sold.toLocaleString("es-MX")}</p>
-              <p>Comision acumulada estimada: ${metrics.commission.toLocaleString("es-MX")}</p>
-            </>
-          ) : (
-            <p><strong>Comision sobre venta desactivada</strong></p>
-          )}
-        </article>
-
-        <article className="card">
-          <h3>Soporte por plan</h3>
-          {supportChannel(commercialStatus?.support) === "correo" ? (
-            <>
-              <p>Canal principal: Correo</p>
-              <p>Correo de atencion: soporte@comercia.mx</p>
-            </>
-          ) : (
-            <>
-              <p>Canal principal: Chat agente IA</p>
-              <p>Escalamiento a persona: Base visual preparada (sin integracion Telegram en esta fase).</p>
-            </>
-          )}
-          <Link className="button button-outline" to="/admin/channels/landing">
-            Abrir soporte comercial
-          </Link>
-        </article>
-      </article>
-
       <article className="card">
         <h3>Expandir capacidad</h3>
         <p>Recursos cerca del limite: {capacityCards.filter((item) => item.limit > 0 && item.used >= Math.ceil(item.limit * PREVENTIVE_RATIO)).map((x) => x.label).join(", ") || "Sin alertas de capacidad"}</p>
@@ -405,9 +395,9 @@ export function DashboardPage() {
             className="button"
             type="button"
             disabled={Boolean(loadingAction)}
-            onClick={() => void handlePlanRequest({ request_type: "upgrade", target_plan_key: "growth_fixed", notes: "Solicitud de mejora de plan desde dashboard de marca." })}
+            onClick={() => void handleUpgradePlan("Solicitud de mejora de plan desde dashboard de marca.")}
           >
-            Mejorar plan
+            {loadingAction === "growth_fixed" ? "Enviando..." : "Mejorar plan"}
           </button>
         </div>
       </article>

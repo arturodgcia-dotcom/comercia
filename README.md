@@ -1108,3 +1108,10 @@ Variables backend (`backend/.env`):
 - Wizard conservado:
   - no se toca su logica interna ni persistencia.
   - continua operativo en rutas `/reinpia/brands/:tenantId/setup`.
+## Actualizacion panel cliente/marca (2026-04-13)
+
+- El panel de marca mantiene contexto local para acciones de resumen: `Comprar más créditos`, `Abrir soporte comercial` y `Mejorar plan`.
+- Se agregó vista local de `Marcas hijas` en `/admin/brands/children`, sin saltar al panel global ni mostrar acciones globales de creación.
+- La `Ficha de marca activa` (`/admin/branding`) ahora permite revisar marcas hijas relacionadas desde selector interno.
+- El menú de marca eliminó la división `Canales`; los accesos de canal quedaron dentro de `Operación`.
+- Se consolidó la experiencia para crecimiento de capacidad (upgrade y add-ons) dentro del panel local.

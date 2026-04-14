@@ -692,3 +692,15 @@
 - [x] Limpieza de navegacion principal para sacar flujo legacy/mezclado
 - [x] Wizard preservado y funcional sin rehacer logica
 - [x] Validacion ejecutada: frontend build + backend compile
+## Checklist - Correcciones panel cliente/marca (2026-04-13)
+
+- [x] Botón `Comprar más créditos` funcional en resumen de marca.
+- [x] Botón `Abrir Soporte Comercial` funcional y local (`/admin/contracts`).
+- [x] Botón `Mejorar Plan` funcional sin salto al panel global.
+- [x] Eliminado bloque separado de cliente principal/comercial en resumen.
+- [x] `Marcas hijas` ya no navega al panel global.
+- [x] Vista local de marcas hijas implementada (`/admin/brands/children`).
+- [x] Sin botón global de crear marca en flujo local de marcas hijas.
+- [x] `Ficha de marca activa` revisa principal/hijas con selector.
+- [x] Menú de marca sin sección `Canales`.
+- [x] Router actualizado con rutas locales de marca.
