@@ -141,6 +141,26 @@ Objetivo: base estable para BI/reporting sin dependencias de Excel en esta fase.
 - Frontend: `RoleRoute` para vistas `/reinpia/*`.
 - `tenant_admin` no accede al dashboard global multi-tenant.
 
+## 12.1) Arquitectura administrativa consolidada (vigente)
+Estructura oficial:
+- Panel global:
+  - Inicio
+  - Creación
+  - Administración
+  - Finanzas
+  - Operación interna
+- Wizard:
+  - flujo oficial de creación/setup inicial por marca
+- Canales creados:
+  - administración global posterior de landing, ecommerce público, ecommerce distribuidores y webApp/POS
+- Panel de marca:
+  - operación diaria, consumo/límites, soporte, add-ons y alertas
+
+Decisiones de limpieza:
+- Se retiran aliases legacy de administración de tenants (`/tenants*`) para evitar duplicidad con rutas REINPIA.
+- Se conserva una sola ficha administrativa de marca por ruta:
+  - `/reinpia/tenants/:tenantId`
+
 ## 15) Flujo de comisionistas y referidos
 1. COMERCIA landing acepta clave de comisionista manual y por query param `?ref=CODIGO`.
 2. Backend valida codigo en `SalesCommissionAgent`.

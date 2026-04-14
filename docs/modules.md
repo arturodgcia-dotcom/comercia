@@ -233,6 +233,22 @@ Nuevos endpoints:
   - modulos internos y prospectos internos
 - Se depuro `ComerciaLandingPage.css` para conservar estilos usados por el sitio publico oficial.
 
+## Actualizacion arquitectura admin global/marca (Ejecucion 41)
+- Se consolidó la arquitectura administrativa oficial:
+  - Panel global: Inicio, Creación, Administración, Finanzas, Operación interna.
+  - Wizard oficial solo para creación inicial.
+  - Módulo global `Canales creados` como centro administrativo de canales.
+  - Panel de marca orientado a operación diaria.
+- Se retiraron rutas legacy/alias de tenants:
+  - `/tenants`
+  - `/tenants/:tenantId`
+  - `/tenants/:tenantId/branding`
+- Se eliminaron páginas legacy no alineadas:
+  - `frontend/src/pages/TenantsPage.tsx`
+  - `frontend/src/pages/TenantDetailPage.tsx`
+- Se actualizaron accesos en `Canales creados` para usar solo rutas REINPIA oficiales de ficha de marca.
+- Se eliminó mezcla de contexto global dentro del menú de marca.
+
 ## Actualizacion canales de marca tenant-aware (Ejecucion 38)
 - Nuevas rutas de control por canal en panel de marca:
   - `/admin/channels/landing`

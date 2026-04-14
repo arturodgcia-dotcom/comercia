@@ -83,7 +83,6 @@ import { ResolvedStorefrontLandingPage } from "../pages/ResolvedStorefrontLandin
 import { ResolvedStorefrontPublicPage } from "../pages/ResolvedStorefrontPublicPage";
 import { StoreServicesPage } from "../pages/StoreServicesPage";
 import { StripeSettingsPage } from "../pages/StripeSettingsPage";
-import { TenantDetailPage } from "../pages/TenantDetailPage";
 import { TenantReportsOverviewPage } from "../pages/TenantReportsOverviewPage";
 import { TenantSalesReportPage } from "../pages/TenantSalesReportPage";
 import { TenantProductsReportPage } from "../pages/TenantProductsReportPage";
@@ -92,7 +91,6 @@ import { TenantDistributorsReportPage } from "../pages/TenantDistributorsReportP
 import { TenantLogisticsReportPage } from "../pages/TenantLogisticsReportPage";
 import { TenantServicesReportPage } from "../pages/TenantServicesReportPage";
 import { TenantMarketingInsightsPage } from "../pages/TenantMarketingInsightsPage";
-import { TenantsPage } from "../pages/TenantsPage";
 import { UsersAdminPage } from "../pages/UsersAdminPage";
 import {
   BrandDistributorsChannelPage,
@@ -182,9 +180,6 @@ export function AppRouter() {
             <Route path="onboarding/client" element={<OnboardingClientPage />} />
             <Route path="admin/automation" element={<AutomationAdminPage />} />
             <Route element={<RoleRoute allowedRoles={["reinpia_admin", "super_admin"]} />}>
-              <Route path="tenants" element={<TenantsPage />} />
-              <Route path="tenants/:tenantId" element={<TenantDetailPage />} />
-              <Route path="tenants/:tenantId/branding" element={<BrandingEditorPage />} />
               <Route path="reinpia/dashboard" element={<ReinpiaDashboardPage />} />
               <Route path="reinpia/brands/new" element={<ReinpiaBrandsNewPage />} />
               <Route path="reinpia/brands/:tenantId/setup" element={<BrandSetupWizard />} />

@@ -68,6 +68,7 @@ export function AdminLayout() {
     const saved = sessionStorage.getItem(STORAGE_MODE_KEY);
     return saved === "global" || saved === "brand" ? saved : "brand";
   });
+  const globalHomePath = isSuperAdmin ? "/reinpia/dashboard" : "/reinpia/payments";
 
   useEffect(() => {
     if (!isGlobalOperator) {
@@ -104,6 +105,12 @@ export function AdminLayout() {
   }, [isGlobalOperator, location.pathname]);
 
   useEffect(() => {
+    if (userRole === "contador" && location.pathname.startsWith("/reinpia/dashboard")) {
+      navigate("/reinpia/payments", { replace: true });
+    }
+  }, [location.pathname, navigate, userRole]);
+
+  useEffect(() => {
     if (!token) return;
     const targetTenantId = isSuperAdmin ? selectedBrandId : user?.tenant_id;
     if (!targetTenantId) return;
@@ -136,29 +143,14 @@ export function AdminLayout() {
 
   const globalSections: NavSection[] = [
     {
-      title: "INICIO EJECUTIVO",
+      title: "INICIO",
       roles: ["reinpia_admin", "super_admin", "contador"],
       items: [
         { label: "Dashboard global", to: "/reinpia/dashboard", roles: ["reinpia_admin", "super_admin"] },
         { label: "Resumen de clientes activos", to: "/reinpia/clientes-comerciales?view=resumen" },
-        { label: "Marcas activas", to: "/reinpia/tenants?status=active" },
         { label: "Alertas criticas", to: "/reinpia/alerts?severity=critical" },
         { label: "Consumo global IA", to: "/reinpia/clientes-comerciales?tab=tokens-ia" },
         { label: "Estado de soporte", to: "/reinpia/commercial-inbox" },
-      ],
-    },
-    {
-      title: "COMERCIAL Y CAPTACIÓN",
-      roles: ["reinpia_admin", "super_admin"],
-      items: [
-        { label: "Prospectos de Marketing", to: "/reinpia/marketing/prospectos" },
-        { label: "Precotizaciones internas", to: "/reinpia/clientes-comerciales?tab=prequotes" },
-        { label: "Clientes potenciales", to: "/reinpia/clientes-comerciales?status=prospect" },
-        { label: "Seguimiento comercial", to: "/reinpia/commercial-inbox?scope=comercial" },
-        { label: "Propuestas enviadas", to: "/reinpia/clientes-comerciales?tab=proposals" },
-        { label: "Estado de cierre", to: "/reinpia/clientes-comerciales?tab=pipeline" },
-        { label: "Comisionistas", to: "/reinpia/commission-agents" },
-        { label: "Comisiones por venta/comercial", to: "/reinpia/reports/commissions" },
       ],
     },
     {
@@ -246,15 +238,14 @@ export function AdminLayout() {
         roles: ADMIN_ROLES,
         items: [
           { label: "Resumen de marca", to: "/" },
-          { label: "Cliente principal (plan y comercial)", to: "/" },
+          { label: "Plan activo y soporte", to: "/plans" },
         ],
       },
       {
         title: "MARCAS",
         roles: ADMIN_ROLES,
         items: [
-          { label: "Marcas hijas", to: "/reinpia/tenants?domain=administracion", roles: ["reinpia_admin", "super_admin"] },
-          { label: "Ficha de marca activa", to: "/" },
+          { label: "Ficha de marca activa", to: "/admin/branding", roles: ["tenant_admin", "reinpia_admin"] },
         ],
       },
       {
@@ -285,7 +276,7 @@ export function AdminLayout() {
         title: "CONSUMO Y LÍMITES",
         roles: ADMIN_ROLES,
         items: [
-          { label: "Consumo del plan", to: "/" },
+          { label: "Consumo del plan", to: "/plans" },
           { label: "Usuarios", to: "/admin/users", roles: ["tenant_admin", "reinpia_admin", "tenant_staff"] },
           { label: "Carga masiva y stock", to: "/admin/catalog/bulk-upload" },
         ],
@@ -294,20 +285,19 @@ export function AdminLayout() {
         title: "SOPORTE",
         roles: ADMIN_ROLES,
         items: [
-          { label: "Soporte del plan", to: "/" },
+          { label: "Soporte del plan", to: "/admin/contracts", roles: ["tenant_admin", "reinpia_admin"] },
           { label: "Diagnóstico inteligente", to: "/admin/diagnostico-inteligente", roles: ["tenant_admin", "reinpia_admin"] },
         ],
       },
       {
         title: "ADD-ONS",
         roles: ADMIN_ROLES,
-        items: addonItems,
+        items: [{ label: "Expandir capacidad", to: "/plans" }, ...addonItems.filter((item) => item.label !== "Expandir capacidad")],
       },
       {
         title: "ALERTAS",
         roles: ADMIN_ROLES,
         items: [
-          { label: "Alertas principales", to: "/" },
           { label: "Alertas operativas", to: "/admin/automation", roles: ["tenant_admin", "reinpia_admin"] },
         ],
       },
@@ -315,7 +305,7 @@ export function AdminLayout() {
   }, [brandSettings?.addon_logistics_status, brandSettings?.addon_nfc_status, brandSettings?.addon_workday_status, logisticsLabel, nfcLabel, workdayLabel]);
 
   const visibleSections = mode === "global" && isGlobalOperator ? globalSections : brandSections;
-  const homePath = mode === "global" && isGlobalOperator ? "/reinpia/dashboard" : "/";
+  const homePath = mode === "global" && isGlobalOperator ? globalHomePath : "/";
 
   const pathParts = location.pathname.split("/").filter(Boolean);
   const breadcrumbs = pathParts.map((part, index) => {
@@ -329,7 +319,7 @@ export function AdminLayout() {
   const onChangeMode = (nextMode: AppMode) => {
     setMode(nextMode);
     if (nextMode === "global") {
-      navigate("/reinpia/dashboard");
+      navigate(globalHomePath);
       return;
     }
     navigate("/");

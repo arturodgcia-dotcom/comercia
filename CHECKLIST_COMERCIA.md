@@ -147,6 +147,16 @@
 - [x] Depuracion de estilos legacy en `ComerciaLandingPage.css` para sitio publico vigente
 - [x] Validacion de build frontend sin imports rotos
 - [x] Documentacion actualizada (`README.md`, `docs/modules.md`, `docs/architecture.md`, `CHECKLIST_COMERCIA.md`)
+
+## Entregables ejecucion 41 (Limpieza admin global/marca legacy)
+- [x] Auditoria de rutas oficiales: panel global, wizard, canales creados y panel de marca
+- [x] Identificacion de legacy/duplicados de tenants en router admin
+- [x] Retiro de aliases legacy de tenants (`/tenants`, `/tenants/:tenantId`, `/tenants/:tenantId/branding`)
+- [x] Eliminacion de paginas legacy `TenantsPage` y `TenantDetailPage`
+- [x] Consolidacion de enlaces de marca hacia `/reinpia/tenants/:tenantId`
+- [x] Limpieza de menu para evitar mezcla de contexto global en panel de marca
+- [x] Validacion build frontend y compile backend
+- [x] Documentacion actualizada (`README.md`, `docs/modules.md`, `docs/architecture.md`, `CHECKLIST_COMERCIA.md`)
 - [x] Seeds demo idempotentes de eventos, alertas, bloqueos y reglas de seguridad
 - [x] Documentacion actualizada (README, architecture, modules, checklist)
 - [x] Validacion: backend compile + alembic upgrade head + frontend build

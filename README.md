@@ -174,6 +174,27 @@ npm run dev
   - `http://localhost:5175/reinpia/security/alerts`
   - `http://localhost:5175/reinpia/security/rules`
   - `http://localhost:5175/reinpia/security/blocked`
+
+## Arquitectura administrativa oficial (vigente)
+Panel global:
+- Inicio
+- Creación
+- Administración
+- Finanzas
+- Operación interna
+
+Flujos oficiales:
+- Wizard: `/reinpia/brands/:tenantId/setup` (solo creación / setup inicial)
+- Canales creados: `/reinpia/canales-creados` (administración global posterior de canales)
+- Panel de marca: operación diaria desde menú de marca (canales, operación, consumo/límites, soporte, add-ons, alertas)
+
+Limpieza de legacy aplicada:
+- Se retiraron aliases legacy de panel:
+  - `/tenants`
+  - `/tenants/:tenantId`
+  - `/tenants/:tenantId/branding`
+- Se consolidó navegación de ficha de marca en:
+  - `/reinpia/tenants/:tenantId`
 - Onboarding:
   - `http://localhost:5175/onboarding/sales`
   - `http://localhost:5175/onboarding/client`

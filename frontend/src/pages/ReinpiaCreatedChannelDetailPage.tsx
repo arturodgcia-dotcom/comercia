@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useAuth } from "../app/AuthContext";
 import { PageHeader } from "../components/PageHeader";
@@ -10,7 +10,7 @@ type ChannelKey = "landing" | "public" | "distributors" | "pos";
 
 const CHANNEL_LABELS: Record<ChannelKey, string> = {
   landing: "Landing",
-  public: "Ecommerce público",
+  public: "Ecommerce pÃºblico",
   distributors: "Ecommerce distribuidores",
   pos: "WebApp / POS",
 };
@@ -63,7 +63,7 @@ function resolveState(workflow: BrandSetupWorkflow | null, channel: ChannelKey):
   };
   const step = workflow.steps.find((item) => item.code === stepCode[channel]);
   if (step?.approved) return "creado";
-  if (step?.status === "in_progress") return "en configuración";
+  if (step?.status === "in_progress") return "en configuraciÃ³n";
   return "pendiente";
 }
 
@@ -134,7 +134,7 @@ export function ReinpiaCreatedChannelDetailPage() {
   if (!channelValid) {
     return (
       <section>
-        <PageHeader title="Detalle de canal" subtitle="Canal no válido." />
+        <PageHeader title="Detalle de canal" subtitle="Canal no vÃ¡lido." />
         <Link className="button" to="/reinpia/canales-creados">
           Volver a canales creados
         </Link>
@@ -179,11 +179,11 @@ export function ReinpiaCreatedChannelDetailPage() {
               <p>{summary.route}</p>
             </article>
             <article className="card">
-              <h4>País / idioma / moneda</h4>
+              <h4>PaÃ­s / idioma / moneda</h4>
               <p>{summary.locale}</p>
             </article>
             <article className="card">
-              <h4>Última regeneración/configuración</h4>
+              <h4>Ãšltima regeneraciÃ³n/configuraciÃ³n</h4>
               <p>{summary.updatedAt}</p>
             </article>
             <article className="card">
@@ -202,10 +202,7 @@ export function ReinpiaCreatedChannelDetailPage() {
               Abrir canal
             </a>
             <Link className="button button-outline" to={`/reinpia/tenants/${tenant.id}`}>
-              Ver configuración comercial
-            </Link>
-            <Link className="button button-outline" to={`/tenants/${tenant.id}/branding`}>
-              Ir a panel de marca
+              Abrir ficha de marca
             </Link>
             <Link className="button" to="/reinpia/canales-creados">
               Volver a canales creados
@@ -216,3 +213,4 @@ export function ReinpiaCreatedChannelDetailPage() {
     </section>
   );
 }
+
