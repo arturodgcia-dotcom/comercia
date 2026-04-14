@@ -176,7 +176,7 @@ export function AdminLayout() {
         { label: "Pagos", to: "/reinpia/payments" },
         { label: "Comisiones", to: "/reinpia/reports/commissions" },
         { label: "Planes y Add-ons", to: "/reinpia/clientes-comerciales?tab=planes-addons" },
-        { label: "Tokens IA", to: "/reinpia/clientes-comerciales?tab=tokens-ia" },
+        { label: "Tokens IA", to: "/reinpia/clientes-comerciales?focus=tokens" },
       ],
     },
     {
@@ -221,8 +221,8 @@ export function AdminLayout() {
         title: "MARCAS HIJAS",
         roles: ADMIN_ROLES,
         items: [
-          { label: "Marcas hijas", to: "/admin/brands/children", roles: ["tenant_admin", "reinpia_admin"] },
-          { label: "Ficha de marca activa", to: "/admin/branding", roles: ["tenant_admin", "reinpia_admin"] },
+          { label: "Marcas hijas", to: "/admin/brands/children", roles: ["tenant_admin", "reinpia_admin", "super_admin"] },
+          { label: "Ficha de marca activa", to: "/admin/branding", roles: ["tenant_admin", "reinpia_admin", "super_admin"] },
         ],
       },
       {

@@ -664,3 +664,28 @@ Limpieza aplicada:
 - Sin items duplicados apuntando al mismo destino.
 - Sin accesos globales a rutas de panel de marca.
 - Sin saturacion por subopciones legacy en el menu principal.
+## Modulos de consumo y capacidad IA (2026-04-14)
+
+### Panel de marca
+
+- `Planes` (`/plans`)
+  - Plan contratado actual
+  - Marcas registradas segun cupo del plan
+  - Tokens IA mensuales (asignados, consumidos, restantes)
+  - Indicador de gasolina para consumo IA
+  - Acciones: upgrade y add-ons
+
+- `Marcas hijas` (`/admin/brands/children`)
+  - Lista de marca principal + submarcas
+  - Consumo operativo por marca
+  - Riesgo comercial (estable/advertencia/critico)
+  - Indicador de tokens por marca
+  - CTA de recarga IA y crecimiento
+
+### Panel global
+
+- `Clientes comerciales` (`/reinpia/clientes-comerciales`)
+  - Planeacion global de tokens IA
+  - Tokens distribuidos por marca
+  - Tokens de reserva y umbral minimo sugerido
+  - Agente centinela de sobreconsumo por marca

@@ -1254,3 +1254,20 @@ Reglas aplicadas:
 - Canales creados se mantiene como modulo global de administracion de canales.
 - Se retiran del flujo principal global los enlaces redundantes o de estructura legacy.
 - Se deja base visual clara para evolucionar permisos por rol (contador, soporte, comercial, operaciones).
+## Arquitectura de control de tokens IA (2026-04-14)
+
+Se incorporo una capa de monitoreo de tokens IA en dos niveles:
+
+- Nivel marca (operativo local):
+  - Indicadores de consumo y disponibilidad en `Planes` y `Marcas hijas`.
+  - Acciones de recarga y crecimiento sin salir del contexto local.
+
+- Nivel global (REINPIA):
+  - Planeacion de tokens generales.
+  - Distribucion por marca.
+  - Reserva minima sugerida.
+  - Agente centinela para deteccion temprana de sobreconsumo.
+
+Principio:
+- El panel de marca resuelve operacion diaria y acciones de compra para su cuenta.
+- El panel global supervisa distribucion, riesgo y reserva para evitar agotamiento sistémico.

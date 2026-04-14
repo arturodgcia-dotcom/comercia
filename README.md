@@ -1147,3 +1147,17 @@ Notas:
 - Se removieron del menu global enlaces duplicados o ambiguos.
 - Se evitaron enlaces globales hacia rutas del panel de marca.
 - Wizard y panel de marca se mantienen separados del flujo global.
+## Control de planes, marcas hijas y tokens IA (2026-04-14)
+
+- Panel de marca:
+  - `Marcas hijas` visible tambien para `super_admin` en contexto de marca activa.
+  - Vista de marcas hijas con consumo por marca, riesgo operativo y indicador de tokens IA tipo gasolina.
+  - CTA por marca para recargar tokens IA, mejorar plan y adquirir add-ons de capacidad.
+- Modulo `Planes`:
+  - Muestra el paquete contratado actual (no lista genérica de todos los planes legacy).
+  - Incluye cupo de marcas vs marcas registradas.
+  - Incluye tokens mensuales asignados/consumidos/restantes con indicador visual.
+  - Incluye acciones de upgrade y compra de add-ons.
+- Panel global:
+  - Se agrego planeacion de tokens IA: generales, distribuidos por marca y reserva.
+  - Se agrego bloque de `Agente centinela` para detectar sobreconsumo por marca y sugerir recarga.

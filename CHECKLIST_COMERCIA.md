@@ -715,3 +715,14 @@
 - [x] Sin enlaces globales apuntando a rutas del panel de marca.
 - [x] Sin duplicados en menu global principal.
 - [x] Wizard y panel de marca permanecen separados del flujo global.
+## Checklist - Plan, submarcas y tokens IA (2026-04-14)
+
+- [x] `Marcas hijas` visible para `super_admin` en panel de marca.
+- [x] Vista de submarcas con consumo por marca y riesgo operativo.
+- [x] Indicador tipo gasolina para consumo de tokens IA por marca.
+- [x] Modulo `Planes` muestra paquete contratado actual.
+- [x] `Planes` incluye upgrade y add-ons.
+- [x] `Planes` incluye cupo de marcas vs marcas registradas.
+- [x] Panel global incluye planeacion de tokens (general/distribuido/reserva).
+- [x] Panel global incluye centinela de consumo por marca con acciones de recarga.
+- [x] Navegacion global `Tokens IA` enfoca la seccion de tokens.

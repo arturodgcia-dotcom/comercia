@@ -1,4 +1,5 @@
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { useAuth } from "../app/AuthContext";
 import { PageHeader } from "../components/PageHeader";
 import { api } from "../services/api";
@@ -25,6 +26,7 @@ const DEFAULT_FORM: NewAccountForm = {
 
 export function ReinpiaCommercialClientsPage() {
   const { token } = useAuth();
+  const location = useLocation();
   const [rows, setRows] = useState<CommercialClientAccount[]>([]);
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [usage, setUsage] = useState<Record<number, CommercialAccountUsage>>({});
@@ -40,6 +42,74 @@ export function ReinpiaCommercialClientsPage() {
   const [loadingCheckout, setLoadingCheckout] = useState("");
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+
+  const tokensByBrand = useMemo(() => {
+    const tokenRows: Array<{
+      accountId: number;
+      accountName: string;
+      tenantId: number;
+      tenantName: string;
+      assigned: number;
+      reserved: number;
+      consumed: number;
+      remaining: number;
+      consumedPct: number;
+      keyState: string;
+      override: boolean;
+    }> = [];
+    for (const account of rowsDataWithCredits(rows, aiCredits)) {
+      for (const brand of account.brands) {
+        tokenRows.push({
+          accountId: account.id,
+          accountName: account.legal_name,
+          tenantId: brand.tenant_id,
+          tenantName: brand.tenant_name,
+          assigned: brand.assigned_tokens,
+          reserved: brand.reserved_tokens,
+          consumed: brand.consumed_tokens,
+          remaining: brand.remaining_tokens,
+          consumedPct: Number(brand.percentage_consumed || 0),
+          keyState: brand.key_state,
+          override: Boolean(brand.override_active),
+        });
+      }
+    }
+    return tokenRows.sort((a, b) => b.consumedPct - a.consumedPct);
+  }, [aiCredits, rows]);
+
+  const tokensPlanner = useMemo(() => {
+    const totals = tokensByBrand.reduce(
+      (acc, row) => {
+        acc.assigned += row.assigned;
+        acc.reserved += row.reserved;
+        acc.consumed += row.consumed;
+        acc.remaining += row.remaining;
+        return acc;
+      },
+      { assigned: 0, reserved: 0, consumed: 0, remaining: 0 }
+    );
+    const reserveFloor = Math.ceil(totals.assigned * 0.15);
+    const reserveHealthy = totals.reserved >= reserveFloor;
+    const criticalBrands = tokensByBrand.filter((row) => row.consumedPct >= 90 || row.remaining <= row.reserved * 0.2);
+    const warningBrands = tokensByBrand.filter((row) => row.consumedPct >= 75 && row.consumedPct < 90);
+    return {
+      ...totals,
+      reserveFloor,
+      reserveHealthy,
+      criticalBrands,
+      warningBrands,
+    };
+  }, [tokensByBrand]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const focus = params.get("focus");
+    if (focus !== "tokens") return;
+    const target = document.getElementById("tokens-global");
+    if (target) {
+      target.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [location.search]);
 
   const load = async () => {
     if (!token) return;
@@ -225,6 +295,18 @@ export function ReinpiaCommercialClientsPage() {
     }
   };
 
+  const handleReserveTopup = async (accountId: number) => {
+    const accountBrands = tenants.filter((tenant) => Number(tenant.commercial_client_account_id || 0) === accountId);
+    const parent = accountBrands.find((tenant) => tenant.is_parent_brand) ?? accountBrands[0];
+    if (!parent) return;
+    await handleAddonCheckout("extra_500_ai_credits", {
+      tenantId: parent.id,
+      accountId,
+      resourceOrigin: "capacity_ai_credits",
+      uiOrigin: "dashboard_global",
+    });
+  };
+
   return (
     <section>
       <PageHeader
@@ -234,6 +316,67 @@ export function ReinpiaCommercialClientsPage() {
       {error ? <p className="error">{error}</p> : null}
       {message ? <p>{message}</p> : null}
       {loading ? <p className="muted">Cargando...</p> : null}
+
+      <article className="card" id="tokens-global" style={{ marginBottom: "12px" }}>
+        <h3>Planeacion de tokens IA (global)</h3>
+        <p>
+          <strong>Tokens generales asignados:</strong> {tokensPlanner.assigned}
+          {" | "}<strong>Consumidos:</strong> {tokensPlanner.consumed}
+          {" | "}<strong>Restantes:</strong> {tokensPlanner.remaining}
+        </p>
+        <p>
+          <strong>Tokens en reserva:</strong> {tokensPlanner.reserved}
+          {" | "}<strong>Reserva minima sugerida:</strong> {tokensPlanner.reserveFloor}
+          {" | "}<strong>Estado de reserva:</strong> {tokensPlanner.reserveHealthy ? "Suficiente" : "Baja (requiere recarga)"}
+        </p>
+        <p>
+          <strong>Marcas en critico:</strong> {tokensPlanner.criticalBrands.length}
+          {" | "}<strong>Marcas en advertencia:</strong> {tokensPlanner.warningBrands.length}
+        </p>
+      </article>
+
+      <article className="card" style={{ marginBottom: "12px" }}>
+        <h3>Agente centinela de consumo IA por marca</h3>
+        <p>
+          Monitoreo automatico operativo: detecta sobreconsumo por marca, riesgo de agotamiento y necesidad de recarga de reserva.
+        </p>
+        <div className="card-grid">
+          {tokensPlanner.criticalBrands.slice(0, 6).map((brand) => (
+            <article className="card" key={`token-critical-${brand.tenantId}`}>
+              <p className="marketing-tag">Critico</p>
+              <h4>{brand.tenantName}</h4>
+              <p><strong>Cliente:</strong> {brand.accountName}</p>
+              <p><strong>Consumo:</strong> {brand.consumedPct.toFixed(2)}%</p>
+              <p><strong>Restantes:</strong> {brand.remaining}</p>
+              <p><strong>Reserva marca:</strong> {brand.reserved}</p>
+              <div className="row-gap">
+                <button
+                  className="button button-outline"
+                  type="button"
+                  disabled={Boolean(loadingCheckout)}
+                  onClick={() => void handleAddonCheckout("extra_500_ai_credits", {
+                    tenantId: brand.tenantId,
+                    accountId: brand.accountId,
+                    resourceOrigin: "capacity_ai_credits",
+                    uiOrigin: "dashboard_global",
+                  })}
+                >
+                  {loadingCheckout === `${brand.tenantId}:extra_500_ai_credits` ? "Redirigiendo..." : "Recargar tokens marca"}
+                </button>
+                <button
+                  className="button"
+                  type="button"
+                  disabled={Boolean(loadingCheckout)}
+                  onClick={() => void handleReserveTopup(brand.accountId)}
+                >
+                  Recargar reserva cliente
+                </button>
+              </div>
+            </article>
+          ))}
+          {!tokensPlanner.criticalBrands.length ? <p>Sin marcas en consumo critico de tokens IA.</p> : null}
+        </div>
+      </article>
 
       <div className="card-grid" style={{ gridTemplateColumns: "1.2fr 1fr" }}>
         <article className="card">
@@ -485,6 +628,57 @@ export function ReinpiaCommercialClientsPage() {
           </article>
         );
       })}
+
+      <article className="card" style={{ marginTop: "12px" }}>
+        <h3>Distribucion de tokens por marca</h3>
+        <div className="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Cliente</th>
+                <th>Marca</th>
+                <th>Asignados</th>
+                <th>Reserva</th>
+                <th>Consumidos</th>
+                <th>Restantes</th>
+                <th>% consumo</th>
+                <th>Llave</th>
+              </tr>
+            </thead>
+            <tbody>
+              {tokensByBrand.map((row) => (
+                <tr key={`dist-${row.accountId}-${row.tenantId}`}>
+                  <td>{row.accountName}</td>
+                  <td>{row.tenantName}</td>
+                  <td>{row.assigned}</td>
+                  <td>{row.reserved}</td>
+                  <td>{row.consumed}</td>
+                  <td>{row.remaining}</td>
+                  <td>{row.consumedPct.toFixed(2)}%</td>
+                  <td>{row.keyState}</td>
+                </tr>
+              ))}
+              {!tokensByBrand.length ? (
+                <tr>
+                  <td colSpan={8}>Sin distribucion de tokens disponible.</td>
+                </tr>
+              ) : null}
+            </tbody>
+          </table>
+        </div>
+      </article>
     </section>
   );
+}
+
+function rowsDataWithCredits(
+  accounts: CommercialClientAccount[],
+  credits: Record<number, CommercialAccountAiCredits>,
+): Array<CommercialClientAccount & { brands: CommercialAccountAiCredits["brands"] }> {
+  return accounts
+    .map((account) => ({
+      ...account,
+      brands: credits[account.id]?.brands ?? [],
+    }))
+    .filter((account) => account.brands.length > 0);
 }
