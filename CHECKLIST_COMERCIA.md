@@ -704,3 +704,14 @@
 - [x] `Ficha de marca activa` revisa principal/hijas con selector.
 - [x] Menú de marca sin sección `Canales`.
 - [x] Router actualizado con rutas locales de marca.
+## Checklist - Orden del Panel Global (2026-04-14)
+
+- [x] Panel Global organizado en 5 dominios: Inicio, Creacion, Administracion, Finanzas, Operacion interna.
+- [x] INICIO mantiene solo dashboard global.
+- [x] CREACION mantiene solo alta/setup inicial (Clientes, Marcas, Nueva marca, Wizard).
+- [x] ADMINISTRACION mantiene activos creados y configuracion internacional.
+- [x] FINANZAS concentra pagos, comisiones, planes/add-ons y tokens IA.
+- [x] OPERACION INTERNA concentra soporte, alertas, seguridad, prospectos y usuarios internos.
+- [x] Sin enlaces globales apuntando a rutas del panel de marca.
+- [x] Sin duplicados en menu global principal.
+- [x] Wizard y panel de marca permanecen separados del flujo global.

@@ -1234,3 +1234,23 @@ Arquitectura aplicada:
   - Se eliminó la sección `Canales` del menú de marca para simplificar IA/operación.
   - Canales se mantienen operativos dentro de la sección `Operación`.
 - Las acciones de crecimiento y soporte del resumen de marca resuelven dentro del contexto local del tenant.
+## Arquitectura de navegacion global (2026-04-14)
+
+Se consolido el Panel Global de ComerCia como capa ejecutiva y administrativa, separada del panel de marca y del wizard:
+
+- Global:
+  - Inicio
+  - Creacion
+  - Administracion
+  - Finanzas
+  - Operacion interna
+- Wizard:
+  - flujo de setup inicial
+- Panel de marca:
+  - operacion diaria local
+
+Reglas aplicadas:
+- El menu global no mezcla rutas de marca.
+- Canales creados se mantiene como modulo global de administracion de canales.
+- Se retiran del flujo principal global los enlaces redundantes o de estructura legacy.
+- Se deja base visual clara para evolucionar permisos por rol (contador, soporte, comercial, operaciones).

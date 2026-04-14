@@ -632,3 +632,35 @@ Nuevos endpoints:
 - `Navegación panel de marca`:
   - Se eliminó el agrupador `Canales`.
   - Los accesos de canal viven bajo `Operación`.
+## Panel Global - dominios funcionales (2026-04-14)
+
+El menu global oficial queda agrupado en 5 dominios:
+
+1. INICIO
+   - Dashboard global
+2. CREACION
+   - Clientes
+   - Marcas
+   - Nueva marca
+   - Wizard de configuracion
+3. ADMINISTRACION
+   - Clientes comerciales
+   - Marcas activas
+   - Canales creados
+   - Configuracion internacional
+4. FINANZAS
+   - Pagos
+   - Comisiones
+   - Planes y Add-ons
+   - Tokens IA
+5. OPERACION INTERNA
+   - Soporte
+   - Alertas / Centinela
+   - Seguridad
+   - Prospectos de Marketing
+   - Usuarios internos
+
+Limpieza aplicada:
+- Sin items duplicados apuntando al mismo destino.
+- Sin accesos globales a rutas de panel de marca.
+- Sin saturacion por subopciones legacy en el menu principal.

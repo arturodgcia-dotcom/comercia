@@ -1115,3 +1115,35 @@ Variables backend (`backend/.env`):
 - La `Ficha de marca activa` (`/admin/branding`) ahora permite revisar marcas hijas relacionadas desde selector interno.
 - El menú de marca eliminó la división `Canales`; los accesos de canal quedaron dentro de `Operación`.
 - Se consolidó la experiencia para crecimiento de capacidad (upgrade y add-ons) dentro del panel local.
+## Reorganizacion del Panel Global (2026-04-14)
+
+El Panel Global de ComerCia se reorganizo por dominios funcionales y se limpio de duplicados:
+
+- INICIO
+  - Dashboard global
+- CREACION
+  - Clientes
+  - Marcas
+  - Nueva marca
+  - Wizard de configuracion
+- ADMINISTRACION
+  - Clientes comerciales
+  - Marcas activas
+  - Canales creados
+  - Configuracion internacional
+- FINANZAS
+  - Pagos
+  - Comisiones
+  - Planes y Add-ons
+  - Tokens IA
+- OPERACION INTERNA
+  - Soporte
+  - Alertas / Centinela
+  - Seguridad
+  - Prospectos de Marketing
+  - Usuarios internos
+
+Notas:
+- Se removieron del menu global enlaces duplicados o ambiguos.
+- Se evitaron enlaces globales hacia rutas del panel de marca.
+- Wizard y panel de marca se mantienen separados del flujo global.
