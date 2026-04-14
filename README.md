@@ -46,6 +46,18 @@ Plataforma SaaS multitenant para landing, ecommerce, growth comercial y operacio
   - Planes: `basic_fixed`, `growth_fixed`, `premium_fixed`, `basic_commission`, `growth_commission`, `premium_commission`.
   - Add-ons: `extra_user`, `extra_ai_agent`, `extra_brand`, `extra_100_products`, `extra_branch`, `extra_500_ai_credits`, `premium_support`.
 
+## Arquitectura publica oficial COMERCIA (actual)
+Rutas publicas activas del sitio comercial:
+- `/comercia`
+- `/comercia/precios`
+- `/comercia/marketing`
+- `/comercia/consultoria`
+
+Reglas aplicadas:
+- Se retira del router publico el bloque legacy de demos `MercaPlus` (`/demo/mercaplus*`).
+- Se mantiene intacto el flujo tenant-aware (`/store/*`) y el flujo de templates del sistema.
+- `ComerciaLandingPage.css` se depura para conservar solo estilos usados por las rutas publicas activas.
+
 ## Arranque local
 
 ### Arranque unificado (1 comando)

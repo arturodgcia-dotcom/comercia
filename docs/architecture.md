@@ -85,6 +85,21 @@ No hay firma biometrica en esta fase.
   - enfoque en servicios y captacion de agencias/distribuidores
   - widget placeholder "SofIA by REINPIA"
 
+## 10.1) Sitio publico COMERCIA (arquitectura vigente)
+Superficie publica oficial del sitio comercial:
+- `/comercia`
+- `/comercia/precios`
+- `/comercia/marketing`
+- `/comercia/consultoria`
+
+Criterios de limpieza aplicados:
+- Se retiro del router el bloque demo legacy `MercaPlus` (`/demo/mercaplus*`).
+- Se eliminaron componentes demo legacy asociados al flujo publico retirado.
+- Se mantuvo intacta la arquitectura fuera de alcance:
+  - wizard de creacion
+  - paneles internos/globales
+  - storefront tenant-aware y canales internos de marca
+
 ## 11) Seed tenant REINPIA
 `init_db` crea/actualiza de forma idempotente:
 - tenant `reinpia`

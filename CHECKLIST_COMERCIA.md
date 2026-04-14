@@ -138,6 +138,15 @@
 - [x] Integraciones reales en auth, cupones, referral/comisionistas, webhook Stripe y POS
 - [x] Frontend seguridad REINPIA: dashboard, alerts, rules y blocked entities
 - [x] Componentes UI centinela: `SecurityKpiCard`, `SecurityEventTable`, `SecurityAlertList`, `RuleEditorCard`, `BlockedEntityTable`
+
+## Entregables ejecucion 40 (Limpieza landing publica COMERCIA)
+- [x] Auditoria de rutas activas publicas (`/comercia`, `/comercia/precios`, `/comercia/marketing`, `/comercia/consultoria`)
+- [x] Identificacion de legacy publico fuera del flujo oficial (`/demo/mercaplus*`)
+- [x] Retiro de rutas demo legacy del router publico
+- [x] Eliminacion de archivos demo legacy en `frontend/src/demo/mercaplus`
+- [x] Depuracion de estilos legacy en `ComerciaLandingPage.css` para sitio publico vigente
+- [x] Validacion de build frontend sin imports rotos
+- [x] Documentacion actualizada (`README.md`, `docs/modules.md`, `docs/architecture.md`, `CHECKLIST_COMERCIA.md`)
 - [x] Seeds demo idempotentes de eventos, alertas, bloqueos y reglas de seguridad
 - [x] Documentacion actualizada (README, architecture, modules, checklist)
 - [x] Validacion: backend compile + alembic upgrade head + frontend build

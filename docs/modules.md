@@ -216,7 +216,22 @@ Nuevos endpoints:
   - Vista `Global: Marcas` limpiada con tabla priorizada y acciones por fila.
 - Permisos
   - Crear marca solo para `reinpia_admin` y solo en contexto global.
-  - Usuarios de marca sin acceso a modulos globales por ruta/rol.
+- Usuarios de marca sin acceso a modulos globales por ruta/rol.
+
+## Actualizacion sitio publico COMERCIA (Ejecucion 40)
+- Arquitectura publica oficial consolidada en:
+  - `/comercia`
+  - `/comercia/precios`
+  - `/comercia/marketing`
+  - `/comercia/consultoria`
+- Se retiro del router publico el bloque legacy de demos `MercaPlus` (`/demo/mercaplus*`).
+- Se eliminaron archivos legacy de `frontend/src/demo/mercaplus` al quedar fuera del flujo oficial.
+- Se mantuvo sin cambios el alcance no solicitado:
+  - wizard
+  - panel global / panel de marca
+  - ecommerce tenant-aware
+  - modulos internos y prospectos internos
+- Se depuro `ComerciaLandingPage.css` para conservar estilos usados por el sitio publico oficial.
 
 ## Actualizacion canales de marca tenant-aware (Ejecucion 38)
 - Nuevas rutas de control por canal en panel de marca:
