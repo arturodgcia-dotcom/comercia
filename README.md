@@ -1178,3 +1178,52 @@ Se cerraron tres módulos finales para pruebas operativas:
   - Captura de speech/tono/FAQs/objeciones/restricciones/horario/cierres
   - Guardado y envío a soporte para aplicación por REINPIA
   - Contexto de agentes activos y estado de configuración pendiente
+
+## Integracion Nervia x ComerCia (2026-04-14)
+
+- Nuevo puente de marketing para sincronizar metrica de publicaciones y retroalimentar contenido de Nervia.
+- Endpoints globales:
+  - `POST /api/v1/reinpia/nervia-bridge/sync`
+  - `GET /api/v1/reinpia/nervia-bridge/report`
+  - `GET /api/v1/reinpia/nervia-bridge/feedback`
+- Nuevo modulo en panel global:
+  - ruta: `/reinpia/nervia-marketing`
+  - muestra KPIs de clics, impresiones, leads y ventas pagadas
+  - distribucion por marca y top publicaciones
+  - recomendaciones de angulo/CTA/formato para retroalimentar a Nervia
+
+## Aislamiento REINPIA vs agencias externas (2026-04-14)
+
+- Se agrego segmentacion estructural en tenant:
+  - `tenant_type` (`platform_tenant`, `agency_tenant`, `direct_client_tenant`, `managed_client_tenant`)
+  - `owner_scope` (`reinpia_internal`, `external_agency`)
+  - `owner_agency_tenant_id`
+- Se agrega control comercial del conector:
+  - `comercia_connection_enabled`
+  - `comercia_connection_source`
+- El modulo Nervia (`/reinpia/nervia-marketing`) aplica aislamiento por backend:
+  - usuarios `agency_admin` solo ven marcas de su ambito
+  - nunca ven clientes internos de REINPIA
+  - solo acceden a datos de marcas con conector ComerCia habilitado (addon `comercia_connector` o bandera activa)
+- Se agrega add-on comercial `comercia_connector` para habilitar acceso pagado al puente Nervia x ComerCia.
+
+## Identidad de origen comercial por marca (2026-04-14)
+
+- Cada marca ahora puede registrar origen comercial:
+  - `reinpia_direct`
+  - `comercia_direct`
+  - `nervia_direct`
+  - `agency_client`
+  - `commission_agent_referral`
+  - `unknown`
+- Se agrega trazabilidad de comisionista:
+  - `acquisition_commission_agent_id`
+  - `acquisition_referral_code`
+- Objetivo: distinguir clientes internos REINPIA/ComerCia/Nervia vs clientes de agencias externas y referencias por comisionista.
+
+## Switch de comunicación con Nervia (2026-04-14)
+- Se agrega control por marca para habilitar/deshabilitar envío a Nervia:
+  - `nervia_sync_enabled`
+  - `nervia_customer_identifier`
+  - `nervia_marketing_contract_active`
+- Regla backend: no hay sync/report/feedback si falta identificador o contrato de marketing activo.

@@ -4,6 +4,18 @@ export interface Tenant {
   slug: string;
   subdomain: string;
   business_type: "products" | "services" | "mixed" | string;
+  tenant_type?: "platform_tenant" | "agency_tenant" | "direct_client_tenant" | "managed_client_tenant" | string;
+  owner_scope?: "reinpia_internal" | "external_agency" | string;
+  owner_agency_tenant_id?: number | null;
+  comercia_connection_enabled?: boolean;
+  comercia_connection_source?: string | null;
+  nervia_sync_enabled?: boolean;
+  nervia_customer_identifier?: string | null;
+  nervia_marketing_contract_active?: boolean;
+  acquisition_origin?: "reinpia_direct" | "comercia_direct" | "nervia_direct" | "agency_client" | "commission_agent_referral" | "unknown";
+  acquisition_commission_agent_id?: number | null;
+  acquisition_referral_code?: string | null;
+  acquisition_notes?: string | null;
   is_active: boolean;
   plan_id?: number | null;
   plan_type?: "commission" | "subscription" | string;
@@ -34,6 +46,7 @@ export interface User {
   full_name: string;
   role:
     | "reinpia_admin"
+    | "agency_admin"
     | "super_admin"
     | "contador"
     | "soporte"
@@ -1712,4 +1725,72 @@ export interface MarketingInsightItem {
   recommendation: string;
   period_label: string;
   created_at: string;
+}
+
+export interface NerviaPublicationMetricPayload {
+  tenant_id: number;
+  publication_id: string;
+  channel: string;
+  campaign_name?: string | null;
+  published_at?: string | null;
+  impressions: number;
+  clicks: number;
+  leads_generated: number;
+  notes?: string | null;
+}
+
+export interface NerviaPublicationMetricRead {
+  id: number;
+  tenant_id: number;
+  tenant_name: string;
+  publication_id: string;
+  channel: string;
+  campaign_name?: string | null;
+  published_at?: string | null;
+  impressions: number;
+  clicks: number;
+  leads_generated: number;
+  notes?: string | null;
+  synced_at: string;
+}
+
+export interface NerviaTenantPerformance {
+  tenant_id: number;
+  tenant_name: string;
+  clicks: number;
+  impressions: number;
+  leads: number;
+  ventas_pagadas: number;
+  revenue_mxn: number;
+  conversion_click_to_lead_pct: number;
+  conversion_lead_to_sale_pct: number;
+}
+
+export interface NerviaReport {
+  generated_at: string;
+  total_clicks: number;
+  total_impressions: number;
+  total_leads: number;
+  total_ventas_pagadas: number;
+  total_revenue_mxn: number;
+  ctr_pct: number;
+  conversion_click_to_lead_pct: number;
+  conversion_lead_to_sale_pct: number;
+  by_tenant: NerviaTenantPerformance[];
+  top_publications: NerviaPublicationMetricRead[];
+}
+
+export interface NerviaSuggestion {
+  tenant_id: number;
+  tenant_name: string;
+  insight: string;
+  suggested_post_angle: string;
+  suggested_cta: string;
+  suggested_format: string;
+}
+
+export interface NerviaFeedbackPayload {
+  generated_at: string;
+  report: NerviaReport;
+  suggestions: NerviaSuggestion[];
 }

@@ -27,6 +27,22 @@ class Tenant(Base, TimestampMixin):
     slug: Mapped[str] = mapped_column(String(120), unique=True, nullable=False)
     subdomain: Mapped[str] = mapped_column(String(120), unique=True, nullable=False)
     business_type: Mapped[str] = mapped_column(String(20), nullable=False)
+    tenant_type: Mapped[str] = mapped_column(String(40), default="direct_client_tenant", nullable=False, index=True)
+    owner_scope: Mapped[str] = mapped_column(String(40), default="reinpia_internal", nullable=False, index=True)
+    owner_agency_tenant_id: Mapped[int | None] = mapped_column(ForeignKey("tenants.id"), nullable=True, index=True)
+    comercia_connection_enabled: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    comercia_connection_source: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    nervia_sync_enabled: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    nervia_customer_identifier: Mapped[str | None] = mapped_column(String(120), nullable=True, index=True)
+    nervia_marketing_contract_active: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    acquisition_origin: Mapped[str] = mapped_column(String(40), default="reinpia_direct", nullable=False, index=True)
+    acquisition_commission_agent_id: Mapped[int | None] = mapped_column(
+        ForeignKey("sales_commission_agents.id"),
+        nullable=True,
+        index=True,
+    )
+    acquisition_referral_code: Mapped[str | None] = mapped_column(String(80), nullable=True, index=True)
+    acquisition_notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     plan_id: Mapped[int | None] = mapped_column(ForeignKey("plans.id"), nullable=True, index=True)
     plan_type: Mapped[str] = mapped_column(String(20), default="subscription", nullable=False)

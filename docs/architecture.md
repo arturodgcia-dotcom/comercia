@@ -1290,3 +1290,80 @@ Se consolidó un flujo de operación sin dependencias técnicas manuales para cl
   - El cliente define lineamientos
   - REINPIA aplica la configuración vía soporte
   - Se evita activar/agregar agentes desde lógica técnica manual en UI cliente
+
+## Ejecucion 58: puente de marketing Nervia x ComerCia (2026-04-14)
+Objetivo:
+- conectar datos de marketing (Nervia) con resultados comerciales (ComerCia) para cerrar ciclo de mejora de contenido.
+
+Arquitectura aplicada:
+1) Capa de ingesta de marketing
+- endpoint: `POST /api/v1/reinpia/nervia-bridge/sync`
+- persiste metricas de publicaciones (tenant, canal, campaign, impresiones, clics, leads) en store operativo local.
+
+2) Capa de reporte comercial+marketing
+- endpoint: `GET /api/v1/reinpia/nervia-bridge/report`
+- combina:
+  - metricas sincronizadas de publicaciones
+  - ventas pagadas (`Order`)
+  - leads comerciales (`PlanPurchaseLead`)
+- expone KPIs globales y desglose por marca.
+
+3) Capa de retroalimentacion a Nervia
+- endpoint: `GET /api/v1/reinpia/nervia-bridge/feedback`
+- genera sugerencias por marca:
+  - insight
+  - angulo de publicacion
+  - CTA sugerido
+  - formato sugerido
+
+4) Capa de visualizacion global
+- nueva ruta frontend: `/reinpia/nervia-marketing`
+- integra:
+  - KPIs globales de marketing+ventas
+  - tabla por marca
+  - top publicaciones
+  - recomendaciones para equipo Nervia
+  - formulario de sincronizacion manual
+
+## Ejecucion 59: aislamiento interno REINPIA vs agencias externas (2026-04-14)
+Objetivo:
+- separar de forma estricta los clientes internos de REINPIA y los clientes gestionados por agencias externas.
+
+Arquitectura aplicada:
+1) Capa de clasificacion de tenant
+- nuevos atributos en `tenants`:
+  - `tenant_type`
+  - `owner_scope`
+  - `owner_agency_tenant_id`
+  - `comercia_connection_enabled`
+  - `comercia_connection_source`
+
+2) Capa de visibilidad de datos
+- servicio `tenant_access_service` con reglas backend:
+  - `reinpia_admin/super_admin`: visibilidad global interna
+  - `agency_admin`: solo su tenant + clientes vinculados por `owner_agency_tenant_id`
+  - tenant roles: solo su propia marca
+
+3) Capa de acceso pagado al puente
+- add-on comercial: `comercia_connector`
+- habilita acceso a integracion Nervia x ComerCia por tenant/cliente
+- el modulo Nervia valida conector activo antes de exponer metricas a agencias
+
+4) Capa de enforcement en modulo Nervia
+- endpoints del puente usan `get_nervia_operator`
+- reportes/sync/feedback filtran por tenant visible
+- evita fuga de datos de clientes internos REINPIA hacia agencias externas
+
+## Ejecucion 60: trazabilidad de origen por marca (2026-04-14)
+Objetivo:
+- saber de forma explicita si una marca es interna de REINPIA/ComerCia/Nervia, de agencia externa o referida por comisionista.
+
+Cambios:
+- `Tenant` incorpora:
+  - `acquisition_origin`
+  - `acquisition_commission_agent_id`
+  - `acquisition_referral_code`
+  - `acquisition_notes`
+- API de tenants valida que `acquisition_commission_agent_id` exista cuando se captura.
+- UI de alta de marca agrega bloque `Origen comercial de la marca`.
+- UI de listado global de marcas muestra columna `Origen`.

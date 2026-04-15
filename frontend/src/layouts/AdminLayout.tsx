@@ -9,7 +9,7 @@ type AppMode = "global" | "brand";
 type NavItem = { label: string; to: string; roles?: string[] };
 type NavSection = { title: string; items: NavItem[]; roles?: string[] };
 
-const ADMIN_ROLES = ["reinpia_admin", "super_admin", "tenant_admin", "tenant_staff", "contador", "soporte"];
+const ADMIN_ROLES = ["reinpia_admin", "super_admin", "agency_admin", "tenant_admin", "tenant_staff", "contador", "soporte"];
 const STORAGE_MODE_KEY = "comercia_admin_mode";
 const STORAGE_BRAND_KEY = "comercia_admin_brand_id";
 
@@ -58,7 +58,8 @@ export function AdminLayout() {
 
   const userRole = user?.role;
   const isSuperAdmin = userRole === "reinpia_admin" || userRole === "super_admin";
-  const isGlobalOperator = isSuperAdmin || userRole === "contador";
+  const isAgencyAdmin = userRole === "agency_admin";
+  const isGlobalOperator = isSuperAdmin || userRole === "contador" || isAgencyAdmin;
   const canAccessAdmin = ADMIN_ROLES.includes(userRole ?? "");
 
   const [tenants, setTenants] = useState<Tenant[]>([]);
@@ -68,7 +69,7 @@ export function AdminLayout() {
     const saved = sessionStorage.getItem(STORAGE_MODE_KEY);
     return saved === "global" || saved === "brand" ? saved : "brand";
   });
-  const globalHomePath = isSuperAdmin ? "/reinpia/dashboard" : "/reinpia/payments";
+  const globalHomePath = isSuperAdmin ? "/reinpia/dashboard" : isAgencyAdmin ? "/reinpia/nervia-marketing" : "/reinpia/payments";
 
   useEffect(() => {
     if (!isGlobalOperator) {
@@ -181,13 +182,14 @@ export function AdminLayout() {
     },
     {
       title: "OPERACIÓN INTERNA",
-      roles: ["reinpia_admin", "super_admin"],
+      roles: ["reinpia_admin", "super_admin", "agency_admin"],
       items: [
-        { label: "Soporte", to: "/reinpia/commercial-inbox" },
-        { label: "Alertas / Centinela", to: "/reinpia/alerts" },
-        { label: "Seguridad", to: "/reinpia/security" },
-        { label: "Prospectos de Marketing", to: "/reinpia/marketing/prospectos" },
-        { label: "Usuarios internos", to: "/reinpia/users" },
+        { label: "Soporte", to: "/reinpia/commercial-inbox", roles: ["reinpia_admin", "super_admin"] },
+        { label: "Alertas / Centinela", to: "/reinpia/alerts", roles: ["reinpia_admin", "super_admin"] },
+        { label: "Seguridad", to: "/reinpia/security", roles: ["reinpia_admin", "super_admin"] },
+        { label: "Prospectos de Marketing", to: "/reinpia/marketing/prospectos", roles: ["reinpia_admin", "super_admin"] },
+        { label: "Nervia Marketing", to: "/reinpia/nervia-marketing" },
+        { label: "Usuarios internos", to: "/reinpia/users", roles: ["reinpia_admin", "super_admin"] },
       ],
     },
   ];

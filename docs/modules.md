@@ -732,3 +732,25 @@ Limpieza aplicada:
   - guardar configuración
   - enviar solicitud a soporte para aplicación por REINPIA
   - no activa agentes manualmente desde el cliente
+
+## Actualizacion Nervia x ComerCia (2026-04-14)
+- Nuevo modulo global `Nervia Marketing` en `/reinpia/nervia-marketing`.
+- Nuevos endpoints REINPIA:
+  - `POST /api/v1/reinpia/nervia-bridge/sync`
+  - `GET /api/v1/reinpia/nervia-bridge/report`
+  - `GET /api/v1/reinpia/nervia-bridge/feedback`
+- El modulo entrega:
+  - KPIs globales (clics, impresiones, leads, ventas pagadas, revenue)
+  - reporte por marca y top publicaciones
+  - recomendaciones para retroalimentar a Nervia en generacion de publicaciones
+
+## Actualizacion aislamiento multiagencia y conector ComerCia (2026-04-14)
+- Segmentacion de tenant agregada (`tenant_type`, `owner_scope`, `owner_agency_tenant_id`).
+- Aislamiento backend real para vistas Nervia por tipo de operador (`reinpia_admin/super_admin/agency_admin`).
+- `agency_admin` solo accede a sus clientes y nunca a clientes internos de REINPIA.
+- Conector ComerCia tratado como add-on comercial (`comercia_connector`) con habilitacion por compra/webhook.
+
+## Actualizacion trazabilidad de origen comercial (2026-04-14)
+- Nuevos campos en tenant para identificar el origen de cada marca.
+- Se soporta clasificacion de cliente interno, cliente de agencia y referencia por comisionista.
+- El panel de `Marcas` muestra columna `Origen` para auditoria operativa.

@@ -46,6 +46,10 @@ import {
   MarketingProspect,
   MembershipPlan,
   MercadoPagoSettings,
+  NerviaFeedbackPayload,
+  NerviaPublicationMetricPayload,
+  NerviaPublicationMetricRead,
+  NerviaReport,
   OnboardingGuide,
   OnboardingProgressResponse,
   PosCustomer,
@@ -256,6 +260,18 @@ export const api = {
       subdomain: string;
       business_type: string;
       is_active: boolean;
+      tenant_type?: string;
+      owner_scope?: string;
+      owner_agency_tenant_id?: number | null;
+      comercia_connection_enabled?: boolean;
+      comercia_connection_source?: string;
+      nervia_sync_enabled?: boolean;
+      nervia_customer_identifier?: string | null;
+      nervia_marketing_contract_active?: boolean;
+      acquisition_origin?: string;
+      acquisition_commission_agent_id?: number | null;
+      acquisition_referral_code?: string | null;
+      acquisition_notes?: string | null;
       billing_model?: string;
       commission_percentage?: number;
       commission_enabled?: boolean;
@@ -840,6 +856,19 @@ export const api = {
     request<MarketingProspect>(`/api/v1/reinpia/marketing-prospects/${prospectId}`, {}, token),
   updateReinpiaMarketingProspect: (token: string, prospectId: number, payload: Record<string, unknown>) =>
     request<MarketingProspect>(`/api/v1/reinpia/marketing-prospects/${prospectId}`, { method: "PUT", body: JSON.stringify(payload) }, token),
+  syncNerviaMetrics: (
+    token: string,
+    payload: { source?: string; items: NerviaPublicationMetricPayload[] }
+  ) =>
+    request<NerviaPublicationMetricRead[]>(
+      "/api/v1/reinpia/nervia-bridge/sync",
+      { method: "POST", body: JSON.stringify(payload) },
+      token
+    ),
+  getNerviaBridgeReport: (token: string) =>
+    request<NerviaReport>("/api/v1/reinpia/nervia-bridge/report", {}, token),
+  getNerviaBridgeFeedback: (token: string) =>
+    request<NerviaFeedbackPayload>("/api/v1/reinpia/nervia-bridge/feedback", {}, token),
 
   getOnboardingGuides: (token: string) => request<OnboardingGuide[]>("/api/v1/onboarding/guides", {}, token),
   getOnboardingGuide: (token: string, guideId: number) =>

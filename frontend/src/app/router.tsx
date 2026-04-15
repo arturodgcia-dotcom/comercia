@@ -77,6 +77,7 @@ import { ReinpiaAlertsPage } from "../pages/ReinpiaAlertsPage";
 import { ReinpiaCommercialInboxPage } from "../pages/ReinpiaCommercialInboxPage";
 import { ReinpiaCommercialClientsPage } from "../pages/ReinpiaCommercialClientsPage";
 import { ReinpiaMarketingProspectsPage } from "../pages/ReinpiaMarketingProspectsPage";
+import { ReinpiaNerviaBridgePage } from "../pages/ReinpiaNerviaBridgePage";
 import { ReviewsAdminPage } from "../pages/ReviewsAdminPage";
 import { OnboardingSalesPage } from "../pages/OnboardingSalesPage";
 import { OnboardingClientPage } from "../pages/OnboardingClientPage";
@@ -219,6 +220,9 @@ export function AppRouter() {
               <Route path="reinpia/payments" element={<ReinpiaPaymentsPage />} />
               <Route path="reinpia/commission-agents" element={<ReinpiaCommissionAgentsPage />} />
               <Route path="reinpia/reports/commissions" element={<ReinpiaCommissionsReportPage />} />
+            </Route>
+            <Route element={<RoleRoute allowedRoles={["reinpia_admin", "super_admin", "agency_admin"]} />}>
+              <Route path="reinpia/nervia-marketing" element={<ReinpiaNerviaBridgePage />} />
             </Route>
           </Route>
           <Route path="*" element={<Navigate to="/comercia" replace />} />

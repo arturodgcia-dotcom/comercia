@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
 from app.db.session import get_db
-from app.models.models import Banner, CommercialClientAccount, Plan, StorefrontConfig, Tenant, TenantBranding
+from app.models.models import Banner, CommercialClientAccount, Plan, SalesCommissionAgent, StorefrontConfig, Tenant, TenantBranding
 from app.models.models import User
 from app.schemas.storefront import StorefrontSnapshot
 from app.schemas.tenant import TenantCreate, TenantRead, TenantUpdate
@@ -19,18 +19,14 @@ from app.services.tenant_config_service import (
 )
 from app.services.commercial_plan_service import apply_plan_to_tenant
 from app.services.commercial_account_guard_service import enforce_brand_limit_for_account
+from app.services.tenant_access_service import assert_user_can_access_tenant, is_global_internal_user, list_visible_tenants
 
 router = APIRouter()
 
 
 @router.get("", response_model=list[TenantRead])
 def list_tenants(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)) -> list[Tenant]:
-    if current_user.role == "reinpia_admin":
-        return db.scalars(select(Tenant).order_by(Tenant.id.desc())).all()
-    if current_user.tenant_id is None:
-        return []
-    tenant = db.get(Tenant, current_user.tenant_id)
-    return [tenant] if tenant else []
+    return list_visible_tenants(db, current_user)
 
 
 @router.post("", response_model=TenantRead, status_code=status.HTTP_201_CREATED)
@@ -39,7 +35,7 @@ def create_tenant(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> Tenant:
-    if current_user.role != "reinpia_admin":
+    if not is_global_internal_user(current_user):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="solo admin global puede crear marcas")
     _validate_slug_and_subdomain_uniqueness(db, payload.slug, payload.subdomain)
     values = payload.model_dump()
@@ -77,6 +73,17 @@ def create_tenant(
         if not account:
             raise HTTPException(status_code=404, detail="cliente comercial no encontrado")
         enforce_brand_limit_for_account(db, account)
+    if values.get("acquisition_commission_agent_id"):
+        agent = db.get(SalesCommissionAgent, int(values["acquisition_commission_agent_id"]))
+        if not agent:
+            raise HTTPException(status_code=404, detail="comisionista de origen no encontrado")
+    if values.get("acquisition_origin") == "agency_client":
+        values["owner_scope"] = "external_agency"
+    if values.get("nervia_sync_enabled"):
+        if not str(values.get("nervia_customer_identifier") or "").strip():
+            raise HTTPException(status_code=400, detail="falta identificador oficial de cliente Nervia")
+        if not bool(values.get("nervia_marketing_contract_active")):
+            raise HTTPException(status_code=400, detail="el contrato de marketing Nervia debe estar activo para sincronizar")
     tenant = Tenant(**values)
     if values.get("commercial_plan_key"):
         try:
@@ -99,7 +106,7 @@ def get_tenant(tenant_id: int, db: Session = Depends(get_db), current_user: User
     tenant = db.get(Tenant, tenant_id)
     if not tenant:
         raise HTTPException(status_code=404, detail="tenant no encontrado")
-    _assert_tenant_scope(current_user, tenant_id)
+    _assert_tenant_scope(current_user, tenant)
     return tenant
 
 
@@ -110,7 +117,7 @@ def update_tenant(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> Tenant:
-    if current_user.role != "reinpia_admin":
+    if not is_global_internal_user(current_user):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="solo admin global puede actualizar marcas")
     tenant = db.get(Tenant, tenant_id)
     if not tenant:
@@ -167,6 +174,24 @@ def update_tenant(
             raise HTTPException(status_code=404, detail="cliente comercial no encontrado")
         if tenant.commercial_client_account_id != account.id:
             enforce_brand_limit_for_account(db, account)
+    if "acquisition_commission_agent_id" in changes and changes.get("acquisition_commission_agent_id"):
+        agent = db.get(SalesCommissionAgent, int(changes["acquisition_commission_agent_id"]))
+        if not agent:
+            raise HTTPException(status_code=404, detail="comisionista de origen no encontrado")
+    if "acquisition_origin" in changes and changes.get("acquisition_origin") == "agency_client":
+        tenant.owner_scope = "external_agency"
+    if (
+        ("nervia_sync_enabled" in changes and bool(changes.get("nervia_sync_enabled")))
+        or (tenant.nervia_sync_enabled and "nervia_sync_enabled" not in changes)
+    ):
+        candidate_id = str(changes.get("nervia_customer_identifier", tenant.nervia_customer_identifier) or "").strip()
+        candidate_contract = bool(
+            changes.get("nervia_marketing_contract_active", tenant.nervia_marketing_contract_active)
+        )
+        if not candidate_id:
+            raise HTTPException(status_code=400, detail="falta identificador oficial de cliente Nervia")
+        if not candidate_contract:
+            raise HTTPException(status_code=400, detail="el contrato de marketing Nervia debe estar activo para sincronizar")
     if "ai_tokens_locked" in changes and changes["ai_tokens_locked"] is not None:
         tenant.ai_tokens_locked = bool(changes["ai_tokens_locked"])
     if "ai_tokens_lock_reason" in changes:
@@ -182,7 +207,7 @@ def initialize_tenant_storefront(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> dict:
-    if current_user.role != "reinpia_admin":
+    if not is_global_internal_user(current_user):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="solo admin global puede inicializar storefront")
     tenant = db.get(Tenant, tenant_id)
     if not tenant:
@@ -200,7 +225,7 @@ def get_tenant_storefront_config(
     tenant = db.get(Tenant, tenant_id)
     if not tenant:
         raise HTTPException(status_code=404, detail="tenant no encontrado")
-    _assert_tenant_scope(current_user, tenant_id)
+    _assert_tenant_scope(current_user, tenant)
 
     branding = db.scalar(select(TenantBranding).where(TenantBranding.tenant_id == tenant_id))
     config = db.scalar(select(StorefrontConfig).where(StorefrontConfig.tenant_id == tenant_id))
@@ -214,11 +239,11 @@ def _validate_slug_and_subdomain_uniqueness(db: Session, slug: str, subdomain: s
         raise HTTPException(status_code=400, detail="slug o subdomain ya existen")
 
 
-def _assert_tenant_scope(current_user: User, tenant_id: int) -> None:
-    if current_user.role == "reinpia_admin":
-        return
-    if current_user.tenant_id != tenant_id:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="sin acceso a esta marca")
+def _assert_tenant_scope(current_user: User, tenant: Tenant) -> None:
+    try:
+        assert_user_can_access_tenant(current_user, tenant)
+    except PermissionError as exc:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(exc)) from exc
 
 
 def _commission_rules_for_billing(*, commission_rules_json: str | None, commission_enabled: bool, commission_percentage: str) -> dict:

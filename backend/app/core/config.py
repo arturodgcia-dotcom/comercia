@@ -43,6 +43,7 @@ class Settings(BaseSettings):
     stripe_price_addon_extra_branch: str = Field(default="", alias="STRIPE_PRICE_ADDON_EXTRA_BRANCH")
     stripe_price_addon_extra_500_ai_credits: str = Field(default="", alias="STRIPE_PRICE_ADDON_EXTRA_500_AI_CREDITS")
     stripe_price_addon_premium_support: str = Field(default="", alias="STRIPE_PRICE_ADDON_PREMIUM_SUPPORT")
+    stripe_price_addon_comercia_connector: str = Field(default="", alias="STRIPE_PRICE_ADDON_COMERCIA_CONNECTOR")
 
     model_config = SettingsConfigDict(
         env_file=".env",

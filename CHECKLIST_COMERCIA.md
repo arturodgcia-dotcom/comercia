@@ -738,3 +738,39 @@
 - [x] Configuración de speech se guarda y se envía a soporte.
 - [x] Se evita activación técnica manual de agentes desde cliente.
 - [x] Menú de marca incluye Soporte, Expandir capacidad y Respuestas y atención.
+
+## Entregables ejecucion 58 (Puente Nervia x ComerCia)
+- [x] Endpoint para sincronizar metricas de publicaciones de Nervia
+- [x] Endpoint de reporte global de marketing + ventas
+- [x] Endpoint de feedback para sugerencias de contenido
+- [x] Modulo global `/reinpia/nervia-marketing` con KPIs, tabla por marca y top publicaciones
+- [x] Retroalimentacion visible para mejorar publicaciones en Nervia
+- [x] Formulario de sincronizacion manual desde panel global
+- [x] Menu global actualizado con acceso a `Nervia Marketing`
+- [x] Documentacion actualizada (`README.md`, `docs/modules.md`, `docs/architecture.md`, `CHECKLIST_COMERCIA.md`)
+
+## Entregables ejecucion 59 (Aislamiento REINPIA vs agencias)
+- [x] Segmentacion de tenant con `tenant_type`, `owner_scope` y `owner_agency_tenant_id`
+- [x] Control de acceso comercial a conector con `comercia_connection_enabled`
+- [x] Servicio backend de visibilidad por usuario/tenant (`tenant_access_service`)
+- [x] Endpoints Nervia protegidos con operador dedicado (`get_nervia_operator`)
+- [x] Filtro backend de reportes/sync/feedback por scope visible
+- [x] Add-on comercial `comercia_connector` integrado en catalogo
+- [x] Base frontend para rol `agency_admin` en menu/ruta de Nervia
+- [x] Migracion alembic para aislamiento multiagencia
+- [x] Documentacion actualizada (`README.md`, `docs/modules.md`, `docs/architecture.md`, `CHECKLIST_COMERCIA.md`)
+
+## Entregables ejecucion 60 (Identificacion de origen por marca)
+- [x] Campos de origen comercial en tenant (`acquisition_origin`, `acquisition_commission_agent_id`, `acquisition_referral_code`, `acquisition_notes`)
+- [x] Migracion Alembic para trazabilidad de origen
+- [x] Validacion backend de comisionista de origen
+- [x] Formulario de alta de marca con selector de origen comercial
+- [x] Columna `Origen` en listado global de marcas
+- [x] Documentacion actualizada (`README.md`, `docs/modules.md`, `docs/architecture.md`, `CHECKLIST_COMERCIA.md`)
+
+## Entregables ejecucion 61 (Switch Nervia + identificador oficial)
+- [x] Switch por marca para activar/desactivar comunicación con Nervia
+- [x] Identificador oficial de cliente Nervia por tenant
+- [x] Validación de contrato de marketing Nervia activo
+- [x] Bloqueo backend de sync/report/feedback cuando no cumple activación
+- [x] UI de alta de marca con activación Nervia y campos requeridos

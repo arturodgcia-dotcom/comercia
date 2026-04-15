@@ -19,6 +19,13 @@ export function ReinpiaBrandsNewPage() {
     commission_percentage: 3,
     commission_scope: "ventas_online_pagadas",
     commission_notes: "",
+    acquisition_origin: "reinpia_direct",
+    acquisition_commission_agent_id: "",
+    acquisition_referral_code: "",
+    acquisition_notes: "",
+    nervia_sync_enabled: false,
+    nervia_customer_identifier: "",
+    nervia_marketing_contract_active: false,
   });
 
   const handleSubmit = async (event: FormEvent) => {
@@ -27,7 +34,16 @@ export function ReinpiaBrandsNewPage() {
     try {
       setSaving(true);
       setError("");
-      const created = await api.createTenant(token, form);
+      const payload = {
+        ...form,
+        acquisition_commission_agent_id: form.acquisition_commission_agent_id
+          ? Number(form.acquisition_commission_agent_id)
+          : undefined,
+        acquisition_referral_code: form.acquisition_referral_code || undefined,
+        acquisition_notes: form.acquisition_notes || undefined,
+        nervia_customer_identifier: form.nervia_customer_identifier || undefined,
+      };
+      const created = await api.createTenant(token, payload);
       navigate(`/reinpia/brands/${created.id}/setup`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "No fue posible crear la marca.");
@@ -140,6 +156,93 @@ export function ReinpiaBrandsNewPage() {
         ) : (
           <p className="muted">La cuota fija no cobra porcentaje sobre venta.</p>
         )}
+        <h3 style={{ marginTop: 8 }}>Origen comercial de la marca</h3>
+        <label>
+          Origen
+          <select
+            value={form.acquisition_origin}
+            onChange={(event) =>
+              setForm((previous) => ({
+                ...previous,
+                acquisition_origin: event.target.value,
+              }))
+            }
+          >
+            <option value="reinpia_direct">Cliente interno REINPIA</option>
+            <option value="comercia_direct">Cliente directo ComerCia</option>
+            <option value="nervia_direct">Cliente directo Nervia</option>
+            <option value="agency_client">Cliente de agencia externa</option>
+            <option value="commission_agent_referral">Referido por comisionista</option>
+            <option value="unknown">Origen no clasificado</option>
+          </select>
+        </label>
+        {form.acquisition_origin === "commission_agent_referral" ? (
+          <>
+            <label>
+              ID de comisionista
+              <input
+                type="number"
+                min={1}
+                value={form.acquisition_commission_agent_id}
+                onChange={(event) =>
+                  setForm((previous) => ({ ...previous, acquisition_commission_agent_id: event.target.value }))
+                }
+              />
+            </label>
+            <label>
+              Código de referencia
+              <input
+                value={form.acquisition_referral_code}
+                onChange={(event) =>
+                  setForm((previous) => ({ ...previous, acquisition_referral_code: event.target.value }))
+                }
+              />
+            </label>
+          </>
+        ) : null}
+        <label>
+          Notas de origen (opcional)
+          <textarea
+            value={form.acquisition_notes}
+            onChange={(event) => setForm((previous) => ({ ...previous, acquisition_notes: event.target.value }))}
+          />
+        </label>
+        <h3 style={{ marginTop: 8 }}>Activación de comunicación con Nervia</h3>
+        <label className="checkbox">
+          <input
+            type="checkbox"
+            checked={form.nervia_sync_enabled}
+            onChange={(event) =>
+              setForm((previous) => ({ ...previous, nervia_sync_enabled: event.target.checked }))
+            }
+          />
+          Activar comunicación de esta marca con Nervia
+        </label>
+        {form.nervia_sync_enabled ? (
+          <>
+            <label>
+              Identificador de cliente Nervia
+              <input
+                placeholder="Ej. NERVIA-CLI-ACME-001"
+                value={form.nervia_customer_identifier}
+                onChange={(event) =>
+                  setForm((previous) => ({ ...previous, nervia_customer_identifier: event.target.value }))
+                }
+                required={form.nervia_sync_enabled}
+              />
+            </label>
+            <label className="checkbox">
+              <input
+                type="checkbox"
+                checked={form.nervia_marketing_contract_active}
+                onChange={(event) =>
+                  setForm((previous) => ({ ...previous, nervia_marketing_contract_active: event.target.checked }))
+                }
+              />
+              Contrato de marketing con Nervia activo
+            </label>
+          </>
+        ) : null}
         {error ? <p className="error">{error}</p> : null}
         <button className="button" type="submit" disabled={saving}>
           {saving ? "Creando..." : "Crear marca y abrir workflow"}

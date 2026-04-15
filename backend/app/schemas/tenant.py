@@ -8,6 +8,18 @@ class TenantCreate(BaseModel):
     slug: str
     subdomain: str
     business_type: str
+    tenant_type: str = "direct_client_tenant"
+    owner_scope: str = "reinpia_internal"
+    owner_agency_tenant_id: int | None = None
+    comercia_connection_enabled: bool = False
+    comercia_connection_source: str | None = None
+    nervia_sync_enabled: bool = False
+    nervia_customer_identifier: str | None = None
+    nervia_marketing_contract_active: bool = False
+    acquisition_origin: str = "reinpia_direct"
+    acquisition_commission_agent_id: int | None = None
+    acquisition_referral_code: str | None = None
+    acquisition_notes: str | None = None
     is_active: bool = True
     plan_id: int | None = None
     plan_type: str | None = None
@@ -30,6 +42,18 @@ class TenantUpdate(BaseModel):
     slug: str | None = None
     subdomain: str | None = None
     business_type: str | None = None
+    tenant_type: str | None = None
+    owner_scope: str | None = None
+    owner_agency_tenant_id: int | None = None
+    comercia_connection_enabled: bool | None = None
+    comercia_connection_source: str | None = None
+    nervia_sync_enabled: bool | None = None
+    nervia_customer_identifier: str | None = None
+    nervia_marketing_contract_active: bool | None = None
+    acquisition_origin: str | None = None
+    acquisition_commission_agent_id: int | None = None
+    acquisition_referral_code: str | None = None
+    acquisition_notes: str | None = None
     is_active: bool | None = None
     plan_id: int | None = None
     plan_type: str | None = None
@@ -55,6 +79,18 @@ class TenantRead(TimestampSchema):
     slug: str
     subdomain: str
     business_type: str
+    tenant_type: str
+    owner_scope: str
+    owner_agency_tenant_id: int | None
+    comercia_connection_enabled: bool
+    comercia_connection_source: str | None
+    nervia_sync_enabled: bool
+    nervia_customer_identifier: str | None
+    nervia_marketing_contract_active: bool
+    acquisition_origin: str
+    acquisition_commission_agent_id: int | None
+    acquisition_referral_code: str | None
+    acquisition_notes: str | None
     is_active: bool
     plan_id: int | None
     plan_type: str

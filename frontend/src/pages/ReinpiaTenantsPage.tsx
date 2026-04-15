@@ -4,7 +4,7 @@ import { useAuth } from "../app/AuthContext";
 import { FilterBar } from "../components/FilterBar";
 import { PageHeader } from "../components/PageHeader";
 import { api } from "../services/api";
-import { ReinpiaTenantSummaryRow } from "../types/domain";
+import { ReinpiaTenantSummaryRow, Tenant } from "../types/domain";
 
 function describeActivity(row: ReinpiaTenantSummaryRow): string {
   if (row.paid_orders > 0) return `${row.paid_orders} ventas pagadas`;
@@ -16,12 +16,21 @@ function billingModelLabel(value?: string): string {
   return value === "commission_based" ? "Comision por venta" : "Cuota fija";
 }
 
+function originLabel(origin?: string): string {
+  if (origin === "agency_client") return "Agencia externa";
+  if (origin === "commission_agent_referral") return "Comisionista";
+  if (origin === "nervia_direct") return "Nervia directo";
+  if (origin === "comercia_direct") return "ComerCia directo";
+  if (origin === "reinpia_direct") return "REINPIA interno";
+  return "No clasificado";
+}
+
 export function ReinpiaTenantsPage() {
   const { token } = useAuth();
   const [filters, setFilters] = useState({ tenantId: "", dateFrom: "", dateTo: "", status: "" });
   const [rows, setRows] = useState<ReinpiaTenantSummaryRow[]>([]);
   const [error, setError] = useState("");
-  const [tenantNames, setTenantNames] = useState<Record<number, string>>({});
+  const [tenantsById, setTenantsById] = useState<Record<number, Tenant>>({});
 
   const query = useMemo(() => {
     const params = new URLSearchParams();
@@ -36,13 +45,13 @@ export function ReinpiaTenantsPage() {
     api
       .getTenants(token)
       .then((data) => {
-        const next: Record<number, string> = {};
+        const next: Record<number, Tenant> = {};
         data.forEach((item) => {
-          next[item.id] = item.name;
+          next[item.id] = item;
         });
-        setTenantNames(next);
+        setTenantsById(next);
       })
-      .catch(() => setTenantNames({}));
+      .catch(() => setTenantsById({}));
   }, [token]);
 
   useEffect(() => {
@@ -75,6 +84,8 @@ export function ReinpiaTenantsPage() {
               <th>ID</th>
               <th>Marca</th>
               <th>Estado</th>
+              <th>Origen</th>
+              <th>Nervia</th>
               <th>Plan</th>
               <th>Tipo de negocio</th>
               <th>Modelo comercial</th>
@@ -93,8 +104,14 @@ export function ReinpiaTenantsPage() {
             {rows.map((row) => (
               <tr key={row.tenant_id}>
                 <td>{row.tenant_id}</td>
-                <td>{tenantNames[row.tenant_id] ?? row.tenant_name}</td>
+                <td>{tenantsById[row.tenant_id]?.name ?? row.tenant_name}</td>
                 <td>{row.is_active ? "Activa" : "Inactiva"}</td>
+                <td>{originLabel(tenantsById[row.tenant_id]?.acquisition_origin)}</td>
+                <td>
+                  {tenantsById[row.tenant_id]?.nervia_sync_enabled
+                    ? `Activo (${tenantsById[row.tenant_id]?.nervia_customer_identifier || "sin ID"})`
+                    : "No activo"}
+                </td>
                 <td>{row.plan_id ?? "-"}</td>
                 <td>{row.business_type}</td>
                 <td>{billingModelLabel(row.billing_model)}</td>

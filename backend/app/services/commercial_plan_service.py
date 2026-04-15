@@ -165,6 +165,7 @@ COMMERCIAL_ADDONS: list[dict[str, Any]] = [
     {"id": "extra_branch", "code": "extra_branch", "name": "Sucursal extra", "monthly_price_mxn": Decimal("790.00"), "stripe_price_env": "stripe_price_addon_extra_branch"},
     {"id": "extra_500_tokens", "code": "extra_500_ai_credits", "name": "500 creditos IA extra", "monthly_price_mxn": Decimal("490.00"), "stripe_price_env": "stripe_price_addon_extra_500_ai_credits", "legacy_keys": ["extra_500_tokens"]},
     {"id": "premium_support", "code": "premium_support", "name": "Soporte premium", "monthly_price_mxn": Decimal("990.00"), "stripe_price_env": "stripe_price_addon_premium_support"},
+    {"id": "comercia_connector", "code": "comercia_connector", "name": "Conector ComerCia", "monthly_price_mxn": Decimal("1290.00"), "stripe_price_env": "stripe_price_addon_comercia_connector"},
 ]
 
 LIMIT_ADDON_SUGGESTIONS: dict[str, dict[str, str]] = {
@@ -455,6 +456,9 @@ def apply_addon_to_tenant(tenant: Tenant, *, addon_code: str) -> dict[str, Any]:
         tenant.ai_tokens_locked = False
         tenant.ai_tokens_lock_reason = None
         tenant.ai_tokens_last_reset_at = datetime.utcnow()
+    elif normalized_code == "comercia_connector":
+        tenant.comercia_connection_enabled = True
+        tenant.comercia_connection_source = "addon_stripe_checkout"
     else:
         _apply_addon_to_tenant_limits(tenant, normalized_code)
     return addon_serialized

@@ -19,6 +19,7 @@ from app.api.v1.endpoints import (
     logistics,
     loyalty,
     memberships,
+    nervia_bridge,
     mercadopago_settings,
     onboarding,
     payments,
@@ -78,6 +79,7 @@ api_router.include_router(currency.router, tags=["currency"])
 api_router.include_router(pos.router, prefix="/pos", tags=["pos"])
 api_router.include_router(automation.router, prefix="/automation", tags=["automation"])
 api_router.include_router(reinpia_admin.router, prefix="/reinpia", tags=["reinpia-admin"])
+api_router.include_router(nervia_bridge.router, prefix="/reinpia", tags=["nervia-bridge"])
 api_router.include_router(reinpia_finance.router)
 api_router.include_router(comercia_public.router, prefix="/comercia", tags=["comercia-public"])
 api_router.include_router(brand_setup.router, prefix="/brand-setup", tags=["brand-setup"])
