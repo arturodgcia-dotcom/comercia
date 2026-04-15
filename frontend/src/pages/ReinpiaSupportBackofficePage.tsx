@@ -89,10 +89,9 @@ export function ReinpiaSupportBackofficePage() {
   const metrics = useMemo(() => {
     const tickets = rows.reduce((acc, row) => acc + row.total, 0);
     const incidencias = rows.reduce((acc, row) => acc + row.incidencias, 0);
-    const abiertos = rows.reduce((acc, row) => acc + row.abiertos, 0);
     const pendientes = rows.reduce((acc, row) => acc + row.pendientes, 0);
     const clientesAbiertos = rows.filter((row) => row.abiertos > 0 || row.pendientes > 0).length;
-    return { tickets, incidencias, abiertos, pendientes, clientesAbiertos };
+    return { tickets, incidencias, pendientes, clientesAbiertos };
   }, [rows]);
 
   return (

@@ -1384,3 +1384,11 @@ Cambios:
 - UI de listado global de marcas muestra columna `Origen`.
 
 
+
+## Cierre Sprint 1 (2026-04-15)
+- Navegación global y de marca reconciliada con rutas activas (sin rutas fantasma visibles).
+- Reparto funcional final:
+  - Dashboard: resumen ejecutivo.
+  - Planes: detalle contractual y límites.
+  - Expansión: add-ons y upgrade.
+- Corrección de textos visibles en español UTF-8 en módulos de soporte/comercial y dashboard.

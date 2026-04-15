@@ -190,10 +190,22 @@ export function AdminLayout() {
       ],
     },
     {
+      title: "REPORTES",
+      roles: ["reinpia_admin", "super_admin"],
+      items: [
+        { label: "Resumen comercial", to: "/reinpia/reports" },
+        { label: "Visión general", to: "/reinpia/reports/overview" },
+        { label: "Crecimiento", to: "/reinpia/reports/growth" },
+        { label: "Leads", to: "/reinpia/reports/leads" },
+        { label: "Oportunidades de marketing", to: "/reinpia/reports/marketing-opportunities" },
+      ],
+    },
+    {
       title: "OPERACIÓN INTERNA",
       roles: ["reinpia_admin", "super_admin", "agency_admin"],
       items: [
         { label: "Soporte global backoffice", to: "/reinpia/support-backoffice", roles: ["reinpia_admin", "super_admin"] },
+        { label: "Operación global", to: "/reinpia/operations", roles: ["reinpia_admin", "super_admin"] },
         { label: "Alertas / Centinela", to: "/reinpia/alerts", roles: ["reinpia_admin", "super_admin"] },
         { label: "Seguridad", to: "/reinpia/security", roles: ["reinpia_admin", "super_admin"] },
         { label: "Nervia Marketing", to: "/reinpia/nervia-marketing" },
@@ -225,6 +237,8 @@ export function AdminLayout() {
         items: [
           { label: "Resumen de marca", to: "/" },
           { label: "Plan activo y soporte", to: "/plans" },
+          { label: "Onboarding ventas", to: "/onboarding/sales", roles: ["tenant_admin", "reinpia_admin", "super_admin"] },
+          { label: "Onboarding cliente", to: "/onboarding/client", roles: ["tenant_admin", "reinpia_admin", "super_admin"] },
         ],
       },
       {
@@ -250,6 +264,7 @@ export function AdminLayout() {
           { label: "Distribuidores", to: "/admin/distributors" },
           { label: "Ventas POS", to: "/pos/sales" },
           { label: "Fidelización", to: "/admin/loyalty", roles: ["tenant_admin", "reinpia_admin"] },
+          { label: "Contratos", to: "/admin/contracts", roles: ["tenant_admin", "reinpia_admin"] },
           { label: "Configuración local", to: "/admin/currency", roles: ["tenant_admin", "reinpia_admin"] },
         ],
       },
@@ -257,7 +272,6 @@ export function AdminLayout() {
         title: "CONSUMO Y LÍMITES",
         roles: ADMIN_ROLES,
         items: [
-          { label: "Consumo del plan", to: "/plans" },
           { label: "Usuarios", to: "/admin/users", roles: ["tenant_admin", "reinpia_admin", "tenant_staff"] },
           { label: "Carga masiva y stock", to: "/admin/catalog/bulk-upload" },
         ],

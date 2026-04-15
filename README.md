@@ -27,6 +27,16 @@ Cambios principales cerrados en Sprint 1:
   - eliminadas rutas placeholder de login:
     - `/store/:tenantSlug/distribuidores/login-placeholder`
     - `/pos/login-placeholder`
+- Cierre 100% del sprint:
+  - menú de marca sin duplicado de `/plans`
+  - rutas huérfanas integradas en navegación:
+    - global: `/reinpia/operations`, `/reinpia/reports/*`
+    - marca: `/admin/contracts`, `/onboarding/sales`, `/onboarding/client`
+  - textos visibles corregidos a español UTF-8 sin mojibake
+  - reparto final de vistas:
+    - `Dashboard`: resumen ejecutivo
+    - `Plans`: detalle de plan y límites
+    - `Capacity`: compra de add-ons y upgrade
   - accesos B2B ajustados a `/login`.
 
 ## Wizard oficial de alta/configuracion de marcas

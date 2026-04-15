@@ -907,3 +907,7 @@
 - [x] Bloqueo backend de sync/report/feedback cuando no cumple activación
 - [x] UI de alta de marca con activación Nervia y campos requeridos
 
+- [x] Cierre 100% Sprint 1: menú sin duplicados funcionales
+- [x] Cierre 100% Sprint 1: rutas huérfanas integradas u ordenadas
+- [x] Cierre 100% Sprint 1: dashboard/plan/expansión reconciliados sin redundancia crítica
+- [x] Cierre 100% Sprint 1: corrección de encoding/mojibake en vistas internas

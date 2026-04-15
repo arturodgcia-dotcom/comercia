@@ -95,8 +95,8 @@ export function ReinpiaTenantsPage() {
               <th>Ventas sujetas</th>
               <th>Comision estimada</th>
               <th>Neto</th>
-              <th>Ãšltima actividad</th>
-              <th>AcciÃ³n principal</th>
+              <th>�ltima actividad</th>
+              <th>Acci�n principal</th>
               <th>Acciones</th>
             </tr>
           </thead>
@@ -148,3 +148,4 @@ export function ReinpiaTenantsPage() {
     </section>
   );
 }
+

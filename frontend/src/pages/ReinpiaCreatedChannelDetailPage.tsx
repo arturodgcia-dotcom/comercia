@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useAuth } from "../app/AuthContext";
 import { PageHeader } from "../components/PageHeader";
@@ -10,7 +10,7 @@ type ChannelKey = "landing" | "public" | "distributors" | "pos";
 
 const CHANNEL_LABELS: Record<ChannelKey, string> = {
   landing: "Landing",
-  public: "Ecommerce pÃºblico",
+  public: "Ecommerce p�blico",
   distributors: "Ecommerce distribuidores",
   pos: "WebApp / POS",
 };
@@ -63,7 +63,7 @@ function resolveState(workflow: BrandSetupWorkflow | null, channel: ChannelKey):
   };
   const step = workflow.steps.find((item) => item.code === stepCode[channel]);
   if (step?.approved) return "creado";
-  if (step?.status === "in_progress") return "en configuraciÃ³n";
+  if (step?.status === "in_progress") return "en configuraci�n";
   return "pendiente";
 }
 
@@ -134,7 +134,7 @@ export function ReinpiaCreatedChannelDetailPage() {
   if (!channelValid) {
     return (
       <section>
-        <PageHeader title="Detalle de canal" subtitle="Canal no vÃ¡lido." />
+        <PageHeader title="Detalle de canal" subtitle="Canal no válido." />
         <Link className="button" to="/reinpia/canales-creados">
           Volver a canales creados
         </Link>
@@ -179,11 +179,11 @@ export function ReinpiaCreatedChannelDetailPage() {
               <p>{summary.route}</p>
             </article>
             <article className="card">
-              <h4>PaÃ­s / idioma / moneda</h4>
+              <h4>Pa�s / idioma / moneda</h4>
               <p>{summary.locale}</p>
             </article>
             <article className="card">
-              <h4>Ãšltima regeneraciÃ³n/configuraciÃ³n</h4>
+              <h4>�ltima regeneraci�n/configuraci�n</h4>
               <p>{summary.updatedAt}</p>
             </article>
             <article className="card">
@@ -213,4 +213,5 @@ export function ReinpiaCreatedChannelDetailPage() {
     </section>
   );
 }
+
 

@@ -1,4 +1,4 @@
-﻿import { Navigate, Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes } from "react-router-dom";
 import { ProtectedRoute } from "../components/ProtectedRoute";
 import { RoleRoute } from "../components/RoleRoute";
 import { AdminLayout } from "../layouts/AdminLayout";
@@ -122,7 +122,7 @@ export function AppRouter() {
       <Route path="/store/:tenantSlug/distribuidores" element={<ResolvedStorefrontDistributorsPage />} />
       <Route path="/store/:tenantSlug/distribuidores/registro" element={<DistributorRegistrationPage />} />
 
-      {/* â”€â”€ Plantillas de muestra (preview sin autenticaciÃ³n) â”€â”€ */}
+      {/* -- Plantillas de muestra (preview sin autenticaci�n) -- */}
       <Route path="/templates/tienda-publica" element={<StorePublicTemplate />} />
       <Route path="/templates/distribuidores" element={<StoreDistributorsTemplate />} />
       <Route path="/templates/pos" element={<StorePOSTemplate />} />
@@ -229,4 +229,5 @@ export function AppRouter() {
     </Routes>
   );
 }
+
 

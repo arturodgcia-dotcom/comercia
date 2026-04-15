@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../app/AuthContext";
 import { PageHeader } from "../components/PageHeader";
@@ -33,7 +33,7 @@ function toStateFromStep(status: string | undefined, approved: boolean | undefin
 
 function toLabel(state: ChannelState): string {
   if (state === "creado") return "Creado";
-  if (state === "en_configuracion") return "En configuraciÃ³n";
+  if (state === "en_configuracion") return "En configuraci�n";
   return "Pendiente";
 }
 
@@ -152,7 +152,7 @@ export function ReinpiaCreatedChannelsPage() {
     const allRows: ChannelMatrixRow[] = [];
     const channelConfig: Array<{ key: ChannelKey; label: string; stepCode: string }> = [
       { key: "landing", label: "Landing", stepCode: "landing_setup" },
-      { key: "public", label: "Ecommerce pÃºblico", stepCode: "ecommerce_setup" },
+      { key: "public", label: "Ecommerce p�blico", stepCode: "ecommerce_setup" },
       { key: "distributors", label: "Ecommerce distribuidores", stepCode: "distributors_setup" },
       { key: "pos", label: "WebApp / POS", stepCode: "pos_setup" },
     ];
@@ -219,7 +219,7 @@ export function ReinpiaCreatedChannelsPage() {
     <section>
       <PageHeader
         title="Canales creados"
-        subtitle="MÃ³dulo administrativo Ãºnico para ver activos ya creados por cliente principal, marca y canal."
+        subtitle="M�dulo administrativo único para ver activos ya creados por cliente principal, marca y canal."
       />
       {error ? <p className="error">{error}</p> : null}
       {loading ? <p className="muted">Cargando consolidado de canales...</p> : null}
@@ -261,9 +261,9 @@ export function ReinpiaCreatedChannelsPage() {
                       <th>Estado</th>
                       <th>Plantilla activa</th>
                       <th>Ruta real</th>
-                      <th>PaÃ­s / idioma / moneda</th>
-                      <th>Ãšltima actualizaciÃ³n</th>
-                      <th>AcciÃ³n principal</th>
+                      <th>Pa�s / idioma / moneda</th>
+                      <th>�ltima actualización</th>
+                      <th>Acción principal</th>
                       <th>Acciones</th>
                     </tr>
                   </thead>
@@ -312,4 +312,5 @@ export function ReinpiaCreatedChannelsPage() {
     </section>
   );
 }
+
 
