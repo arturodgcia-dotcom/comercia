@@ -1,7 +1,7 @@
 from datetime import datetime
 from decimal import Decimal
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, Numeric, String, Text
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, Numeric, String, Text, UniqueConstraint
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
@@ -85,6 +85,57 @@ class User(Base, TimestampMixin):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     tenant_id: Mapped[int | None] = mapped_column(ForeignKey("tenants.id"), nullable=True, index=True)
     preferred_language: Mapped[str] = mapped_column(String(10), default="es", nullable=False)
+
+
+class RoleCatalog(Base, TimestampMixin):
+    __tablename__ = "role_catalog"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    role_key: Mapped[str] = mapped_column(String(80), unique=True, nullable=False, index=True)
+    display_name: Mapped[str] = mapped_column(String(180), nullable=False)
+    scope: Mapped[str] = mapped_column(String(20), nullable=False, index=True)  # global|client|brand
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    is_system: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+
+
+class PermissionCatalog(Base, TimestampMixin):
+    __tablename__ = "permission_catalog"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    permission_key: Mapped[str] = mapped_column(String(120), unique=True, nullable=False, index=True)
+    display_name: Mapped[str] = mapped_column(String(220), nullable=False)
+    domain: Mapped[str] = mapped_column(String(40), nullable=False, index=True)
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+
+class RolePermission(Base):
+    __tablename__ = "role_permissions"
+    __table_args__ = (UniqueConstraint("role_id", "permission_id", name="uq_role_permissions_role_permission"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    role_id: Mapped[int] = mapped_column(ForeignKey("role_catalog.id"), nullable=False, index=True)
+    permission_id: Mapped[int] = mapped_column(ForeignKey("permission_catalog.id"), nullable=False, index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+
+
+class UserRoleAssignment(Base, TimestampMixin):
+    __tablename__ = "user_role_assignments"
+    __table_args__ = (
+        UniqueConstraint("user_id", "role_id", "scope", "commercial_client_account_id", "tenant_id", name="uq_user_role_assignments_scope"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)
+    role_id: Mapped[int] = mapped_column(ForeignKey("role_catalog.id"), nullable=False, index=True)
+    scope: Mapped[str] = mapped_column(String(20), nullable=False, index=True)  # global|client|brand
+    commercial_client_account_id: Mapped[int | None] = mapped_column(
+        ForeignKey("commercial_client_accounts.id"),
+        nullable=True,
+        index=True,
+    )
+    tenant_id: Mapped[int | None] = mapped_column(ForeignKey("tenants.id"), nullable=True, index=True)
+    is_primary: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
 
 class TenantBranding(Base, TimestampMixin):

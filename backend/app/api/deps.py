@@ -7,6 +7,7 @@ from app.core.config import get_settings
 from app.core.security import decode_token
 from app.db.session import get_db
 from app.models.models import User
+from app.services.role_permissions_service import has_permission, role_matches_any_alias
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login", auto_error=False)
 GLOBAL_ADMIN_ROLES = {"reinpia_admin", "super_admin"}
@@ -66,18 +67,25 @@ def get_current_user(token: str | None = Depends(oauth2_scheme), db: Session = D
 
 
 def get_reinpia_admin(current_user: User = Depends(get_current_user)) -> User:
-    if current_user.role not in GLOBAL_ADMIN_ROLES:
+    if not role_matches_any_alias(current_user.role, {"super_admin"}):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="requiere rol super_admin o reinpia_admin")
     return current_user
 
 
-def get_finance_view_user(current_user: User = Depends(get_current_user)) -> User:
-    if current_user.role not in FINANCE_VIEW_ROLES:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="requiere rol financiero autorizado")
-    return current_user
+def get_finance_view_user(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)) -> User:
+    if current_user.role in FINANCE_VIEW_ROLES:
+        return current_user
+    if has_permission(db, current_user, "global.view_payments") or has_permission(db, current_user, "global.view_commissions"):
+        return current_user
+    raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="requiere rol financiero autorizado")
 
 
-def get_nervia_operator(current_user: User = Depends(get_current_user)) -> User:
-    if current_user.role not in NERVIA_OPERATOR_ROLES:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="requiere rol operativo de Nervia")
+def get_nervia_operator(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)) -> User:
+    if current_user.role in NERVIA_OPERATOR_ROLES:
+        return current_user
+    if has_permission(db, current_user, "global.view_marketing_prospects"):
+        return current_user
+    if has_permission(db, current_user, "global.view_dashboard") and has_permission(db, current_user, "global.view_clients"):
+        return current_user
+    raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="requiere rol operativo de Nervia")
     return current_user

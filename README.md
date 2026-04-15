@@ -1258,3 +1258,23 @@ Se cerraron tres módulos finales para pruebas operativas:
   - `nervia_customer_identifier`
   - `nervia_marketing_contract_active`
 - Regla backend: no hay sync/report/feedback si falta identificador o contrato de marketing activo.
+
+## Sprint 2 - Bloque 1: Roles y permisos dedicados (2026-04-15)
+- Se integra módulo formal de control de acceso basado en catálogo:
+  - `role_catalog`
+  - `permission_catalog`
+  - `role_permissions`
+  - `user_role_assignments`
+- Se crean roles base globales:
+  - `super_admin`, `contador`, `soporte`, `comercial`, `operaciones`
+- Se crean roles base de cliente/marca:
+  - `client_admin`, `brand_admin`, `brand_operator`, `brand_support_viewer`
+- Se publica módulo global de administración en `/reinpia/roles` para:
+  - consultar roles
+  - consultar permisos
+  - asignar rol a usuario con alcance (`global`, `client`, `brand`)
+- `/api/v1/auth/me` ahora expone:
+  - `permissions`
+  - `effective_roles`
+- Se mantiene compatibilidad con roles legacy (`reinpia_admin`, `tenant_admin`, `tenant_staff`, etc.) mediante mapeo seguro.
+- Navegación global/brand comienza a responder a permisos base sin romper accesos existentes.

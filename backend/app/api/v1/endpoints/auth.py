@@ -7,6 +7,7 @@ from app.core.security import create_access_token, verify_password
 from app.db.session import get_db
 from app.models.models import User
 from app.schemas.auth import LoginRequest, TokenResponse, UserRead
+from app.services.role_permissions_service import resolve_effective_role_keys, resolve_user_permissions
 from app.services.security_hooks import on_auth_login_failed, on_auth_login_success
 
 router = APIRouter()
@@ -33,5 +34,19 @@ def login(payload: LoginRequest, request: Request, db: Session = Depends(get_db)
 
 
 @router.get("/me", response_model=UserRead)
-def me(current_user: User = Depends(get_current_user)) -> User:
-    return current_user
+def me(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)) -> UserRead:
+    permissions = sorted(resolve_user_permissions(db, current_user))
+    effective_roles = sorted(resolve_effective_role_keys(db, current_user))
+    return UserRead(
+        id=current_user.id,
+        email=current_user.email,
+        full_name=current_user.full_name,
+        role=current_user.role,
+        is_active=current_user.is_active,
+        tenant_id=current_user.tenant_id,
+        preferred_language=current_user.preferred_language,
+        permissions=permissions,
+        effective_roles=effective_roles,
+        created_at=current_user.created_at,
+        updated_at=current_user.updated_at,
+    )

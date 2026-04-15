@@ -60,7 +60,7 @@
 | Storefront distribuidores separado | Inicial funcional | home comercial B2B con beneficios, volumen y compra recurrente |
 | Dashboard de marca reorganizado | Inicial funcional | modulos agrupados + topbar con volver y breadcrumbs |
 | Arranque local unificado | Inicial funcional | scripts robustos con bootstrap, deteccion de puertos y URLs utiles |
-| Diagnóstico inteligente | Inicial funcional | modulo independiente para evaluar SEO, AEO e identidad por marca |
+| Diagnï¿½stico inteligente | Inicial funcional | modulo independiente para evaluar SEO, AEO e identidad por marca |
 | Bots / agentes | Base arquitectura | pendiente implementacion |
 | Lia agente comercial | Base funcional | widget conversacional con recomendacion de plan y envio a diagnostico |
 | Visibilidad por rol en admin | Inicial funcional | distributor/public fuera de modulos admin de marca/global |
@@ -127,7 +127,7 @@
 - `/api/v1/security/blocked-entities/{id}/unblock`
 - `/api/v1/security/kpis`
 
-## Endpoints diagnóstico inteligente
+## Endpoints diagnï¿½stico inteligente
 - `POST /api/v1/brand-diagnostics/{tenant_id}/analyze`
 - `POST /api/v1/brand-diagnostics/analyze-external-url`
 - `GET /api/v1/brand-diagnostics/{tenant_id}/latest`
@@ -136,7 +136,7 @@
 - `POST /api/v1/brand-diagnostics/{tenant_id}/improvement-plan`
 - `GET /api/v1/reinpia/diagnostics`
 
-## Actualizacion modulo Diagnóstico inteligente
+## Actualizacion modulo Diagnï¿½stico inteligente
 - Nuevo modulo desacoplado del wizard de setup.
 - Disponible en panel de marca:
   - `/admin/diagnostico-inteligente`
@@ -169,7 +169,7 @@ Nuevos componentes y capacidades:
 - Paginas legales publicas de privacidad, cookies y proteccion de datos.
 - Seccion de video YouTube configurable por entorno (`VITE_COMERCIA_YOUTUBE_URL`).
 - Formulario de atencion al cliente separado del diagnostico comercial.
-- Lía evolucionada a experiencia conversacional comercial (diagnostico + recomendacion + CTA de cierre).
+- Lï¿½a evolucionada a experiencia conversacional comercial (diagnostico + recomendacion + CTA de cierre).
 - Footer de landing reforzado con enlaces legales y de contacto.
 
 Nuevos endpoints:
@@ -177,13 +177,13 @@ Nuevos endpoints:
 - `GET /api/v1/reinpia/customer-contact-leads`
 
 ## Actualizacion UX comercial
-- Lía migrada a widget flotante conversacional con acciones de cierre.
+- Lï¿½a migrada a widget flotante conversacional con acciones de cierre.
 - Diagnostico comercial presentado como modal/subflujo.
-- Seccion "Contáctanos" separada y orientada a conversion.
+- Seccion "Contï¿½ctanos" separada y orientada a conversion.
 - Copy de retos comerciales ajustado (se elimina etiqueta "Dolor").
 
 ## Modulo interno de seguimiento
-- `ReinpiaCommercialInboxPage` centraliza contacto, leads de Lía, diagnosticos y solicitudes de asesoria.
+- `ReinpiaCommercialInboxPage` centraliza contacto, leads de Lï¿½a, diagnosticos y solicitudes de asesoria.
 - Filtros por canal y estatus + edicion de estatus desde detalle.
 
 ## Actualizacion navegacion por contexto (Ejecucion 33)
@@ -194,7 +194,7 @@ Nuevos endpoints:
 - `tenant_admin` y `tenant_staff` solo ven el menu de marca.
 - Monedas se ubica por contexto:
   - Global: "Monedas y tipos de cambio"
-  - Marca: "Moneda de operación"
+  - Marca: "Moneda de operaciï¿½n"
 
 ## Actualizacion conectividad API y Monedas (Ejecucion 36)
 - URL base de API centralizada y endurecida para entorno local:
@@ -213,7 +213,7 @@ Nuevos endpoints:
 ## Actualizacion panel por contexto (Ejecucion 37)
 - Monedas
   - Global: modulo funcional `Monedas y tipos de cambio`.
-  - Marca: modulo funcional `Moneda de operación`.
+  - Marca: modulo funcional `Moneda de operaciï¿½n`.
 - Usuarios
   - Global: `Usuarios internos de plataforma` con listado/alta/edicion minima.
   - Marca: `Usuarios de la marca` con listado/alta/edicion segun rol.
@@ -242,20 +242,20 @@ Nuevos endpoints:
 - Se depuro `ComerciaLandingPage.css` para conservar estilos usados por el sitio publico oficial.
 
 ## Actualizacion arquitectura admin global/marca (Ejecucion 41)
-- Se consolidó la arquitectura administrativa oficial:
-  - Panel global: Inicio, Creación, Administración, Finanzas, Operación interna.
-  - Wizard oficial solo para creación inicial.
-  - Módulo global `Canales creados` como centro administrativo de canales.
-  - Panel de marca orientado a operación diaria.
+- Se consolidï¿½ la arquitectura administrativa oficial:
+  - Panel global: Inicio, Creaciï¿½n, Administraciï¿½n, Finanzas, Operaciï¿½n interna.
+  - Wizard oficial solo para creaciï¿½n inicial.
+  - Mï¿½dulo global `Canales creados` como centro administrativo de canales.
+  - Panel de marca orientado a operaciï¿½n diaria.
 - Se retiraron rutas legacy/alias de tenants:
   - `/tenants`
   - `/tenants/:tenantId`
   - `/tenants/:tenantId/branding`
-- Se eliminaron páginas legacy no alineadas:
+- Se eliminaron pï¿½ginas legacy no alineadas:
   - `frontend/src/pages/TenantsPage.tsx`
   - `frontend/src/pages/TenantDetailPage.tsx`
 - Se actualizaron accesos en `Canales creados` para usar solo rutas REINPIA oficiales de ficha de marca.
-- Se eliminó mezcla de contexto global dentro del menú de marca.
+- Se eliminï¿½ mezcla de contexto global dentro del menï¿½ de marca.
 
 ## Actualizacion canales de marca tenant-aware (Ejecucion 38)
 - Nuevas rutas de control por canal en panel de marca:
@@ -610,17 +610,17 @@ Nuevos endpoints:
 - Navegacion global de ComerCia | Estado: funcional
   - agrupada por dominios:
     - `INICIO`
-    - `CREACIÓN`
-    - `ADMINISTRACIÓN`
+    - `CREACIï¿½N`
+    - `ADMINISTRACIï¿½N`
     - `FINANZAS`
-    - `OPERACIÓN INTERNA`
-- Dominio CREACIÓN | Estado: funcional
+    - `OPERACIï¿½N INTERNA`
+- Dominio CREACIï¿½N | Estado: funcional
   - Clientes, Marcas, Nueva marca, Wizard de configuracion.
-- Dominio ADMINISTRACIÓN | Estado: funcional
+- Dominio ADMINISTRACIï¿½N | Estado: funcional
   - Clientes comerciales, Marcas activas, Canales creados, Configuracion internacional.
 - Dominio FINANZAS | Estado: funcional
   - Pagos, Comisiones, Planes y Add-ons, Tokens IA.
-- Dominio OPERACIÓN INTERNA | Estado: funcional
+- Dominio OPERACIï¿½N INTERNA | Estado: funcional
   - Soporte, Alertas/Centinela, Seguridad, Prospectos de Marketing, Usuarios internos.
 - Limpieza de flujo principal | Estado: funcional
   - rutas legacy/global mezcladas fuera del menu principal.
@@ -628,18 +628,18 @@ Nuevos endpoints:
 ## Panel cliente/marca - ajustes de contexto (2026-04-13)
 
 - `Dashboard de marca`:
-  - Botones de resumen activos: compra de créditos IA, soporte comercial local y mejora de plan.
-  - Se retiró el bloque separado de contexto comercial para evitar duplicidad en la vista principal.
+  - Botones de resumen activos: compra de crï¿½ditos IA, soporte comercial local y mejora de plan.
+  - Se retirï¿½ el bloque separado de contexto comercial para evitar duplicidad en la vista principal.
 - `Marcas hijas`:
-  - Nuevo módulo local: `/admin/brands/children`.
+  - Nuevo mï¿½dulo local: `/admin/brands/children`.
   - Muestra marca principal + hijas relacionadas con estado operativo y consumo por marca.
-  - Incluye CTAs de crecimiento: mejorar plan, add-on de marca, más créditos IA.
+  - Incluye CTAs de crecimiento: mejorar plan, add-on de marca, mï¿½s crï¿½ditos IA.
 - `Ficha de marca activa`:
   - Ruta: `/admin/branding`.
-  - Permite cambiar de marca (principal/hija) para revisar salud operativa y branding básico.
-- `Navegación panel de marca`:
-  - Se eliminó el agrupador `Canales`.
-  - Los accesos de canal viven bajo `Operación`.
+  - Permite cambiar de marca (principal/hija) para revisar salud operativa y branding bï¿½sico.
+- `Navegaciï¿½n panel de marca`:
+  - Se eliminï¿½ el agrupador `Canales`.
+  - Los accesos de canal viven bajo `Operaciï¿½n`.
 ## Panel Global - dominios funcionales (2026-04-14)
 
 El menu global oficial queda agrupado en 5 dominios:
@@ -697,7 +697,7 @@ Limpieza aplicada:
   - Tokens distribuidos por marca
   - Tokens de reserva y umbral minimo sugerido
   - Agente centinela de sobreconsumo por marca
-## Cierre módulos panel de marca (2026-04-14)
+## Cierre mï¿½dulos panel de marca (2026-04-14)
 
 ### Soporte
 
@@ -712,17 +712,17 @@ Limpieza aplicada:
 ### Expandir capacidad
 
 - Ruta: `/admin/capacity-expand`
-- Catálogo de expansión con:
+- Catï¿½logo de expansiï¿½n con:
   - usuario extra
   - agente IA extra
   - marca extra
   - 100 productos extra
   - sucursal extra
-  - 500 créditos IA extra
+  - 500 crï¿½ditos IA extra
   - soporte premium
-- Incluye recomendación por recurso en riesgo + acciones de checkout y upgrade.
+- Incluye recomendaciï¿½n por recurso en riesgo + acciones de checkout y upgrade.
 
-### Respuestas y atención
+### Respuestas y atenciï¿½n
 
 - Ruta: `/admin/respuestas-atencion`
 - Captura:
@@ -737,8 +737,8 @@ Limpieza aplicada:
   - estilo
   - notas y documento base
 - Flujo:
-  - guardar configuración
-  - enviar solicitud a soporte para aplicación por REINPIA
+  - guardar configuraciï¿½n
+  - enviar solicitud a soporte para aplicaciï¿½n por REINPIA
   - no activa agentes manualmente desde el cliente
 
 ## Actualizacion Nervia x ComerCia (2026-04-14)
@@ -765,11 +765,29 @@ Limpieza aplicada:
 
 
 ## Cierre Sprint 1 (2026-04-15)
-- Menú de marca sin duplicidad funcional en `Plan activo y soporte`.
+- Menï¿½ de marca sin duplicidad funcional en `Plan activo y soporte`.
 - `DashboardPage` queda como resumen ejecutivo de marca.
-- `PlansPage` queda como detalle de plan y límites.
+- `PlansPage` queda como detalle de plan y lï¿½mites.
 - `BrandCapacityExpansionPage` queda para compra de add-ons y solicitud de upgrade.
-- Rutas antes huérfanas ahora integradas en navegación:
+- Rutas antes huï¿½rfanas ahora integradas en navegaciï¿½n:
   - global: `reinpia/operations`, `reinpia/reports/*`
   - marca: `admin/contracts`, `onboarding/sales`, `onboarding/client`
-- Corrección de textos mojibake en vistas internas críticas.
+- Correcciï¿½n de textos mojibake en vistas internas crï¿½ticas.
+
+## Sprint 2 - Bloque 1 (2026-04-15): MÃ³dulo de roles y permisos
+- Dominio nuevo en panel global:
+  - `Roles y permisos` (`/reinpia/roles`)
+- Backend nuevo:
+  - `GET /api/v1/admin/roles`
+  - `GET /api/v1/admin/permissions`
+  - `GET /api/v1/admin/role-assignments`
+  - `POST /api/v1/admin/role-assignments`
+- CatÃ¡logo inicial de roles:
+  - global: `super_admin`, `contador`, `soporte`, `comercial`, `operaciones`
+  - cliente/marca: `client_admin`, `brand_admin`, `brand_operator`, `brand_support_viewer`
+- CatÃ¡logo inicial de permisos:
+  - global: dashboard/clientes/marcas/pagos/comisiones/soporte/prospectos/seguridad/usuarios internos/roles-permisos
+  - marca: dashboard/catÃ¡logo/distribuidores/consumo/soporte/add-ons/branding/canales/respuestas
+- IntegraciÃ³n de compatibilidad:
+  - mapeo de roles legacy hacia catÃ¡logo nuevo
+  - guardas de navegaciÃ³n por permiso con fallback por rol legacy

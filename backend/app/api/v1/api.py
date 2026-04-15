@@ -26,6 +26,7 @@ from app.api.v1.endpoints import (
     plans,
     pos,
     products,
+    roles_permissions,
     reports,
     recurring_orders,
     reinpia_admin,
@@ -86,3 +87,4 @@ api_router.include_router(brand_setup.router, prefix="/brand-setup", tags=["bran
 api_router.include_router(brand_diagnostics.router, tags=["brand-diagnostics"])
 api_router.include_router(admin_settings.router, prefix="/admin", tags=["admin-settings"])
 api_router.include_router(users_admin.router, prefix="/admin", tags=["users-admin"])
+api_router.include_router(roles_permissions.router, prefix="/admin", tags=["roles-permissions"])

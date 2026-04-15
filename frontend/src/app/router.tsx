@@ -76,6 +76,7 @@ import { ReinpiaCommercialInboxPage } from "../pages/ReinpiaCommercialInboxPage"
 import { ReinpiaCommercialClientsPage } from "../pages/ReinpiaCommercialClientsPage";
 import { ReinpiaMarketingProspectsPage } from "../pages/ReinpiaMarketingProspectsPage";
 import { ReinpiaNerviaBridgePage } from "../pages/ReinpiaNerviaBridgePage";
+import { ReinpiaRolesPermissionsPage } from "../pages/ReinpiaRolesPermissionsPage";
 import { ReinpiaSupportBackofficePage } from "../pages/ReinpiaSupportBackofficePage";
 import { ReviewsAdminPage } from "../pages/ReviewsAdminPage";
 import { OnboardingSalesPage } from "../pages/OnboardingSalesPage";
@@ -122,7 +123,7 @@ export function AppRouter() {
       <Route path="/store/:tenantSlug/distribuidores" element={<ResolvedStorefrontDistributorsPage />} />
       <Route path="/store/:tenantSlug/distribuidores/registro" element={<DistributorRegistrationPage />} />
 
-      {/* -- Plantillas de muestra (preview sin autenticación) -- */}
+      {/* -- Plantillas de muestra (preview sin autenticaciÃ³n) -- */}
       <Route path="/templates/tienda-publica" element={<StorePublicTemplate />} />
       <Route path="/templates/distribuidores" element={<StoreDistributorsTemplate />} />
       <Route path="/templates/pos" element={<StorePOSTemplate />} />
@@ -150,7 +151,7 @@ export function AppRouter() {
             <Route path="products" element={<ProductsPage />} />
           </Route>
 
-          <Route element={<RoleRoute allowedRoles={["tenant_admin", "reinpia_admin", "super_admin", "contador"]} />}>
+          <Route element={<RoleRoute allowedRoles={["tenant_admin", "tenant_staff", "brand_admin", "brand_operator", "brand_support_viewer", "client_admin", "reinpia_admin", "super_admin", "contador", "soporte", "comercial", "operaciones", "agency_admin"]} />}>
             <Route path="admin/channels/landing" element={<BrandLandingChannelPage />} />
             <Route path="admin/channels/public" element={<BrandPublicEcommerceChannelPage />} />
             <Route path="admin/channels/distributors" element={<BrandDistributorsChannelPage />} />
@@ -191,6 +192,7 @@ export function AppRouter() {
               <Route path="reinpia/brands/:tenantId/setup" element={<BrandSetupWizard />} />
               <Route path="reinpia/tenants" element={<ReinpiaTenantsPage />} />
               <Route path="reinpia/users" element={<UsersAdminPage />} />
+              <Route path="reinpia/roles" element={<ReinpiaRolesPermissionsPage />} />
               <Route path="reinpia/language" element={<LanguageAdminPage />} />
               <Route path="reinpia/currency" element={<CurrencyAdminPage />} />
               <Route path="reinpia/tenants/:tenantId" element={<ReinpiaTenantDetailPage />} />
@@ -204,11 +206,17 @@ export function AppRouter() {
               <Route path="reinpia/reports/growth" element={<ReinpiaGrowthReportPage />} />
               <Route path="reinpia/reports/leads" element={<ReinpiaLeadsReportPage />} />
               <Route path="reinpia/reports/marketing-opportunities" element={<ReinpiaMarketingOpportunitiesPage />} />
-              <Route path="reinpia/commercial-inbox" element={<ReinpiaCommercialInboxPage />} />
-              <Route path="reinpia/support-backoffice" element={<ReinpiaSupportBackofficePage />} />
               <Route path="reinpia/clientes-comerciales" element={<ReinpiaCommercialClientsPage />} />
+            </Route>
+            <Route element={<RoleRoute allowedRoles={["reinpia_admin", "super_admin", "comercial"]} allowedPermissions={["global.view_marketing_prospects"]} />}>
+              <Route path="reinpia/commercial-inbox" element={<ReinpiaCommercialInboxPage />} />
               <Route path="reinpia/marketing/prospectos" element={<ReinpiaMarketingProspectsPage />} />
+            </Route>
+            <Route element={<RoleRoute allowedRoles={["reinpia_admin", "super_admin", "soporte", "operaciones", "agency_admin"]} allowedPermissions={["global.view_support"]} />}>
+              <Route path="reinpia/support-backoffice" element={<ReinpiaSupportBackofficePage />} />
               <Route path="reinpia/alerts" element={<ReinpiaAlertsPage />} />
+            </Route>
+            <Route element={<RoleRoute allowedRoles={["reinpia_admin", "super_admin", "operaciones", "agency_admin"]} allowedPermissions={["global.view_security"]} />}>
               <Route path="reinpia/security" element={<ReinpiaSecurityDashboardPage />} />
               <Route path="reinpia/security/alerts" element={<ReinpiaSecurityAlertsPage />} />
               <Route path="reinpia/security/rules" element={<ReinpiaSecurityRulesPage />} />

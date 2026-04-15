@@ -3,19 +3,37 @@ import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../app/AuthContext";
 import { LanguageSelector } from "../components/LanguageSelector";
 import { api } from "../services/api";
-import { BrandAdminSettings, Tenant } from "../types/domain";
+import { BrandAdminSettings, Tenant, User } from "../types/domain";
+import { hasPermission } from "../utils/accessControl";
 
 type AppMode = "global" | "brand";
-type NavItem = { label: string; to: string; roles?: string[] };
-type NavSection = { title: string; items: NavItem[]; roles?: string[] };
+type NavItem = { label: string; to: string; roles?: string[]; permissions?: string[] };
+type NavSection = { title: string; items: NavItem[]; roles?: string[]; permissions?: string[] };
 
-const ADMIN_ROLES = ["reinpia_admin", "super_admin", "agency_admin", "tenant_admin", "tenant_staff", "contador", "soporte"];
+const ADMIN_ROLES = [
+  "reinpia_admin",
+  "super_admin",
+  "agency_admin",
+  "tenant_admin",
+  "tenant_staff",
+  "contador",
+  "soporte",
+  "comercial",
+  "operaciones",
+  "client_admin",
+  "brand_admin",
+  "brand_operator",
+  "brand_support_viewer",
+];
 const STORAGE_MODE_KEY = "comercia_admin_mode";
 const STORAGE_BRAND_KEY = "comercia_admin_brand_id";
 
-function canView(userRole: string | undefined, roles?: string[]) {
-  if (!roles || roles.length === 0) return true;
-  return roles.includes(userRole ?? "");
+function canView(user: User | null | undefined, roles?: string[], permissions?: string[]) {
+  const userRole = user?.role;
+  const roleEnabled = !roles || roles.length === 0 || roles.includes(userRole ?? "");
+  if (roleEnabled) return true;
+  if (!permissions || permissions.length === 0) return false;
+  return permissions.some((permission) => hasPermission(user, permission));
 }
 
 function resolveModeFromPath(pathname: string): AppMode | null {
@@ -59,7 +77,8 @@ export function AdminLayout() {
   const userRole = user?.role;
   const isSuperAdmin = userRole === "reinpia_admin" || userRole === "super_admin";
   const isAgencyAdmin = userRole === "agency_admin";
-  const isGlobalOperator = isSuperAdmin || userRole === "contador" || isAgencyAdmin;
+  const isGlobalOperator =
+    isSuperAdmin || ["contador", "soporte", "comercial", "operaciones", "agency_admin"].includes(userRole ?? "");
   const canAccessAdmin = ADMIN_ROLES.includes(userRole ?? "");
 
   const [tenants, setTenants] = useState<Tenant[]>([]);
@@ -69,7 +88,17 @@ export function AdminLayout() {
     const saved = sessionStorage.getItem(STORAGE_MODE_KEY);
     return saved === "global" || saved === "brand" ? saved : "brand";
   });
-  const globalHomePath = isSuperAdmin ? "/reinpia/dashboard" : isAgencyAdmin ? "/reinpia/nervia-marketing" : "/reinpia/payments";
+  const globalHomePath = isSuperAdmin
+    ? "/reinpia/dashboard"
+    : userRole === "contador"
+      ? "/reinpia/payments"
+      : userRole === "comercial"
+        ? "/reinpia/marketing/prospectos"
+        : userRole === "soporte"
+          ? "/reinpia/support-backoffice"
+          : userRole === "operaciones" || isAgencyAdmin
+            ? "/reinpia/operations"
+            : "/reinpia/dashboard";
 
   useEffect(() => {
     if (!isGlobalOperator) {
@@ -77,7 +106,7 @@ export function AdminLayout() {
       setSelectedBrandId(user?.tenant_id ?? null);
       return;
     }
-    if (userRole === "contador") {
+    if (!isSuperAdmin) {
       setMode("global");
       setSelectedBrandId(null);
       return;
@@ -146,22 +175,25 @@ export function AdminLayout() {
     {
       title: "INICIO",
       roles: ["reinpia_admin", "super_admin"],
+      permissions: ["global.view_dashboard"],
       items: [
-        { label: "Dashboard global", to: "/reinpia/dashboard" },
+        { label: "Dashboard global", to: "/reinpia/dashboard", permissions: ["global.view_dashboard"] },
       ],
     },
     {
       title: "COMERCIAL",
       roles: ["reinpia_admin", "super_admin"],
+      permissions: ["global.view_marketing_prospects"],
       items: [
-        { label: "Prospectos de marketing", to: "/reinpia/marketing/prospectos" },
-        { label: "Precotizaciones internas", to: "/reinpia/marketing/prospectos?view=precotizaciones" },
-        { label: "Seguimiento comercial", to: "/reinpia/commercial-inbox" },
+        { label: "Prospectos de marketing", to: "/reinpia/marketing/prospectos", permissions: ["global.view_marketing_prospects"] },
+        { label: "Precotizaciones internas", to: "/reinpia/marketing/prospectos?view=precotizaciones", permissions: ["global.view_marketing_prospects"] },
+        { label: "Seguimiento comercial", to: "/reinpia/commercial-inbox", permissions: ["global.view_marketing_prospects"] },
       ],
     },
     {
       title: "CREACIÓN",
       roles: ["reinpia_admin", "super_admin"],
+      permissions: ["global.view_clients", "global.view_brands"],
       items: [
         { label: "Clientes principales", to: "/reinpia/clientes-comerciales?domain=creacion" },
         { label: "Marcas", to: "/reinpia/tenants?domain=creacion" },
@@ -172,6 +204,7 @@ export function AdminLayout() {
     {
       title: "ADMINISTRACIÓN",
       roles: ["reinpia_admin", "super_admin"],
+      permissions: ["global.view_clients", "global.view_brands"],
       items: [
         { label: "Clientes comerciales", to: "/reinpia/clientes-comerciales" },
         { label: "Marcas activas", to: "/reinpia/tenants?status=active" },
@@ -182,9 +215,10 @@ export function AdminLayout() {
     {
       title: "FINANZAS",
       roles: ["reinpia_admin", "super_admin", "contador"],
+      permissions: ["global.view_payments", "global.view_commissions"],
       items: [
-        { label: "Pagos", to: "/reinpia/payments" },
-        { label: "Comisiones", to: "/reinpia/reports/commissions" },
+        { label: "Pagos", to: "/reinpia/payments", permissions: ["global.view_payments"] },
+        { label: "Comisiones", to: "/reinpia/reports/commissions", permissions: ["global.view_commissions"] },
         { label: "Planes y Add-ons", to: "/reinpia/clientes-comerciales?tab=planes-addons" },
         { label: "Tokens IA", to: "/reinpia/clientes-comerciales?focus=tokens" },
       ],
@@ -203,13 +237,15 @@ export function AdminLayout() {
     {
       title: "OPERACIÓN INTERNA",
       roles: ["reinpia_admin", "super_admin", "agency_admin"],
+      permissions: ["global.view_support", "global.view_security"],
       items: [
-        { label: "Soporte global backoffice", to: "/reinpia/support-backoffice", roles: ["reinpia_admin", "super_admin"] },
-        { label: "Operación global", to: "/reinpia/operations", roles: ["reinpia_admin", "super_admin"] },
+        { label: "Soporte global backoffice", to: "/reinpia/support-backoffice", roles: ["reinpia_admin", "super_admin"], permissions: ["global.view_support"] },
+        { label: "Operación global", to: "/reinpia/operations", roles: ["reinpia_admin", "super_admin"], permissions: ["global.view_support"] },
         { label: "Alertas / Centinela", to: "/reinpia/alerts", roles: ["reinpia_admin", "super_admin"] },
-        { label: "Seguridad", to: "/reinpia/security", roles: ["reinpia_admin", "super_admin"] },
+        { label: "Seguridad", to: "/reinpia/security", roles: ["reinpia_admin", "super_admin"], permissions: ["global.view_security"] },
         { label: "Nervia Marketing", to: "/reinpia/nervia-marketing" },
-        { label: "Usuarios internos", to: "/reinpia/users", roles: ["reinpia_admin", "super_admin"] },
+        { label: "Usuarios internos", to: "/reinpia/users", roles: ["reinpia_admin", "super_admin"], permissions: ["global.manage_internal_users"] },
+        { label: "Roles y permisos", to: "/reinpia/roles", roles: ["reinpia_admin", "super_admin"], permissions: ["global.manage_roles_permissions"] },
       ],
     },
   ];
@@ -375,12 +411,12 @@ export function AdminLayout() {
 
         <nav className="nav-sections">
           {visibleSections
-            .filter((section) => canView(userRole, section.roles))
+            .filter((section) => canView(user, section.roles, section.permissions))
             .map((section) => (
               <section key={section.title}>
                 <p className="nav-section-title">{section.title}</p>
                 {section.items
-                  .filter((item) => canView(userRole, item.roles))
+                  .filter((item) => canView(user, item.roles, item.permissions))
                   .map((item) => (
                     <NavLink
                       key={item.to + item.label}

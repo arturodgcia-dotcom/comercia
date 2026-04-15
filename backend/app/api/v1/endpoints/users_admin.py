@@ -8,11 +8,12 @@ from app.db.session import get_db
 from app.models.models import Tenant, User
 from app.schemas.users_admin import AdminUserCreate, AdminUserRead, AdminUserUpdate
 from app.services.commercial_account_guard_service import enforce_user_limit_for_tenant
+from app.services.role_permissions_service import ensure_primary_assignment_for_user, role_matches_any_alias
 
 router = APIRouter()
 
-GLOBAL_ALLOWED_ROLES = {"reinpia_admin", "super_admin", "contador", "soporte"}
-BRAND_ALLOWED_ROLES = {"tenant_admin", "tenant_staff", "distributor_user"}
+GLOBAL_ALLOWED_ROLES = {"reinpia_admin", "super_admin", "contador", "soporte", "comercial", "operaciones", "agency_admin"}
+BRAND_ALLOWED_ROLES = {"tenant_admin", "tenant_staff", "distributor_user", "client_admin", "brand_admin", "brand_operator", "brand_support_viewer"}
 
 
 def _to_read(user: User) -> AdminUserRead:
@@ -31,7 +32,7 @@ def _to_read(user: User) -> AdminUserRead:
 
 def _resolve_scope(current_user: User, scope: str, tenant_id: int | None) -> tuple[str, int | None]:
     requested_scope = scope.strip().lower()
-    if current_user.role in {"reinpia_admin", "super_admin"}:
+    if role_matches_any_alias(current_user.role, {"super_admin"}):
         if requested_scope == "global":
             return "global", None
         if requested_scope == "brand":
@@ -40,7 +41,7 @@ def _resolve_scope(current_user: User, scope: str, tenant_id: int | None) -> tup
             return "brand", tenant_id
         raise HTTPException(status_code=400, detail="scope invalido")
 
-    if current_user.role not in {"tenant_admin", "tenant_staff"}:
+    if not role_matches_any_alias(current_user.role, {"brand_admin", "brand_operator"}):
         raise HTTPException(status_code=403, detail="sin permisos para administrar usuarios")
     if current_user.tenant_id is None:
         raise HTTPException(status_code=403, detail="usuario sin tenant asignado")
@@ -80,10 +81,14 @@ def create_admin_user(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    if current_user.role not in {"reinpia_admin", "super_admin", "tenant_admin"}:
+    if not (
+        role_matches_any_alias(current_user.role, {"super_admin"})
+        or role_matches_any_alias(current_user.role, {"brand_admin"})
+    ):
         raise HTTPException(status_code=403, detail="sin permisos para crear usuarios")
     resolved_scope, resolved_tenant_id = _resolve_scope(current_user, scope, tenant_id)
-    _validate_role_for_scope(resolved_scope, payload.role)
+    normalized_role = payload.role.strip().lower()
+    _validate_role_for_scope(resolved_scope, normalized_role)
 
     if db.scalar(select(User).where(User.email == payload.email)):
         raise HTTPException(status_code=409, detail="email ya registrado")
@@ -101,12 +106,21 @@ def create_admin_user(
         email=payload.email.lower(),
         full_name=payload.full_name.strip(),
         hashed_password=get_password_hash(payload.password),
-        role=payload.role,
+        role=normalized_role,
         is_active=payload.is_active,
         tenant_id=target_tenant_id,
         preferred_language=(payload.preferred_language or "es").lower(),
     )
     db.add(row)
+    db.flush()
+    ensure_primary_assignment_for_user(
+        db,
+        user=row,
+        role_key=normalized_role,
+        scope=resolved_scope,
+        tenant_id=target_tenant_id,
+        commercial_client_account_id=None,
+    )
     db.commit()
     db.refresh(row)
     return _to_read(row)
@@ -121,7 +135,10 @@ def update_admin_user(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    if current_user.role not in {"reinpia_admin", "super_admin", "tenant_admin"}:
+    if not (
+        role_matches_any_alias(current_user.role, {"super_admin"})
+        or role_matches_any_alias(current_user.role, {"brand_admin"})
+    ):
         raise HTTPException(status_code=403, detail="sin permisos para editar usuarios")
     resolved_scope, resolved_tenant_id = _resolve_scope(current_user, scope, tenant_id)
 
@@ -137,8 +154,17 @@ def update_admin_user(
 
     updates = payload.model_dump(exclude_unset=True)
     if "role" in updates and updates["role"]:
-        _validate_role_for_scope(resolved_scope, str(updates["role"]))
-        row.role = str(updates["role"])
+        normalized_role = str(updates["role"]).strip().lower()
+        _validate_role_for_scope(resolved_scope, normalized_role)
+        row.role = normalized_role
+        ensure_primary_assignment_for_user(
+            db,
+            user=row,
+            role_key=normalized_role,
+            scope=resolved_scope,
+            tenant_id=row.tenant_id,
+            commercial_client_account_id=None,
+        )
     if "full_name" in updates and updates["full_name"]:
         row.full_name = str(updates["full_name"]).strip()
     if "preferred_language" in updates and updates["preferred_language"]:

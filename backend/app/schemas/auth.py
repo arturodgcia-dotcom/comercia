@@ -21,3 +21,5 @@ class UserRead(TimestampSchema):
     is_active: bool
     tenant_id: int | None
     preferred_language: str
+    permissions: list[str] = []
+    effective_roles: list[str] = []

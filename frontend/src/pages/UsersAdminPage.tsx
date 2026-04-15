@@ -17,7 +17,7 @@ type UserForm = {
 const emptyForm: UserForm = {
   email: "",
   full_name: "",
-  role: "tenant_staff",
+  role: "brand_operator",
   password: "",
   preferred_language: "es",
   is_active: true,
@@ -35,15 +35,15 @@ export function UsersAdminPage() {
   const [editDraft, setEditDraft] = useState<Partial<UserForm>>({});
 
   const isGlobalView = mode === "global" && isGlobalAdmin;
-  const canManage = user?.role === "reinpia_admin" || user?.role === "tenant_admin";
+  const canManage = ["reinpia_admin", "super_admin", "tenant_admin", "brand_admin"].includes(user?.role ?? "");
 
   const roleOptions = useMemo(() => {
-    if (isGlobalView) return ["reinpia_admin"];
-    return ["tenant_admin", "tenant_staff", "distributor_user"];
+    if (isGlobalView) return ["super_admin", "contador", "soporte", "comercial", "operaciones"];
+    return ["client_admin", "brand_admin", "brand_operator", "brand_support_viewer"];
   }, [isGlobalView]);
 
   useEffect(() => {
-    setForm((prev) => ({ ...prev, role: roleOptions[0] ?? "tenant_staff" }));
+    setForm((prev) => ({ ...prev, role: roleOptions[0] ?? "brand_operator" }));
   }, [roleOptions]);
 
   const load = async () => {
@@ -73,7 +73,7 @@ export function UsersAdminPage() {
       setError("");
       const scope = isGlobalView ? "global" : "brand";
       await api.createAdminUser(token, { scope, tenant_id: isGlobalView ? undefined : tenantId ?? undefined }, form);
-      setForm({ ...emptyForm, role: roleOptions[0] ?? "tenant_staff" });
+      setForm({ ...emptyForm, role: roleOptions[0] ?? "brand_operator" });
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : "No fue posible crear usuario.");

@@ -63,7 +63,9 @@ import {
   Plan,
   Product,
   AdminUser,
+  PermissionCatalogEntry,
   ProductReview,
+  RoleCatalogEntry,
   SalesCommissionAgent,
   SalesReferral,
   ReinpiaDistributorsSummary,
@@ -99,6 +101,7 @@ import {
   TenantBranding,
   TenantConfig,
   User,
+  UserRoleAssignmentEntry,
   WishlistItem
 } from "../types/domain";
 
@@ -966,6 +969,38 @@ export const api = {
       token
     );
   },
+  getRoleCatalog: (token: string) =>
+    request<RoleCatalogEntry[]>("/api/v1/admin/roles", {}, token),
+  getPermissionCatalog: (token: string, params?: { domain?: string }) => {
+    const query = new URLSearchParams();
+    if (params?.domain) query.set("domain", params.domain);
+    const suffix = query.toString() ? `?${query.toString()}` : "";
+    return request<PermissionCatalogEntry[]>(`/api/v1/admin/permissions${suffix}`, {}, token);
+  },
+  getUserRoleAssignments: (token: string, params?: { scope?: string; user_id?: number }) => {
+    const query = new URLSearchParams();
+    if (params?.scope) query.set("scope", params.scope);
+    if (params?.user_id) query.set("user_id", String(params.user_id));
+    const suffix = query.toString() ? `?${query.toString()}` : "";
+    return request<UserRoleAssignmentEntry[]>(`/api/v1/admin/role-assignments${suffix}`, {}, token);
+  },
+  createUserRoleAssignment: (
+    token: string,
+    payload: {
+      user_id: number;
+      role_key: string;
+      scope: "global" | "client" | "brand";
+      commercial_client_account_id?: number | null;
+      tenant_id?: number | null;
+      is_primary?: boolean;
+      is_active?: boolean;
+    }
+  ) =>
+    request<UserRoleAssignmentEntry>(
+      "/api/v1/admin/role-assignments",
+      { method: "POST", body: JSON.stringify(payload) },
+      token
+    ),
 
   getPosLocations: (token: string, tenantId: number) =>
     request<PosLocation[]>(`/api/v1/pos/locations/by-tenant/${tenantId}`, {}, token),

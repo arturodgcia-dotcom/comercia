@@ -58,6 +58,8 @@ export interface User {
   is_active: boolean;
   tenant_id: number | null;
   preferred_language?: string;
+  permissions?: string[];
+  effective_roles?: string[];
 }
 
 export interface LoginResponse {
@@ -1445,6 +1447,51 @@ export interface AdminUser {
   is_active: boolean;
   tenant_id: number | null;
   preferred_language: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface RolePermissionEntry {
+  permission_key: string;
+  display_name: string;
+  domain: string;
+}
+
+export interface RoleCatalogEntry {
+  id: number;
+  role_key: string;
+  display_name: string;
+  scope: "global" | "client" | "brand" | string;
+  description?: string | null;
+  is_system: boolean;
+  permissions: RolePermissionEntry[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PermissionCatalogEntry {
+  id: number;
+  permission_key: string;
+  display_name: string;
+  domain: "global" | "brand" | string;
+  description?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface UserRoleAssignmentEntry {
+  id: number;
+  user_id: number;
+  user_email: string;
+  user_full_name: string;
+  role_id: number;
+  role_key: string;
+  role_display_name: string;
+  scope: "global" | "client" | "brand" | string;
+  commercial_client_account_id?: number | null;
+  tenant_id?: number | null;
+  is_primary: boolean;
+  is_active: boolean;
   created_at: string;
   updated_at: string;
 }
