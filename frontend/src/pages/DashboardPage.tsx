@@ -239,7 +239,7 @@ export function DashboardPage() {
           <button
             className="button button-outline"
             type="button"
-            onClick={() => navigate("/admin/contracts")}
+            onClick={() => navigate("/admin/support")}
           >
             Abrir soporte comercial
           </button>
