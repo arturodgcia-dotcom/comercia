@@ -78,6 +78,7 @@ import { ReinpiaCommercialInboxPage } from "../pages/ReinpiaCommercialInboxPage"
 import { ReinpiaCommercialClientsPage } from "../pages/ReinpiaCommercialClientsPage";
 import { ReinpiaMarketingProspectsPage } from "../pages/ReinpiaMarketingProspectsPage";
 import { ReinpiaNerviaBridgePage } from "../pages/ReinpiaNerviaBridgePage";
+import { ReinpiaSupportBackofficePage } from "../pages/ReinpiaSupportBackofficePage";
 import { ReviewsAdminPage } from "../pages/ReviewsAdminPage";
 import { OnboardingSalesPage } from "../pages/OnboardingSalesPage";
 import { OnboardingClientPage } from "../pages/OnboardingClientPage";
@@ -208,6 +209,7 @@ export function AppRouter() {
               <Route path="reinpia/reports/leads" element={<ReinpiaLeadsReportPage />} />
               <Route path="reinpia/reports/marketing-opportunities" element={<ReinpiaMarketingOpportunitiesPage />} />
               <Route path="reinpia/commercial-inbox" element={<ReinpiaCommercialInboxPage />} />
+              <Route path="reinpia/support-backoffice" element={<ReinpiaSupportBackofficePage />} />
               <Route path="reinpia/clientes-comerciales" element={<ReinpiaCommercialClientsPage />} />
               <Route path="reinpia/marketing/prospectos" element={<ReinpiaMarketingProspectsPage />} />
               <Route path="reinpia/alerts" element={<ReinpiaAlertsPage />} />
