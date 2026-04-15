@@ -95,8 +95,8 @@ export function ReinpiaTenantsPage() {
               <th>Ventas sujetas</th>
               <th>Comision estimada</th>
               <th>Neto</th>
-              <th>Última actividad</th>
-              <th>Acción principal</th>
+              <th>Ãšltima actividad</th>
+              <th>AcciÃ³n principal</th>
               <th>Acciones</th>
             </tr>
           </thead>
@@ -129,9 +129,6 @@ export function ReinpiaTenantsPage() {
                 </td>
                 <td>
                   <div className="row-gap">
-                    <Link className="button button-outline" to={`/reinpia/brands/${row.tenant_id}/setup`}>
-                      Wizard creación
-                    </Link>
                     <Link className="button button-outline" to={`/reinpia/canales-creados`}>
                       Canales creados
                     </Link>

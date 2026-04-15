@@ -23,21 +23,6 @@ import {
 type ChannelKey = "landing" | "public" | "distributors" | "pos";
 type PublishState = "borrador" | "en revision" | "publicado" | "requiere ajustes";
 
-type WorkflowPayload = {
-  flow_type?: string;
-  selected_template?: string;
-  is_published?: boolean;
-};
-
-type LandingDraftPayload = {
-  hero_title?: string;
-  hero_subtitle?: string;
-  cta_primary?: string;
-  cta_secondary?: string;
-  contact_cta?: string;
-  sections?: Array<{ title?: string; body?: string }>;
-};
-
 function parseConfig(raw?: string | null): Record<string, unknown> {
   if (!raw) return {};
   try {
@@ -75,10 +60,6 @@ function getPublishState(stepStatus: string | null, hasContent: boolean): Publis
   return "requiere ajustes";
 }
 
-function toBoolean(value: unknown, fallback = false): boolean {
-  return typeof value === "boolean" ? value : fallback;
-}
-
 function formatDateLabel(iso?: string | null): string {
   if (!iso) return "Sin registro";
   const date = new Date(iso);
@@ -86,92 +67,12 @@ function formatDateLabel(iso?: string | null): string {
   return date.toLocaleString("es-MX");
 }
 
-function normalizeExternalUrl(raw: string): string | null {
-  const trimmed = raw.trim();
-  if (!trimmed) return null;
-  const value = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
-  try {
-    const url = new URL(value);
-    return url.toString();
-  } catch {
-    return null;
-  }
-}
-
-function isDemoOrUnusableExternalUrl(url: string | null): boolean {
-  if (!url) return true;
-  try {
-    const parsed = new URL(url);
-    const host = parsed.hostname.toLowerCase();
-    return (
-      host.endsWith(".demo") ||
-      host.endsWith(".local") ||
-      host.endsWith(".invalid") ||
-      host.includes("example")
-    );
-  } catch {
-    return true;
-  }
+function toBoolean(value: unknown, fallback = false): boolean {
+  return typeof value === "boolean" ? value : fallback;
 }
 
 function openInNewTab(url: string) {
   window.open(url, "_blank", "noopener,noreferrer");
-}
-
-function buildFallbackLandingDraft(tenantName: string, businessType: string, branding?: TenantBranding | null): LandingDraftPayload {
-  const isTulipanes = tenantName.toLowerCase().includes("tulipanes");
-  if (isTulipanes) {
-    return {
-      hero_title: branding?.hero_title ?? `${tenantName}: formacion profesional para transformar tu futuro`,
-      hero_subtitle:
-        branding?.hero_subtitle ??
-        "Programas en cosmetologia, podologia, cursos y diplomados con enfoque practico y vision comercial.",
-      cta_primary: "Solicitar diagnostico academico",
-      cta_secondary: "Ver programas disponibles",
-      contact_cta: "Agenda una asesoria y recibe una ruta recomendada segun tu perfil profesional.",
-      sections: [
-        {
-          title: "Propuesta de valor",
-          body: "Integramos formacion tecnica, practica real y acompanamiento para que avances con estructura profesional."
-        },
-        {
-          title: "Por que elegirnos?",
-          body: "Docentes especializados, enfoque en empleabilidad, horarios flexibles y seguimiento personalizado."
-        },
-        {
-          title: "Oferta principal",
-          body: "Cosmetologia integral, podologia profesional, cursos intensivos y diplomados para especializacion."
-        }
-      ]
-    };
-  }
-
-  const isServices = businessType === "services";
-  return {
-    hero_title: branding?.hero_title ?? `${tenantName}: landing comercial lista para conversion`,
-    hero_subtitle:
-      branding?.hero_subtitle ??
-      (isServices
-        ? "Presenta servicios, beneficios y llamados a la accion con estructura comercial clara."
-        : "Muestra catalogo, propuesta de valor y llamados a la accion para acelerar ventas."),
-    cta_primary: "Solicitar diagnostico comercial",
-    cta_secondary: "Conocer programas y soluciones",
-    contact_cta: "Comparte tu objetivo y disenamos una ruta comercial clara para tu marca.",
-    sections: [
-      {
-        title: "Propuesta de valor",
-        body: "Landing tenant-aware conectada al branding, disenada para captar, explicar y convertir."
-      },
-      {
-        title: "Beneficios clave",
-        body: "Claridad comercial, mensajes consistentes y estructura optimizada para revision interna."
-      },
-      {
-        title: "Oferta principal",
-        body: "Bloques de servicios o productos listos para validacion antes de publicacion final."
-      }
-    ]
-  };
 }
 
 function ChannelStateLabel({ label, value }: { label: string; value: string | number }) {
@@ -187,18 +88,10 @@ function billingModelLabel(value?: string): string {
 }
 
 function BrandChannelShell({ channel }: { channel: ChannelKey }) {
-  const { token, user } = useAuth();
+  const { token } = useAuth();
   const { tenantId } = useAdminContextScope();
   const [loading, setLoading] = useState(true);
-  const [runningAction, setRunningAction] = useState(false);
   const [error, setError] = useState("");
-  const [message, setMessage] = useState("");
-  const [lastRegenerated, setLastRegenerated] = useState<Record<ChannelKey, string | null>>({
-    landing: null,
-    public: null,
-    distributors: null,
-    pos: null,
-  });
 
   const [tenant, setTenant] = useState<Tenant | null>(null);
   const [branding, setBranding] = useState<TenantBranding | null>(null);
@@ -212,7 +105,6 @@ function BrandChannelShell({ channel }: { channel: ChannelKey }) {
   const [brandAdminSettings, setBrandAdminSettings] = useState<BrandAdminSettings | null>(null);
 
   const tenantSlug = tenant?.slug ?? "sin-slug";
-  const isGlobalAdmin = user?.role === "reinpia_admin";
 
   const load = async () => {
     if (!token) return;
@@ -223,7 +115,6 @@ function BrandChannelShell({ channel }: { channel: ChannelKey }) {
     }
     setLoading(true);
     setError("");
-    setMessage("");
     try {
       const [
         tenantData,
@@ -277,8 +168,6 @@ function BrandChannelShell({ channel }: { channel: ChannelKey }) {
   const identityData = (parsedConfig.identity_data as Record<string, unknown> | undefined) ?? {};
   const ecommerceData = (parsedConfig.ecommerce_data as Record<string, unknown> | undefined) ?? {};
   const posSetupData = (parsedConfig.pos_setup_data as Record<string, unknown> | undefined) ?? {};
-  const landingDraft = (parsedConfig.landing_draft as LandingDraftPayload | undefined) ?? {};
-  const workflowPayload = (parsedConfig.workflow as WorkflowPayload | undefined) ?? {};
   const channelTemplates = resolveOfficialChannelTemplatesFromConfig(snapshot?.config?.config_json);
 
   const categoriesCount = useMemo(() => {
@@ -292,14 +181,6 @@ function BrandChannelShell({ channel }: { channel: ChannelKey }) {
   );
 
   const landingExternal = toBoolean(identityData.has_existing_landing, false);
-  const landingExternalRaw = String(identityData.existing_landing_url ?? "").trim();
-  const landingExternalUrl = normalizeExternalUrl(landingExternalRaw);
-  const landingExternalDemo = isDemoOrUnusableExternalUrl(landingExternalUrl);
-  const canUseExternalLanding = Boolean(landingExternal && landingExternalUrl && !landingExternalDemo);
-  const isExistingLandingFlow = workflowPayload.flow_type === "with_existing_landing" || landingExternal;
-  const hasApprovedTemplateInternal =
-    Boolean(landingDraft.hero_title || landingDraft.hero_subtitle || branding?.hero_title || snapshot?.config?.landing_enabled) &&
-    workflowPayload.flow_type !== "with_existing_landing";
   const landingTemplateKey = channelTemplates.landing_template;
   const publicTemplateKey = channelTemplates.public_store_template;
   const distributorTemplateKey = channelTemplates.distributor_store_template;
@@ -311,7 +192,7 @@ function BrandChannelShell({ channel }: { channel: ChannelKey }) {
 
   const landingState = getPublishState(
     landingStep?.status ?? null,
-    canUseExternalLanding ? true : Boolean(branding?.hero_title || snapshot?.config?.landing_enabled)
+    landingExternal ? true : Boolean(branding?.hero_title || snapshot?.config?.landing_enabled)
   );
   const publicState = getPublishState(ecommerceStep?.status ?? null, products.length > 0 && categoriesCount > 0);
   const distributorState = getPublishState(
@@ -337,147 +218,6 @@ function BrandChannelShell({ channel }: { channel: ChannelKey }) {
   const posPreviewUrl = urls.posPreviewUrl;
   const posUrl = posPreviewUrl;
 
-  const runRegenerate = async (kind: "landing" | "public" | "distributors") => {
-    if (!token || !tenantId) return;
-    setRunningAction(true);
-    setError("");
-    setMessage("");
-    try {
-      if (!isGlobalAdmin) {
-        if (kind === "landing") {
-          const demoDraft = buildFallbackLandingDraft(tenant?.name ?? "Marca", tenant?.business_type ?? "mixed", branding);
-          const fallbackHeroTitle =
-            demoDraft.hero_title ??
-            landingDraft.hero_title ??
-            branding?.hero_title ??
-            tenant?.name ??
-            "Landing de marca";
-          const fallbackHeroSubtitle =
-            demoDraft.hero_subtitle ??
-            landingDraft.hero_subtitle ??
-            branding?.hero_subtitle ??
-            "Landing tenant-aware sincronizada con branding activo.";
-          await api.upsertTenantBranding(token, tenantId, {
-            primary_color: branding?.primary_color ?? "#0d3e86",
-            secondary_color: branding?.secondary_color ?? "#5f97e3",
-            hero_title: fallbackHeroTitle,
-            hero_subtitle: fallbackHeroSubtitle,
-          });
-          await api.updateBrandSetupWorkflow(token, tenantId, {
-            landing_template: landingTemplateKey,
-            selected_template: landingTemplateKey,
-          });
-        } else if (kind === "public" && channelSettings) {
-          await api.updateBrandChannelSettings(token, tenantId, {
-            nfc_enabled: channelSettings.nfc_enabled,
-            mercadopago_enabled: channelSettings.mercadopago_enabled,
-          });
-          await api.updateBrandSetupWorkflow(token, tenantId, {
-            public_store_template: publicTemplateKey,
-          });
-          const now = new Date().toISOString();
-          setLastRegenerated((prev) => ({ ...prev, [kind]: now }));
-          setMessage("Plantilla publica recalculada para la marca activa.");
-          await load();
-          return;
-        } else if (channelSettings) {
-          await api.updateBrandChannelSettings(token, tenantId, {
-            nfc_enabled: channelSettings.nfc_enabled,
-            mercadopago_enabled: channelSettings.mercadopago_enabled,
-          });
-          await api.updateBrandSetupWorkflow(token, tenantId, {
-            distributor_store_template: distributorTemplateKey,
-          });
-        }
-        const now = new Date().toISOString();
-        setLastRegenerated((prev) => ({ ...prev, [kind]: now }));
-        setMessage("Regeneracion registrada correctamente para la marca activa.");
-        await load();
-        return;
-      }
-
-      if (kind === "landing") {
-        const demoDraft = buildFallbackLandingDraft(tenant?.name ?? "Marca", tenant?.business_type ?? "mixed", branding);
-        const normalizedDraft = {
-          hero_title: demoDraft.hero_title ?? tenant?.name ?? "Landing de marca",
-          hero_subtitle: demoDraft.hero_subtitle ?? "Preview interno tenant-aware actualizado.",
-          cta_primary: demoDraft.cta_primary ?? "Solicitar diagnostico",
-          cta_secondary: demoDraft.cta_secondary ?? "Ver propuesta",
-          sections:
-            demoDraft.sections?.map((section, index) => ({
-              title: section.title ?? `Seccion ${index + 1}`,
-              body: section.body ?? "Contenido en preparacion.",
-            })) ?? [],
-          contact_cta: demoDraft.contact_cta ?? "Contactanos para definir la siguiente fase.",
-        };
-        if (isExistingLandingFlow) {
-          await api.updateBrandSetupWorkflow(token, tenantId, {
-            landing_draft: normalizedDraft,
-            landing_template: landingTemplateKey,
-            selected_template: landingTemplateKey,
-          });
-          await api.upsertTenantBranding(token, tenantId, {
-            primary_color: branding?.primary_color ?? "#0d3e86",
-            secondary_color: branding?.secondary_color ?? "#5f97e3",
-            hero_title: normalizedDraft.hero_title,
-            hero_subtitle: normalizedDraft.hero_subtitle,
-          });
-          setMessage("Preview interno de landing regenerado correctamente para la marca activa.");
-        } else {
-          await api.updateBrandSetupWorkflow(token, tenantId, {
-            landing_template: landingTemplateKey,
-            selected_template: landingTemplateKey,
-          });
-          await api.generateBrandSetupLanding(token, tenantId, true);
-          setMessage("Landing regenerada correctamente para la marca activa.");
-        }
-      } else if (kind === "public") {
-        await api.updateBrandChannelSettings(token, tenantId, {
-          nfc_enabled: channelSettings?.nfc_enabled ?? false,
-          mercadopago_enabled: channelSettings?.mercadopago_enabled ?? false,
-        });
-        await api.updateBrandSetupWorkflow(token, tenantId, {
-          public_store_template: publicTemplateKey,
-        });
-        setMessage("Plantilla publica recalculada con branding y catalogo del tenant activo.");
-      } else {
-        await api.updateBrandSetupWorkflow(token, tenantId, {
-          distributor_store_template: distributorTemplateKey,
-        });
-        await api.applyBrandEcommerceTemplate(token, tenantId);
-        setMessage("Plantilla de ecommerce regenerada correctamente para la marca activa.");
-      }
-      const now = new Date().toISOString();
-      setLastRegenerated((prev) => ({ ...prev, [kind]: now }));
-      await load();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "No fue posible regenerar la plantilla.");
-    } finally {
-      setRunningAction(false);
-    }
-  };
-
-  const requestPlanChange = async (payload: { request_type: "addon" | "upgrade"; addon_id?: string; target_plan_key?: string; notes: string }) => {
-    if (!token || !tenantId) return;
-    setRunningAction(true);
-    setError("");
-    setMessage("");
-    try {
-      await api.createCommercialPlanRequest(token, {
-        tenant_id: tenantId,
-        request_type: payload.request_type,
-        addon_id: payload.addon_id,
-        target_plan_key: payload.target_plan_key,
-        notes: payload.notes,
-      });
-      setMessage("Solicitud enviada a ComerCia. El equipo comercial validara costo, plan y activacion.");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "No fue posible registrar la solicitud comercial.");
-    } finally {
-      setRunningAction(false);
-    }
-  };
-
   const channelTitle =
     channel === "landing"
       ? "Landing de la marca"
@@ -501,7 +241,6 @@ function BrandChannelShell({ channel }: { channel: ChannelKey }) {
       <PageHeader title={channelTitle} subtitle={channelSubtitle} />
       {loading ? <p className="muted">Cargando estado del canal...</p> : null}
       {error ? <p className="error">{error}</p> : null}
-      {message ? <p>{message}</p> : null}
 
       {!loading && tenant ? (
         <article className="card">
@@ -511,60 +250,7 @@ function BrandChannelShell({ channel }: { channel: ChannelKey }) {
             {branding?.secondary_color ?? "sin color secundario"}.
           </p>
           <p className="muted">Slug de operacion: {tenant.slug}</p>
-          <p className="muted">Modelo comercial: {billingModelLabel(tenant.billing_model)}</p>
-          <p className="muted">
-            Comision por venta: {tenant.commission_enabled ? `Si (${Number(tenant.commission_percentage ?? 0).toFixed(2)}%)` : "No aplica"}
-          </p>
-        </article>
-      ) : null}
-
-      {!loading && tenant ? (
-        <article className="card">
-          <h3>Plan comercial y crecimiento</h3>
-          <p className="muted">Plan activo: {tenant.commercial_plan_key ?? "Sin plan comercial asignado"}</p>
-          <p className="muted">Estatus: {tenant.commercial_plan_status}</p>
-          <div className="row-gap">
-            <button
-              className="button button-outline"
-              type="button"
-              disabled={runningAction}
-              onClick={() => void requestPlanChange({ request_type: "upgrade", target_plan_key: "fixed_subscription_growth", notes: "Solicitud de upgrade a Growth." })}
-            >
-              Solicitar upgrade a Growth
-            </button>
-            <button
-              className="button button-outline"
-              type="button"
-              disabled={runningAction}
-              onClick={() => void requestPlanChange({ request_type: "upgrade", target_plan_key: "fixed_subscription_premium", notes: "Solicitud de upgrade a Premium." })}
-            >
-              Solicitar upgrade a Premium
-            </button>
-            <button
-              className="button button-outline"
-              type="button"
-              disabled={runningAction}
-              onClick={() => void requestPlanChange({ request_type: "addon", addon_id: "extra_user", notes: "Solicitud de add-on usuario extra." })}
-            >
-              Comprar add-on usuario extra
-            </button>
-            <button
-              className="button button-outline"
-              type="button"
-              disabled={runningAction}
-              onClick={() => void requestPlanChange({ request_type: "addon", addon_id: "extra_branch", notes: "Solicitud de add-on sucursal extra." })}
-            >
-              Comprar add-on sucursal extra
-            </button>
-            <button
-              className="button button-outline"
-              type="button"
-              disabled={runningAction}
-              onClick={() => void requestPlanChange({ request_type: "addon", addon_id: "extra_500_tokens", notes: "Solicitud de add-on 500 creditos IA." })}
-            >
-              Comprar add-on 500 creditos IA
-            </button>
-          </div>
+          <p className="muted">Estas vistas operativas no relanzan setup inicial. El wizard queda reservado para creacion.</p>
         </article>
       ) : null}
 
@@ -575,22 +261,7 @@ function BrandChannelShell({ channel }: { channel: ChannelKey }) {
             <p className={statusClass(landingState)}>{landingState}</p>
             <ChannelStateLabel label="Landing externa" value={landingExternal ? "Si" : "No"} />
             <ChannelStateLabel label="Plantilla activa" value={landingTemplateKey} />
-            <ChannelStateLabel
-              label="Modo"
-              value={isExistingLandingFlow ? "Interna de revision (ComerCia)" : "Interna tenant-aware aprobada"}
-            />
-            <ChannelStateLabel
-              label="Preview interno ComerCia"
-              value="Disponible"
-            />
-            <ChannelStateLabel
-              label="Estado de template"
-              value={hasApprovedTemplateInternal ? "Aprobado para marca activa" : "Pendiente de aprobacion interna"}
-            />
-            <ChannelStateLabel
-              label="Publicacion"
-              value={workflowPayload.is_published ? "Publicado" : "Borrador / revision"}
-            />
+            <ChannelStateLabel label="Preview interno" value="Disponible" />
             <ChannelStateLabel
               label="URL que abrira Ver landing"
               value={`${window.location.origin}${landingUrl}`}
@@ -601,20 +272,9 @@ function BrandChannelShell({ channel }: { channel: ChannelKey }) {
             />
             <ChannelStateLabel label="Branding aplicado" value={branding ? "Si" : "Pendiente"} />
             <ChannelStateLabel
-              label="Ultima regeneracion"
-              value={formatDateLabel(lastRegenerated.landing ?? landingStep?.updated_at ?? null)}
+              label="Ultima actualizacion de setup inicial"
+              value={formatDateLabel(landingStep?.updated_at ?? null)}
             />
-            {landingExternal && landingExternalDemo ? (
-              <p className="muted">
-                URL externa de demo/no desplegada. Se usa preview interno para evitar enlaces sin resolucion real.
-              </p>
-            ) : null}
-            {canUseExternalLanding ? (
-              <p className="muted">
-                Landing externa valida detectada. Se conserva como dato comercial, pero el motor oficial usa la plantilla interna tenant-aware.
-              </p>
-            ) : null}
-            {canUseExternalLanding ? <ChannelStateLabel label="Landing externa declarada" value={landingExternalUrl ?? "Sin URL"} /> : null}
           </article>
           <article className="card row-gap">
             <button className="button" type="button" onClick={() => openInNewTab(landingUrl)}>
@@ -626,9 +286,7 @@ function BrandChannelShell({ channel }: { channel: ChannelKey }) {
             <Link className="button button-outline" to="/admin/branding">
               Editar branding
             </Link>
-            <button className="button button-outline" type="button" onClick={() => void runRegenerate("landing")} disabled={runningAction}>
-              Regenerar landing
-            </button>
+            <Link className="button button-outline" to="/admin/support">Solicitar ajuste de setup</Link>
           </article>
         </>
       ) : null}
@@ -654,8 +312,8 @@ function BrandChannelShell({ channel }: { channel: ChannelKey }) {
             <ChannelStateLabel label="Ruta ecommerce publico" value={`${window.location.origin}${publicUrl}`} />
             <ChannelStateLabel label="Ruta preview ecommerce" value={`${window.location.origin}${publicPreviewUrl}`} />
             <ChannelStateLabel
-              label="Ultima regeneracion"
-              value={formatDateLabel(lastRegenerated.public ?? ecommerceStep?.updated_at ?? null)}
+              label="Ultima actualizacion de setup inicial"
+              value={formatDateLabel(ecommerceStep?.updated_at ?? null)}
             />
           </article>
           {products.length === 0 ? (
@@ -685,9 +343,7 @@ function BrandChannelShell({ channel }: { channel: ChannelKey }) {
             <Link className="button button-outline" to="/products">
               Editar catalogo
             </Link>
-            <button className="button button-outline" type="button" onClick={() => void runRegenerate("public")} disabled={runningAction}>
-              Regenerar plantilla publica
-            </button>
+            <Link className="button button-outline" to="/admin/support">Solicitar ajuste de setup</Link>
           </article>
         </>
       ) : null}
@@ -711,8 +367,8 @@ function BrandChannelShell({ channel }: { channel: ChannelKey }) {
             <ChannelStateLabel label="Ruta canal distribuidores" value={`${window.location.origin}${distributorsUrl}`} />
             <ChannelStateLabel label="Ruta preview distribuidores" value={`${window.location.origin}${distributorsPreviewUrl}`} />
             <ChannelStateLabel
-              label="Ultima regeneracion"
-              value={formatDateLabel(lastRegenerated.distributors ?? distributorsStep?.updated_at ?? null)}
+              label="Ultima actualizacion de setup inicial"
+              value={formatDateLabel(distributorsStep?.updated_at ?? null)}
             />
           </article>
           {distributorPricingCount === 0 && distributors.length === 0 ? (
@@ -741,14 +397,7 @@ function BrandChannelShell({ channel }: { channel: ChannelKey }) {
             <Link className="button button-outline" to="/admin/distributors">
               Editar reglas comerciales
             </Link>
-            <button
-              className="button button-outline"
-              type="button"
-              onClick={() => void runRegenerate("distributors")}
-              disabled={runningAction}
-            >
-              Regenerar plantilla distribuidor
-            </button>
+            <Link className="button button-outline" to="/admin/support">Solicitar ajuste de setup</Link>
           </article>
         </>
       ) : null}
@@ -768,8 +417,8 @@ function BrandChannelShell({ channel }: { channel: ChannelKey }) {
             <ChannelStateLabel label="NFC habilitado" value={channelSettings?.nfc_enabled ? "Si" : "No"} />
             <ChannelStateLabel label="Ruta POS" value={`${window.location.origin}${posUrl}`} />
             <ChannelStateLabel
-              label="Ultima regeneracion"
-              value={formatDateLabel(lastRegenerated.pos ?? posStep?.updated_at ?? null)}
+              label="Ultima actualizacion de setup inicial"
+              value={formatDateLabel(posStep?.updated_at ?? null)}
             />
           </article>
           {posLocations.length === 0 ? (

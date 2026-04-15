@@ -186,9 +186,6 @@ export function ReinpiaTenantDetailPage() {
         <Link className="button button-outline" to="/reinpia/canales-creados">
           Ver canales creados
         </Link>
-        <Link className="button button-outline" to={`/reinpia/brands/${tenant.id}/setup`}>
-          Abrir workflow de setup
-        </Link>
       </div>
 
       <div className="card-grid">
