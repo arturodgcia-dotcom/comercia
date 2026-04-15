@@ -60,8 +60,8 @@ export function DistributorRegistrationPage() {
           <Link className="button button-outline" to={`/store/${tenant.slug}/distribuidores`}>
             Volver
           </Link>
-          <Link className="button button-outline" to={`/store/${tenant.slug}/distribuidores/login-placeholder`}>
-            Login placeholder
+          <Link className="button button-outline" to="/login">
+            Acceso distribuidores
           </Link>
         </div>
       </section>
@@ -108,4 +108,3 @@ export function DistributorRegistrationPage() {
     </main>
   );
 }
-

@@ -1,4 +1,16 @@
-ï»¿# CHECKLIST COMERCIA
+# CHECKLIST COMERCIA
+
+## Entregables ejecucion 20 (Sprint 1 - limpieza final)
+- [x] Limpieza de rutas legacy visibles (/store/:tenantSlug/distribuidores/login-placeholder, /pos/login-placeholder)
+- [x] Limpieza de imports muertos asociados a rutas placeholder en router
+- [x] Correccion de labels globales en menu (comercial/creacion/soporte)
+- [x] Soporte global separado de inbox comercial con ruta dedicada backoffice
+- [x] README actualizado
+- [x] docs/modules.md actualizado
+- [x] docs/architecture.md actualizado
+- [x] CHECKLIST actualizado
+- [x] Validacion frontend build OK
+- [x] Validacion backend compile OK
 
 ## Entregables ejecucion 1
 - [x] A. Estructura completa del monorepo
@@ -42,7 +54,7 @@
 - [x] Banners dinamicos por posicion/target/prioridad
 - [x] Upsell / cross-sell previo al checkout
 - [x] Wishlist por cliente
-- [x] ReseÃ±as basicas con moderacion
+- [x] Reseñas basicas con moderacion
 - [x] Checkout extendido (coupon_code + points + customer_id)
 - [x] Admin frontend growth pages
 - [x] Storefront extendido (home-data, product detail, checkout UI)
@@ -116,6 +128,18 @@
 - [x] Documentacion actualizada con comandos DEMO/APP y limpieza
 - [x] Validacion ejecutada: compile backend + build frontend + seed/reset/seed
 
+## Entregables ejecucion 20 (Sprint 1 - limpieza final)
+- [x] Limpieza de rutas legacy visibles (/store/:tenantSlug/distribuidores/login-placeholder, /pos/login-placeholder)
+- [x] Limpieza de imports muertos asociados a rutas placeholder en router
+- [x] Correccion de labels globales en menu (comercial/creacion/soporte)
+- [x] Soporte global separado de inbox comercial con ruta dedicada backoffice
+- [x] README actualizado
+- [x] docs/modules.md actualizado
+- [x] docs/architecture.md actualizado
+- [x] CHECKLIST actualizado
+- [x] Validacion frontend build OK
+- [x] Validacion backend compile OK
+
 ## Entregables ejecucion 10 (Cierre funcional local)
 - [x] Panel global REINPIA estabilizado con KPIs y exportes
 - [x] Onboarding vendedor y cliente con progreso por usuario
@@ -128,6 +152,18 @@
 - [x] Base automation para bots/WhatsApp: canales, templates y eventos
 - [x] Seeds DEMO/APP actualizados para onboarding, currency, POS y automation
 - [x] Validacion: backend compile + alembic upgrade head + seed_app_base + seed_demo + frontend build
+
+## Entregables ejecucion 20 (Sprint 1 - limpieza final)
+- [x] Limpieza de rutas legacy visibles (/store/:tenantSlug/distribuidores/login-placeholder, /pos/login-placeholder)
+- [x] Limpieza de imports muertos asociados a rutas placeholder en router
+- [x] Correccion de labels globales en menu (comercial/creacion/soporte)
+- [x] Soporte global separado de inbox comercial con ruta dedicada backoffice
+- [x] README actualizado
+- [x] docs/modules.md actualizado
+- [x] docs/architecture.md actualizado
+- [x] CHECKLIST actualizado
+- [x] Validacion frontend build OK
+- [x] Validacion backend compile OK
 
 ## Entregables ejecucion 11 (Centinela seguridad / antifraude)
 - [x] Auditoria inicial: modulo centinela faltante identificado (modelos/servicios/endpoints/frontend)
@@ -161,6 +197,18 @@
 - [x] Documentacion actualizada (README, architecture, modules, checklist)
 - [x] Validacion: backend compile + alembic upgrade head + frontend build
 
+## Entregables ejecucion 20 (Sprint 1 - limpieza final)
+- [x] Limpieza de rutas legacy visibles (/store/:tenantSlug/distribuidores/login-placeholder, /pos/login-placeholder)
+- [x] Limpieza de imports muertos asociados a rutas placeholder en router
+- [x] Correccion de labels globales en menu (comercial/creacion/soporte)
+- [x] Soporte global separado de inbox comercial con ruta dedicada backoffice
+- [x] README actualizado
+- [x] docs/modules.md actualizado
+- [x] docs/architecture.md actualizado
+- [x] CHECKLIST actualizado
+- [x] Validacion frontend build OK
+- [x] Validacion backend compile OK
+
 ## Entregables ejecucion 12 (Reportes e insights comerciales)
 - [x] Modelos de soporte reportes: `ReportRequest`, `ReportInsight`, `MarketingInsight`
 - [x] Servicios: `reporting_periods`, `reporting_service`, `marketing_insights_service`, `report_export_service`
@@ -175,12 +223,36 @@
 - [x] Seed demo ajustado para fechas distribuidas y marketing insights idempotentes
 - [x] Validacion ejecutada: backend compile, alembic upgrade head, seed_demo, frontend build
 
+## Entregables ejecucion 20 (Sprint 1 - limpieza final)
+- [x] Limpieza de rutas legacy visibles (/store/:tenantSlug/distribuidores/login-placeholder, /pos/login-placeholder)
+- [x] Limpieza de imports muertos asociados a rutas placeholder en router
+- [x] Correccion de labels globales en menu (comercial/creacion/soporte)
+- [x] Soporte global separado de inbox comercial con ruta dedicada backoffice
+- [x] README actualizado
+- [x] docs/modules.md actualizado
+- [x] docs/architecture.md actualizado
+- [x] CHECKLIST actualizado
+- [x] Validacion frontend build OK
+- [x] Validacion backend compile OK
+
 ## Entregables ejecucion 13 (Arranque y root frontend)
 - [x] `start_all.ps1` valida `backend/.venv` y muestra instrucciones exactas si falta
 - [x] `start_all.ps1` soporta modo bootstrap opcional (`-Bootstrap` o `COMERCIA_BOOTSTRAP=1`)
 - [x] `start_all.bat` soporta `--bootstrap` sin romper flujo actual
 - [x] Frontend evita rebote en raiz para no autenticados (`/` -> `/comercia`)
 - [x] README actualizado con uso bootstrap
+
+## Entregables ejecucion 20 (Sprint 1 - limpieza final)
+- [x] Limpieza de rutas legacy visibles (/store/:tenantSlug/distribuidores/login-placeholder, /pos/login-placeholder)
+- [x] Limpieza de imports muertos asociados a rutas placeholder en router
+- [x] Correccion de labels globales en menu (comercial/creacion/soporte)
+- [x] Soporte global separado de inbox comercial con ruta dedicada backoffice
+- [x] README actualizado
+- [x] docs/modules.md actualizado
+- [x] docs/architecture.md actualizado
+- [x] CHECKLIST actualizado
+- [x] Validacion frontend build OK
+- [x] Validacion backend compile OK
 
 ## Entregables ejecucion 14 (Branding + rutas + storefront)
 - [x] Branding visible actualizado a `ComerCia` en landing principal y textos UI clave
@@ -190,20 +262,56 @@
 - [x] `/store/:tenantSlug` ahora muestra fallback elegante con boton reintentar y log claro de endpoint fallido
 - [x] README actualizado con notas de branding y comportamiento de rutas
 
+## Entregables ejecucion 20 (Sprint 1 - limpieza final)
+- [x] Limpieza de rutas legacy visibles (/store/:tenantSlug/distribuidores/login-placeholder, /pos/login-placeholder)
+- [x] Limpieza de imports muertos asociados a rutas placeholder en router
+- [x] Correccion de labels globales en menu (comercial/creacion/soporte)
+- [x] Soporte global separado de inbox comercial con ruta dedicada backoffice
+- [x] README actualizado
+- [x] docs/modules.md actualizado
+- [x] docs/architecture.md actualizado
+- [x] CHECKLIST actualizado
+- [x] Validacion frontend build OK
+- [x] Validacion backend compile OK
+
 ## Entregables ejecucion 15 (Auditoria flujo /store/reinpia)
 - [x] Endpoint frontend verificado: `/api/v1/storefront/{tenantSlug}/home-data`
 - [x] Endpoint backend verificado y funcional para `reinpia`
 - [x] Seed demo verificado: tenant `reinpia` + branding + storefront config + datos minimos visibles
 - [x] Script reusable de verificacion agregado (`python -m app.db.verify_reinpia_storefront`)
 
+## Entregables ejecucion 20 (Sprint 1 - limpieza final)
+- [x] Limpieza de rutas legacy visibles (/store/:tenantSlug/distribuidores/login-placeholder, /pos/login-placeholder)
+- [x] Limpieza de imports muertos asociados a rutas placeholder en router
+- [x] Correccion de labels globales en menu (comercial/creacion/soporte)
+- [x] Soporte global separado de inbox comercial con ruta dedicada backoffice
+- [x] README actualizado
+- [x] docs/modules.md actualizado
+- [x] docs/architecture.md actualizado
+- [x] CHECKLIST actualizado
+- [x] Validacion frontend build OK
+- [x] Validacion backend compile OK
+
 ## Entregables ejecucion 16 (Arquitectura madre/hijos + workflow de marca)
-- [x] Ajuste de copy y navegaciÃ³n: ComerCia plataforma madre, marcas como tenants hijos
+- [x] Ajuste de copy y navegación: ComerCia plataforma madre, marcas como tenants hijos
 - [x] Workflow guiado base para setup por marca (`/reinpia/brands/new`, `/reinpia/brands/:tenantId/setup`)
-- [x] Estados por etapa con revisiÃ³n/aprobaciÃ³n/rehacer antes de publicar
+- [x] Estados por etapa con revisión/aprobación/rehacer antes de publicar
 - [x] Carga de assets locales por etapa en backend (`/api/v1/brand-setup/{tenant_id}/assets`)
-- [x] ConfiguraciÃ³n por marca para NFC / Mercado Pago / MFA TOTP (base funcional)
-- [x] MÃ³dulos visibles: carga masiva, inventario operativo base y retroalimentaciÃ³n moderable
+- [x] Configuración por marca para NFC / Mercado Pago / MFA TOTP (base funcional)
+- [x] Módulos visibles: carga masiva, inventario operativo base y retroalimentación moderable
 - [x] Build frontend + compile backend + alembic upgrade head validados
+
+## Entregables ejecucion 20 (Sprint 1 - limpieza final)
+- [x] Limpieza de rutas legacy visibles (/store/:tenantSlug/distribuidores/login-placeholder, /pos/login-placeholder)
+- [x] Limpieza de imports muertos asociados a rutas placeholder en router
+- [x] Correccion de labels globales en menu (comercial/creacion/soporte)
+- [x] Soporte global separado de inbox comercial con ruta dedicada backoffice
+- [x] README actualizado
+- [x] docs/modules.md actualizado
+- [x] docs/architecture.md actualizado
+- [x] CHECKLIST actualizado
+- [x] Validacion frontend build OK
+- [x] Validacion backend compile OK
 
 ## Entregables ejecucion 17 (Split de pagos Stripe/Mercado Pago)
 - [x] Regla de negocio aplicada: Stripe solo para ecommerce/suscripciones y Mercado Pago para POS/WebApp
@@ -214,6 +322,18 @@
 - [x] Landing ComerCia actualizada con servicios adicionales y activaciones (NFC/cobros digitales)
 - [x] Validacion: backend compile + alembic upgrade head + frontend build
 
+## Entregables ejecucion 20 (Sprint 1 - limpieza final)
+- [x] Limpieza de rutas legacy visibles (/store/:tenantSlug/distribuidores/login-placeholder, /pos/login-placeholder)
+- [x] Limpieza de imports muertos asociados a rutas placeholder en router
+- [x] Correccion de labels globales en menu (comercial/creacion/soporte)
+- [x] Soporte global separado de inbox comercial con ruta dedicada backoffice
+- [x] README actualizado
+- [x] docs/modules.md actualizado
+- [x] docs/architecture.md actualizado
+- [x] CHECKLIST actualizado
+- [x] Validacion frontend build OK
+- [x] Validacion backend compile OK
+
 ## Entregables ejecucion 18 (PWA instalable priorizada para POS)
 - [x] Frontend convertido en PWA instalable (manifest + service worker)
 - [x] `start_url` orientada a POS (`/pos`)
@@ -223,6 +343,18 @@
 - [x] Cache offline basico para shell estatico
 - [x] Documentacion y modulos actualizados
 - [x] Validacion: frontend build OK
+
+## Entregables ejecucion 20 (Sprint 1 - limpieza final)
+- [x] Limpieza de rutas legacy visibles (/store/:tenantSlug/distribuidores/login-placeholder, /pos/login-placeholder)
+- [x] Limpieza de imports muertos asociados a rutas placeholder en router
+- [x] Correccion de labels globales en menu (comercial/creacion/soporte)
+- [x] Soporte global separado de inbox comercial con ruta dedicada backoffice
+- [x] README actualizado
+- [x] docs/modules.md actualizado
+- [x] docs/architecture.md actualizado
+- [x] CHECKLIST actualizado
+- [x] Validacion frontend build OK
+- [x] Validacion backend compile OK
 
 ## Entregables ejecucion 19 (Experiencia premium por marca y operacion visual)
 - [x] Landing por marca elevada con bloques premium reutilizables en storefront
@@ -280,8 +412,8 @@
 - [x] Vistas distribuidores y solicitudes clarificadas con foco operativo (contacto, autorizacion, empleados)
 - [x] Retroalimentacion moderable mejorada (autor, canal, producto, estado y acciones)
 - [x] Logistica adicional mejorada con detalle de costos y generacion de link de cobro (Stripe/MP base)
-- [x] Citas/servicios rediseÃ±adas con acciones operativas (notificar, confirmar recibido, asistencia, cerrar)
-- [x] POS y modulos relacionados con etiquetas visibles en espaÃ±ol (tipos de punto y metodos de pago)
+- [x] Citas/servicios rediseñadas con acciones operativas (notificar, confirmar recibido, asistencia, cerrar)
+- [x] POS y modulos relacionados con etiquetas visibles en español (tipos de punto y metodos de pago)
 - [x] Monedas robustecidas (fallback de error y preconfiguracion regional base)
 
 ## Entregables ejecucion 25 (Wizard condicional + login estable + Lia comercial)
@@ -293,7 +425,7 @@
 - [x] Paso ecommerce distribuidores separado del ecommerce publico
 - [x] Persistencia de progreso por `flow_type`, `current_step`, `steps` y drafts por etapa
 - [x] Login reforzado para evitar estado colgado (`Ingresando...`) y timeout de API
-- [x] Bloque de LÃ­a reemplazado por formulario comercial inteligente de diagnostico
+- [x] Bloque de Lía reemplazado por formulario comercial inteligente de diagnostico
 - [x] Seeds demo actualizados para probar ambos flujos (REINPIA sin landing, Instituto Zaro Latino con landing)
 
 ## Entregables ejecucion 26 (Landing premium + onboarding modular + demo reforzada)
@@ -306,15 +438,15 @@
 - [x] Validacion: backend compile + frontend build
 
 ## Entregables ejecucion 27 (Landing comercial premium + Lia conversacional IA)
-- [x] Landing de ComerCia rediseÃ±ada con narrativa comercial mas fuerte (dolor -> solucion -> proceso -> cierre)
+- [x] Landing de ComerCia rediseñada con narrativa comercial mas fuerte (dolor -> solucion -> proceso -> cierre)
 - [x] Hero y composicion visual premium mejorados con bloques de alto impacto
 - [x] Seccion de problema real del cliente agregada para enfoque de conversion
 - [x] Seccion de solucion ComerCia ampliada por modulos comerciales clave
 - [x] Seccion \"Como funciona\" incorporada con flujo claro en 5 pasos
 - [x] Seccion de paquetes IMPULSA/ESCALA reforzada visualmente
 - [x] Servicios adicionales presentados con enfoque comercial de activacion
-- [x] LÃ­a transformada a asistente conversacional guiado con chips y recomendacion dinamica
-- [x] Captura de lead desde LÃ­a con plan recomendado y contexto para seguimiento
+- [x] Lía transformada a asistente conversacional guiado con chips y recomendacion dinamica
+- [x] Captura de lead desde Lía con plan recomendado y contexto para seguimiento
 - [x] Validacion: frontend build + backend compile
 
 ## Entregables ejecucion 28 (Trust + conversion landing ComerCia)
@@ -327,15 +459,15 @@
 - [x] Trazabilidad backend de atencion con `CustomerContactLead`
 - [x] Endpoint publico `POST /api/v1/comercia/customer-contact-leads`
 - [x] Endpoint admin `GET /api/v1/reinpia/customer-contact-leads`
-- [x] LÃ­a evolucionada a asistente comercial conversacional y persuasivo con captura de lead
+- [x] Lía evolucionada a asistente comercial conversacional y persuasivo con captura de lead
 - [x] Footer landing reforzado con enlaces legales/contacto/atencion
 - [x] Validacion: backend compile + frontend build
 
-## Entregables ejecucion 29 (LÃ­a flotante + flujo comercial unificado)
-- [x] LÃ­a migrada a widget flotante tipo chat web (abrir/cerrar, historial corto, chips, recomendacion y CTAs)
-- [x] Seccion "Atencion al cliente" reemplazada por "ContÃ¡ctanos" con formulario premium
+## Entregables ejecucion 29 (Lía flotante + flujo comercial unificado)
+- [x] Lía migrada a widget flotante tipo chat web (abrir/cerrar, historial corto, chips, recomendacion y CTAs)
+- [x] Seccion "Atencion al cliente" reemplazada por "Contáctanos" con formulario premium
 - [x] Diagnostico comercial movido a subflujo modal (ya no barra suelta)
-- [x] CTAs de landing alineados: abrir LÃ­a, abrir diagnostico, abrir contÃ¡ctanos, ver paquetes
+- [x] CTAs de landing alineados: abrir Lía, abrir diagnostico, abrir contáctanos, ver paquetes
 - [x] Copy "Dolor" eliminado y reemplazado por etiqueta comercial "Reto actual"
 
 ## Entregables ejecucion 45 (Wizard oficial de alta/configuracion)
@@ -402,7 +534,7 @@
 - [x] Validacion ejecutada: frontend build OK
 
 ## Entregables ejecucion 33 (Separacion panel Global vs Marca + selector de contexto)
-- [x] Layout admin separado por contexto: "AdministraciÃ³n General de ComerCia" vs "Panel de OperaciÃ³n de Marca"
+- [x] Layout admin separado por contexto: "Administración General de ComerCia" vs "Panel de Operación de Marca"
 - [x] Indicador persistente de contexto y marca activa en sidebar y topbar
 - [x] Selector de contexto para `reinpia_admin` (Global ComerCia / Marca activa) con persistencia en sesion
 - [x] Selector de marca activa para `reinpia_admin` (usa lista real de tenants)
@@ -410,7 +542,7 @@
 - [x] Navegacion de Marca reorganizada por bloques: inicio, comercial, catalogo, clientes, operacion, POS/WebApp, configuracion y reportes
 - [x] Monedas reubicado por contexto en menu:
   - [x] Global: "Monedas y tipos de cambio"
-  - [x] Marca: "Moneda de operaciÃ³n"
+  - [x] Marca: "Moneda de operación"
 - [x] Limpieza de duplicados de menu (ej. ventas POS repetidas) y consolidacion de accesos
 - [x] Ocultamiento por contexto y rol: usuario de marca no ve menu global
 
@@ -474,8 +606,8 @@
 - [x] `Abrir WebApp / POS` usa ruta valida tenant-aware (`/pos?tenant_id=...`)
 - [x] Validacion ejecutada: frontend build + backend compile
 
-## Entregables ejecucion 40 (DiagnÃ³stico inteligente independiente)
-- [x] Nuevo modulo independiente `DiagnÃ³stico inteligente` (separado de wizard/setup)
+## Entregables ejecucion 40 (Diagnóstico inteligente independiente)
+- [x] Nuevo modulo independiente `Diagnóstico inteligente` (separado de wizard/setup)
 - [x] Ruta de marca: `/admin/diagnostico-inteligente`
 - [x] Ruta global base: `/reinpia/diagnosticos`
 - [x] Backend: endpoints de analisis, latest, historial y plan de mejora
@@ -486,7 +618,7 @@
 - [x] Navegacion: acceso desde bloque Comercial de marca
 - [x] Validacion ejecutada: backend compile + frontend build
 
-## Entregables ejecucion 41 (DiagnÃ³stico inteligente: URL externa)
+## Entregables ejecucion 41 (Diagnóstico inteligente: URL externa)
 - [x] Se mantiene analisis interno de marca activa sin romper flujo actual
 - [x] Se agrega modo "Analizar URL externa" dentro de `/admin/diagnostico-inteligente`
 - [x] Nuevo endpoint: `POST /api/v1/brand-diagnostics/analyze-external-url`
@@ -615,7 +747,7 @@
 - [x] Extensiones de comisionista: tipo interno/externo + asignacion cliente/marca
 - [x] Nueva entidad de conciliacion `CommissionAgentSettlement`
 - [x] Registro de liquidaciones restringido a super admin/reinpia admin
-- [x] UI de pagos/contador en espaÃ±ol con conciliacion (generada, distribuida, pagada, por pagar)
+- [x] UI de pagos/contador en español con conciliacion (generada, distribuida, pagada, por pagar)
 - [x] UI de comisionistas en modo lectura para contador (sin edicion directa)
 - [x] Roles preparados en gestion de usuarios globales: `super_admin`, `contador`, `soporte`
 - [x] Validacion ejecutada: `python -m compileall app` y `npm run build`
@@ -637,7 +769,7 @@
 - [x] Mensaje de saldo mensual ('Te quedan X de Y creditos este mes')
 - [x] Umbral de advertencia al 30% de saldo restante
 - [x] Umbral critico al 10% de saldo restante
-- [x] Boton 'Comprar mÃ¡s crÃ©ditos' conectado a checkout add-on extra_500_ai_credits
+- [x] Boton 'Comprar más créditos' conectado a checkout add-on extra_500_ai_credits
 - [x] Mensaje de bloqueo inteligente al agotar creditos IA sin cortar operacion basica
 - [x] Validacion ejecutada: backend compile + frontend build
 
@@ -684,25 +816,25 @@
 - [x] Validacion ejecutada: frontend build + backend compile
 
 ## Entregables ejecucion 57 (Panel global por dominios funcionales)
-- [x] Menu global reorganizado en `INICIO`, `CREACIÃ“N`, `ADMINISTRACIÃ“N`, `FINANZAS`, `OPERACIÃ“N INTERNA`
-- [x] Dominio `CREACIÃ“N` limitado a Clientes, Marcas, Nueva marca y Wizard
-- [x] Dominio `ADMINISTRACIÃ“N` limitado a Clientes comerciales, Marcas activas, Canales creados y Configuracion internacional
+- [x] Menu global reorganizado en `INICIO`, `CREACIÓN`, `ADMINISTRACIÓN`, `FINANZAS`, `OPERACIÓN INTERNA`
+- [x] Dominio `CREACIÓN` limitado a Clientes, Marcas, Nueva marca y Wizard
+- [x] Dominio `ADMINISTRACIÓN` limitado a Clientes comerciales, Marcas activas, Canales creados y Configuracion internacional
 - [x] Dominio `FINANZAS` agrupado con Pagos, Comisiones, Planes/Add-ons y Tokens IA
-- [x] Dominio `OPERACIÃ“N INTERNA` agrupado con Soporte, Alertas/Centinela, Seguridad, Prospectos y Usuarios internos
+- [x] Dominio `OPERACIÓN INTERNA` agrupado con Soporte, Alertas/Centinela, Seguridad, Prospectos y Usuarios internos
 - [x] Limpieza de navegacion principal para sacar flujo legacy/mezclado
 - [x] Wizard preservado y funcional sin rehacer logica
 - [x] Validacion ejecutada: frontend build + backend compile
 ## Checklist - Correcciones panel cliente/marca (2026-04-13)
 
-- [x] BotÃ³n `Comprar mÃ¡s crÃ©ditos` funcional en resumen de marca.
-- [x] BotÃ³n `Abrir Soporte Comercial` funcional y local (`/admin/contracts`).
-- [x] BotÃ³n `Mejorar Plan` funcional sin salto al panel global.
+- [x] Botón `Comprar más créditos` funcional en resumen de marca.
+- [x] Botón `Abrir Soporte Comercial` funcional y local (`/admin/contracts`).
+- [x] Botón `Mejorar Plan` funcional sin salto al panel global.
 - [x] Eliminado bloque separado de cliente principal/comercial en resumen.
 - [x] `Marcas hijas` ya no navega al panel global.
 - [x] Vista local de marcas hijas implementada (`/admin/brands/children`).
-- [x] Sin botÃ³n global de crear marca en flujo local de marcas hijas.
+- [x] Sin botón global de crear marca en flujo local de marcas hijas.
 - [x] `Ficha de marca activa` revisa principal/hijas con selector.
-- [x] MenÃº de marca sin secciÃ³n `Canales`.
+- [x] Menú de marca sin sección `Canales`.
 - [x] Router actualizado con rutas locales de marca.
 ## Checklist - Orden del Panel Global (2026-04-14)
 
@@ -728,16 +860,16 @@
 - [x] Navegacion global `Tokens IA` enfoca la seccion de tokens.
 ## Checklist - cierre soporte/capacidad/respuestas (2026-04-14)
 
-- [x] Soporte permite crear tickets con datos mÃ­nimos.
+- [x] Soporte permite crear tickets con datos mínimos.
 - [x] Soporte permite adjuntar evidencia por ticket.
 - [x] Historial de tickets con fecha/estado/respuesta/responsable.
-- [x] Soporte por plan: bÃ¡sico (ticket/correo), growth/premium (ticket + chat IA + escalamiento).
-- [x] Expandir capacidad muestra catÃ¡logo completo de add-ons objetivo.
-- [x] Add-ons conectados a checkout cuando estÃ¡n disponibles.
-- [x] Se agregÃ³ mÃ³dulo `Respuestas y atenciÃ³n`.
-- [x] ConfiguraciÃ³n de speech se guarda y se envÃ­a a soporte.
-- [x] Se evita activaciÃ³n tÃ©cnica manual de agentes desde cliente.
-- [x] MenÃº de marca incluye Soporte, Expandir capacidad y Respuestas y atenciÃ³n.
+- [x] Soporte por plan: básico (ticket/correo), growth/premium (ticket + chat IA + escalamiento).
+- [x] Expandir capacidad muestra catálogo completo de add-ons objetivo.
+- [x] Add-ons conectados a checkout cuando están disponibles.
+- [x] Se agregó módulo `Respuestas y atención`.
+- [x] Configuración de speech se guarda y se envía a soporte.
+- [x] Se evita activación técnica manual de agentes desde cliente.
+- [x] Menú de marca incluye Soporte, Expandir capacidad y Respuestas y atención.
 
 ## Entregables ejecucion 58 (Puente Nervia x ComerCia)
 - [x] Endpoint para sincronizar metricas de publicaciones de Nervia
@@ -769,8 +901,9 @@
 - [x] Documentacion actualizada (`README.md`, `docs/modules.md`, `docs/architecture.md`, `CHECKLIST_COMERCIA.md`)
 
 ## Entregables ejecucion 61 (Switch Nervia + identificador oficial)
-- [x] Switch por marca para activar/desactivar comunicaciÃ³n con Nervia
+- [x] Switch por marca para activar/desactivar comunicación con Nervia
 - [x] Identificador oficial de cliente Nervia por tenant
-- [x] ValidaciÃ³n de contrato de marketing Nervia activo
-- [x] Bloqueo backend de sync/report/feedback cuando no cumple activaciÃ³n
-- [x] UI de alta de marca con activaciÃ³n Nervia y campos requeridos
+- [x] Validación de contrato de marketing Nervia activo
+- [x] Bloqueo backend de sync/report/feedback cuando no cumple activación
+- [x] UI de alta de marca con activación Nervia y campos requeridos
+

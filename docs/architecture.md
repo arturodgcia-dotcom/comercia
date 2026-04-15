@@ -1,4 +1,19 @@
-Ôªø# Arquitectura COMERCIA by REINPIA
+# Arquitectura COMERCIA by REINPIA
+
+## Sprint 1 - Cierre funcional (2026-04-15)
+Cambios estructurales ya aplicados:
+- Dominio global ordenado en navegacion por secciones: Inicio, Comercial, Creacion, Administracion, Finanzas y Operacion interna.
+- Separacion de responsabilidad por capas:
+  - Wizard: alta/setup inicial.
+  - Panel marca: operacion diaria.
+  - Panel global: administracion y supervision.
+- Centro de soporte global desacoplado de comercial:
+  - Backoffice tecnico-operativo: /reinpia/support-backoffice.
+  - Comercial interno: /reinpia/commercial-inbox y /reinpia/marketing/prospectos.
+- Consolidacion del estado comercial de marca en dashboard como fuente de verdad.
+- Retiro de rutas placeholder legacy visibles:
+  - `/store/:tenantSlug/distribuidores/login-placeholder`
+  - `/pos/login-placeholder`
 
 ## 1) Estado actual
 Plataforma SaaS multitenant con:
@@ -145,19 +160,19 @@ Objetivo: base estable para BI/reporting sin dependencias de Excel en esta fase.
 Estructura oficial:
 - Panel global:
   - Inicio
-  - Creaci√≥n
-  - Administraci√≥n
+  - CreaciÛn
+  - AdministraciÛn
   - Finanzas
-  - Operaci√≥n interna
+  - OperaciÛn interna
 - Wizard:
-  - flujo oficial de creaci√≥n/setup inicial por marca
+  - flujo oficial de creaciÛn/setup inicial por marca
 - Canales creados:
-  - administraci√≥n global posterior de landing, ecommerce p√∫blico, ecommerce distribuidores y webApp/POS
+  - administraciÛn global posterior de landing, ecommerce p˙blico, ecommerce distribuidores y webApp/POS
 - Panel de marca:
-  - operaci√≥n diaria, consumo/l√≠mites, soporte, add-ons y alertas
+  - operaciÛn diaria, consumo/lÌmites, soporte, add-ons y alertas
 
 Decisiones de limpieza:
-- Se retiran aliases legacy de administraci√≥n de tenants (`/tenants*`) para evitar duplicidad con rutas REINPIA.
+- Se retiran aliases legacy de administraciÛn de tenants (`/tenants*`) para evitar duplicidad con rutas REINPIA.
 - Se conserva una sola ficha administrativa de marca por ruta:
   - `/reinpia/tenants/:tenantId`
 
@@ -417,7 +432,7 @@ Se agrego base PWA para experiencia tipo app en celular:
 - `start_url` orientada a POS: `/pos`.
 - `service worker` para cache basico de shell estatico, manifest e iconos.
 - componentes UX:
-  - `InstallAppPrompt` (boton √¢‚Ç¨≈ìInstalar WebApp√¢‚Ç¨¬ù)
+  - `InstallAppPrompt` (boton ‚ÄúInstalar WebApp‚Äù)
   - `AppInstallHelp` (guia Android/iOS)
 - rutas:
   - usuario con sesion: entra directo a POS
@@ -558,7 +573,7 @@ Esto habilita un flujo de seguimiento comercial end-to-end sin depender de formu
   - contexto global no muestra modulos internos de marca como menu primario
 - Reubicacion de monedas en navegacion:
   - Global: Monedas y tipos de cambio
-  - Marca: Moneda de operaci√≥n
+  - Marca: Moneda de operaciÛn
 
 ## Conectividad API y Monedas (Ejecucion 36)
 - Se centralizo la URL base del frontend en `frontend/src/services/api.ts` para evitar desalineacion entre modulos.
@@ -620,7 +635,7 @@ Esto habilita un flujo de seguimiento comercial end-to-end sin depender de formu
 - POS principal de canal se normaliza a ruta tenant-aware:
   - `/pos?tenant_id={tenantId}`
 
-## Ejecucion 40: m√≥dulo independiente Diagn√≥stico inteligente
+## Ejecucion 40: mÛdulo independiente DiagnÛstico inteligente
 Se agrega un nuevo modulo desacoplado del wizard de marca y de la generacion de landing/ecommerce.
 
 Objetivo:
@@ -659,7 +674,7 @@ Endpoints:
 - `POST /api/v1/brand-diagnostics/{tenant_id}/improvement-plan`
 - `GET /api/v1/reinpia/diagnostics`
 
-Regla de dise√±o:
+Regla de diseÒo:
 - no modifica wizard ni onboarding.
 - opera como modulo paralelo de evaluacion comercial y de visibilidad.
 
@@ -1036,7 +1051,7 @@ Frontend:
 ## Ejecucion 52: UX de creditos IA y continuidad operativa
 - El dashboard de marca implementa una capa de lectura operativa de creditos IA con medidor visual tipo gasolina.
 - Se aplican umbrales de estado en frontend para saldo restante (30% advertencia, 10% critica).
-- El CTA 'Comprar m√°s cr√©ditos' dispara checkout comercial Stripe test del add-on extra_500_ai_credits.
+- El CTA 'Comprar m·s crÈditos' dispara checkout comercial Stripe test del add-on extra_500_ai_credits.
 - Al llegar a 0 creditos se comunica bloqueo de funciones IA no criticas, manteniendo acceso a panel, ventas y operacion basica.
 
 ## Ejecucion 53: add-ons en 1 clic desde alertas y dashboards
@@ -1189,14 +1204,14 @@ Arquitectura aplicada:
 1) Dominio INICIO
 - acceso unico a `Dashboard global`.
 
-2) Dominio CREACI√ìN
+2) Dominio CREACI”N
 - Clientes
 - Marcas
 - Nueva marca
 - Wizard de configuracion
 - alcance exclusivo de setup inicial (sin pagos/soporte/alertas).
 
-3) Dominio ADMINISTRACI√ìN
+3) Dominio ADMINISTRACI”N
 - Clientes comerciales
 - Marcas activas
 - Canales creados
@@ -1210,7 +1225,7 @@ Arquitectura aplicada:
 - Tokens IA
 - base preparada para rol `contador`.
 
-5) Dominio OPERACI√ìN INTERNA
+5) Dominio OPERACI”N INTERNA
 - Soporte
 - Alertas / Centinela
 - Seguridad
@@ -1221,18 +1236,18 @@ Arquitectura aplicada:
 6) Limpieza de flujo principal
 - menu global sin accesos legacy mezclados.
 - se evita empujar flujo principal a `/tenants/:tenantId/branding`; selector de marca vuelve al dashboard de marca.
-- rutas legacy pueden permanecer en c√≥digo, pero fuera de la navegacion principal.
+- rutas legacy pueden permanecer en cÛdigo, pero fuera de la navegacion principal.
 ## Ajuste de arquitectura local marca (2026-04-13)
 
-- Se reforz√≥ separaci√≥n de contexto:
-  - Panel global para gobierno y administraci√≥n central.
-  - Panel cliente/marca para operaci√≥n local y decisiones de capacidad de su propia cuenta.
+- Se reforzÛ separaciÛn de contexto:
+  - Panel global para gobierno y administraciÛn central.
+  - Panel cliente/marca para operaciÛn local y decisiones de capacidad de su propia cuenta.
 - Flujo local agregado:
   - `/admin/brands/children` como vista operativa de marca principal y marcas hijas relacionadas.
-  - `/admin/branding` como ficha de revisi√≥n por marca (selector de principal/hija).
-- Navegaci√≥n:
-  - Se elimin√≥ la secci√≥n `Canales` del men√∫ de marca para simplificar IA/operaci√≥n.
-  - Canales se mantienen operativos dentro de la secci√≥n `Operaci√≥n`.
+  - `/admin/branding` como ficha de revisiÛn por marca (selector de principal/hija).
+- NavegaciÛn:
+  - Se eliminÛ la secciÛn `Canales` del men˙ de marca para simplificar IA/operaciÛn.
+  - Canales se mantienen operativos dentro de la secciÛn `OperaciÛn`.
 - Las acciones de crecimiento y soporte del resumen de marca resuelven dentro del contexto local del tenant.
 ## Arquitectura de navegacion global (2026-04-14)
 
@@ -1270,10 +1285,10 @@ Se incorporo una capa de monitoreo de tokens IA en dos niveles:
 
 Principio:
 - El panel de marca resuelve operacion diaria y acciones de compra para su cuenta.
-- El panel global supervisa distribucion, riesgo y reserva para evitar agotamiento sist√©mico.
+- El panel global supervisa distribucion, riesgo y reserva para evitar agotamiento sistÈmico.
 ## Arquitectura final panel de marca (soporte/capacidad/respuestas) - 2026-04-14
 
-Se consolid√≥ un flujo de operaci√≥n sin dependencias t√©cnicas manuales para cliente:
+Se consolidÛ un flujo de operaciÛn sin dependencias tÈcnicas manuales para cliente:
 
 - Soporte operativo estructurado
   - Tickets persistentes por marca
@@ -1281,15 +1296,15 @@ Se consolid√≥ un flujo de operaci√≥n sin dependencias t√©cnicas manuales para cl
   - Chat IA condicionado por plan
   - Escalamiento humano preparado
 
-- Expansi√≥n de capacidad desacoplada
-  - Cat√°logo centralizado de add-ons
-  - Recomendaci√≥n por consumo/riesgo
-  - Integraci√≥n con checkout comercial
+- ExpansiÛn de capacidad desacoplada
+  - Cat·logo centralizado de add-ons
+  - RecomendaciÛn por consumo/riesgo
+  - IntegraciÛn con checkout comercial
 
-- Configuraci√≥n de speech y atenci√≥n
+- ConfiguraciÛn de speech y atenciÛn
   - El cliente define lineamientos
-  - REINPIA aplica la configuraci√≥n v√≠a soporte
-  - Se evita activar/agregar agentes desde l√≥gica t√©cnica manual en UI cliente
+  - REINPIA aplica la configuraciÛn vÌa soporte
+  - Se evita activar/agregar agentes desde lÛgica tÈcnica manual en UI cliente
 
 ## Ejecucion 58: puente de marketing Nervia x ComerCia (2026-04-14)
 Objetivo:
@@ -1367,3 +1382,5 @@ Cambios:
 - API de tenants valida que `acquisition_commission_agent_id` exista cuando se captura.
 - UI de alta de marca agrega bloque `Origen comercial de la marca`.
 - UI de listado global de marcas muestra columna `Origen`.
+
+

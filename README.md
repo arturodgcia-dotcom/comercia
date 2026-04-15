@@ -8,6 +8,27 @@ Plataforma SaaS multitenant para landing, ecommerce, growth comercial y operacio
 - `docs/`: arquitectura y modulos
 - `infra/`: base Docker local
 
+## Actualizacion Sprint 1 (2026-04-15)
+Objetivo completado: ordenar arquitectura funcional sin migrar framework ni romper flujos activos.
+
+Cambios principales cerrados en Sprint 1:
+- Navegacion global organizada por dominios: `Inicio`, `Comercial`, `Creacion`, `Administracion`, `Finanzas`, `Operacion interna`.
+- Separacion de flujos:
+  - Wizard: solo setup inicial (`/reinpia/brands/:tenantId/setup`).
+  - Panel marca: operacion diaria (sin relanzar setup).
+  - Panel global: administracion y supervision de activos creados.
+- Consolidacion comercial en panel marca:
+  - fuente de verdad en `Resumen de marca` para plan, consumo, creditos IA, limites, soporte, add-ons y upgrade.
+  - vistas duplicadas reducidas en pantallas secundarias.
+- Soporte global desacoplado de comercial:
+  - nuevo backoffice tecnico-operativo: `/reinpia/support-backoffice`.
+  - comercial separado en `/reinpia/commercial-inbox` y `/reinpia/marketing/prospectos`.
+- Limpieza final de rutas legacy visibles:
+  - eliminadas rutas placeholder de login:
+    - `/store/:tenantSlug/distribuidores/login-placeholder`
+    - `/pos/login-placeholder`
+  - accesos B2B ajustados a `/login`.
+
 ## Wizard oficial de alta/configuracion de marcas
 - Ruta oficial: `/reinpia/brands/:tenantId/setup` (solo `reinpia_admin`).
 - El wizard ya no es demo: persiste identidad, branding, plantillas oficiales, estado por paso y estado final de publicacion.

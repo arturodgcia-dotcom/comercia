@@ -28,7 +28,6 @@ import { DataProtectionPolicyPage } from "../pages/DataProtectionPolicyPage";
 import { DashboardPage } from "../pages/DashboardPage";
 import { BrandDiagnosticsPage } from "../pages/BrandDiagnosticsPage";
 import { DistributorApplicationsAdminPage } from "../pages/DistributorApplicationsAdminPage";
-import { DistributorLoginPlaceholderPage } from "../pages/DistributorLoginPlaceholderPage";
 import { DistributorRegistrationPage } from "../pages/DistributorRegistrationPage";
 import { DistributorsAdminPage } from "../pages/DistributorsAdminPage";
 import { FeedbackModerationPage } from "../pages/FeedbackModerationPage";
@@ -43,7 +42,6 @@ import { PaymentsAdminPage } from "../pages/PaymentsAdminPage";
 import { PlansPage } from "../pages/PlansPage";
 import { PosCustomersPage } from "../pages/PosCustomersPage";
 import { PosLocationsPage } from "../pages/PosLocationsPage";
-import { PosLoginPlaceholderPage } from "../pages/PosLoginPlaceholderPage";
 import { PosPage } from "../pages/PosPage";
 import { PosSalesPage } from "../pages/PosSalesPage";
 import { PrivacyPolicyPage } from "../pages/PrivacyPolicyPage";
@@ -123,8 +121,6 @@ export function AppRouter() {
       <Route path="/store/:tenantSlug/service/:serviceId" element={<ServiceDetailPage />} />
       <Route path="/store/:tenantSlug/distribuidores" element={<ResolvedStorefrontDistributorsPage />} />
       <Route path="/store/:tenantSlug/distribuidores/registro" element={<DistributorRegistrationPage />} />
-      <Route path="/store/:tenantSlug/distribuidores/login-placeholder" element={<DistributorLoginPlaceholderPage />} />
-      <Route path="/pos/login-placeholder" element={<PosLoginPlaceholderPage />} />
 
       {/* â”€â”€ Plantillas de muestra (preview sin autenticaciÃ³n) â”€â”€ */}
       <Route path="/templates/tienda-publica" element={<StorePublicTemplate />} />

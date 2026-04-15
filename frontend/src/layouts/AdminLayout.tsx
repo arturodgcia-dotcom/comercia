@@ -154,8 +154,8 @@ export function AdminLayout() {
       title: "COMERCIAL",
       roles: ["reinpia_admin", "super_admin"],
       items: [
-        { label: "Prospectos", to: "/reinpia/marketing/prospectos" },
-        { label: "Precotizaciones", to: "/reinpia/marketing/prospectos?view=precotizaciones" },
+        { label: "Prospectos de marketing", to: "/reinpia/marketing/prospectos" },
+        { label: "Precotizaciones internas", to: "/reinpia/marketing/prospectos?view=precotizaciones" },
         { label: "Seguimiento comercial", to: "/reinpia/commercial-inbox" },
       ],
     },
@@ -163,7 +163,7 @@ export function AdminLayout() {
       title: "CREACIÓN",
       roles: ["reinpia_admin", "super_admin"],
       items: [
-        { label: "Clientes", to: "/reinpia/clientes-comerciales?domain=creacion" },
+        { label: "Clientes principales", to: "/reinpia/clientes-comerciales?domain=creacion" },
         { label: "Marcas", to: "/reinpia/tenants?domain=creacion" },
         { label: "Nueva marca", to: "/reinpia/brands/new" },
         { label: "Wizard de configuración", to: "/reinpia/tenants?domain=wizard" },
@@ -193,7 +193,7 @@ export function AdminLayout() {
       title: "OPERACIÓN INTERNA",
       roles: ["reinpia_admin", "super_admin", "agency_admin"],
       items: [
-        { label: "Soporte técnico / operativo", to: "/reinpia/support-backoffice", roles: ["reinpia_admin", "super_admin"] },
+        { label: "Soporte global backoffice", to: "/reinpia/support-backoffice", roles: ["reinpia_admin", "super_admin"] },
         { label: "Alertas / Centinela", to: "/reinpia/alerts", roles: ["reinpia_admin", "super_admin"] },
         { label: "Seguridad", to: "/reinpia/security", roles: ["reinpia_admin", "super_admin"] },
         { label: "Nervia Marketing", to: "/reinpia/nervia-marketing" },

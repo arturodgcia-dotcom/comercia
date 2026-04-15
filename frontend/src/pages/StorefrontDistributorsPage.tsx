@@ -101,7 +101,7 @@ export function StorefrontDistributorsPage() {
           <Link className="button button-outline" to={`/store/${data.tenant.slug}/distribuidores/registro`}>
             Solicitar registro comercial
           </Link>
-          <Link className="button button-outline" to={`/store/${data.tenant.slug}/distribuidores/login-placeholder`}>
+          <Link className="button button-outline" to="/login">
             Acceso distribuidores
           </Link>
         </div>
