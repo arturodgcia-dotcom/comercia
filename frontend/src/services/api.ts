@@ -35,6 +35,7 @@ import {
   DistributorApplication,
   DistributorEmployee,
   DistributorProfile,
+  DistributorProfileSummary,
   ExchangeRate,
   InternalAlert,
   LogisticsAdditionalService,
@@ -76,6 +77,10 @@ import {
   BlockedEntity,
   ServiceOffering,
   SignedContract,
+  SupportChatResponse,
+  SupportOverview,
+  SupportTicket,
+  BrandResponsesConfig,
   StorefrontDistributorsPayload,
   StorefrontHomePayload,
   StorefrontPayload,
@@ -522,6 +527,12 @@ export const api = {
     ),
   getDistributorsByTenant: (token: string, tenantId: number) =>
     request<DistributorProfile[]>(`/api/v1/distributors/by-tenant/${tenantId}`, {}, token),
+  createDistributorProfile: (token: string, payload: Record<string, unknown>) =>
+    request<DistributorProfile>("/api/v1/distributors/profiles", { method: "POST", body: JSON.stringify(payload) }, token),
+  authorizeDistributorProfile: (token: string, profileId: number, notes?: string) =>
+    request<DistributorProfile>(`/api/v1/distributors/profiles/${profileId}/authorize`, { method: "PUT", body: JSON.stringify({ notes }) }, token),
+  getDistributorSummaryByTenant: (token: string, tenantId: number) =>
+    request<DistributorProfileSummary[]>(`/api/v1/distributors/summary/by-tenant/${tenantId}`, {}, token),
   createDistributorEmployee: (token: string, payload: Record<string, unknown>) =>
     request<DistributorEmployee>("/api/v1/distributors/employees", { method: "POST", body: JSON.stringify(payload) }, token),
   getDistributorEmployees: (token: string, distributorProfileId: number) =>
@@ -537,6 +548,54 @@ export const api = {
     request<SignedContract>("/api/v1/contracts/sign", { method: "POST", body: JSON.stringify(payload) }),
   getSignedContractsByTenant: (token: string, tenantId: number) =>
     request<SignedContract[]>(`/api/v1/contracts/signed/by-tenant/${tenantId}`, {}, token),
+  getSupportOverview: (token: string, tenantId: number) =>
+    request<SupportOverview>(`/api/v1/support-center/tenant/${tenantId}/overview`, {}, token),
+  createSupportTicket: (token: string, tenantId: number, payload: Record<string, unknown>) =>
+    request<SupportTicket>(`/api/v1/support-center/tenant/${tenantId}/tickets`, { method: "POST", body: JSON.stringify(payload) }, token),
+  getSupportTickets: (token: string, tenantId: number) =>
+    request<SupportTicket[]>(`/api/v1/support-center/tenant/${tenantId}/tickets`, {}, token),
+  updateSupportTicketStatus: (token: string, ticketId: number, payload: Record<string, unknown>) =>
+    request<SupportTicket>(`/api/v1/support-center/tickets/${ticketId}/status`, { method: "PUT", body: JSON.stringify(payload) }, token),
+  uploadSupportTicketAttachment: async (token: string, ticketId: number, file: File) => {
+    const formData = new FormData();
+    formData.set("file", file);
+    const endpoint = `${getApiBaseUrl()}/api/v1/support-center/tickets/${ticketId}/attachments`;
+    let response: Response;
+    try {
+      response = await fetch(endpoint, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+    } catch {
+      throw new ApiError(`No fue posible conectar con el endpoint de adjuntos (${endpoint}).`, 0);
+    }
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new ApiError(`Error ${response.status} al subir adjunto en ${endpoint}: ${errorText || response.statusText}`, response.status);
+    }
+    return (await response.json()) as SupportTicket;
+  },
+  sendSupportChatMessage: (token: string, ticketId: number, message: string) =>
+    request<SupportChatResponse>(
+      `/api/v1/support-center/tickets/${ticketId}/chat`,
+      { method: "POST", body: JSON.stringify({ message }) },
+      token
+    ),
+  getBrandResponsesConfig: (token: string, tenantId: number) =>
+    request<BrandResponsesConfig | null>(`/api/v1/support-center/tenant/${tenantId}/responses-config`, {}, token),
+  saveBrandResponsesConfig: (token: string, tenantId: number, payload: Record<string, unknown>) =>
+    request<BrandResponsesConfig>(
+      `/api/v1/support-center/tenant/${tenantId}/responses-config`,
+      { method: "PUT", body: JSON.stringify(payload) },
+      token
+    ),
+  submitBrandResponsesConfig: (token: string, tenantId: number) =>
+    request<{ tenant_id: number; ticket_id: number; message: string }>(
+      `/api/v1/support-center/tenant/${tenantId}/responses-config/submit`,
+      { method: "POST" },
+      token
+    ),
 
   getRecurringOrdersByTenant: (token: string, tenantId: number) =>
     request<RecurringOrderSchedule[]>(`/api/v1/recurring-orders/by-tenant/${tenantId}`, {}, token),

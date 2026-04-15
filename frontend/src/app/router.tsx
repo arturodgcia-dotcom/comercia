@@ -9,6 +9,9 @@ import { TemplateFamilyDemoPage } from "../pages/templates/TemplateFamilyDemoPag
 import { AppointmentsAdminPage } from "../pages/AppointmentsAdminPage";
 import { BrandingEditorPage } from "../pages/BrandingEditorPage";
 import { BrandChildBrandsPage } from "../pages/BrandChildBrandsPage";
+import { BrandSupportCenterPage } from "../pages/BrandSupportCenterPage";
+import { BrandCapacityExpansionPage } from "../pages/BrandCapacityExpansionPage";
+import { BrandResponsesAttentionPage } from "../pages/BrandResponsesAttentionPage";
 import { BannersAdminPage } from "../pages/BannersAdminPage";
 import { CatalogBulkUploadPage } from "../pages/CatalogBulkUploadPage";
 import { CategoriesPage } from "../pages/CategoriesPage";
@@ -168,6 +171,9 @@ export function AppRouter() {
             <Route path="admin/banners" element={<BannersAdminPage />} />
             <Route path="admin/reviews" element={<ReviewsAdminPage />} />
             <Route path="admin/contracts" element={<ContractsAdminPage />} />
+            <Route path="admin/support" element={<BrandSupportCenterPage />} />
+            <Route path="admin/capacity-expand" element={<BrandCapacityExpansionPage />} />
+            <Route path="admin/respuestas-atencion" element={<BrandResponsesAttentionPage />} />
             <Route path="admin/settings/payments/stripe" element={<StripeSettingsPage />} />
             <Route path="admin/settings/payments/mercadopago" element={<MercadoPagoSettingsPage />} />
             <Route path="admin/reports" element={<TenantReportsOverviewPage />} />

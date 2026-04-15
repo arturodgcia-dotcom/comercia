@@ -726,3 +726,15 @@
 - [x] Panel global incluye planeacion de tokens (general/distribuido/reserva).
 - [x] Panel global incluye centinela de consumo por marca con acciones de recarga.
 - [x] Navegacion global `Tokens IA` enfoca la seccion de tokens.
+## Checklist - cierre soporte/capacidad/respuestas (2026-04-14)
+
+- [x] Soporte permite crear tickets con datos mínimos.
+- [x] Soporte permite adjuntar evidencia por ticket.
+- [x] Historial de tickets con fecha/estado/respuesta/responsable.
+- [x] Soporte por plan: básico (ticket/correo), growth/premium (ticket + chat IA + escalamiento).
+- [x] Expandir capacidad muestra catálogo completo de add-ons objetivo.
+- [x] Add-ons conectados a checkout cuando están disponibles.
+- [x] Se agregó módulo `Respuestas y atención`.
+- [x] Configuración de speech se guarda y se envía a soporte.
+- [x] Se evita activación técnica manual de agentes desde cliente.
+- [x] Menú de marca incluye Soporte, Expandir capacidad y Respuestas y atención.

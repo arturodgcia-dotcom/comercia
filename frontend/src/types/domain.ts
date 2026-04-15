@@ -505,6 +505,19 @@ export interface DistributorEmployee {
   updated_at: string;
 }
 
+export interface DistributorProfileSummary {
+  distributor_profile_id: number;
+  tenant_id: number;
+  business_name: string;
+  contact_name: string;
+  email: string;
+  is_authorized: boolean;
+  employees_count: number;
+  distributor_users_count: number;
+  pos_sales_count: number;
+  pos_sales_total_mxn: number;
+}
+
 export interface ContractTemplate {
   id: number;
   tenant_id?: number | null;
@@ -528,6 +541,78 @@ export interface SignedContract {
   status: string;
   created_at: string;
   updated_at: string;
+}
+
+export interface SupportTicketAttachment {
+  id: number;
+  file_name: string;
+  stored_path: string;
+  uploaded_at: string;
+}
+
+export interface SupportTicketMessage {
+  id: number;
+  role: string;
+  message: string;
+  created_at: string;
+}
+
+export interface SupportTicket {
+  id: number;
+  tenant_id: number;
+  asunto: string;
+  descripcion: string;
+  categoria: string;
+  prioridad: string;
+  marca_relacionada?: string | null;
+  correo_contacto: string;
+  telefono_whatsapp?: string | null;
+  estado: string;
+  respuesta?: string | null;
+  responsable?: string | null;
+  created_at: string;
+  updated_at: string;
+  attachments: SupportTicketAttachment[];
+  mensajes: SupportTicketMessage[];
+}
+
+export interface SupportOverview {
+  tenant_id: number;
+  plan_tier: string;
+  support_channel: string;
+  official_email: string;
+  chat_enabled: boolean;
+  escalation_enabled: boolean;
+  human_escalation_hint: string;
+}
+
+export interface SupportChatResponse {
+  ticket_id: number;
+  chat_enabled: boolean;
+  response: string;
+  escalate_to_human: boolean;
+  channel_hint: string;
+  updated_ticket: SupportTicket;
+}
+
+export interface BrandResponsesConfig {
+  id: number;
+  tenant_id: number;
+  tono_atencion: string;
+  saludo_inicial: string;
+  speech_comercial_base: string;
+  preguntas_frecuentes: string;
+  objeciones_frecuentes: string;
+  restricciones_respuesta: string;
+  horario_atencion: string;
+  mensajes_cierre: string;
+  estilo_deseado: string;
+  notas_adicionales?: string | null;
+  documento_base?: string | null;
+  last_updated_at: string;
+  pending_apply: boolean;
+  active_agents_count: number;
+  last_applied_at?: string | null;
 }
 
 export interface RecurringOrderSchedule {

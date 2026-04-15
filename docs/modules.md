@@ -689,3 +689,46 @@ Limpieza aplicada:
   - Tokens distribuidos por marca
   - Tokens de reserva y umbral minimo sugerido
   - Agente centinela de sobreconsumo por marca
+## Cierre módulos panel de marca (2026-04-14)
+
+### Soporte
+
+- Ruta: `/admin/support`
+- Capacidades:
+  - alta de ticket
+  - adjuntos por ticket
+  - historial y estados (`nuevo`, `en revision`, `pendiente de cliente`, `resuelto`, `cerrado`)
+  - chat IA por plan (Growth/Premium)
+  - base de escalamiento humano/Telegram interno
+
+### Expandir capacidad
+
+- Ruta: `/admin/capacity-expand`
+- Catálogo de expansión con:
+  - usuario extra
+  - agente IA extra
+  - marca extra
+  - 100 productos extra
+  - sucursal extra
+  - 500 créditos IA extra
+  - soporte premium
+- Incluye recomendación por recurso en riesgo + acciones de checkout y upgrade.
+
+### Respuestas y atención
+
+- Ruta: `/admin/respuestas-atencion`
+- Captura:
+  - tono
+  - saludo inicial
+  - speech comercial
+  - preguntas frecuentes
+  - objeciones
+  - restricciones
+  - horario
+  - mensajes de cierre
+  - estilo
+  - notas y documento base
+- Flujo:
+  - guardar configuración
+  - enviar solicitud a soporte para aplicación por REINPIA
+  - no activa agentes manualmente desde el cliente

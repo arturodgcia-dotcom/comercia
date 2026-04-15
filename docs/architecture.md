@@ -1271,3 +1271,22 @@ Se incorporo una capa de monitoreo de tokens IA en dos niveles:
 Principio:
 - El panel de marca resuelve operacion diaria y acciones de compra para su cuenta.
 - El panel global supervisa distribucion, riesgo y reserva para evitar agotamiento sistémico.
+## Arquitectura final panel de marca (soporte/capacidad/respuestas) - 2026-04-14
+
+Se consolidó un flujo de operación sin dependencias técnicas manuales para cliente:
+
+- Soporte operativo estructurado
+  - Tickets persistentes por marca
+  - Adjuntos por evidencia
+  - Chat IA condicionado por plan
+  - Escalamiento humano preparado
+
+- Expansión de capacidad desacoplada
+  - Catálogo centralizado de add-ons
+  - Recomendación por consumo/riesgo
+  - Integración con checkout comercial
+
+- Configuración de speech y atención
+  - El cliente define lineamientos
+  - REINPIA aplica la configuración vía soporte
+  - Se evita activar/agregar agentes desde lógica técnica manual en UI cliente

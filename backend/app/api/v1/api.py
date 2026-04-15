@@ -33,6 +33,7 @@ from app.api.v1.endpoints import (
     security,
     services,
     storefront,
+    support_center,
     stripe_config,
     stripe_webhook,
     tenant_branding,
@@ -69,6 +70,7 @@ api_router.include_router(services.router, prefix="/services", tags=["services"]
 api_router.include_router(appointments.router, prefix="/appointments", tags=["appointments"])
 api_router.include_router(distributors_ops.router, prefix="/distributors", tags=["distributors"])
 api_router.include_router(contracts.router, prefix="/contracts", tags=["contracts"])
+api_router.include_router(support_center.router, prefix="/support-center", tags=["support-center"])
 api_router.include_router(recurring_orders.router, prefix="/recurring-orders", tags=["recurring-orders"])
 api_router.include_router(logistics.router, prefix="/logistics", tags=["logistics"])
 api_router.include_router(onboarding.router, prefix="/onboarding", tags=["onboarding"])

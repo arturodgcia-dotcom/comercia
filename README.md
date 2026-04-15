@@ -1161,3 +1161,20 @@ Notas:
 - Panel global:
   - Se agrego planeacion de tokens IA: generales, distribuidos por marca y reserva.
   - Se agrego bloque de `Agente centinela` para detectar sobreconsumo por marca y sugerir recarga.
+## Cierre operativo panel de marca (2026-04-14)
+
+Se cerraron tres módulos finales para pruebas operativas:
+
+- Soporte (`/admin/support`)
+  - Creación de tickets
+  - Adjuntos (imagen/PDF/capturas/archivo simple)
+  - Historial con estado, respuesta y responsable
+  - Chat IA de soporte para planes Growth/Premium
+- Expandir capacidad (`/admin/capacity-expand`)
+  - Catálogo de add-ons comprables
+  - Recomendaciones por recursos en riesgo
+  - CTA de compra y mejora de plan
+- Respuestas y atención (`/admin/respuestas-atencion`)
+  - Captura de speech/tono/FAQs/objeciones/restricciones/horario/cierres
+  - Guardado y envío a soporte para aplicación por REINPIA
+  - Contexto de agentes activos y estado de configuración pendiente

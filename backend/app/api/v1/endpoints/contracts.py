@@ -12,6 +12,7 @@ from app.schemas.contracts import (
     SignedContractRead,
 )
 from app.services.contract_service import create_default_distributor_contract_template, sign_contract
+from app.services.notifications_service import send_email_notification
 
 router = APIRouter()
 
@@ -53,7 +54,13 @@ def update_template(template_id: int, payload: ContractTemplateUpdate, db: Sessi
 def sign(payload: SignedContractCreate, db: Session = Depends(get_db)):
     if not payload.accept_terms:
         raise HTTPException(status_code=400, detail="debes aceptar el contrato")
-    return sign_contract(db, **payload.model_dump(exclude={"accept_terms"}))
+    signed = sign_contract(db, **payload.model_dump(exclude={"accept_terms"}))
+    send_email_notification(
+        payload.signed_by_email,
+        "Copia de contrato firmado",
+        f"Tu contrato fue firmado y autorizado. Folio: {signed.id}. Fecha: {signed.signed_at.isoformat()}",
+    )
+    return signed
 
 
 @router.get("/signed/by-tenant/{tenant_id}", response_model=list[SignedContractRead])

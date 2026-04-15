@@ -193,7 +193,7 @@ export function AdminLayout() {
   ];
 
   const brandSections: NavSection[] = useMemo(() => {
-    const addonItems: NavItem[] = [{ label: "Expandir capacidad", to: "/plans" }];
+    const addonItems: NavItem[] = [{ label: "Expandir capacidad", to: "/admin/capacity-expand" }];
     if (isAddonContracted(brandSettings?.addon_logistics_status)) {
       addonItems.push({ label: logisticsLabel, to: "/admin/logistics" });
     }
@@ -256,14 +256,21 @@ export function AdminLayout() {
         title: "SOPORTE",
         roles: ADMIN_ROLES,
         items: [
-          { label: "Soporte del plan", to: "/admin/contracts", roles: ["tenant_admin", "reinpia_admin"] },
+          { label: "Soporte", to: "/admin/support", roles: ["tenant_admin", "reinpia_admin", "super_admin"] },
           { label: "Diagnóstico inteligente", to: "/admin/diagnostico-inteligente", roles: ["tenant_admin", "reinpia_admin"] },
         ],
       },
       {
         title: "ADD-ONS",
         roles: ADMIN_ROLES,
-        items: [{ label: "Expandir capacidad", to: "/plans" }, ...addonItems.filter((item) => item.label !== "Expandir capacidad")],
+        items: [{ label: "Expandir capacidad", to: "/admin/capacity-expand" }, ...addonItems.filter((item) => item.label !== "Expandir capacidad")],
+      },
+      {
+        title: "RESPUESTAS Y ATENCIÓN",
+        roles: ADMIN_ROLES,
+        items: [
+          { label: "Respuestas y atención", to: "/admin/respuestas-atencion", roles: ["tenant_admin", "reinpia_admin", "super_admin"] },
+        ],
       },
       {
         title: "ALERTAS",
