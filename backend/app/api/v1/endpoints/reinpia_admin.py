@@ -86,6 +86,7 @@ from app.services.ai_credit_service import (
 )
 from app.services.internal_alerts_service import create_internal_alert
 from app.services.operational_alerts_service import sync_operational_alerts_for_all_tenants
+from app.services.sentinel_minimal_alerts_service import sync_minimal_sentinel_alerts
 from app.services.export_service import (
     export_commission_agents_csv,
     export_commissions_summary_csv,
@@ -821,6 +822,7 @@ def list_internal_alerts(
     db: Session = Depends(get_db),
 ):
     sync_operational_alerts_for_all_tenants(db)
+    sync_minimal_sentinel_alerts(db)
     db.commit()
     return get_pending_internal_alerts(
         db,
