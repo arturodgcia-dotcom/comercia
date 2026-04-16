@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 
 from app.api.v1.endpoints import (
+    ai_autonomy,
     admin_settings,
     automation,
     appointments,
@@ -88,3 +89,4 @@ api_router.include_router(brand_diagnostics.router, tags=["brand-diagnostics"])
 api_router.include_router(admin_settings.router, prefix="/admin", tags=["admin-settings"])
 api_router.include_router(users_admin.router, prefix="/admin", tags=["users-admin"])
 api_router.include_router(roles_permissions.router, prefix="/admin", tags=["roles-permissions"])
+api_router.include_router(ai_autonomy.router, prefix="/admin", tags=["ai-autonomy"])

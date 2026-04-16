@@ -1,4 +1,10 @@
 import {
+  AiAgent,
+  AiAutonomyDashboard,
+  AiAutonomyLevel,
+  AiEvent,
+  AiProviderSetting,
+  AiUsage,
   Appointment,
   AiCreditMovement,
   AutomationEventLog,
@@ -1038,6 +1044,90 @@ export const api = {
       { method: "POST", body: JSON.stringify(payload) },
       token
     ),
+  getAiAutonomyDashboard: (token: string) =>
+    request<AiAutonomyDashboard>("/api/v1/admin/ai-autonomy/dashboard", {}, token),
+  getAiAutonomyLevels: (token: string) =>
+    request<AiAutonomyLevel[]>("/api/v1/admin/ai-autonomy/autonomy-levels", {}, token),
+  getAiProviderSettings: (token: string) =>
+    request<AiProviderSetting[]>("/api/v1/admin/ai-autonomy/providers", {}, token),
+  updateAiProviderSetting: (
+    token: string,
+    providerKey: string,
+    payload: { is_enabled?: boolean; default_model?: string; api_key?: string; config_json?: string }
+  ) =>
+    request<AiProviderSetting>(
+      `/api/v1/admin/ai-autonomy/providers/${encodeURIComponent(providerKey)}`,
+      { method: "PUT", body: JSON.stringify(payload) },
+      token
+    ),
+  getAiAgents: (token: string, params?: { tenant_id?: number }) => {
+    const query = new URLSearchParams();
+    if (params?.tenant_id) query.set("tenant_id", String(params.tenant_id));
+    const suffix = query.toString() ? `?${query.toString()}` : "";
+    return request<AiAgent[]>(`/api/v1/admin/ai-autonomy/agents${suffix}`, {}, token);
+  },
+  createAiAgent: (
+    token: string,
+    payload: {
+      tenant_id?: number | null;
+      name: string;
+      description?: string | null;
+      provider_key: string;
+      autonomy_level: number;
+      status?: string;
+      is_active?: boolean;
+      owner_scope?: string;
+    }
+  ) =>
+    request<AiAgent>("/api/v1/admin/ai-autonomy/agents", { method: "POST", body: JSON.stringify(payload) }, token),
+  updateAiAgent: (
+    token: string,
+    agentId: number,
+    payload: {
+      name?: string;
+      description?: string | null;
+      provider_key?: string;
+      autonomy_level?: number;
+      status?: string;
+      is_active?: boolean;
+      owner_scope?: string;
+    }
+  ) =>
+    request<AiAgent>(`/api/v1/admin/ai-autonomy/agents/${agentId}`, { method: "PATCH", body: JSON.stringify(payload) }, token),
+  getAiEvents: (token: string, params?: { limit?: number }) => {
+    const query = new URLSearchParams();
+    if (params?.limit) query.set("limit", String(params.limit));
+    const suffix = query.toString() ? `?${query.toString()}` : "";
+    return request<AiEvent[]>(`/api/v1/admin/ai-autonomy/events${suffix}`, {}, token);
+  },
+  createAiEvent: (
+    token: string,
+    agentId: number,
+    payload: {
+      tenant_id?: number | null;
+      event_type: string;
+      event_status?: string;
+      summary: string;
+      action_payload_json?: string | null;
+      result_payload_json?: string | null;
+      tokens_used?: number;
+      input_tokens?: number;
+      output_tokens?: number;
+      cost_mxn?: number;
+      estimated_value_mxn?: number;
+    }
+  ) =>
+    request<AiEvent>(
+      `/api/v1/admin/ai-autonomy/agents/${agentId}/events`,
+      { method: "POST", body: JSON.stringify(payload) },
+      token
+    ),
+  getAiUsage: (token: string, params?: { limit?: number }) => {
+    const query = new URLSearchParams();
+    if (params?.limit) query.set("limit", String(params.limit));
+    const suffix = query.toString() ? `?${query.toString()}` : "";
+    return request<AiUsage[]>(`/api/v1/admin/ai-autonomy/usage${suffix}`, {}, token);
+  },
 
   getPosLocations: (token: string, tenantId: number) =>
     request<PosLocation[]>(`/api/v1/pos/locations/by-tenant/${tenantId}`, {}, token),

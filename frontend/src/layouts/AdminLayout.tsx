@@ -244,6 +244,7 @@ export function AdminLayout() {
         { label: "Alertas / Centinela", to: "/reinpia/alerts", roles: ["reinpia_admin", "super_admin"] },
         { label: "Seguridad", to: "/reinpia/security", roles: ["reinpia_admin", "super_admin"], permissions: ["global.view_security"] },
         { label: "Nervia Marketing", to: "/reinpia/nervia-marketing" },
+        { label: "IA autónoma", to: "/reinpia/ai-autonomia", roles: ["reinpia_admin", "super_admin"] },
         { label: "Usuarios internos", to: "/reinpia/users", roles: ["reinpia_admin", "super_admin"], permissions: ["global.manage_internal_users"] },
         { label: "Roles y permisos", to: "/reinpia/roles", roles: ["reinpia_admin", "super_admin"], permissions: ["global.manage_roles_permissions"] },
       ],

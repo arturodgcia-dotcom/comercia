@@ -1886,3 +1886,89 @@ export interface NerviaFeedbackPayload {
   report: NerviaReport;
   suggestions: NerviaSuggestion[];
 }
+
+export interface AiAutonomyLevel {
+  id: number;
+  level: number;
+  code: string;
+  display_name: string;
+  description: string;
+  is_premium: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AiProviderSetting {
+  id: number;
+  provider_key: string;
+  display_name: string;
+  is_enabled: boolean;
+  default_model: string;
+  api_key_masked?: string | null;
+  config_json?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AiAgent {
+  id: number;
+  tenant_id?: number | null;
+  name: string;
+  description?: string | null;
+  provider_key: string;
+  autonomy_level: number;
+  status: string;
+  is_active: boolean;
+  total_actions: number;
+  successful_actions: number;
+  estimated_roi_mxn: number;
+  last_action_at?: string | null;
+  owner_scope: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AiUsage {
+  id: number;
+  tenant_id?: number | null;
+  agent_id?: number | null;
+  provider_key: string;
+  usage_date: string;
+  input_tokens: number;
+  output_tokens: number;
+  total_tokens: number;
+  cost_mxn: number;
+  estimated_value_mxn: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AiEvent {
+  id: number;
+  tenant_id?: number | null;
+  agent_id?: number | null;
+  event_type: string;
+  event_status: string;
+  summary: string;
+  action_payload_json?: string | null;
+  result_payload_json?: string | null;
+  provider_key: string;
+  autonomy_level: number;
+  tokens_used: number;
+  cost_mxn: number;
+  estimated_value_mxn: number;
+  roi_delta_mxn: number;
+  created_at: string;
+}
+
+export interface AiAutonomyDashboard {
+  active_agents: number;
+  total_consumption_tokens: number;
+  total_cost_mxn: number;
+  total_actions: number;
+  estimated_roi_mxn: number;
+  success_rate_pct: number;
+  autonomy_distribution: Array<{ autonomy_level: number; count: number }>;
+  provider_distribution: Array<{ provider_key: string; count: number }>;
+  recent_events: AiEvent[];
+}

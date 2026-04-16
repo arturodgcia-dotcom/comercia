@@ -79,6 +79,7 @@ import { ReinpiaMarketingProspectsPage } from "../pages/ReinpiaMarketingProspect
 import { ReinpiaNerviaBridgePage } from "../pages/ReinpiaNerviaBridgePage";
 import { ReinpiaRolesPermissionsPage } from "../pages/ReinpiaRolesPermissionsPage";
 import { ReinpiaSupportBackofficePage } from "../pages/ReinpiaSupportBackofficePage";
+import { ReinpiaAiAutonomyPage } from "../pages/ReinpiaAiAutonomyPage";
 import { ReviewsAdminPage } from "../pages/ReviewsAdminPage";
 import { OnboardingSalesPage } from "../pages/OnboardingSalesPage";
 import { OnboardingClientPage } from "../pages/OnboardingClientPage";
@@ -201,6 +202,7 @@ export function AppRouter() {
               <Route path="reinpia/tenants" element={<ReinpiaTenantsPage />} />
               <Route path="reinpia/users" element={<UsersAdminPage />} />
               <Route path="reinpia/roles" element={<ReinpiaRolesPermissionsPage />} />
+              <Route path="reinpia/ai-autonomia" element={<ReinpiaAiAutonomyPage />} />
               <Route path="reinpia/language" element={<LanguageAdminPage />} />
               <Route path="reinpia/currency" element={<CurrencyAdminPage />} />
               <Route path="reinpia/tenants/:tenantId" element={<ReinpiaTenantDetailPage />} />

@@ -1,7 +1,7 @@
-from datetime import datetime
+from datetime import date, datetime
 from decimal import Decimal
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, Numeric, String, Text, UniqueConstraint
+from sqlalchemy import Boolean, Date, DateTime, ForeignKey, Integer, Numeric, String, Text, UniqueConstraint
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
@@ -1240,3 +1240,83 @@ class AutomationEventLog(Base):
     related_entity_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
     payload_json: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+
+
+class AutonomyLevel(Base, TimestampMixin):
+    __tablename__ = "autonomy_levels"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    level: Mapped[int] = mapped_column(Integer, unique=True, nullable=False, index=True)
+    code: Mapped[str] = mapped_column(String(40), unique=True, nullable=False, index=True)
+    display_name: Mapped[str] = mapped_column(String(120), nullable=False)
+    description: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    is_premium: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+
+
+class AiProviderSetting(Base, TimestampMixin):
+    __tablename__ = "ai_provider_settings"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    provider_key: Mapped[str] = mapped_column(String(40), unique=True, nullable=False, index=True)
+    display_name: Mapped[str] = mapped_column(String(120), nullable=False)
+    is_enabled: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    default_model: Mapped[str] = mapped_column(String(120), nullable=False, default="")
+    api_key_encrypted: Mapped[str | None] = mapped_column(Text, nullable=True)
+    api_key_last4: Mapped[str | None] = mapped_column(String(4), nullable=True)
+    config_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+
+class AiAgent(Base, TimestampMixin):
+    __tablename__ = "ai_agents"
+    __table_args__ = (
+        UniqueConstraint("name", "tenant_id", name="uq_ai_agents_name_tenant"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    tenant_id: Mapped[int | None] = mapped_column(ForeignKey("tenants.id"), nullable=True, index=True)
+    name: Mapped[str] = mapped_column(String(120), nullable=False)
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    provider_key: Mapped[str] = mapped_column(String(40), nullable=False, default="openai", index=True)
+    autonomy_level: Mapped[int] = mapped_column(Integer, nullable=False, default=0, index=True)
+    status: Mapped[str] = mapped_column(String(30), nullable=False, default="activo", index=True)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    total_actions: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    successful_actions: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    estimated_roi_mxn: Mapped[Decimal] = mapped_column(Numeric(12, 2), default=Decimal("0"), nullable=False)
+    last_action_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True, index=True)
+    owner_scope: Mapped[str] = mapped_column(String(20), nullable=False, default="global", index=True)
+
+
+class AiUsage(Base, TimestampMixin):
+    __tablename__ = "ai_usage"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    tenant_id: Mapped[int | None] = mapped_column(ForeignKey("tenants.id"), nullable=True, index=True)
+    agent_id: Mapped[int | None] = mapped_column(ForeignKey("ai_agents.id"), nullable=True, index=True)
+    provider_key: Mapped[str] = mapped_column(String(40), nullable=False, default="openai", index=True)
+    usage_date: Mapped[date] = mapped_column(Date, default=date.today, nullable=False, index=True)
+    input_tokens: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    output_tokens: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    total_tokens: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    cost_mxn: Mapped[Decimal] = mapped_column(Numeric(12, 4), default=Decimal("0"), nullable=False)
+    estimated_value_mxn: Mapped[Decimal] = mapped_column(Numeric(12, 2), default=Decimal("0"), nullable=False)
+
+
+class AiEvent(Base):
+    __tablename__ = "ai_events"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    tenant_id: Mapped[int | None] = mapped_column(ForeignKey("tenants.id"), nullable=True, index=True)
+    agent_id: Mapped[int | None] = mapped_column(ForeignKey("ai_agents.id"), nullable=True, index=True)
+    event_type: Mapped[str] = mapped_column(String(60), nullable=False, index=True)
+    event_status: Mapped[str] = mapped_column(String(30), nullable=False, default="ejecutado", index=True)
+    summary: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    action_payload_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+    result_payload_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+    provider_key: Mapped[str] = mapped_column(String(40), nullable=False, default="openai", index=True)
+    autonomy_level: Mapped[int] = mapped_column(Integer, nullable=False, default=0, index=True)
+    tokens_used: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    cost_mxn: Mapped[Decimal] = mapped_column(Numeric(12, 4), default=Decimal("0"), nullable=False)
+    estimated_value_mxn: Mapped[Decimal] = mapped_column(Numeric(12, 2), default=Decimal("0"), nullable=False)
+    roi_delta_mxn: Mapped[Decimal] = mapped_column(Numeric(12, 2), default=Decimal("0"), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False, index=True)
