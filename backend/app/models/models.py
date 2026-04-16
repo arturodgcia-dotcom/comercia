@@ -66,6 +66,12 @@ class Tenant(Base, TimestampMixin):
     ai_tokens_locked: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     ai_tokens_lock_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
     ai_tokens_last_reset_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    available_ai_capabilities_json: Mapped[str] = mapped_column(Text, default="[]", nullable=False)
+    active_ai_capabilities_json: Mapped[str] = mapped_column(Text, default="[]", nullable=False)
+    ai_autonomy_level: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    ai_token_budget_monthly: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    ai_token_budget_remaining: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    ai_token_budget_reserved: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
 
     branding: Mapped["TenantBranding"] = relationship(back_populates="tenant", uselist=False)
     stripe_config: Mapped["StripeConfig"] = relationship(back_populates="tenant", uselist=False)
@@ -1320,3 +1326,26 @@ class AiEvent(Base):
     estimated_value_mxn: Mapped[Decimal] = mapped_column(Numeric(12, 2), default=Decimal("0"), nullable=False)
     roi_delta_mxn: Mapped[Decimal] = mapped_column(Numeric(12, 2), default=Decimal("0"), nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+
+
+class AiOrchestratorExecution(Base):
+    __tablename__ = "ai_orchestrator_executions"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id"), nullable=False, index=True)
+    brand_id: Mapped[int | None] = mapped_column(ForeignKey("tenants.id"), nullable=True, index=True)
+    event_type: Mapped[str] = mapped_column(String(80), nullable=False, index=True)
+    event_channel: Mapped[str | None] = mapped_column(String(40), nullable=True, index=True)
+    triggered_agent: Mapped[str | None] = mapped_column(String(80), nullable=True, index=True)
+    started_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    executed: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False, index=True)
+    skipped: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False, index=True)
+    skip_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+    execution_priority: Mapped[str] = mapped_column(String(20), default="normal", nullable=False, index=True)
+    execution_cost_estimate: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    tokens_used: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    tokens_saved: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    cost_estimate_mxn: Mapped[Decimal] = mapped_column(Numeric(12, 4), default=Decimal("0"), nullable=False)
+    outcome_summary: Mapped[str | None] = mapped_column(Text, nullable=True)
+    context_json: Mapped[str | None] = mapped_column(Text, nullable=True)

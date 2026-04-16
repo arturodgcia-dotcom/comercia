@@ -124,3 +124,65 @@ class AiAutonomyDashboardRead(BaseModel):
     autonomy_distribution: list[dict[str, int]]
     provider_distribution: list[dict[str, int]]
     recent_events: list[AiEventRead]
+
+
+class AiLogicalAgentRead(BaseModel):
+    agent_key: str
+    display_name: str
+    description: str
+
+
+class AiOrchestratorTenantRead(BaseModel):
+    tenant_id: int
+    tenant_name: str
+    plan_key: str | None = None
+    autonomy_level: int
+    available_ai_capabilities: list[str]
+    active_ai_capabilities: list[str]
+    token_budget_monthly: int
+    token_budget_remaining: int
+    token_budget_reserved: int
+    orchestrator_status: str
+
+
+class AiOrchestratorExecutionRead(BaseModel):
+    id: int
+    tenant_id: int
+    brand_id: int | None = None
+    event_type: str
+    event_channel: str | None = None
+    triggered_agent: str | None = None
+    started_at: datetime
+    finished_at: datetime | None = None
+    executed: bool
+    skipped: bool
+    skip_reason: str | None = None
+    execution_priority: str
+    execution_cost_estimate: int
+    tokens_used: int
+    tokens_saved: int
+    cost_estimate_mxn: Decimal
+    outcome_summary: str | None = None
+
+
+class AiOrchestratorDashboardRead(BaseModel):
+    orchestrator_status: str
+    active_tenants: int
+    logical_agents_catalog: list[AiLogicalAgentRead]
+    selected_tenant: AiOrchestratorTenantRead | None = None
+    executions_total: int
+    skipped_total: int
+    tokens_used_total: int
+    tokens_saved_total: int
+    recent_executions: list[AiOrchestratorExecutionRead]
+    recent_skips: list[AiOrchestratorExecutionRead]
+
+
+class AiOrchestratorTriggerRequest(BaseModel):
+    tenant_id: int
+    brand_id: int | None = None
+    event_type: str
+    event_channel: str | None = None
+    execution_priority: str | None = None
+    execution_cost_estimate: int | None = None
+    context: dict | None = None

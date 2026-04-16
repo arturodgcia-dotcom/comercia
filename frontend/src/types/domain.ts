@@ -1972,3 +1972,55 @@ export interface AiAutonomyDashboard {
   provider_distribution: Array<{ provider_key: string; count: number }>;
   recent_events: AiEvent[];
 }
+
+export interface AiLogicalAgent {
+  agent_key: string;
+  display_name: string;
+  description: string;
+}
+
+export interface AiOrchestratorTenant {
+  tenant_id: number;
+  tenant_name: string;
+  plan_key?: string | null;
+  autonomy_level: number;
+  available_ai_capabilities: string[];
+  active_ai_capabilities: string[];
+  token_budget_monthly: number;
+  token_budget_remaining: number;
+  token_budget_reserved: number;
+  orchestrator_status: string;
+}
+
+export interface AiOrchestratorExecution {
+  id: number;
+  tenant_id: number;
+  brand_id?: number | null;
+  event_type: string;
+  event_channel?: string | null;
+  triggered_agent?: string | null;
+  started_at: string;
+  finished_at?: string | null;
+  executed: boolean;
+  skipped: boolean;
+  skip_reason?: string | null;
+  execution_priority: string;
+  execution_cost_estimate: number;
+  tokens_used: number;
+  tokens_saved: number;
+  cost_estimate_mxn: number;
+  outcome_summary?: string | null;
+}
+
+export interface AiOrchestratorDashboard {
+  orchestrator_status: string;
+  active_tenants: number;
+  logical_agents_catalog: AiLogicalAgent[];
+  selected_tenant?: AiOrchestratorTenant | null;
+  executions_total: number;
+  skipped_total: number;
+  tokens_used_total: number;
+  tokens_saved_total: number;
+  recent_executions: AiOrchestratorExecution[];
+  recent_skips: AiOrchestratorExecution[];
+}

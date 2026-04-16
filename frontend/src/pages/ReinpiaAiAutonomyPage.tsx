@@ -2,133 +2,102 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useAuth } from "../app/AuthContext";
 import { PageHeader } from "../components/PageHeader";
 import { api } from "../services/api";
-import { AiAgent, AiAutonomyDashboard, AiAutonomyLevel, AiProviderSetting } from "../types/domain";
+import { AiAutonomyLevel, AiOrchestratorDashboard, AiProviderSetting } from "../types/domain";
 
-const EMPTY_DASHBOARD: AiAutonomyDashboard = {
-  active_agents: 0,
-  total_consumption_tokens: 0,
-  total_cost_mxn: 0,
-  total_actions: 0,
-  estimated_roi_mxn: 0,
-  success_rate_pct: 0,
-  autonomy_distribution: [],
-  provider_distribution: [],
-  recent_events: [],
+const EMPTY_DASHBOARD: AiOrchestratorDashboard = {
+  orchestrator_status: "inactivo",
+  active_tenants: 0,
+  logical_agents_catalog: [],
+  selected_tenant: null,
+  executions_total: 0,
+  skipped_total: 0,
+  tokens_used_total: 0,
+  tokens_saved_total: 0,
+  recent_executions: [],
+  recent_skips: [],
 };
+
+const EVENT_OPTIONS = [
+  "new_lead",
+  "new_ticket",
+  "campaign_request",
+  "abandoned_cart",
+  "sentinel_alert",
+  "user_explicit_request",
+  "scheduled_high_value_review",
+  "sentinel_deep_scan",
+];
 
 export function ReinpiaAiAutonomyPage() {
   const { token } = useAuth();
-  const [dashboard, setDashboard] = useState<AiAutonomyDashboard>(EMPTY_DASHBOARD);
-  const [levels, setLevels] = useState<AiAutonomyLevel[]>([]);
+  const [dashboard, setDashboard] = useState<AiOrchestratorDashboard>(EMPTY_DASHBOARD);
   const [providers, setProviders] = useState<AiProviderSetting[]>([]);
-  const [agents, setAgents] = useState<AiAgent[]>([]);
+  const [levels, setLevels] = useState<AiAutonomyLevel[]>([]);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [saving, setSaving] = useState(false);
-  const [agentForm, setAgentForm] = useState({
-    name: "",
-    description: "",
-    provider_key: "openai",
-    autonomy_level: 0,
-    owner_scope: "global",
+  const [triggerForm, setTriggerForm] = useState({
+    event_type: "new_lead",
+    event_channel: "dashboard",
+    execution_priority: "normal",
+    execution_cost_estimate: 70,
   });
 
-  const load = async () => {
+  const load = async (tenantId?: number) => {
     if (!token) return;
-    const [dash, autonomy, providerRows, agentRows] = await Promise.all([
-      api.getAiAutonomyDashboard(token),
-      api.getAiAutonomyLevels(token),
+    const [dash, providerRows, autonomyRows] = await Promise.all([
+      api.getAiOrchestratorDashboard(token, tenantId ? { tenant_id: tenantId } : undefined),
       api.getAiProviderSettings(token),
-      api.getAiAgents(token),
+      api.getAiAutonomyLevels(token),
     ]);
     setDashboard(dash);
-    setLevels(autonomy);
     setProviders(providerRows);
-    setAgents(agentRows);
+    setLevels(autonomyRows);
   };
 
   useEffect(() => {
-    load().catch((err) => setError(err instanceof Error ? err.message : "No fue posible cargar IA autónoma"));
+    load().catch((err) => setError(err instanceof Error ? err.message : "No fue posible cargar el orquestador IA"));
   }, [token]);
 
-  const providerLookup = useMemo(() => {
-    return providers.reduce<Record<string, string>>((acc, row) => {
-      acc[row.provider_key] = row.display_name;
-      return acc;
-    }, {});
-  }, [providers]);
+  const selectedTenant = dashboard.selected_tenant;
 
-  const levelLookup = useMemo(() => {
-    return levels.reduce<Record<number, string>>((acc, row) => {
-      acc[row.level] = row.display_name;
-      return acc;
-    }, {});
-  }, [levels]);
+  const activeProviders = useMemo(() => providers.filter((provider) => provider.is_enabled), [providers]);
 
-  const createAgent = async (event: FormEvent) => {
-    event.preventDefault();
-    if (!token) return;
+  const autonomyLabel = useMemo(() => {
+    if (!selectedTenant) return "No definido";
+    const row = levels.find((item) => item.level === selectedTenant.autonomy_level);
+    return row?.display_name || `Nivel ${selectedTenant.autonomy_level}`;
+  }, [levels, selectedTenant]);
+
+  const triggerEvent = async (event?: FormEvent) => {
+    event?.preventDefault();
+    if (!token || !selectedTenant) return;
     setSaving(true);
     setError("");
     setMessage("");
     try {
-      await api.createAiAgent(token, {
-        name: agentForm.name,
-        description: agentForm.description || undefined,
-        provider_key: agentForm.provider_key,
-        autonomy_level: Number(agentForm.autonomy_level),
-        owner_scope: agentForm.owner_scope,
-        status: "activo",
-        is_active: true,
+      const result = await api.triggerAiOrchestratorEvent(token, {
+        tenant_id: selectedTenant.tenant_id,
+        brand_id: selectedTenant.tenant_id,
+        event_type: triggerForm.event_type,
+        event_channel: triggerForm.event_channel,
+        execution_priority: triggerForm.execution_priority,
+        execution_cost_estimate: Number(triggerForm.execution_cost_estimate),
+        context: {
+          source: "reinpia_ai_autonomy_panel",
+          has_new_data: triggerForm.event_type === "scheduled_high_value_review",
+          has_opportunity: triggerForm.event_type === "new_lead",
+          no_changes: triggerForm.event_type === "sentinel_deep_scan",
+        },
       });
-      setMessage("Agente creado correctamente.");
-      setAgentForm((prev) => ({ ...prev, name: "", description: "" }));
-      await load();
+      setMessage(
+        result.executed
+          ? `Evento ejecutado con ${result.tokens_used} tokens usando ${result.triggered_agent || "agente"}.`
+          : `Evento omitido por regla: ${result.skip_reason || "sin detalle"}.`
+      );
+      await load(selectedTenant.tenant_id);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "No fue posible crear el agente");
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const toggleProvider = async (provider: AiProviderSetting) => {
-    if (!token) return;
-    setSaving(true);
-    setError("");
-    setMessage("");
-    try {
-      await api.updateAiProviderSetting(token, provider.provider_key, {
-        is_enabled: !provider.is_enabled,
-      });
-      setMessage(`Proveedor ${provider.display_name} ${provider.is_enabled ? "desactivado" : "activado"}.`);
-      await load();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "No fue posible actualizar proveedor");
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const registerAction = async (agent: AiAgent) => {
-    if (!token) return;
-    setSaving(true);
-    setError("");
-    setMessage("");
-    try {
-      await api.createAiEvent(token, agent.id, {
-        event_type: "accion_autonoma",
-        event_status: "ejecutado",
-        summary: `Acción autónoma registrada para ${agent.name}`,
-        tokens_used: 120,
-        input_tokens: 80,
-        output_tokens: 40,
-        cost_mxn: 0.9,
-        estimated_value_mxn: 12,
-      });
-      setMessage("Acción registrada y consumo actualizado.");
-      await load();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "No fue posible registrar la acción");
+      setError(err instanceof Error ? err.message : "No fue posible procesar el evento del orquestador");
     } finally {
       setSaving(false);
     }
@@ -137,183 +106,198 @@ export function ReinpiaAiAutonomyPage() {
   return (
     <section>
       <PageHeader
-        title="IA autónoma"
-        subtitle="Control operativo de agentes, consumo, eventos y ROI estimado por proveedor y nivel de autonomía."
+        title="Cerebro Orquestador IA"
+        subtitle="Ejecucion por evento, capacidades por plan y control de presupuesto de tokens sin agentes permanentes innecesarios."
       />
+
       {error ? <p className="error">{error}</p> : null}
       {message ? <p className="muted">{message}</p> : null}
 
       <div className="card-grid" style={{ marginBottom: "1rem" }}>
         <article className="card">
-          <h4>Agentes activos</h4>
-          <p>{dashboard.active_agents}</p>
+          <h4>Estado del orquestador</h4>
+          <p>{dashboard.orchestrator_status}</p>
         </article>
         <article className="card">
-          <h4>Consumo total</h4>
-          <p>{dashboard.total_consumption_tokens.toLocaleString("es-MX")} tokens</p>
+          <h4>Tenants activos</h4>
+          <p>{dashboard.active_tenants.toLocaleString("es-MX")}</p>
         </article>
         <article className="card">
-          <h4>Acciones realizadas</h4>
-          <p>{dashboard.total_actions.toLocaleString("es-MX")}</p>
+          <h4>Ejecuciones</h4>
+          <p>{dashboard.executions_total.toLocaleString("es-MX")}</p>
         </article>
         <article className="card">
-          <h4>ROI estimado</h4>
-          <p>${Number(dashboard.estimated_roi_mxn || 0).toLocaleString("es-MX")}</p>
+          <h4>Omisiones por reglas</h4>
+          <p>{dashboard.skipped_total.toLocaleString("es-MX")}</p>
+        </article>
+        <article className="card">
+          <h4>Tokens consumidos</h4>
+          <p>{dashboard.tokens_used_total.toLocaleString("es-MX")}</p>
+        </article>
+        <article className="card">
+          <h4>Tokens ahorrados</h4>
+          <p>{dashboard.tokens_saved_total.toLocaleString("es-MX")}</p>
         </article>
       </div>
 
       <div className="card" style={{ marginBottom: "1rem" }}>
-        <h3>Proveedores IA (OpenAI / Gemini)</h3>
-        <table className="table">
-          <thead>
-            <tr>
-              <th>Proveedor</th>
-              <th>Modelo base</th>
-              <th>API key</th>
-              <th>Estado</th>
-              <th>Acción</th>
-            </tr>
-          </thead>
-          <tbody>
-            {providers.map((provider) => (
-              <tr key={provider.id}>
-                <td>{provider.display_name}</td>
-                <td>{provider.default_model || "Sin modelo"}</td>
-                <td>{provider.api_key_masked || "No configurada"}</td>
-                <td>{provider.is_enabled ? "Activo" : "Inactivo"}</td>
-                <td>
-                  <button className="button button-outline" type="button" disabled={saving} onClick={() => void toggleProvider(provider)}>
-                    {provider.is_enabled ? "Desactivar" : "Activar"}
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      <div className="card" style={{ marginBottom: "1rem" }}>
-        <h3>Niveles de autonomía</h3>
-        <ul>
-          {levels.map((level) => (
-            <li key={level.id}>
-              <strong>{level.display_name}</strong>: {level.description}
-            </li>
-          ))}
-        </ul>
-      </div>
-
-      <form className="card inline-form" onSubmit={createAgent} style={{ marginBottom: "1rem" }}>
-        <h3>Nuevo agente</h3>
-        <input
-          placeholder="Nombre del agente"
-          value={agentForm.name}
-          onChange={(e) => setAgentForm((prev) => ({ ...prev, name: e.target.value }))}
-          required
-        />
-        <input
-          placeholder="Descripción"
-          value={agentForm.description}
-          onChange={(e) => setAgentForm((prev) => ({ ...prev, description: e.target.value }))}
-        />
-        <select
-          value={agentForm.provider_key}
-          onChange={(e) => setAgentForm((prev) => ({ ...prev, provider_key: e.target.value }))}
-        >
-          {providers.map((provider) => (
-            <option key={provider.provider_key} value={provider.provider_key}>
-              {provider.display_name}
-            </option>
-          ))}
-        </select>
-        <select
-          value={agentForm.autonomy_level}
-          onChange={(e) => setAgentForm((prev) => ({ ...prev, autonomy_level: Number(e.target.value) }))}
-        >
-          {levels.map((level) => (
-            <option key={level.id} value={level.level}>
-              {level.display_name}
-            </option>
-          ))}
-        </select>
-        <select
-          value={agentForm.owner_scope}
-          onChange={(e) => setAgentForm((prev) => ({ ...prev, owner_scope: e.target.value }))}
-        >
-          <option value="global">Global</option>
-          <option value="brand">Marca</option>
-        </select>
-        <button className="button" type="submit" disabled={saving}>
-          Crear agente
-        </button>
-      </form>
-
-      <div className="card" style={{ marginBottom: "1rem" }}>
-        <h3>Agentes activos</h3>
+        <h3>Catalogo de agentes logicos reutilizables</h3>
         <table className="table">
           <thead>
             <tr>
               <th>Agente</th>
-              <th>Proveedor</th>
-              <th>Nivel</th>
-              <th>Estado</th>
-              <th>Acciones</th>
-              <th>ROI estimado</th>
-              <th>Operación</th>
+              <th>Descripcion</th>
             </tr>
           </thead>
           <tbody>
-            {agents.map((agent) => (
-              <tr key={agent.id}>
+            {dashboard.logical_agents_catalog.map((agent) => (
+              <tr key={agent.agent_key}>
                 <td>
-                  <strong>{agent.name}</strong>
-                  <div className="muted">{agent.description || "Sin descripción"}</div>
+                  <strong>{agent.display_name}</strong>
+                  <div className="muted">{agent.agent_key}</div>
                 </td>
-                <td>{providerLookup[agent.provider_key] || agent.provider_key}</td>
-                <td>{levelLookup[agent.autonomy_level] || `Nivel ${agent.autonomy_level}`}</td>
-                <td>{agent.is_active ? "Activo" : "Pausado"}</td>
-                <td>{agent.total_actions}</td>
-                <td>${Number(agent.estimated_roi_mxn || 0).toLocaleString("es-MX")}</td>
-                <td>
-                  <button className="button button-outline" type="button" disabled={saving} onClick={() => void registerAction(agent)}>
-                    Registrar acción
-                  </button>
-                </td>
+                <td>{agent.description}</td>
               </tr>
             ))}
+            {!dashboard.logical_agents_catalog.length ? (
+              <tr>
+                <td colSpan={2}>No hay catalogo cargado.</td>
+              </tr>
+            ) : null}
           </tbody>
         </table>
       </div>
 
-      <div className="card">
-        <h3>Eventos recientes</h3>
+      <div className="card" style={{ marginBottom: "1rem" }}>
+        <h3>Capacidades por plan y presupuesto</h3>
+        {selectedTenant ? (
+          <>
+            <p>
+              <strong>Tenant:</strong> {selectedTenant.tenant_name} | <strong>Plan:</strong> {selectedTenant.plan_key || "sin plan"} |
+              <strong> Autonomia:</strong> {autonomyLabel}
+            </p>
+            <p>
+              <strong>Budget mensual:</strong> {selectedTenant.token_budget_monthly.toLocaleString("es-MX")} tokens |
+              <strong> Disponible:</strong> {selectedTenant.token_budget_remaining.toLocaleString("es-MX")} |
+              <strong> Reservado:</strong> {selectedTenant.token_budget_reserved.toLocaleString("es-MX")}
+            </p>
+            <p>
+              <strong>Capacidades habilitadas por plan:</strong> {selectedTenant.available_ai_capabilities.join(", ") || "Sin capacidades"}
+            </p>
+            <p>
+              <strong>Capacidades activas:</strong> {selectedTenant.active_ai_capabilities.join(", ") || "Sin capacidades activas"}
+            </p>
+          </>
+        ) : (
+          <p className="muted">No hay tenant seleccionado para mostrar entitlements.</p>
+        )}
+      </div>
+
+      <form className="card inline-form" onSubmit={triggerEvent} style={{ marginBottom: "1rem" }}>
+        <h3>Simular trigger de evento</h3>
+        <select
+          value={triggerForm.event_type}
+          onChange={(e) => setTriggerForm((prev) => ({ ...prev, event_type: e.target.value }))}
+        >
+          {EVENT_OPTIONS.map((eventKey) => (
+            <option key={eventKey} value={eventKey}>
+              {eventKey}
+            </option>
+          ))}
+        </select>
+        <input
+          placeholder="Canal"
+          value={triggerForm.event_channel}
+          onChange={(e) => setTriggerForm((prev) => ({ ...prev, event_channel: e.target.value }))}
+        />
+        <select
+          value={triggerForm.execution_priority}
+          onChange={(e) => setTriggerForm((prev) => ({ ...prev, execution_priority: e.target.value }))}
+        >
+          <option value="low">low</option>
+          <option value="normal">normal</option>
+          <option value="high">high</option>
+          <option value="critical">critical</option>
+        </select>
+        <input
+          type="number"
+          min={1}
+          step={1}
+          value={triggerForm.execution_cost_estimate}
+          onChange={(e) => setTriggerForm((prev) => ({ ...prev, execution_cost_estimate: Number(e.target.value) }))}
+        />
+        <button className="button" type="submit" disabled={saving || !selectedTenant}>
+          Ejecutar trigger
+        </button>
+      </form>
+
+      <div className="card" style={{ marginBottom: "1rem" }}>
+        <h3>Proveedores IA disponibles</h3>
+        <p>
+          {activeProviders.length
+            ? `Activos: ${activeProviders.map((provider) => provider.display_name).join(", ")}`
+            : "No hay proveedores activos"}
+        </p>
+      </div>
+
+      <div className="card" style={{ marginBottom: "1rem" }}>
+        <h3>Ultimas ejecuciones</h3>
         <table className="table">
           <thead>
             <tr>
               <th>Fecha</th>
               <th>Evento</th>
-              <th>Estado</th>
+              <th>Agente</th>
+              <th>Resultado</th>
               <th>Tokens</th>
               <th>Costo</th>
-              <th>Valor</th>
-              <th>ROI</th>
+              <th>Resumen</th>
             </tr>
           </thead>
           <tbody>
-            {dashboard.recent_events.map((event) => (
+            {dashboard.recent_executions.map((event) => (
               <tr key={event.id}>
-                <td>{new Date(event.created_at).toLocaleString("es-MX")}</td>
-                <td>{event.summary}</td>
-                <td>{event.event_status}</td>
-                <td>{event.tokens_used}</td>
-                <td>${Number(event.cost_mxn || 0).toLocaleString("es-MX")}</td>
-                <td>${Number(event.estimated_value_mxn || 0).toLocaleString("es-MX")}</td>
-                <td>${Number(event.roi_delta_mxn || 0).toLocaleString("es-MX")}</td>
+                <td>{new Date(event.started_at).toLocaleString("es-MX")}</td>
+                <td>{event.event_type}</td>
+                <td>{event.triggered_agent || "n/a"}</td>
+                <td>{event.executed ? "Ejecutado" : "Omitido"}</td>
+                <td>{event.executed ? event.tokens_used : event.tokens_saved}</td>
+                <td>${Number(event.cost_estimate_mxn || 0).toLocaleString("es-MX")}</td>
+                <td>{event.outcome_summary || "Sin resumen"}</td>
               </tr>
             ))}
-            {!dashboard.recent_events.length ? (
+            {!dashboard.recent_executions.length ? (
               <tr>
-                <td colSpan={7}>Sin eventos registrados todavía.</td>
+                <td colSpan={7}>Sin ejecuciones registradas.</td>
+              </tr>
+            ) : null}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="card">
+        <h3>Ejecuciones omitidas (skip rules)</h3>
+        <table className="table">
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Evento</th>
+              <th>Regla de omision</th>
+              <th>Tokens ahorrados</th>
+            </tr>
+          </thead>
+          <tbody>
+            {dashboard.recent_skips.map((event) => (
+              <tr key={event.id}>
+                <td>{new Date(event.started_at).toLocaleString("es-MX")}</td>
+                <td>{event.event_type}</td>
+                <td>{event.skip_reason || "sin detalle"}</td>
+                <td>{event.tokens_saved}</td>
+              </tr>
+            ))}
+            {!dashboard.recent_skips.length ? (
+              <tr>
+                <td colSpan={4}>No hay omisiones recientes.</td>
               </tr>
             ) : null}
           </tbody>

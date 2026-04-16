@@ -4,6 +4,8 @@ import {
   AiAutonomyLevel,
   AiEvent,
   AiProviderSetting,
+  AiOrchestratorDashboard,
+  AiOrchestratorExecution,
   AiUsage,
   Appointment,
   AiCreditMovement,
@@ -1046,6 +1048,37 @@ export const api = {
     ),
   getAiAutonomyDashboard: (token: string) =>
     request<AiAutonomyDashboard>("/api/v1/admin/ai-autonomy/dashboard", {}, token),
+  getAiOrchestratorDashboard: (token: string, params?: { tenant_id?: number }) => {
+    const query = new URLSearchParams();
+    if (params?.tenant_id) query.set("tenant_id", String(params.tenant_id));
+    const suffix = query.toString() ? `?${query.toString()}` : "";
+    return request<AiOrchestratorDashboard>(`/api/v1/admin/ai-autonomy/orchestrator/dashboard${suffix}`, {}, token);
+  },
+  triggerAiOrchestratorEvent: (
+    token: string,
+    payload: {
+      tenant_id: number;
+      brand_id?: number | null;
+      event_type: string;
+      event_channel?: string;
+      execution_priority?: string;
+      execution_cost_estimate?: number;
+      context?: Record<string, unknown>;
+    }
+  ) =>
+    request<AiOrchestratorExecution>(
+      "/api/v1/admin/ai-autonomy/orchestrator/events",
+      { method: "POST", body: JSON.stringify(payload) },
+      token
+    ),
+  getAiOrchestratorExecutions: (token: string, params?: { tenant_id?: number; event_type?: string; limit?: number }) => {
+    const query = new URLSearchParams();
+    if (params?.tenant_id) query.set("tenant_id", String(params.tenant_id));
+    if (params?.event_type) query.set("event_type", params.event_type);
+    if (params?.limit) query.set("limit", String(params.limit));
+    const suffix = query.toString() ? `?${query.toString()}` : "";
+    return request<AiOrchestratorExecution[]>(`/api/v1/admin/ai-autonomy/orchestrator/executions${suffix}`, {}, token);
+  },
   getAiAutonomyLevels: (token: string) =>
     request<AiAutonomyLevel[]>("/api/v1/admin/ai-autonomy/autonomy-levels", {}, token),
   getAiProviderSettings: (token: string) =>

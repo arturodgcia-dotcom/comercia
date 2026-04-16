@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
 from app.db.session import get_db
-from app.models.models import AiAgent, AiEvent, AiProviderSetting, AiUsage, AutonomyLevel, User
+from app.models.models import AiAgent, AiEvent, AiOrchestratorExecution, AiProviderSetting, AiUsage, AutonomyLevel, Tenant, User
 from app.schemas.ai_autonomy import (
     AiAgentCreate,
     AiAgentRead,
@@ -16,6 +16,9 @@ from app.schemas.ai_autonomy import (
     AiEventRead,
     AiProviderSettingRead,
     AiProviderSettingUpdate,
+    AiOrchestratorDashboardRead,
+    AiOrchestratorExecutionRead,
+    AiOrchestratorTriggerRequest,
     AiUsageRead,
     AutonomyLevelRead,
 )
@@ -27,6 +30,7 @@ from app.services.ai_autonomy_service import (
     to_event_read,
     upsert_provider_setting,
 )
+from app.services.ai_orchestrator_service import build_orchestrator_dashboard, process_orchestrator_event
 from app.services.role_permissions_service import role_matches_any_alias
 
 router = APIRouter()
@@ -37,6 +41,28 @@ def _assert_ai_admin(current_user: User) -> None:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="requiere rol super_admin o reinpia_admin")
 
 
+def _to_orchestrator_execution_read(row: AiOrchestratorExecution) -> AiOrchestratorExecutionRead:
+    return AiOrchestratorExecutionRead(
+        id=row.id,
+        tenant_id=row.tenant_id,
+        brand_id=row.brand_id,
+        event_type=row.event_type,
+        event_channel=row.event_channel,
+        triggered_agent=row.triggered_agent,
+        started_at=row.started_at,
+        finished_at=row.finished_at,
+        executed=bool(row.executed),
+        skipped=bool(row.skipped),
+        skip_reason=row.skip_reason,
+        execution_priority=row.execution_priority,
+        execution_cost_estimate=int(row.execution_cost_estimate or 0),
+        tokens_used=int(row.tokens_used or 0),
+        tokens_saved=int(row.tokens_saved or 0),
+        cost_estimate_mxn=Decimal(row.cost_estimate_mxn or 0),
+        outcome_summary=row.outcome_summary,
+    )
+
+
 @router.get("/ai-autonomy/dashboard", response_model=AiAutonomyDashboardRead)
 def ai_autonomy_dashboard(
     db: Session = Depends(get_db),
@@ -45,6 +71,62 @@ def ai_autonomy_dashboard(
     _assert_ai_admin(current_user)
     ensure_ai_autonomy_seeded(db)
     return build_dashboard_payload(db)
+
+
+@router.get("/ai-autonomy/orchestrator/dashboard", response_model=AiOrchestratorDashboardRead)
+def ai_orchestrator_dashboard(
+    tenant_id: int | None = Query(default=None),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    _assert_ai_admin(current_user)
+    ensure_ai_autonomy_seeded(db)
+    return AiOrchestratorDashboardRead.model_validate(build_orchestrator_dashboard(db, tenant_id=tenant_id))
+
+
+@router.post(
+    "/ai-autonomy/orchestrator/events",
+    response_model=AiOrchestratorExecutionRead,
+    status_code=status.HTTP_201_CREATED,
+)
+def trigger_ai_orchestrator_event(
+    payload: AiOrchestratorTriggerRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    _assert_ai_admin(current_user)
+    tenant = db.get(Tenant, payload.tenant_id)
+    if not tenant:
+        raise HTTPException(status_code=404, detail="tenant no encontrado")
+    row = process_orchestrator_event(
+        db,
+        tenant=tenant,
+        brand_id=payload.brand_id or payload.tenant_id,
+        event_type=payload.event_type,
+        event_channel=payload.event_channel,
+        context=payload.context or {},
+        execution_priority=payload.execution_priority,
+        execution_cost_estimate=payload.execution_cost_estimate,
+    )
+    return _to_orchestrator_execution_read(row)
+
+
+@router.get("/ai-autonomy/orchestrator/executions", response_model=list[AiOrchestratorExecutionRead])
+def list_ai_orchestrator_executions(
+    tenant_id: int | None = Query(default=None),
+    event_type: str | None = Query(default=None),
+    limit: int = Query(default=100, ge=1, le=300),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    _assert_ai_admin(current_user)
+    query = select(AiOrchestratorExecution).order_by(AiOrchestratorExecution.started_at.desc())
+    if tenant_id is not None:
+        query = query.where(AiOrchestratorExecution.tenant_id == tenant_id)
+    if event_type:
+        query = query.where(AiOrchestratorExecution.event_type == event_type.strip().lower())
+    rows = db.scalars(query.limit(limit)).all()
+    return [_to_orchestrator_execution_read(row) for row in rows]
 
 
 @router.get("/ai-autonomy/autonomy-levels", response_model=list[AutonomyLevelRead])
