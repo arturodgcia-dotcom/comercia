@@ -2,7 +2,7 @@ import json
 import re
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -19,6 +19,11 @@ from app.schemas.product import (
     ProductUpdate,
 )
 from app.services.commercial_account_guard_service import enforce_product_limit_for_tenant
+from app.services.product_identity_service import (
+    ensure_unique_product_identity,
+    resolve_product_identity,
+    resolve_scan_match_code,
+)
 
 router = APIRouter()
 
@@ -35,6 +40,25 @@ def list_products(db: Session = Depends(get_db), tenant_id: int | None = None) -
 def list_products_by_tenant(tenant_id: int, db: Session = Depends(get_db)) -> list[Product]:
     _tenant_or_404(db, tenant_id)
     return db.scalars(select(Product).where(Product.tenant_id == tenant_id).order_by(Product.id.desc())).all()
+
+
+@router.get("/by-tenant/{tenant_id}/scan", response_model=ProductRead)
+def get_product_by_scan_code(
+    tenant_id: int,
+    code: str = Query(..., min_length=2),
+    db: Session = Depends(get_db),
+) -> Product:
+    _tenant_or_404(db, tenant_id)
+    normalized = resolve_scan_match_code(code)
+    row = db.scalar(
+        select(Product).where(
+            Product.tenant_id == tenant_id,
+            (Product.barcode == normalized) | (Product.sku == normalized),
+        )
+    )
+    if not row:
+        raise HTTPException(status_code=404, detail="producto no encontrado por codigo")
+    return row
 
 
 @router.get("/bulk-import/tenant/{tenant_id}/latest", response_model=CatalogImportJobRead | None)
@@ -83,9 +107,6 @@ def bulk_import_catalog(
         if not row.nombre.strip():
             errors.append(CatalogImportErrorRow(index=index, reason="Falta nombre"))
             continue
-        if not row.sku.strip():
-            errors.append(CatalogImportErrorRow(index=index, reason="Falta SKU"))
-            continue
         if row.precio_publico is None:
             errors.append(CatalogImportErrorRow(index=index, reason="precio_publico invalido"))
             continue
@@ -108,17 +129,43 @@ def bulk_import_catalog(
             category_by_slug[category_slug] = category
             categories_created += 1
 
-        product_slug = _slugify(row.sku) or _slugify(row.nombre)
+        import_identity = resolve_product_identity(
+            db,
+            tenant_id=tenant.id,
+            category_id=category.id,
+            incoming_sku=row.sku,
+            incoming_barcode=row.barcode,
+            incoming_barcode_type=row.barcode_type,
+            incoming_external_barcode=row.external_barcode,
+        )
+
+        product_slug = _slugify(import_identity["sku"]) or _slugify(row.nombre)
         if not product_slug:
             errors.append(CatalogImportErrorRow(index=index, reason="No se pudo generar slug del producto"))
             continue
         product = product_by_slug.get(product_slug)
         is_active = _parse_yes_no(row.visible_publico) or _parse_yes_no(row.visible_distribuidor)
+        try:
+            ensure_unique_product_identity(
+                db,
+                tenant_id=tenant.id,
+                sku=str(import_identity["sku"]),
+                barcode=str(import_identity["barcode"]),
+                ignore_product_id=product.id if product else None,
+            )
+        except ValueError as exc:
+            errors.append(CatalogImportErrorRow(index=index, reason=str(exc)))
+            continue
 
         if product:
             product.category_id = category.id
             product.name = row.nombre.strip()
             product.description = row.descripcion
+            product.sku = str(import_identity["sku"])
+            product.barcode = str(import_identity["barcode"])
+            product.barcode_type = str(import_identity["barcode_type"])
+            product.external_barcode = bool(import_identity["external_barcode"])
+            product.auto_generated = bool(import_identity["auto_generated"])
             product.price_public = row.precio_publico
             product.price_retail = row.precio_menudeo
             product.price_wholesale = row.precio_mayoreo
@@ -134,6 +181,11 @@ def bulk_import_catalog(
                 category_id=category.id,
                 name=row.nombre.strip(),
                 slug=product_slug,
+                sku=str(import_identity["sku"]),
+                barcode=str(import_identity["barcode"]),
+                barcode_type=str(import_identity["barcode_type"]),
+                external_barcode=bool(import_identity["external_barcode"]),
+                auto_generated=bool(import_identity["auto_generated"]),
                 description=row.descripcion,
                 price_public=row.precio_publico,
                 price_retail=row.precio_menudeo,
@@ -194,7 +246,35 @@ def create_product(payload: ProductCreate, db: Session = Depends(get_db)) -> Pro
         enforce_product_limit_for_tenant(db, payload.tenant_id)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
-    product = Product(**payload.model_dump())
+    identity = resolve_product_identity(
+        db,
+        tenant_id=payload.tenant_id,
+        category_id=payload.category_id,
+        incoming_sku=payload.sku,
+        incoming_barcode=payload.barcode,
+        incoming_barcode_type=payload.barcode_type,
+        incoming_external_barcode=payload.external_barcode,
+    )
+    try:
+        ensure_unique_product_identity(
+            db,
+            tenant_id=payload.tenant_id,
+            sku=str(identity["sku"]),
+            barcode=str(identity["barcode"]),
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+    product_data = payload.model_dump()
+    product_data["sku"] = identity["sku"]
+    product_data["barcode"] = identity["barcode"]
+    product_data["barcode_type"] = identity["barcode_type"]
+    product_data["external_barcode"] = identity["external_barcode"]
+    product_data["auto_generated"] = identity["auto_generated"]
+    if not product_data.get("slug"):
+        product_data["slug"] = _slugify(str(identity["sku"])) or _slugify(payload.name)
+
+    product = Product(**product_data)
     db.add(product)
     db.commit()
     db.refresh(product)
@@ -210,6 +290,34 @@ def update_product(product_id: int, payload: ProductUpdate, db: Session = Depend
     incoming = payload.model_dump(exclude_unset=True)
     if "category_id" in incoming:
         _validate_category_belongs_to_tenant(db, product.tenant_id, incoming["category_id"])
+
+    sku_changed = "sku" in incoming
+    barcode_changed = "barcode" in incoming or "barcode_type" in incoming or "external_barcode" in incoming
+    if sku_changed or barcode_changed:
+        identity = resolve_product_identity(
+            db,
+            tenant_id=product.tenant_id,
+            category_id=int(incoming.get("category_id") or product.category_id) if (incoming.get("category_id") or product.category_id) else None,
+            incoming_sku=incoming.get("sku") if sku_changed else product.sku,
+            incoming_barcode=incoming.get("barcode") if "barcode" in incoming else product.barcode,
+            incoming_barcode_type=incoming.get("barcode_type") if "barcode_type" in incoming else product.barcode_type,
+            incoming_external_barcode=incoming.get("external_barcode") if "external_barcode" in incoming else product.external_barcode,
+        )
+        incoming["sku"] = identity["sku"]
+        incoming["barcode"] = identity["barcode"]
+        incoming["barcode_type"] = identity["barcode_type"]
+        incoming["external_barcode"] = identity["external_barcode"]
+        incoming["auto_generated"] = identity["auto_generated"]
+        try:
+            ensure_unique_product_identity(
+                db,
+                tenant_id=product.tenant_id,
+                sku=str(identity["sku"]),
+                barcode=str(identity["barcode"]),
+                ignore_product_id=product.id,
+            )
+        except ValueError as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
 
     for key, value in incoming.items():
         setattr(product, key, value)

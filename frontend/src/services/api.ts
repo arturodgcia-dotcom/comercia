@@ -444,6 +444,8 @@ export const api = {
   updateCategory: (token: string, categoryId: number, payload: Partial<Category>) =>
     request<Category>(`/api/v1/categories/${categoryId}`, { method: "PUT", body: JSON.stringify(payload) }, token),
   getProductsByTenant: (token: string, tenantId: number) => request<Product[]>(`/api/v1/products/by-tenant/${tenantId}`, {}, token),
+  getProductByScanCode: (token: string, tenantId: number, code: string) =>
+    request<Product>(`/api/v1/products/by-tenant/${tenantId}/scan?code=${encodeURIComponent(code)}`, {}, token),
   createProduct: (token: string, payload: Record<string, unknown>) =>
     request<Product>("/api/v1/products", { method: "POST", body: JSON.stringify(payload) }, token),
   updateProduct: (token: string, productId: number, payload: Partial<Product>) =>

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { KeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useAuth } from "../app/AuthContext";
 import { buildBrandTheme, tokensToCssVars } from "../branding/multibrandTemplates";
@@ -48,7 +48,16 @@ export function PosPage() {
   const [paymentMethod, setPaymentMethod] = useState("mercado_pago_qr");
   const [pendingPayment, setPendingPayment] = useState<PosPaymentTransaction | null>(null);
   const [ticket, setTicket] = useState<TicketItem[]>([]);
+  const [scanCode, setScanCode] = useState("");
+  const [scanStatus, setScanStatus] = useState("");
+  const [cameraScanning, setCameraScanning] = useState(false);
   const [error, setError] = useState("");
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const cameraActiveRef = useRef(false);
+
+  const supportsBarcodeDetector = typeof window !== "undefined" && "BarcodeDetector" in window;
 
   useEffect(() => {
     if (!token) return;
@@ -128,6 +137,116 @@ export function PosPage() {
       return [...prev, { product_id: product.id, quantity: 1, unit_price: Number(product.price_public) }];
     });
   };
+
+  const findProductByCodeLocal = (rawCode: string): Product | undefined => {
+    const code = rawCode.trim().toUpperCase();
+    if (!code) return undefined;
+    return products.find((product) => product.barcode.toUpperCase() === code || product.sku.toUpperCase() === code);
+  };
+
+  const processScanCode = async (rawCode: string) => {
+    const code = rawCode.trim();
+    if (!code || !token || !tenantId) return;
+    setError("");
+    setScanStatus("");
+    try {
+      let product = findProductByCodeLocal(code);
+      if (!product) {
+        product = await api.getProductByScanCode(token, tenantId, code);
+      }
+      addItem(product);
+      setScanStatus(`Producto agregado: ${product.name} (${product.sku})`);
+      setScanCode("");
+    } catch {
+      setError("No se encontro producto para ese codigo.");
+    }
+  };
+
+  const handleScanEnter = async (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.key !== "Enter") return;
+    event.preventDefault();
+    await processScanCode(scanCode);
+  };
+
+  const stopCameraScanner = () => {
+    cameraActiveRef.current = false;
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+    }
+    setCameraScanning(false);
+  };
+
+  const runCameraDetection = async () => {
+    if (!videoRef.current || !canvasRef.current || !token || !tenantId) return;
+    const detectorCtor = (window as unknown as { BarcodeDetector?: new (config?: { formats?: string[] }) => { detect: (source: CanvasImageSource) => Promise<Array<{ rawValue?: string }>> } }).BarcodeDetector;
+    if (!detectorCtor) {
+      setError("Este navegador no soporta lector por camara. Usa scanner USB o captura manual.");
+      return;
+    }
+    const detector = new detectorCtor({ formats: ["code_128", "ean_13"] });
+
+    const loop = async () => {
+      if (!cameraActiveRef.current || !videoRef.current || !canvasRef.current) return;
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      const ctx = canvas.getContext("2d");
+      if (!ctx || video.videoWidth <= 0 || video.videoHeight <= 0) {
+        requestAnimationFrame(() => void loop());
+        return;
+      }
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      try {
+        const found = await detector.detect(canvas);
+        const code = String(found?.[0]?.rawValue || "").trim();
+        if (code) {
+          await processScanCode(code);
+          stopCameraScanner();
+          return;
+        }
+      } catch {
+        // ignore transient detector errors
+      }
+      requestAnimationFrame(() => void loop());
+    };
+
+    requestAnimationFrame(() => void loop());
+  };
+
+  const startCameraScanner = async () => {
+    if (!supportsBarcodeDetector) {
+      setError("Este navegador no soporta lector por camara. Usa scanner USB o captura manual.");
+      return;
+    }
+      setError("");
+      setScanStatus("");
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false });
+      streamRef.current = stream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        await videoRef.current.play();
+      }
+      cameraActiveRef.current = true;
+      setCameraScanning(true);
+      setTimeout(() => {
+        void runCameraDetection();
+      }, 200);
+    } catch {
+      setError("No se pudo abrir la camara para escaneo.");
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      cameraActiveRef.current = false;
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((track) => track.stop());
+      }
+    };
+  }, []);
 
   const closeSale = async () => {
     if (!token || !selectedLocationId || ticket.length === 0) return;
@@ -218,6 +337,7 @@ export function PosPage() {
       </div>
       <p className="chip">{tenantConfig?.plan_type === "commission" ? "Modelo comision" : "Sin comision"}</p>
       {error ? <p className="error">{error}</p> : null}
+      {scanStatus ? <p className="muted">{scanStatus}</p> : null}
       <div className="card-grid">
         <article className="card">
           <h3>Ticket</h3>
@@ -248,6 +368,35 @@ export function PosPage() {
               <option value="tarjeta_manual_placeholder">Tarjeta manual (placeholder)</option>
             </select>
           </label>
+          <label>
+            Escaneo (USB o manual)
+            <input
+              placeholder="Escanea o escribe barcode/SKU y presiona Enter"
+              value={scanCode}
+              onChange={(event) => setScanCode(event.target.value)}
+              onKeyDown={(event) => void handleScanEnter(event)}
+            />
+          </label>
+          <div className="row-gap">
+            <button className="button button-outline" type="button" onClick={() => void processScanCode(scanCode)}>
+              Agregar por codigo
+            </button>
+            {!cameraScanning ? (
+              <button className="button button-outline" type="button" onClick={() => void startCameraScanner()}>
+                Escanear con camara movil
+              </button>
+            ) : (
+              <button className="button button-outline" type="button" onClick={stopCameraScanner}>
+                Detener camara
+              </button>
+            )}
+          </div>
+          {cameraScanning ? (
+            <div style={{ marginTop: "0.75rem" }}>
+              <video ref={videoRef} style={{ width: "100%", maxWidth: 420, borderRadius: 8 }} muted playsInline />
+              <canvas ref={canvasRef} style={{ display: "none" }} />
+            </div>
+          ) : null}
           <ul>
             {ticket.map((item) => (
               <li key={item.product_id}>Producto #{item.product_id} x {item.quantity}</li>
@@ -287,10 +436,13 @@ export function PosPage() {
           <div className="card-grid">
             {products.slice(0, 10).map((product) => (
               <button className="button button-outline" key={product.id} onClick={() => addItem(product)} type="button">
-                {product.name} (${Number(product.price_public).toLocaleString("es-MX")})
+                {product.name} (${Number(product.price_public).toLocaleString("es-MX")}) · {product.sku}
               </button>
             ))}
           </div>
+          <p className="muted" style={{ marginTop: "0.75rem" }}>
+            Lectura habilitada por {supportsBarcodeDetector ? "camara, scanner USB e input manual" : "scanner USB e input manual"}.
+          </p>
         </article>
       </div>
       <section className="card">

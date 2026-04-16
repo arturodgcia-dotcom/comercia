@@ -37,6 +37,7 @@ from app.schemas.brand_setup import (
 from app.services.brand_setup_generator import generate_brand_content, generate_landing_draft
 from app.services.commercial_account_guard_service import build_account_usage_payload, get_tenant_commercial_account
 from app.services.commercial_plan_service import COMMERCIAL_ADDONS, parse_limits
+from app.services.product_identity_service import resolve_product_identity
 from app.services.tenant_config_service import normalize_billing_config
 
 router = APIRouter()
@@ -480,6 +481,21 @@ def apply_ecommerce_template(
         if product:
             product.category_id = category.id
             product.description = spec["description"]
+            if not (product.sku or "").strip() or not (product.barcode or "").strip():
+                identity = resolve_product_identity(
+                    db,
+                    tenant_id=tenant.id,
+                    category_id=category.id,
+                    incoming_sku=product.sku,
+                    incoming_barcode=product.barcode,
+                    incoming_barcode_type=product.barcode_type,
+                    incoming_external_barcode=product.external_barcode,
+                )
+                product.sku = str(identity["sku"])
+                product.barcode = str(identity["barcode"])
+                product.barcode_type = str(identity["barcode_type"])
+                product.external_barcode = bool(identity["external_barcode"])
+                product.auto_generated = bool(identity["auto_generated"])
             product.price_public = spec["price_public"]
             product.price_retail = spec["price_retail"]
             product.price_wholesale = spec["price_wholesale"]
@@ -495,6 +511,15 @@ def apply_ecommerce_template(
                 tenant_id=tenant.id,
                 model=Product,
                 base_slug=base_slug,
+            ),
+            **resolve_product_identity(
+                db,
+                tenant_id=tenant.id,
+                category_id=category.id,
+                incoming_sku=None,
+                incoming_barcode=None,
+                incoming_barcode_type="code128",
+                incoming_external_barcode=False,
             ),
             description=spec["description"],
             price_public=spec["price_public"],

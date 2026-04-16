@@ -133,6 +133,11 @@ export interface Product {
   category_id?: number;
   name: string;
   slug: string;
+  sku: string;
+  barcode: string;
+  barcode_type: string;
+  external_barcode: boolean;
+  auto_generated: boolean;
   description?: string;
   price_public: number;
   price_wholesale?: number;

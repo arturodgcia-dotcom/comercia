@@ -101,7 +101,6 @@ const REQUIRED_COLUMNS = [
   "nombre",
   "descripcion",
   "categoria",
-  "sku",
   "precio_publico",
   "precio_menudeo",
   "precio_mayoreo",
@@ -400,7 +399,6 @@ export function BrandSetupWizard() {
       const detectedRowErrors = parsedRows
         .map((row, index) => {
           if (!row.nombre) return { index: index + 1, reason: "Falta nombre" };
-          if (!row.sku) return { index: index + 1, reason: "Falta SKU" };
           if (!row.precio_publico || Number.isNaN(Number(row.precio_publico))) {
             return { index: index + 1, reason: "precio_publico invalido" };
           }

@@ -15,6 +15,10 @@ export function ProductsPage() {
   const [form, setForm] = useState({
     name: "",
     slug: "",
+    sku: "",
+    barcode: "",
+    barcode_type: "code128",
+    external_barcode: false,
     description: "",
     category_id: "",
     price_public: "0",
@@ -62,7 +66,11 @@ export function ProductsPage() {
         tenant_id: tenantId,
         category_id: form.category_id ? Number(form.category_id) : null,
         name: form.name,
-        slug: form.slug,
+        slug: form.slug || undefined,
+        sku: form.sku || undefined,
+        barcode: form.barcode || undefined,
+        barcode_type: form.barcode_type || undefined,
+        external_barcode: form.external_barcode,
         description: form.description || undefined,
         price_public: Number(form.price_public),
         price_wholesale: form.price_wholesale ? Number(form.price_wholesale) : undefined,
@@ -77,6 +85,10 @@ export function ProductsPage() {
       setForm({
         name: "",
         slug: "",
+        sku: "",
+        barcode: "",
+        barcode_type: "code128",
+        external_barcode: false,
         description: "",
         category_id: "",
         price_public: "0",
@@ -92,6 +104,47 @@ export function ProductsPage() {
     } catch (err) {
       setError(err instanceof Error ? err.message : "No fue posible crear producto");
     }
+  };
+
+  const printLabels = () => {
+    if (!items.length) return;
+    const printable = window.open("", "_blank", "width=1000,height=800");
+    if (!printable) return;
+    const cards = items
+      .slice(0, 120)
+      .map(
+        (product) => `
+        <div class="label">
+          <div class="name">${product.name}</div>
+          <div>SKU: ${product.sku}</div>
+          <div>Precio: $${Number(product.price_public).toLocaleString("es-MX")}</div>
+          <div class="barcode">${product.barcode}</div>
+          <div class="meta">${product.barcode_type.toUpperCase()}</div>
+        </div>
+      `
+      )
+      .join("");
+    printable.document.write(`
+      <html>
+        <head>
+          <title>Etiquetas de productos</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 0; padding: 16px; }
+            .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+            .label { border: 1px solid #111; border-radius: 6px; padding: 8px; min-height: 110px; }
+            .name { font-weight: bold; margin-bottom: 4px; font-size: 13px; }
+            .barcode { font-family: "Courier New", monospace; font-size: 16px; letter-spacing: 1px; margin-top: 6px; }
+            .meta { font-size: 11px; color: #444; margin-top: 4px; }
+          </style>
+        </head>
+        <body>
+          <h2>Etiquetas de productos</h2>
+          <div class="grid">${cards}</div>
+          <script>window.onload = () => window.print();</script>
+        </body>
+      </html>
+    `);
+    printable.document.close();
   };
 
   const toggleFeatured = async (product: Product) => {
@@ -141,7 +194,21 @@ export function ProductsPage() {
 
       <form className="inline-form" onSubmit={handleCreate}>
         <input required placeholder="Nombre" value={form.name} onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))} />
-        <input required placeholder="Slug" value={form.slug} onChange={(e) => setForm((p) => ({ ...p, slug: e.target.value }))} />
+        <input placeholder="Slug (opcional)" value={form.slug} onChange={(e) => setForm((p) => ({ ...p, slug: e.target.value }))} />
+        <input placeholder="SKU (opcional, autogenerado si vacio)" value={form.sku} onChange={(e) => setForm((p) => ({ ...p, sku: e.target.value }))} />
+        <input placeholder="Codigo de barras (opcional)" value={form.barcode} onChange={(e) => setForm((p) => ({ ...p, barcode: e.target.value }))} />
+        <select value={form.barcode_type} onChange={(e) => setForm((p) => ({ ...p, barcode_type: e.target.value }))}>
+          <option value="code128">CODE128 interno</option>
+          <option value="ean13">EAN13</option>
+        </select>
+        <label className="checkbox">
+          <input
+            type="checkbox"
+            checked={form.external_barcode}
+            onChange={(e) => setForm((p) => ({ ...p, external_barcode: e.target.checked }))}
+          />
+          Barcode externo del cliente
+        </label>
         <input placeholder="Descripcion" value={form.description} onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))} />
         <input
           required
@@ -176,12 +243,19 @@ export function ProductsPage() {
           Crear producto
         </button>
       </form>
+      <div className="row-gap" style={{ marginBottom: "1rem" }}>
+        <button className="button button-outline" type="button" onClick={printLabels}>
+          Imprimir etiquetas
+        </button>
+      </div>
 
       <table className="table">
         <thead>
           <tr>
             <th>ID</th>
             <th>Producto</th>
+            <th>SKU</th>
+            <th>Barcode</th>
             <th>Precio publico</th>
             <th>Stripe</th>
             <th>Acciones</th>
@@ -192,6 +266,11 @@ export function ProductsPage() {
             <tr key={product.id}>
               <td>{product.id}</td>
               <td>{product.name}</td>
+              <td>{product.sku}</td>
+              <td>
+                {product.barcode}
+                <div className="muted">{product.barcode_type.toUpperCase()} · {product.external_barcode ? "externo" : "interno"}</div>
+              </td>
               <td>{Number(product.price_public).toLocaleString("es-MX")}</td>
               <td>
                 {product.stripe_product_id ? "Sincronizado" : "Pendiente"}

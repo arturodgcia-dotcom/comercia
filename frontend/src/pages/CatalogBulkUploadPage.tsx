@@ -12,7 +12,6 @@ const REQUIRED_COLUMNS = [
   "nombre",
   "descripcion",
   "categoria",
-  "sku",
   "precio_publico",
   "precio_menudeo",
   "precio_mayoreo",
@@ -87,7 +86,7 @@ export function CatalogBulkUploadPage() {
       "Kit Inicio ComerCia",
       "Paquete inicial para ventas",
       "Kits",
-      "KIT-001",
+      "",
       "1299",
       "1199",
       "1099",
@@ -140,7 +139,6 @@ export function CatalogBulkUploadPage() {
       const detectedErrors = parsed
         .map((row, index) => {
           if (!row.nombre) return { index: index + 1, reason: "Falta nombre" };
-          if (!row.sku) return { index: index + 1, reason: "Falta SKU" };
           if (!row.precio_publico || Number.isNaN(Number(row.precio_publico))) {
             return { index: index + 1, reason: "precio_publico invalido" };
           }
@@ -228,7 +226,7 @@ export function CatalogBulkUploadPage() {
       <section className="store-banner">
         <h3>Guia rapida del layout</h3>
         <p>
-          El archivo debe incluir visibilidad por canal, precios publico/menudeo/mayoreo, minimos, stock y columnas Stripe.
+          El archivo debe incluir visibilidad por canal, precios publico/menudeo/mayoreo, minimos, stock y columnas Stripe. SKU y barcode son opcionales (se autogeneran si vienen vacios).
         </p>
         <div className="row-gap">
           <button className="button button-outline" type="button" onClick={downloadTemplate}>

@@ -9,7 +9,12 @@ class ProductCreate(BaseModel):
     tenant_id: int
     category_id: int | None = None
     name: str
-    slug: str
+    slug: str | None = None
+    sku: str | None = None
+    barcode: str | None = None
+    barcode_type: str | None = "code128"
+    external_barcode: bool = False
+    auto_generated: bool | None = None
     description: str | None = None
     price_public: Decimal
     price_wholesale: Decimal | None = None
@@ -26,6 +31,11 @@ class ProductUpdate(BaseModel):
     category_id: int | None = None
     name: str | None = None
     slug: str | None = None
+    sku: str | None = None
+    barcode: str | None = None
+    barcode_type: str | None = None
+    external_barcode: bool | None = None
+    auto_generated: bool | None = None
     description: str | None = None
     price_public: Decimal | None = None
     price_wholesale: Decimal | None = None
@@ -44,6 +54,11 @@ class ProductRead(TimestampSchema):
     category_id: int | None
     name: str
     slug: str
+    sku: str
+    barcode: str
+    barcode_type: str
+    external_barcode: bool
+    auto_generated: bool
     description: str | None
     price_public: Decimal
     price_wholesale: Decimal | None
@@ -60,7 +75,10 @@ class CatalogImportRow(BaseModel):
     nombre: str
     descripcion: str | None = None
     categoria: str
-    sku: str
+    sku: str | None = None
+    barcode: str | None = None
+    barcode_type: str | None = None
+    external_barcode: bool = False
     precio_publico: Decimal
     precio_menudeo: Decimal | None = None
     precio_mayoreo: Decimal | None = None

@@ -17,6 +17,9 @@ export function InventoryPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [error, setError] = useState("");
   const [stockMap, setStockMap] = useState<StockMap>({});
+  const [scanCode, setScanCode] = useState("");
+  const [movementType, setMovementType] = useState<"entrada" | "ajuste" | "conteo">("entrada");
+  const [movementQty, setMovementQty] = useState<number>(1);
 
   useEffect(() => {
     if (!token || !tenantId) return;
@@ -80,6 +83,52 @@ export function InventoryPage() {
     });
   };
 
+  const applyScannedMovement = async () => {
+    if (!scanCode.trim()) return;
+    const normalized = scanCode.trim().toUpperCase();
+    let product = products.find((item) => item.barcode.toUpperCase() === normalized || item.sku.toUpperCase() === normalized);
+    if (!product && token && tenantId) {
+      try {
+        product = await api.getProductByScanCode(token, tenantId, normalized);
+      } catch {
+        setError("No se encontro producto para ese codigo en inventario.");
+        return;
+      }
+    }
+    if (!product) {
+      setError("No se encontro producto para ese codigo en inventario.");
+      return;
+    }
+
+    const qty = Math.max(1, Number(movementQty || 1));
+    if (movementType === "entrada") {
+      applyMovement(product.id, "general", qty);
+    } else if (movementType === "ajuste") {
+      applyMovement(product.id, "general", -qty);
+    } else {
+      setStockMap((previous) => {
+        const current = previous[product.id] ?? { general: 0, publico: 0, distribuidor: 0, pos: 0, almacenPrincipal: 0 };
+        const nextGeneral = qty;
+        const publico = Math.floor(nextGeneral * 0.5);
+        const distribuidor = Math.floor(nextGeneral * 0.3);
+        const pos = Math.max(0, nextGeneral - publico - distribuidor);
+        return {
+          ...previous,
+          [product.id]: {
+            ...current,
+            general: nextGeneral,
+            publico,
+            distribuidor,
+            pos,
+            almacenPrincipal: nextGeneral,
+          },
+        };
+      });
+    }
+    setError("");
+    setScanCode("");
+  };
+
   return (
     <section>
       <PageHeader
@@ -102,6 +151,38 @@ export function InventoryPage() {
         <article className="card"><h3>Canal distribuidor</h3><p>{totals.distribuidor}</p></article>
         <article className="card"><h3>Canal POS</h3><p>{totals.pos}</p></article>
       </div>
+      <article className="card" style={{ marginBottom: "1rem" }}>
+        <h3>Escaneo para movimientos de inventario</h3>
+        <p className="muted">Usa scanner USB o captura manual por SKU/barcode para entrada, ajuste o conteo rapido.</p>
+        <div className="row-gap">
+          <select value={movementType} onChange={(event) => setMovementType(event.target.value as "entrada" | "ajuste" | "conteo")}>
+            <option value="entrada">Entrada mercancia</option>
+            <option value="ajuste">Ajuste inventario</option>
+            <option value="conteo">Conteo rapido</option>
+          </select>
+          <input
+            type="number"
+            min={1}
+            value={movementQty}
+            onChange={(event) => setMovementQty(Number(event.target.value))}
+            placeholder="Cantidad"
+          />
+          <input
+            value={scanCode}
+            onChange={(event) => setScanCode(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                event.preventDefault();
+                void applyScannedMovement();
+              }
+            }}
+            placeholder="Escanea barcode o SKU y presiona Enter"
+          />
+          <button className="button button-outline" type="button" onClick={() => void applyScannedMovement()}>
+            Aplicar movimiento por escaneo
+          </button>
+        </div>
+      </article>
 
       <div className="table-wrapper">
         <table>
@@ -109,6 +190,7 @@ export function InventoryPage() {
             <tr>
               <th>Producto</th>
               <th>SKU</th>
+              <th>Barcode</th>
               <th>Stock general</th>
               <th>Público</th>
               <th>Distribuidor</th>
@@ -123,7 +205,11 @@ export function InventoryPage() {
               return (
                 <tr key={product.id}>
                   <td>{product.name}</td>
-                  <td>{product.slug.toUpperCase()}</td>
+                  <td>{product.sku}</td>
+                  <td>
+                    {product.barcode}
+                    <div className="muted">{product.barcode_type.toUpperCase()}</div>
+                  </td>
                   <td>{stock.general}</td>
                   <td>{stock.publico}</td>
                   <td>{stock.distribuidor}</td>

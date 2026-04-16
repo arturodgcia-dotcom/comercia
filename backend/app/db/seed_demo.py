@@ -65,6 +65,7 @@ from app.services.marketing_insights_service import generate_tenant_growth_insig
 from app.services.security_watch_service import block_entity
 from app.services.storefront_initializer import initialize_storefront
 from app.services.brand_setup_generator import generate_brand_content, generate_landing_draft
+from app.services.product_identity_service import resolve_product_identity
 from app.schemas.brand_setup import BrandIdentityData
 
 pwd_context = CryptContext(schemes=["bcrypt", "pbkdf2_sha256"], deprecated="auto")
@@ -576,8 +577,48 @@ def _service(db: Session, tenant_id: int, cat_id: int, name: str, slug: str, pri
 
 
 def _product(db: Session, tenant_id: int, cat_id: int, name: str, slug: str, price: float, featured: bool) -> Product:
-    p = db.scalar(select(Product).where(Product.tenant_id == tenant_id, Product.slug == slug)) or Product(tenant_id=tenant_id, category_id=cat_id, name=name, slug=slug, description=f"{name} demo", price_public=Decimal(str(price)), price_wholesale=Decimal(str(price))*Decimal("0.85"), price_retail=Decimal(str(price))*Decimal("0.93"), is_featured=featured, is_active=True)
+    identity = resolve_product_identity(
+        db,
+        tenant_id=tenant_id,
+        category_id=cat_id,
+        incoming_sku=None,
+        incoming_barcode=None,
+        incoming_barcode_type="code128",
+        incoming_external_barcode=False,
+    )
+    p = db.scalar(select(Product).where(Product.tenant_id == tenant_id, Product.slug == slug)) or Product(
+        tenant_id=tenant_id,
+        category_id=cat_id,
+        name=name,
+        slug=slug,
+        sku=str(identity["sku"]),
+        barcode=str(identity["barcode"]),
+        barcode_type=str(identity["barcode_type"]),
+        external_barcode=bool(identity["external_barcode"]),
+        auto_generated=bool(identity["auto_generated"]),
+        description=f"{name} demo",
+        price_public=Decimal(str(price)),
+        price_wholesale=Decimal(str(price))*Decimal("0.85"),
+        price_retail=Decimal(str(price))*Decimal("0.93"),
+        is_featured=featured,
+        is_active=True,
+    )
     p.category_id, p.name, p.price_public, p.price_wholesale, p.price_retail, p.is_featured, p.is_active = cat_id, name, Decimal(str(price)), (Decimal(str(price))*Decimal("0.85")).quantize(Decimal("0.01")), (Decimal(str(price))*Decimal("0.93")).quantize(Decimal("0.01")), featured, True
+    if not (p.sku or "").strip() or not (p.barcode or "").strip():
+        patch_identity = resolve_product_identity(
+            db,
+            tenant_id=tenant_id,
+            category_id=cat_id,
+            incoming_sku=p.sku,
+            incoming_barcode=p.barcode,
+            incoming_barcode_type=p.barcode_type,
+            incoming_external_barcode=p.external_barcode,
+        )
+        p.sku = str(patch_identity["sku"])
+        p.barcode = str(patch_identity["barcode"])
+        p.barcode_type = str(patch_identity["barcode_type"])
+        p.external_barcode = bool(patch_identity["external_barcode"])
+        p.auto_generated = bool(patch_identity["auto_generated"])
     seed_key = f"{tenant_id}-{slug}".replace("_", "-")
     p.stripe_product_id = f"prod_demo_{seed_key}"
     p.stripe_price_id_public = f"price_demo_public_{seed_key}"
