@@ -3,7 +3,28 @@ from datetime import datetime
 from pydantic import BaseModel, Field
 
 
-SUPPORT_STATES = ["nuevo", "en revision", "pendiente de cliente", "resuelto", "cerrado"]
+SUPPORT_STATES = [
+    "nuevo",
+    "pendiente",
+    "en revision",
+    "en espera cliente",
+    "pendiente de cliente",
+    "resuelto",
+    "escalado",
+    "cerrado",
+]
+SUPPORT_CATEGORIES = [
+    "tecnico",
+    "ecommerce",
+    "pagos",
+    "branding",
+    "agentes ia",
+    "soporte comercial",
+    "operacion",
+    "incidencia critica",
+]
+SUPPORT_PRIORITIES = ["baja", "media", "alta", "urgente"]
+SUPPORT_ORIGINS = ["cliente", "sistema", "interno"]
 
 
 class SupportTicketAttachmentRead(BaseModel):
@@ -29,16 +50,20 @@ class SupportTicketCreate(BaseModel):
     marca_relacionada: str | None = None
     correo_contacto: str
     telefono_whatsapp: str | None = None
+    origen: str = "cliente"
 
 
 class SupportTicketStatusUpdate(BaseModel):
     estado: str
     respuesta: str | None = None
     responsable: str | None = None
+    responsable_user_id: int | None = None
+    comentario_interno: str | None = None
 
 
 class SupportTicketRead(BaseModel):
     id: int
+    folio: str | None = None
     tenant_id: int
     asunto: str
     descripcion: str
@@ -50,6 +75,8 @@ class SupportTicketRead(BaseModel):
     estado: str
     respuesta: str | None = None
     responsable: str | None = None
+    responsable_user_id: int | None = None
+    origen: str | None = None
     created_at: datetime
     updated_at: datetime
     attachments: list[SupportTicketAttachmentRead] = Field(default_factory=list)
@@ -106,3 +133,52 @@ class ResponseConfigSubmitResult(BaseModel):
     tenant_id: int
     ticket_id: int
     message: str
+
+
+class SupportBackofficeAssigneeRead(BaseModel):
+    user_id: int
+    full_name: str
+    email: str
+    role: str
+
+
+class SupportTicketTimelineEventRead(BaseModel):
+    id: int
+    ticket_id: int
+    event_type: str
+    actor_user_id: int | None = None
+    actor_name: str | None = None
+    actor_role: str | None = None
+    note: str | None = None
+    created_at: datetime
+
+
+class SupportBackofficeTicketRead(SupportTicketRead):
+    cliente_principal: str | None = None
+    cliente_principal_id: int | None = None
+    marca: str | None = None
+    ultima_respuesta_at: datetime | None = None
+    tiempo_abierto_min: int = 0
+    tiempo_sin_respuesta_min: int = 0
+    vencido_sla: bool = False
+    total_tickets_previos_marca: int = 0
+    plan_activo: str | None = None
+    uso_plan: dict[str, int] = Field(default_factory=dict)
+    timeline: list[SupportTicketTimelineEventRead] = Field(default_factory=list)
+
+
+class SupportBackofficeSummaryRead(BaseModel):
+    total: int
+    nuevos: int
+    pendientes: int
+    en_espera_cliente: int
+    resueltos: int
+    escalados: int
+    vencidos_sla: int
+
+
+class SupportTicketBackofficeUpdate(BaseModel):
+    estado: str | None = None
+    prioridad: str | None = None
+    responsable_user_id: int | None = None
+    comentario_interno: str | None = None

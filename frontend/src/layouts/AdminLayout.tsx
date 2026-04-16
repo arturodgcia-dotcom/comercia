@@ -95,7 +95,7 @@ export function AdminLayout() {
       : userRole === "comercial"
         ? "/reinpia/marketing/prospectos"
         : userRole === "soporte"
-          ? "/reinpia/support-backoffice"
+          ? "/reinpia/support"
           : userRole === "operaciones" || isAgencyAdmin
             ? "/reinpia/operations"
             : "/reinpia/dashboard";
@@ -239,7 +239,7 @@ export function AdminLayout() {
       roles: ["reinpia_admin", "super_admin", "agency_admin"],
       permissions: ["global.view_support", "global.view_security"],
       items: [
-        { label: "Soporte global backoffice", to: "/reinpia/support-backoffice", roles: ["reinpia_admin", "super_admin"], permissions: ["global.view_support"] },
+        { label: "Soporte global backoffice", to: "/reinpia/support", roles: ["reinpia_admin", "super_admin"], permissions: ["global.view_support"] },
         { label: "Operación global", to: "/reinpia/operations", roles: ["reinpia_admin", "super_admin"], permissions: ["global.view_support"] },
         { label: "Alertas / Centinela", to: "/reinpia/alerts", roles: ["reinpia_admin", "super_admin"] },
         { label: "Seguridad", to: "/reinpia/security", roles: ["reinpia_admin", "super_admin"], permissions: ["global.view_security"] },

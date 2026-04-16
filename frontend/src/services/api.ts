@@ -84,6 +84,9 @@ import {
   ServiceOffering,
   SignedContract,
   SupportChatResponse,
+  SupportBackofficeAssignee,
+  SupportBackofficeSummary,
+  SupportBackofficeTicket,
   SupportOverview,
   SupportTicket,
   BrandResponsesConfig,
@@ -599,6 +602,40 @@ export const api = {
     request<SupportChatResponse>(
       `/api/v1/support-center/tickets/${ticketId}/chat`,
       { method: "POST", body: JSON.stringify({ message }) },
+      token
+    ),
+  getSupportBackofficeSummary: (token: string) =>
+    request<SupportBackofficeSummary>("/api/v1/support-center/backoffice/summary", {}, token),
+  getSupportBackofficeAssignees: (token: string) =>
+    request<SupportBackofficeAssignee[]>("/api/v1/support-center/backoffice/assignees", {}, token),
+  getSupportBackofficeTickets: (
+    token: string,
+    params?: { estado?: string; prioridad?: string; responsable_user_id?: number; tenant_id?: number; q?: string }
+  ) => {
+    const query = new URLSearchParams();
+    if (params?.estado) query.set("estado", params.estado);
+    if (params?.prioridad) query.set("prioridad", params.prioridad);
+    if (params?.responsable_user_id) query.set("responsable_user_id", String(params.responsable_user_id));
+    if (params?.tenant_id) query.set("tenant_id", String(params.tenant_id));
+    if (params?.q) query.set("q", params.q);
+    const suffix = query.toString() ? `?${query.toString()}` : "";
+    return request<SupportBackofficeTicket[]>(`/api/v1/support-center/backoffice/tickets${suffix}`, {}, token);
+  },
+  getSupportBackofficeTicketById: (token: string, ticketId: number) =>
+    request<SupportBackofficeTicket>(`/api/v1/support-center/backoffice/tickets/${ticketId}`, {}, token),
+  updateSupportBackofficeTicket: (
+    token: string,
+    ticketId: number,
+    payload: {
+      estado?: string;
+      prioridad?: string;
+      responsable_user_id?: number | null;
+      comentario_interno?: string;
+    }
+  ) =>
+    request<SupportBackofficeTicket>(
+      `/api/v1/support-center/backoffice/tickets/${ticketId}`,
+      { method: "PUT", body: JSON.stringify(payload) },
       token
     ),
   getBrandResponsesConfig: (token: string, tenantId: number) =>

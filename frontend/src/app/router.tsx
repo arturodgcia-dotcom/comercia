@@ -213,6 +213,7 @@ export function AppRouter() {
               <Route path="reinpia/marketing/prospectos" element={<ReinpiaMarketingProspectsPage />} />
             </Route>
             <Route element={<RoleRoute allowedRoles={["reinpia_admin", "super_admin", "soporte", "operaciones", "agency_admin"]} allowedPermissions={["global.view_support"]} />}>
+              <Route path="reinpia/support" element={<ReinpiaSupportBackofficePage />} />
               <Route path="reinpia/support-backoffice" element={<ReinpiaSupportBackofficePage />} />
               <Route path="reinpia/alerts" element={<ReinpiaAlertsPage />} />
             </Route>

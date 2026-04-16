@@ -574,6 +574,7 @@ export interface SupportTicketMessage {
 
 export interface SupportTicket {
   id: number;
+  folio?: string | null;
   tenant_id: number;
   asunto: string;
   descripcion: string;
@@ -585,10 +586,54 @@ export interface SupportTicket {
   estado: string;
   respuesta?: string | null;
   responsable?: string | null;
+  responsable_user_id?: number | null;
+  origen?: "cliente" | "sistema" | "interno" | string;
   created_at: string;
   updated_at: string;
   attachments: SupportTicketAttachment[];
   mensajes: SupportTicketMessage[];
+}
+
+export interface SupportBackofficeAssignee {
+  user_id: number;
+  full_name: string;
+  email: string;
+  role: string;
+}
+
+export interface SupportTicketTimelineEvent {
+  id: number;
+  ticket_id: number;
+  event_type: string;
+  actor_user_id?: number | null;
+  actor_name?: string | null;
+  actor_role?: string | null;
+  note?: string | null;
+  created_at: string;
+}
+
+export interface SupportBackofficeTicket extends SupportTicket {
+  cliente_principal?: string | null;
+  cliente_principal_id?: number | null;
+  marca?: string | null;
+  ultima_respuesta_at?: string | null;
+  tiempo_abierto_min: number;
+  tiempo_sin_respuesta_min: number;
+  vencido_sla: boolean;
+  total_tickets_previos_marca: number;
+  plan_activo?: string | null;
+  uso_plan: Record<string, number>;
+  timeline: SupportTicketTimelineEvent[];
+}
+
+export interface SupportBackofficeSummary {
+  total: number;
+  nuevos: number;
+  pendientes: number;
+  en_espera_cliente: number;
+  resueltos: number;
+  escalados: number;
+  vencidos_sla: number;
 }
 
 export interface SupportOverview {
