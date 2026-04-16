@@ -292,6 +292,22 @@ export function ComerciaPreciosPage() {
       .catch(() => null);
   }, []);
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const checkoutState = (params.get("checkout") || "").trim().toLowerCase();
+    if (checkoutState === "success") {
+      setStatus(
+        "Pago confirmado. Estamos provisionando tu cliente y acceso inicial. Revisa tu correo para continuar con onboarding."
+      );
+      setError("");
+      return;
+    }
+    if (checkoutState === "cancel") {
+      setStatus("");
+      setError("Checkout cancelado. Puedes retomar la compra cuando quieras.");
+    }
+  }, []);
+
   const fixedPlans = useMemo(
     () => plans.filter((item) => item.code.includes("fixed")).sort((a, b) => tierRank(a) - tierRank(b)),
     [plans]

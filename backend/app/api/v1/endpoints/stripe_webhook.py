@@ -1,4 +1,5 @@
 import json
+import re
 from datetime import datetime, timedelta
 from decimal import Decimal
 
@@ -6,13 +7,17 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.core.security import get_password_hash
 from app.db.session import get_db
-from app.models.models import Appointment, CommercialClientAccount, Coupon, Order, ServiceOffering, StripeConfig, Tenant
+from app.models.models import Appointment, CommercialClientAccount, Coupon, Order, ServiceOffering, StripeConfig, Tenant, User
 from app.services.coupon_service import increment_coupon_usage
 from app.services.email_service import send_purchase_receipt
+from app.services.internal_alerts_service import create_internal_alert
 from app.services.loyalty_service import apply_points_for_order, consume_points
 from app.services.notifications_service import send_email_notification, send_whatsapp_placeholder
+from app.services.onboarding_service import ensure_default_onboarding_guides
 from app.services.security_hooks import on_checkout_payment_failed, on_webhook_verification_failed
+from app.services.storefront_initializer import initialize_storefront
 from app.services.stripe_service import construct_webhook_event
 from app.services.automation_service import log_automation_event
 from app.services.commercial_plan_service import apply_addon_to_tenant, apply_plan_to_tenant
@@ -33,6 +38,9 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)) -> dic
     data_object = event.get("data", {}).get("object", {})
 
     if event_type == "checkout.session.completed":
+        if _is_public_commercial_session(data_object):
+            _apply_public_commercial_checkout(db, data_object)
+            return {"received": True}
         if _is_commercial_plan_session(data_object):
             _apply_commercial_plan_checkout(db, data_object)
             return {"received": True}
@@ -103,6 +111,13 @@ def _is_commercial_plan_session(session_obj: dict) -> bool:
     return str(metadata.get("kind") or "").strip().lower() == "tenant_commercial_plan"
 
 
+def _is_public_commercial_session(session_obj: dict) -> bool:
+    metadata = session_obj.get("metadata", {})
+    kind = str(metadata.get("kind") or "").strip().lower()
+    item_type = str(metadata.get("item_type") or "").strip().lower()
+    return kind == "comercia_catalog_checkout" and item_type == "plan"
+
+
 def _is_commercial_addon_session(session_obj: dict) -> bool:
     metadata = session_obj.get("metadata", {})
     return str(metadata.get("kind") or "").strip().lower() == "tenant_commercial_addon"
@@ -125,6 +140,136 @@ def _apply_commercial_plan_checkout(db: Session, session_obj: dict) -> None:
     )
     db.add(tenant)
     db.commit()
+
+
+def _slugify(value: str) -> str:
+    base = re.sub(r"[^a-z0-9]+", "-", (value or "").strip().lower())
+    normalized = re.sub(r"-{2,}", "-", base).strip("-")
+    return normalized[:40] or "cliente"
+
+
+def _unique_slug_and_subdomain(db: Session, base_name: str) -> tuple[str, str]:
+    seed = _slugify(base_name)
+    index = 0
+    while True:
+        suffix = "" if index == 0 else f"-{index}"
+        candidate = f"{seed}{suffix}"
+        existing = db.scalar(select(Tenant).where((Tenant.slug == candidate) | (Tenant.subdomain == candidate)))
+        if not existing:
+            return candidate, candidate
+        index += 1
+
+
+def _resolve_customer_identity(session_obj: dict) -> tuple[str, str | None, str | None]:
+    metadata = session_obj.get("metadata", {}) if isinstance(session_obj.get("metadata"), dict) else {}
+    details = session_obj.get("customer_details", {}) if isinstance(session_obj.get("customer_details"), dict) else {}
+    email = str(details.get("email") or session_obj.get("customer_email") or "").strip().lower() or None
+    name = (
+        str(details.get("name") or metadata.get("customer_name") or "").strip()
+        or (email.split("@")[0].replace(".", " ").title() if email else "")
+        or "Cliente COMERCIA"
+    )
+    phone = str(details.get("phone") or metadata.get("customer_phone") or "").strip() or None
+    return name, email, phone
+
+
+def _apply_public_commercial_checkout(db: Session, session_obj: dict) -> None:
+    metadata = session_obj.get("metadata", {})
+    plan_key = str(metadata.get("plan_key") or metadata.get("item_code") or "").strip().lower()
+    session_id = str(session_obj.get("id") or "").strip()
+    if not plan_key or not session_id:
+        return
+
+    existing_tenant = db.scalar(select(Tenant).where(Tenant.commercial_checkout_session_id == session_id))
+    if existing_tenant:
+        return
+
+    customer_name, customer_email, customer_phone = _resolve_customer_identity(session_obj)
+    account = CommercialClientAccount(
+        legal_name=customer_name,
+        contact_name=customer_name,
+        contact_email=customer_email,
+        contact_phone=customer_phone,
+        billing_model=str(metadata.get("billing_model") or "fixed_subscription"),
+        status="active",
+        notes=f"Alta automatica post-pago Stripe ({session_id})",
+    )
+    db.add(account)
+    db.flush()
+
+    slug, subdomain = _unique_slug_and_subdomain(db, customer_name)
+    tenant = Tenant(
+        name=f"{customer_name} Marca",
+        slug=slug,
+        subdomain=subdomain,
+        business_type="mixed",
+        tenant_type="direct_client_tenant",
+        owner_scope="reinpia_internal",
+        acquisition_origin="comercia_direct",
+        is_active=True,
+        commercial_client_account_id=account.id,
+        is_parent_brand=True,
+    )
+    apply_plan_to_tenant(
+        tenant,
+        plan_key=plan_key,
+        source="stripe_checkout_public",
+        checkout_session_id=session_id,
+    )
+    db.add(tenant)
+    db.flush()
+    initialize_storefront(db, tenant)
+
+    temp_password: str | None = None
+    if customer_email:
+        existing_user = db.scalar(select(User).where(User.email == customer_email))
+        if not existing_user:
+            temp_password = f"Comercia!{session_id[-6:]}"
+            new_user = User(
+                email=customer_email,
+                full_name=customer_name,
+                hashed_password=get_password_hash(temp_password),
+                role="tenant_admin",
+                is_active=True,
+                tenant_id=tenant.id,
+                preferred_language="es",
+            )
+            db.add(new_user)
+        elif existing_user.tenant_id is None:
+            existing_user.tenant_id = tenant.id
+            if existing_user.role == "public_customer":
+                existing_user.role = "tenant_admin"
+            db.add(existing_user)
+
+    ensure_default_onboarding_guides(db)
+    create_internal_alert(
+        db=db,
+        alert_type="post_pago_alta_cliente",
+        title="Nuevo cliente creado post-pago Stripe",
+        message=(
+            f"Cliente {customer_name} creado con marca tenant_id={tenant.id}. "
+            f"Onboarding: /onboarding/client | Wizard: /reinpia/brands/{tenant.id}/setup"
+        ),
+        severity="info",
+        related_entity_type="tenant",
+        related_entity_id=tenant.id,
+        tenant_id=tenant.id,
+    )
+    db.add(tenant)
+    db.add(account)
+    db.commit()
+
+    if customer_email and temp_password:
+        send_email_notification(
+            customer_email,
+            "Acceso inicial COMERCIA",
+            (
+                f"Tu marca fue creada correctamente.\n"
+                f"Usuario: {customer_email}\n"
+                f"Password temporal: {temp_password}\n"
+                f"Ingresa en /login y continua con onboarding cliente."
+            ),
+        )
 
 
 def _parse_addons_json(raw: str | None) -> dict:
