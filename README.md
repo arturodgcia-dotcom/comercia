@@ -1278,3 +1278,18 @@ Se cerraron tres módulos finales para pruebas operativas:
   - `effective_roles`
 - Se mantiene compatibilidad con roles legacy (`reinpia_admin`, `tenant_admin`, `tenant_staff`, etc.) mediante mapeo seguro.
 - Navegación global/brand comienza a responder a permisos base sin romper accesos existentes.
+
+## Actualizacion ejecucion 63 (Orquestador IA central por eventos) - 2026-04-16
+- Se implementa un Cerebro Orquestador central (sin agentes permanentes por marca/cliente).
+- Se agrega catalogo de agentes logicos reutilizables: `commercial_agent`, `marketing_agent`, `support_agent`, `sentinel_agent`, `growth_agent`.
+- La activacion IA ahora es exclusivamente por evento/trigger; si no hay evento util, se omite y se registra skip.
+- El plan gobierna capacidades IA habilitadas (entitlements), no procesos vivos:
+  - `available_ai_capabilities_json`
+  - `active_ai_capabilities_json`
+  - `ai_autonomy_level`
+  - `ai_token_budget_monthly`
+  - `ai_token_budget_remaining`
+  - `ai_token_budget_reserved`
+- Se integra control de presupuesto antes de ejecutar (presupuesto, prioridad, criticidad y reglas de no ejecucion).
+- Se agrega trazabilidad completa de ejecucion/skip en `ai_orchestrator_executions`.
+- Panel inicial de IA autonoma actualizado para mostrar capacidades, ejecuciones, omisiones y ahorro de tokens.

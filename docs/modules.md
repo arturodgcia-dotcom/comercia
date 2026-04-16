@@ -791,3 +791,20 @@ Limpieza aplicada:
 - Integración de compatibilidad:
   - mapeo de roles legacy hacia catálogo nuevo
   - guardas de navegación por permiso con fallback por rol legacy
+
+## Modulo de Orquestador IA central (Ejecucion 63 - 2026-04-16)
+
+| Modulo | Estado | Notas |
+|---|---|---|
+| Cerebro Orquestador IA | Inicial funcional | Decide ejecutar u omitir por evento, plan, autonomia y presupuesto |
+| Catalogo de agentes logicos reutilizables | Inicial funcional | `commercial_agent`, `marketing_agent`, `support_agent`, `sentinel_agent`, `growth_agent` |
+| Ejecucion por evento | Inicial funcional | Triggers reales (`new_lead`, `new_ticket`, `campaign_request`, `abandoned_cart`, `sentinel_alert`, etc.) |
+| Reglas de skip/token saving | Inicial funcional | Evita ejecuciones sin trigger/campana/datos, por low budget o enfriamiento centinela |
+| Entitlements IA por plan | Inicial funcional | Capacidades disponibles/activas + autonomia + presupuestos en tenant |
+| Trazabilidad orquestador | Inicial funcional | Tabla `ai_orchestrator_executions` con executed/skipped, motivo, tokens usados/ahorrados |
+| Panel IA inicial actualizado | Inicial funcional | Capacidades por plan, capacidades activas, ultimas ejecuciones, omisiones, tokens usados y ahorrados |
+
+### Endpoints Orquestador IA
+- `GET /api/v1/admin/ai-autonomy/orchestrator/dashboard`
+- `POST /api/v1/admin/ai-autonomy/orchestrator/events`
+- `GET /api/v1/admin/ai-autonomy/orchestrator/executions`

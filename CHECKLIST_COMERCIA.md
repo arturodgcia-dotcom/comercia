@@ -934,3 +934,15 @@
 - [x] Demo marcada visualmente como "Vista de muestra / No productivo"
 - [x] Rutas productivas mantienen flujo real principal (`/comercia`, `/reinpia/*`, `/admin/*`, `/store/:tenantSlug*`)
 - [x] Documentacion actualizada (README, modules, architecture, checklist)
+
+## Entregables ejecucion 63 (Orquestador IA central por eventos)
+- [x] Cerebro Orquestador central implementado
+- [x] Catalogo de agentes logicos reutilizables definido (`commercial_agent`, `marketing_agent`, `support_agent`, `sentinel_agent`, `growth_agent`)
+- [x] Ejecucion IA modelada por evento real (sin procesos IA permanentes por defecto)
+- [x] Reglas explicitas de skip/no ejecucion implementadas
+- [x] Trazabilidad de ejecucion/skip implementada (`ai_orchestrator_executions`)
+- [x] Entitlements IA por plan integrados en tenant (capacidades + autonomia + presupuesto)
+- [x] Panel inicial IA actualizado con consumo y ahorro de tokens
+- [x] Compatibilidad preservada con planes/add-ons/creditos/paneles actuales
+- [x] Validacion backend compile OK
+- [x] Validacion frontend build OK

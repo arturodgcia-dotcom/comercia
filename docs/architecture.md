@@ -1421,3 +1421,73 @@ Cambios:
 - `/auth/me` agrega `permissions` y `effective_roles`.
 - `RoleRoute` acepta `allowedPermissions`.
 - navegación global y de marca filtra módulos por permisos base con fallback legacy.
+
+## Ejecucion 63: arquitectura de IA autonoma eficiente por eventos (2026-04-16)
+Objetivo:
+- eliminar el modelo de muchos agentes vivos por marca/cliente y mover la autonomia a un Orquestador central de ejecucion bajo demanda.
+
+Arquitectura aplicada:
+1) Cerebro Orquestador central
+- servicio: `backend/app/services/ai_orchestrator_service.py`
+- responsabilidades:
+  - leer plan y limites del tenant
+  - resolver capacidades IA habilitadas/activas
+  - leer presupuesto IA mensual/restante/reservado
+  - leer nivel de autonomia
+  - seleccionar agente logico por evento
+  - decidir ejecutar u omitir
+  - registrar trazabilidad de ejecucion/skip
+
+2) Agentes logicos reutilizables (sin procesos permanentes)
+- `commercial_agent`
+- `marketing_agent`
+- `support_agent`
+- `sentinel_agent`
+- `growth_agent`
+
+3) Activacion solo por evento
+- triggers modelados: `new_lead`, `new_ticket`, `campaign_request`, `abandoned_cart`, `sentinel_alert`, `user_explicit_request`, `scheduled_high_value_review`, `sentinel_deep_scan`.
+- sin trigger util => no se ejecuta LLM y se registra skip.
+
+4) Plan gobierna capacidades (entitlements)
+- nuevos campos tenant:
+  - `available_ai_capabilities_json`
+  - `active_ai_capabilities_json`
+  - `ai_autonomy_level`
+  - `ai_token_budget_monthly`
+  - `ai_token_budget_remaining`
+  - `ai_token_budget_reserved`
+- el plan limita capacidades activables; no crea procesos IA permanentes.
+
+5) Control de presupuesto y reglas de no ejecucion
+- validaciones previas:
+  - presupuesto disponible
+  - prioridad/criticidad
+  - relevancia del evento
+- skip rules explicitas por agente/evento y por presupuesto bajo.
+
+6) Trazabilidad completa
+- nueva tabla: `ai_orchestrator_executions`
+- registro de ejecucion u omision con:
+  - tenant/brand
+  - evento/canal
+  - agente disparado
+  - inicio/fin
+  - executed/skipped
+  - skip_reason
+  - prioridad/costo estimado
+  - tokens usados y tokens ahorrados
+  - outcome_summary
+
+7) Capa API y panel inicial
+- endpoints admin:
+  - `GET /api/v1/admin/ai-autonomy/orchestrator/dashboard`
+  - `POST /api/v1/admin/ai-autonomy/orchestrator/events`
+  - `GET /api/v1/admin/ai-autonomy/orchestrator/executions`
+- UI `ReinpiaAiAutonomyPage` renovada para mostrar:
+  - capacidades IA por plan
+  - capacidades activas
+  - ejecuciones recientes
+  - omisiones recientes
+  - tokens consumidos y ahorrados
+  - estado del orquestador
