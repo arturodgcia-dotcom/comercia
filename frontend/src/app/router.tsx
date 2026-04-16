@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes } from "react-router-dom";
+﻿import { Navigate, Route, Routes } from "react-router-dom";
 import { ProtectedRoute } from "../components/ProtectedRoute";
 import { RoleRoute } from "../components/RoleRoute";
 import { AdminLayout } from "../layouts/AdminLayout";
@@ -6,6 +6,7 @@ import { StorePublicTemplate } from "../pages/templates/StorePublicTemplate";
 import { StoreDistributorsTemplate } from "../pages/templates/StoreDistributorsTemplate";
 import { StorePOSTemplate } from "../pages/templates/StorePOSTemplate";
 import { TemplateFamilyDemoPage } from "../pages/templates/TemplateFamilyDemoPage";
+import { InternalDemoHubPage } from "../pages/internal/InternalDemoHubPage";
 import { AppointmentsAdminPage } from "../pages/AppointmentsAdminPage";
 import { BrandingEditorPage } from "../pages/BrandingEditorPage";
 import { BrandChildBrandsPage } from "../pages/BrandChildBrandsPage";
@@ -123,11 +124,18 @@ export function AppRouter() {
       <Route path="/store/:tenantSlug/distribuidores" element={<ResolvedStorefrontDistributorsPage />} />
       <Route path="/store/:tenantSlug/distribuidores/registro" element={<DistributorRegistrationPage />} />
 
-      {/* -- Plantillas de muestra (preview sin autenticación) -- */}
-      <Route path="/templates/tienda-publica" element={<StorePublicTemplate />} />
-      <Route path="/templates/distribuidores" element={<StoreDistributorsTemplate />} />
-      <Route path="/templates/pos" element={<StorePOSTemplate />} />
-      <Route path="/templates/familia" element={<TemplateFamilyDemoPage />} />
+      {/* -- Demo interna (vista de muestra no productiva) -- */}
+      <Route path="/internal/demo" element={<InternalDemoHubPage />} />
+      <Route path="/internal/demo/familia" element={<TemplateFamilyDemoPage />} />
+      <Route path="/internal/demo/tienda-publica" element={<StorePublicTemplate />} />
+      <Route path="/internal/demo/distribuidores" element={<StoreDistributorsTemplate />} />
+      <Route path="/internal/demo/pos" element={<StorePOSTemplate />} />
+
+      {/* -- Compatibilidad de rutas demo legacy -- */}
+      <Route path="/templates/familia" element={<Navigate to="/internal/demo/familia" replace />} />
+      <Route path="/templates/tienda-publica" element={<Navigate to="/internal/demo/tienda-publica" replace />} />
+      <Route path="/templates/distribuidores" element={<Navigate to="/internal/demo/distribuidores" replace />} />
+      <Route path="/templates/pos" element={<Navigate to="/internal/demo/pos" replace />} />
 
       <Route element={<ProtectedRoute />}>
         <Route path="/" element={<AdminLayout />}>

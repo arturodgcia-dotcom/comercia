@@ -920,7 +920,7 @@ Variables backend (`backend/.env`):
   - `/store/:tenantSlug/landing`
   - `/store/:tenantSlug`
   - `/store/:tenantSlug/distribuidores`
-- Rutas `/templates/*` y `/demo/*` permanecen como internas de referencia, fuera del flujo principal de marca.
+- Rutas demo internas bajo `/internal/demo/*` (con redirección legacy desde `/templates/*`) fuera del flujo principal de marca.
 
 ## Actualizacion ejecucion 47 (Mercadotecnia publica + flujo interno de prospectos)
 - La landing publica de COMERCIA mantiene enfoque comercial y formulario de interes en `#marketing-diagnostico`.

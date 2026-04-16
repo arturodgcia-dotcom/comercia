@@ -848,7 +848,7 @@ Rutas productivas oficiales:
 - `/store/:tenantSlug/distribuidores`
 
 Rutas legacy/demo:
-- `/templates/*` y `/demo/*` no participan como motor principal de canales por marca.
+- `/internal/demo/*` (con redirección legacy desde `/templates/*`) no participan como motor principal de canales por marca.
 
 ## Ejecucion 47: separacion publica vs interna en mercadotecnia COMERCIA
 Objetivo:

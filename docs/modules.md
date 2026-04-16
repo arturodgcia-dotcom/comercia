@@ -436,7 +436,7 @@ Nuevos endpoints:
 - Backend de setup bloqueado a oficiales:
   - `backend/app/api/v1/endpoints/brand_setup.py`
 - Legacy/demo fuera del flujo principal:
-  - `/templates/*` y `/demo/*` solo referencia interna, no motor activo por tenant.
+- `/internal/demo/*` (y redirección legacy desde `/templates/*`) solo referencia interna, no motor activo por tenant.
 
 ## Actualizacion mercadotecnia publica e interna (Ejecucion 47)
 - Landing principal COMERCIA | Estado: funcional

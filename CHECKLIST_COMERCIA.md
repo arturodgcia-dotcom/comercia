@@ -927,3 +927,10 @@
 - [x] Menú principal responde a permisos base por rol
 - [x] Build frontend OK
 - [x] Compile backend OK
+
+## Entregables ejecucion 62 (Separacion demo/mock vs flujo real)
+- [x] Demo movida a namespace interno `/internal/demo/*`
+- [x] Rutas legacy `/templates/*` redirigen a demo interna
+- [x] Demo marcada visualmente como "Vista de muestra / No productivo"
+- [x] Rutas productivas mantienen flujo real principal (`/comercia`, `/reinpia/*`, `/admin/*`, `/store/:tenantSlug*`)
+- [x] Documentacion actualizada (README, modules, architecture, checklist)

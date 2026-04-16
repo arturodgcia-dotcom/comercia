@@ -6,10 +6,10 @@ import "./TemplateFamily.css";
 type PosItem = { id: number; name: string; price: number };
 
 const POS_ITEMS: PosItem[] = [
-  { id: 1, name: "Producto rapido A", price: 120 },
-  { id: 2, name: "Producto rapido B", price: 280 },
+  { id: 1, name: "Producto rápido A", price: 120 },
+  { id: 2, name: "Producto rápido B", price: 280 },
   { id: 3, name: "Servicio express", price: 390 },
-  { id: 4, name: "Membresia mensual", price: 890 }
+  { id: 4, name: "Membresía mensual", price: 890 },
 ];
 
 export function StorePOSTemplate() {
@@ -42,13 +42,18 @@ export function StorePOSTemplate() {
               {theme.logoText}
               <span>{theme.logoAccent ? ` ${theme.logoAccent}` : ""}</span>
             </h1>
-            <p className="tf-muted">POS limpio y rapido con identidad de marca sincronizada con landing y ecommerce.</p>
+            <p className="tf-muted">POS limpio y rápido con identidad de marca sincronizada con landing y ecommerce.</p>
+          </div>
+          <div className="tf-demo-banner">
+            <strong>Demo</strong>
+            <span>Vista de muestra</span>
+            <span>No productivo</span>
           </div>
           <div className="tf-nav-actions">
-            <Link className="button button-outline" to={`/templates/tienda-publica?brand=${theme.key}`}>
-              Ecommerce publico
+            <Link className="button button-outline" to={`/internal/demo/tienda-publica?brand=${theme.key}`}>
+              Ecommerce público
             </Link>
-            <Link className="button button-outline" to={`/templates/distribuidores?brand=${theme.key}`}>
+            <Link className="button button-outline" to={`/internal/demo/distribuidores?brand=${theme.key}`}>
               Distribuidores
             </Link>
           </div>
@@ -57,10 +62,8 @@ export function StorePOSTemplate() {
         <section className="tf-pos-grid">
           <article className="tf-card">
             <p className="tf-eyebrow">Caja de venta</p>
-            <h2>Operacion POS de {theme.name}</h2>
-            <p className="tf-muted">
-              Login POS, carrito, cupones, puntos y resumen de compra usando la misma familia visual multicanal.
-            </p>
+            <h2>Operación POS de {theme.name}</h2>
+            <p className="tf-muted">Login POS, carrito, cupones, puntos y resumen de compra en una vista de muestra.</p>
             <div className="tf-grid tf-grid-2">
               {POS_ITEMS.map((item) => (
                 <button key={item.id} type="button" className="button button-outline" onClick={() => addItem(item.id)}>
@@ -89,7 +92,7 @@ export function StorePOSTemplate() {
                 Limpiar ticket
               </button>
             </div>
-            <p className="tf-muted">Membresias, credenciales y puntos heredan los mismos tokens de marca.</p>
+            <p className="tf-muted">Membresías, credenciales y puntos heredan los mismos tokens visuales.</p>
           </aside>
         </section>
 
@@ -97,12 +100,11 @@ export function StorePOSTemplate() {
           <p>{theme.valueProp}</p>
           <div className="tf-footer-links">
             <Link to={`/comercia?brand=${theme.key}`}>Landing</Link>
-            <Link to={`/templates/tienda-publica?brand=${theme.key}`}>Tienda publica</Link>
-            <Link to={`/templates/distribuidores?brand=${theme.key}`}>Canal B2B</Link>
+            <Link to={`/internal/demo/tienda-publica?brand=${theme.key}`}>Tienda pública</Link>
+            <Link to={`/internal/demo/distribuidores?brand=${theme.key}`}>Canal B2B</Link>
           </div>
         </footer>
       </section>
     </main>
   );
 }
-

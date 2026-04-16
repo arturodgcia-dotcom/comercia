@@ -49,5 +49,4 @@ Flujo recomendado:
 - `tulipanes` (Instituto Tulipanes Rojos)
 
 Vista comparativa:
-- Ruta: `/templates/familia`
-
+- Ruta: `/internal/demo/familia` (demo interna, no productiva)
