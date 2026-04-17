@@ -9,6 +9,7 @@ export function CouponsAdminPage() {
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [tenantId, setTenantId] = useState<number | null>(null);
   const [items, setItems] = useState<Coupon[]>([]);
+  const [savingId, setSavingId] = useState<number | null>(null);
   const [form, setForm] = useState({ code: "", discount_type: "percentage", discount_value: 10, applies_to: "all" });
 
   const load = async (id: number) => {
@@ -35,6 +36,17 @@ export function CouponsAdminPage() {
     await api.createCoupon(token, { tenant_id: tenantId, ...form, is_active: true });
     setForm({ code: "", discount_type: "percentage", discount_value: 10, applies_to: "all" });
     await load(tenantId);
+  };
+
+  const update = async (coupon: Coupon, payload: Record<string, unknown>) => {
+    if (!token || !tenantId) return;
+    setSavingId(coupon.id);
+    try {
+      await api.updateCoupon(token, coupon.id, payload);
+      await load(tenantId);
+    } finally {
+      setSavingId(null);
+    }
   };
 
   return (
@@ -75,6 +87,7 @@ export function CouponsAdminPage() {
             <th>Value</th>
             <th>Used</th>
             <th>Activo</th>
+            <th>Acciones</th>
           </tr>
         </thead>
         <tbody>
@@ -86,7 +99,31 @@ export function CouponsAdminPage() {
               <td>
                 {coupon.used_count}/{coupon.max_uses ?? "inf"}
               </td>
-              <td>{coupon.is_active ? "Yes" : "No"}</td>
+              <td>{coupon.is_active ? "Si" : "No"}</td>
+              <td>
+                <div className="row-gap">
+                  <button
+                    className="button button-outline"
+                    type="button"
+                    disabled={savingId === coupon.id}
+                    onClick={() => void update(coupon, { is_active: !coupon.is_active })}
+                  >
+                    {coupon.is_active ? "Desactivar" : "Activar"}
+                  </button>
+                  <button
+                    className="button button-outline"
+                    type="button"
+                    disabled={savingId === coupon.id}
+                    onClick={() =>
+                      void update(coupon, {
+                        discount_value: Number(coupon.discount_value) + 1,
+                      })
+                    }
+                  >
+                    +1 descuento
+                  </button>
+                </div>
+              </td>
             </tr>
           ))}
         </tbody>

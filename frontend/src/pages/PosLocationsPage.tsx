@@ -14,6 +14,7 @@ export function PosLocationsPage() {
   const { token, user } = useAuth();
   const tenantId = user?.tenant_id ?? 1;
   const [locations, setLocations] = useState<PosLocation[]>([]);
+  const [savingId, setSavingId] = useState<number | null>(null);
   const [form, setForm] = useState({ name: "", code: "", location_type: "brand_store", address: "" });
 
   const load = () => token && api.getPosLocations(token, tenantId).then(setLocations);
@@ -25,6 +26,17 @@ export function PosLocationsPage() {
     await api.createPosLocation(token, { tenant_id: tenantId, ...form, is_active: true });
     setForm({ name: "", code: "", location_type: "brand_store", address: "" });
     load();
+  };
+
+  const updateLocation = async (location: PosLocation, payload: Record<string, unknown>) => {
+    if (!token) return;
+    setSavingId(location.id);
+    try {
+      await api.updatePosLocation(token, location.id, payload);
+      load();
+    } finally {
+      setSavingId(null);
+    }
   };
 
   return (
@@ -43,7 +55,7 @@ export function PosLocationsPage() {
       </form>
       <table className="table">
         <thead>
-          <tr><th>ID</th><th>Nombre</th><th>Codigo</th><th>Tipo</th><th>Direccion</th><th>Activo</th></tr>
+          <tr><th>ID</th><th>Nombre</th><th>Codigo</th><th>Tipo</th><th>Direccion</th><th>Activo</th><th>Acciones</th></tr>
         </thead>
         <tbody>
           {locations.map((location) => (
@@ -54,6 +66,16 @@ export function PosLocationsPage() {
               <td>{LOCATION_LABELS[location.location_type] ?? location.location_type}</td>
               <td>{location.address}</td>
               <td>{location.is_active ? "Si" : "No"}</td>
+              <td>
+                <button
+                  className="button button-outline"
+                  type="button"
+                  disabled={savingId === location.id}
+                  onClick={() => void updateLocation(location, { is_active: !location.is_active })}
+                >
+                  {location.is_active ? "Desactivar" : "Activar"}
+                </button>
+              </td>
             </tr>
           ))}
         </tbody>

@@ -2,7 +2,14 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useAuth } from "../app/AuthContext";
 import { PageHeader } from "../components/PageHeader";
 import { api } from "../services/api";
-import { AiAutonomyLevel, AiOrchestratorDashboard, AiProviderSetting } from "../types/domain";
+import {
+  AiAutonomyLevel,
+  AiEvent,
+  AiOrchestratorDashboard,
+  AiOrchestratorExecution,
+  AiProviderSetting,
+  AiUsage,
+} from "../types/domain";
 
 const EMPTY_DASHBOARD: AiOrchestratorDashboard = {
   orchestrator_status: "inactivo",
@@ -33,9 +40,13 @@ export function ReinpiaAiAutonomyPage() {
   const [dashboard, setDashboard] = useState<AiOrchestratorDashboard>(EMPTY_DASHBOARD);
   const [providers, setProviders] = useState<AiProviderSetting[]>([]);
   const [levels, setLevels] = useState<AiAutonomyLevel[]>([]);
+  const [usageRows, setUsageRows] = useState<AiUsage[]>([]);
+  const [eventRows, setEventRows] = useState<AiEvent[]>([]);
+  const [executionRows, setExecutionRows] = useState<AiOrchestratorExecution[]>([]);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [saving, setSaving] = useState(false);
+  const [tokenForm, setTokenForm] = useState({ tokens: 100, reason: "ajuste operativo P1" });
   const [triggerForm, setTriggerForm] = useState({
     event_type: "new_lead",
     event_channel: "dashboard",
@@ -45,14 +56,20 @@ export function ReinpiaAiAutonomyPage() {
 
   const load = async (tenantId?: number) => {
     if (!token) return;
-    const [dash, providerRows, autonomyRows] = await Promise.all([
+    const [dash, providerRows, autonomyRows, usage, events, executions] = await Promise.all([
       api.getAiOrchestratorDashboard(token, tenantId ? { tenant_id: tenantId } : undefined),
       api.getAiProviderSettings(token),
       api.getAiAutonomyLevels(token),
+      api.getAiUsage(token, { limit: 25 }),
+      api.getAiEvents(token, { limit: 25 }),
+      api.getAiOrchestratorExecutions(token, tenantId ? { tenant_id: tenantId, limit: 25 } : { limit: 25 }),
     ]);
     setDashboard(dash);
     setProviders(providerRows);
     setLevels(autonomyRows);
+    setUsageRows(usage);
+    setEventRows(events);
+    setExecutionRows(executions);
   };
 
   useEffect(() => {
@@ -98,6 +115,40 @@ export function ReinpiaAiAutonomyPage() {
       await load(selectedTenant.tenant_id);
     } catch (err) {
       setError(err instanceof Error ? err.message : "No fue posible procesar el evento del orquestador");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const applyTokenAction = async (action: "topup" | "consume" | "lock" | "unlock") => {
+    if (!token || !selectedTenant) return;
+    setSaving(true);
+    setError("");
+    setMessage("");
+    try {
+      if (action === "topup") {
+        await api.topupTenantAiTokens(token, selectedTenant.tenant_id, {
+          tokens: Math.max(1, Number(tokenForm.tokens)),
+          reason: tokenForm.reason,
+        });
+        setMessage("Recarga de tokens aplicada.");
+      } else if (action === "consume") {
+        await api.consumeTenantAiTokens(token, selectedTenant.tenant_id, {
+          tokens: Math.max(1, Number(tokenForm.tokens)),
+          source: "reinpia_ai_autonomy_panel",
+          reason: tokenForm.reason,
+        });
+        setMessage("Consumo manual de tokens registrado.");
+      } else {
+        await api.setTenantAiTokensLock(token, selectedTenant.tenant_id, {
+          locked: action === "lock",
+          reason: tokenForm.reason,
+        });
+        setMessage(action === "lock" ? "Consumo IA bloqueado para el tenant." : "Consumo IA desbloqueado para el tenant.");
+      }
+      await load(selectedTenant.tenant_id);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "No fue posible aplicar el ajuste de tokens.");
     } finally {
       setSaving(false);
     }
@@ -232,6 +283,36 @@ export function ReinpiaAiAutonomyPage() {
       </form>
 
       <div className="card" style={{ marginBottom: "1rem" }}>
+        <h3>Control de tokens (P1)</h3>
+        <div className="inline-form">
+          <input
+            type="number"
+            min={1}
+            step={1}
+            value={tokenForm.tokens}
+            onChange={(e) => setTokenForm((prev) => ({ ...prev, tokens: Number(e.target.value) }))}
+          />
+          <input
+            placeholder="Motivo"
+            value={tokenForm.reason}
+            onChange={(e) => setTokenForm((prev) => ({ ...prev, reason: e.target.value }))}
+          />
+          <button className="button button-outline" type="button" disabled={saving || !selectedTenant} onClick={() => void applyTokenAction("topup")}>
+            Recargar
+          </button>
+          <button className="button button-outline" type="button" disabled={saving || !selectedTenant} onClick={() => void applyTokenAction("consume")}>
+            Consumir
+          </button>
+          <button className="button button-outline" type="button" disabled={saving || !selectedTenant} onClick={() => void applyTokenAction("lock")}>
+            Bloquear
+          </button>
+          <button className="button button-outline" type="button" disabled={saving || !selectedTenant} onClick={() => void applyTokenAction("unlock")}>
+            Desbloquear
+          </button>
+        </div>
+      </div>
+
+      <div className="card" style={{ marginBottom: "1rem" }}>
         <h3>Proveedores IA disponibles</h3>
         <p>
           {activeProviders.length
@@ -298,6 +379,103 @@ export function ReinpiaAiAutonomyPage() {
             {!dashboard.recent_skips.length ? (
               <tr>
                 <td colSpan={4}>No hay omisiones recientes.</td>
+              </tr>
+            ) : null}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="card" style={{ marginTop: "1rem" }}>
+        <h3>Eventos IA (endpoint P1)</h3>
+        <table className="table">
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Tipo</th>
+              <th>Estatus</th>
+              <th>Proveedor</th>
+              <th>Tokens</th>
+              <th>Costo</th>
+            </tr>
+          </thead>
+          <tbody>
+            {eventRows.map((event) => (
+              <tr key={event.id}>
+                <td>{new Date(event.created_at).toLocaleString("es-MX")}</td>
+                <td>{event.event_type}</td>
+                <td>{event.event_status}</td>
+                <td>{event.provider_key}</td>
+                <td>{event.tokens_used}</td>
+                <td>${Number(event.cost_mxn ?? 0).toLocaleString("es-MX")}</td>
+              </tr>
+            ))}
+            {!eventRows.length ? (
+              <tr>
+                <td colSpan={6}>Sin eventos recientes.</td>
+              </tr>
+            ) : null}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="card" style={{ marginTop: "1rem" }}>
+        <h3>Uso IA (endpoint P1)</h3>
+        <table className="table">
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Proveedor</th>
+              <th>Input</th>
+              <th>Output</th>
+              <th>Total tokens</th>
+              <th>Costo</th>
+            </tr>
+          </thead>
+          <tbody>
+            {usageRows.map((row) => (
+              <tr key={row.id}>
+                <td>{new Date(row.created_at).toLocaleString("es-MX")}</td>
+                <td>{row.provider_key}</td>
+                <td>{row.input_tokens}</td>
+                <td>{row.output_tokens}</td>
+                <td>{row.total_tokens}</td>
+                <td>${Number(row.cost_mxn ?? 0).toLocaleString("es-MX")}</td>
+              </tr>
+            ))}
+            {!usageRows.length ? (
+              <tr>
+                <td colSpan={6}>Sin consumos registrados.</td>
+              </tr>
+            ) : null}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="card" style={{ marginTop: "1rem" }}>
+        <h3>Historial de ejecuciones del orquestador (endpoint P1)</h3>
+        <table className="table">
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Evento</th>
+              <th>Agente</th>
+              <th>Ejecucion</th>
+              <th>Skip reason</th>
+            </tr>
+          </thead>
+          <tbody>
+            {executionRows.map((row) => (
+              <tr key={row.id}>
+                <td>{new Date(row.started_at).toLocaleString("es-MX")}</td>
+                <td>{row.event_type}</td>
+                <td>{row.triggered_agent || "n/a"}</td>
+                <td>{row.executed ? "Ejecutado" : "Omitido"}</td>
+                <td>{row.skip_reason || "-"}</td>
+              </tr>
+            ))}
+            {!executionRows.length ? (
+              <tr>
+                <td colSpan={5}>Sin ejecuciones registradas.</td>
               </tr>
             ) : null}
           </tbody>

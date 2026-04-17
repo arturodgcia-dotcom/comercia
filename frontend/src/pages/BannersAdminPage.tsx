@@ -11,6 +11,7 @@ export function BannersAdminPage() {
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [tenantId, setTenantId] = useState<number | null>(null);
   const [items, setItems] = useState<Banner[]>([]);
+  const [savingId, setSavingId] = useState<number | null>(null);
   const [form, setForm] = useState({
     title: "",
     image_url: "",
@@ -44,6 +45,17 @@ export function BannersAdminPage() {
     await api.createBanner(token, { tenant_id: tenantId, ...form, is_active: true });
     setForm({ title: "", image_url: "", target_type: "promotion", target_value: "", position: "hero", priority: 1 });
     await load(tenantId);
+  };
+
+  const update = async (banner: Banner, payload: Record<string, unknown>) => {
+    if (!token || !tenantId) return;
+    setSavingId(banner.id);
+    try {
+      await api.updateBanner(token, banner.id, payload);
+      await load(tenantId);
+    } finally {
+      setSavingId(null);
+    }
   };
 
   return (
@@ -85,6 +97,8 @@ export function BannersAdminPage() {
             <th>{t("security.action")}</th>
             <th>Target</th>
             <th>Prioridad</th>
+            <th>Estado</th>
+            <th>Acciones</th>
           </tr>
         </thead>
         <tbody>
@@ -97,6 +111,27 @@ export function BannersAdminPage() {
                 {banner.target_type}: {banner.target_value}
               </td>
               <td>{banner.priority}</td>
+              <td>{banner.is_active ? "Activo" : "Inactivo"}</td>
+              <td>
+                <div className="row-gap">
+                  <button
+                    className="button button-outline"
+                    type="button"
+                    disabled={savingId === banner.id}
+                    onClick={() => void update(banner, { is_active: !banner.is_active })}
+                  >
+                    {banner.is_active ? "Desactivar" : "Activar"}
+                  </button>
+                  <button
+                    className="button button-outline"
+                    type="button"
+                    disabled={savingId === banner.id}
+                    onClick={() => void update(banner, { priority: Number(banner.priority) + 1 })}
+                  >
+                    +1 prioridad
+                  </button>
+                </div>
+              </td>
             </tr>
           ))}
         </tbody>

@@ -334,6 +334,7 @@ export function PosPage() {
       <AppInstallHelp context="POS" />
       <div className="row-gap">
         <Link to="/pos/locations" className="button button-outline">Ubicaciones</Link>
+        <Link to="/pos/employees" className="button button-outline">Empleados POS</Link>
         <Link to="/pos/customers" className="button button-outline">Clientes POS</Link>
         <Link to="/pos/sales" className="button button-outline">Historial POS</Link>
       </div>

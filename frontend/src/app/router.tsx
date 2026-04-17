@@ -42,6 +42,7 @@ import { NfcAddonPage } from "../pages/NfcAddonPage";
 import { PaymentsAdminPage } from "../pages/PaymentsAdminPage";
 import { PlansPage } from "../pages/PlansPage";
 import { PosCustomersPage } from "../pages/PosCustomersPage";
+import { PosEmployeesPage } from "../pages/PosEmployeesPage";
 import { PosLocationsPage } from "../pages/PosLocationsPage";
 import { PosPage } from "../pages/PosPage";
 import { PosSalesPage } from "../pages/PosSalesPage";
@@ -154,6 +155,7 @@ export function AppRouter() {
             <Route path="admin/logistics" element={<LogisticsAdminPage />} />
             <Route path="pos" element={<PosPage />} />
             <Route path="pos/locations" element={<PosLocationsPage />} />
+            <Route path="pos/employees" element={<PosEmployeesPage />} />
             <Route path="pos/sales" element={<PosSalesPage />} />
             <Route path="pos/customers" element={<PosCustomersPage />} />
             <Route path="categories" element={<CategoriesPage />} />

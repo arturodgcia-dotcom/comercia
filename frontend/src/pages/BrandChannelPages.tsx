@@ -437,6 +437,9 @@ function BrandChannelShell({ channel }: { channel: ChannelKey }) {
             <Link className="button button-outline" to="/pos/locations">
               Configurar puntos de venta
             </Link>
+            <Link className="button button-outline" to="/pos/employees">
+              Configurar empleados POS
+            </Link>
             <Link className="button button-outline" to="/admin/settings/payments/mercadopago">
               Configurar cobros POS
             </Link>
