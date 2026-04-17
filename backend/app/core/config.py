@@ -44,6 +44,11 @@ class Settings(BaseSettings):
     stripe_price_addon_extra_500_ai_credits: str = Field(default="", alias="STRIPE_PRICE_ADDON_EXTRA_500_AI_CREDITS")
     stripe_price_addon_premium_support: str = Field(default="", alias="STRIPE_PRICE_ADDON_PREMIUM_SUPPORT")
     stripe_price_addon_comercia_connector: str = Field(default="", alias="STRIPE_PRICE_ADDON_COMERCIA_CONNECTOR")
+    resend_api_key: str = Field(default="", alias="RESEND_API_KEY")
+    sendgrid_api_key: str = Field(default="", alias="SENDGRID_API_KEY")
+    support_from_email: str = Field(default="soporte@tudominio.com", alias="SUPPORT_FROM_EMAIL")
+    sales_from_email: str = Field(default="ventas@tudominio.com", alias="SALES_FROM_EMAIL")
+    alerts_from_email: str = Field(default="alertas@tudominio.com", alias="ALERTS_FROM_EMAIL")
 
     model_config = SettingsConfigDict(
         env_file=".env",

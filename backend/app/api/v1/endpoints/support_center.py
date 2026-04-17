@@ -29,10 +29,13 @@ from app.schemas.support_center import (
     SupportTicketStatusUpdate,
     SupportTicketTimelineEventRead,
 )
+from app.core.config import get_settings
+from app.services.notifications_service import send_alert_notification, send_support_notification
 from app.services.role_permissions_service import has_permission, role_matches_any_alias
 from app.services.support_center_store import UPLOADS_DIR, to_datetime, utc_now_iso, with_store
 
 router = APIRouter()
+settings = get_settings()
 BACKOFFICE_ALLOWED_ROLES = {"super_admin", "soporte", "operaciones"}
 ASSIGNABLE_ROLE_KEYS = {"soporte", "operaciones", "comercial", "super_admin"}
 
@@ -336,6 +339,24 @@ def create_ticket(
         return ticket
 
     created = with_store(_mutate)
+    support_subject = f"Soporte COMERCIA · Ticket {created.get('folio')}"
+    support_body = (
+        f"Ticket generado para marca {tenant.name}.\n"
+        f"Asunto: {created.get('asunto')}\n"
+        f"Categoria: {created.get('categoria')}\n"
+        f"Prioridad: {created.get('prioridad')}\n"
+        f"Descripcion: {created.get('descripcion')}\n"
+    )
+    send_support_notification(
+        created.get("correo_contacto", ""),
+        support_subject,
+        support_body,
+    )
+    send_alert_notification(
+        settings.support_from_email,
+        f"Alerta basica soporte · {created.get('folio')}",
+        support_body,
+    )
     return _serialize_ticket(created)
 
 

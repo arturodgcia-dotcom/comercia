@@ -14,7 +14,11 @@ from app.services.coupon_service import increment_coupon_usage
 from app.services.email_service import send_purchase_receipt
 from app.services.internal_alerts_service import create_internal_alert
 from app.services.loyalty_service import apply_points_for_order, consume_points
-from app.services.notifications_service import send_email_notification, send_whatsapp_placeholder
+from app.services.notifications_service import (
+    send_email_notification,
+    send_welcome_notification,
+    send_whatsapp_placeholder,
+)
 from app.services.onboarding_service import ensure_default_onboarding_guides
 from app.services.security_hooks import on_checkout_payment_failed, on_webhook_verification_failed
 from app.services.storefront_initializer import initialize_storefront
@@ -260,7 +264,7 @@ def _apply_public_commercial_checkout(db: Session, session_obj: dict) -> None:
     db.commit()
 
     if customer_email and temp_password:
-        send_email_notification(
+        send_welcome_notification(
             customer_email,
             "Acceso inicial COMERCIA",
             (
