@@ -2,11 +2,39 @@ from __future__ import annotations
 
 from app.core.config import get_settings
 from app.services.transactional_email_service import send_transactional_email
+from app.services.whatsapp_service import send_whatsapp_text
+
+
+def send_whatsapp_notification(phone: str | None, message: str, *, strict: bool = False) -> bool:
+    result = send_whatsapp_text(phone, message)
+    if bool(result.get("sent")):
+        print(
+            "[WHATSAPP_SENT]",
+            {
+                "provider": result.get("provider"),
+                "to": result.get("to"),
+                "message_id": result.get("message_id"),
+            },
+        )
+        return True
+
+    print(
+        "[WHATSAPP_BLOCKER]",
+        {
+            "provider": result.get("provider"),
+            "to": result.get("to"),
+            "blocker": result.get("blocker"),
+            "detail": result.get("detail"),
+        },
+    )
+    if strict:
+        raise RuntimeError(str(result.get("blocker") or "No fue posible enviar WhatsApp"))
+    return False
 
 
 def send_whatsapp_placeholder(phone: str | None, message: str) -> None:
-    # Placeholder intencional para futura integracion oficial WhatsApp Business API.
-    print("[WHATSAPP_PLACEHOLDER]", {"phone": phone, "message": message})
+    # Backward compatibility: mantiene la firma anterior, pero ahora usa proveedor real o bloquea explicitamente.
+    send_whatsapp_notification(phone, message, strict=False)
 
 
 def send_email_notification(

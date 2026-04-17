@@ -48,7 +48,7 @@ Regla operativa actual:
 1. Se define `ServiceOffering` por tenant.
 2. Cliente compra servicio para si o como regalo desde storefront.
 3. Checkout guarda payload de servicio/regalo en `Order`.
-4. En pago exitoso se crea `Appointment`, se envia email y placeholder WhatsApp.
+4. En pago exitoso se crea `Appointment`, se envia email y notificacion WhatsApp via Meta Cloud API (si credenciales activas).
 
 ## 6) Flujo de regalo (MVP)
 Campos de regalo soportados:
@@ -195,9 +195,9 @@ Decisiones de limpieza:
 ## 16) Alertas internas y base para bots/WhatsApp
 - `InternalAlert` centraliza eventos de operacion comercial y contable.
 - `internal_alerts_service` expone creacion tipada de alertas legibles para equipo interno.
-- base de integracion futura:
+- base de integracion de canales:
   - bots comerciales
-  - notificaciones WhatsApp reales
+  - notificaciones WhatsApp via Meta Cloud API
   - derivacion automatica a procesos de backoffice
 
 ## 17) Exportes comerciales extendidos

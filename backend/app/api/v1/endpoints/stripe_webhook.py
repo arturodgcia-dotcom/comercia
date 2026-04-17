@@ -17,7 +17,7 @@ from app.services.loyalty_service import apply_points_for_order, consume_points
 from app.services.notifications_service import (
     send_email_notification,
     send_welcome_notification,
-    send_whatsapp_placeholder,
+    send_whatsapp_notification,
 )
 from app.services.onboarding_service import ensure_default_onboarding_guides
 from app.services.security_hooks import on_checkout_payment_failed, on_webhook_verification_failed
@@ -433,5 +433,5 @@ def _create_appointments_from_order(db: Session, order: Order) -> None:
         recipient_email = order.gift_recipient_email or order.gift_sender_email
         if recipient_email:
             send_email_notification(recipient_email, "Instrucciones de servicio", f"Tu cita para {service.name} fue agendada.")
-        send_whatsapp_placeholder(order.gift_recipient_phone, f"Servicio {service.name} registrado")
+        send_whatsapp_notification(order.gift_recipient_phone, f"Servicio {service.name} registrado")
     db.commit()

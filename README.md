@@ -490,6 +490,28 @@ Limpieza de legacy aplicada:
   - `logistics_delivered`
   - `followup_required`
 
+### WhatsApp Cloud API (Meta) - Integracion operativa
+- Servicio backend: `backend/app/services/whatsapp_service.py`
+- Notificaciones: `backend/app/services/notifications_service.py`
+- Flujos conectados:
+  - instrucciones de cita (`appointment_service`)
+  - confirmacion post-pago servicio (`stripe_webhook`)
+- Variables exactas:
+  - `WHATSAPP_PROVIDER=meta_cloud`
+  - `WHATSAPP_CLOUD_API_VERSION=v22.0`
+  - `WHATSAPP_CLOUD_ACCESS_TOKEN=...`
+  - `WHATSAPP_CLOUD_PHONE_NUMBER_ID=...`
+  - `WHATSAPP_CLOUD_WABA_ID=...` (opcional)
+  - `WHATSAPP_DEFAULT_TO=...` (fallback destino para smoke test)
+  - `WHATSAPP_VERIFY_TOKEN=...` (reservado webhook verify)
+- Endpoint externo usado para envio:
+  - `POST https://graph.facebook.com/{WHATSAPP_CLOUD_API_VERSION}/{WHATSAPP_CLOUD_PHONE_NUMBER_ID}/messages`
+- Endpoint externo usado para smoke test de conectividad:
+  - `GET https://graph.facebook.com/{WHATSAPP_CLOUD_API_VERSION}/{WHATSAPP_CLOUD_PHONE_NUMBER_ID}?fields=id,display_phone_number,verified_name`
+- Comportamiento sin credenciales:
+  - no hay placeholder silencioso
+  - se registra `WHATSAPP_BLOCKER` con razon exacta.
+
 ### Comisionistas y alertas internas (actual)
 - comisionistas comerciales (`SalesCommissionAgent`) con clave unica
 - trazabilidad de referidos (`SalesReferral`) por codigo manual o query param `?ref=`

@@ -49,6 +49,13 @@ class Settings(BaseSettings):
     support_from_email: str = Field(default="soporte@tudominio.com", alias="SUPPORT_FROM_EMAIL")
     sales_from_email: str = Field(default="ventas@tudominio.com", alias="SALES_FROM_EMAIL")
     alerts_from_email: str = Field(default="alertas@tudominio.com", alias="ALERTS_FROM_EMAIL")
+    whatsapp_provider: str = Field(default="meta_cloud", alias="WHATSAPP_PROVIDER")
+    whatsapp_cloud_api_version: str = Field(default="v22.0", alias="WHATSAPP_CLOUD_API_VERSION")
+    whatsapp_cloud_access_token: str = Field(default="", alias="WHATSAPP_CLOUD_ACCESS_TOKEN")
+    whatsapp_cloud_phone_number_id: str = Field(default="", alias="WHATSAPP_CLOUD_PHONE_NUMBER_ID")
+    whatsapp_cloud_waba_id: str = Field(default="", alias="WHATSAPP_CLOUD_WABA_ID")
+    whatsapp_default_to: str = Field(default="", alias="WHATSAPP_DEFAULT_TO")
+    whatsapp_verify_token: str = Field(default="", alias="WHATSAPP_VERIFY_TOKEN")
 
     model_config = SettingsConfigDict(
         env_file=".env",

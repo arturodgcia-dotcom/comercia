@@ -48,7 +48,7 @@
 | Monedas y tipo de cambio | Inicial funcional | settings por tenant + rates manual/refresh + preview |
 | POS / WebApp base | Inicial funcional | ubicaciones, empleados, clientes, ventas POS y pagos Mercado Pago |
 | Fidelizacion en POS | Base funcional | uso/suma de puntos en cierre de venta |
-| Automation bots/WhatsApp base | Inicial funcional | eventos, canales y templates sin proveedor externo |
+| Automation bots/WhatsApp | Inicial funcional | eventos, canales y templates + envio WhatsApp Meta Cloud API con validacion explicita de credenciales |
 | Centinela seguridad/antifraude | Inicial funcional | eventos, reglas, alertas, bloqueos y panel REINPIA security |
 | Workflow guiado de alta de marca | Inicial funcional | wizard secuencial SaaS (6 pasos bloqueados) + generacion de contenido/landing + aprobacion y publicacion |
 | Media assets por etapa | Base funcional | carga de archivos locales por etapa de setup |

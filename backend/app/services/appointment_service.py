@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from app.models.models import Appointment, ServiceOffering
 from app.services.automation_service import log_automation_event
-from app.services.notifications_service import send_email_notification, send_whatsapp_placeholder
+from app.services.notifications_service import send_email_notification, send_whatsapp_notification
 
 
 def create_appointment_for_self(
@@ -105,7 +105,7 @@ def send_appointment_instructions(appointment: Appointment) -> None:
             "Instrucciones de cita",
             f"Cita agendada para {appointment.scheduled_for}.",
         )
-    send_whatsapp_placeholder(appointment.gift_recipient_phone, "Tu cita fue registrada.")
+    send_whatsapp_notification(appointment.gift_recipient_phone, "Tu cita fue registrada.")
     appointment.instructions_sent_at = datetime.utcnow()
 
 
