@@ -42,7 +42,7 @@ router = APIRouter()
 
 
 def _ensure_tenant_access(user: User, tenant_id: int) -> None:
-    if user.role == "reinpia_admin":
+    if user.role in {"reinpia_admin", "super_admin"}:
         return
     if user.role == "tenant_admin" and user.tenant_id == tenant_id:
         return
