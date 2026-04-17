@@ -9,6 +9,8 @@ const PAYMENT_METHOD_LABELS: Record<string, string> = {
   transfer: "Transferencia",
   mercado_pago_link: "Mercado Pago Link",
   mercado_pago_qr: "Mercado Pago QR",
+  mercado_pago_point: "Mercado Pago Point",
+  tarjeta_manual: "Tarjeta manual",
   mercado_pago_point_placeholder: "Mercado Pago Point",
   tarjeta_manual_placeholder: "Tarjeta manual",
 };

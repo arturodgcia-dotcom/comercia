@@ -23,6 +23,9 @@ SUPPORTED_POS_PAYMENT_METHODS = {
     "transfer",
     "mercado_pago_link",
     "mercado_pago_qr",
+    "mercado_pago_point",
+    "tarjeta_manual",
+    # Compatibilidad historica
     "mercado_pago_point_placeholder",
     "tarjeta_manual_placeholder",
 }
@@ -42,8 +45,12 @@ def create_pos_sale(
     register_membership: bool = False,
 ) -> PosSale:
     normalized_payment_method = (payment_method or "cash").strip().lower()
+    if normalized_payment_method == "mercado_pago_point_placeholder":
+        normalized_payment_method = "mercado_pago_point"
+    if normalized_payment_method == "tarjeta_manual_placeholder":
+        normalized_payment_method = "tarjeta_manual"
     if normalized_payment_method not in SUPPORTED_POS_PAYMENT_METHODS:
-        normalized_payment_method = "tarjeta_manual_placeholder"
+        normalized_payment_method = "tarjeta_manual"
 
     subtotal = Decimal("0")
     for item in items:

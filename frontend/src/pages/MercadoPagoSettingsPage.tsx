@@ -124,7 +124,7 @@ export function MercadoPagoSettingsPage() {
             checked={settings.mercadopago_point_enabled}
             onChange={(event) => setSettings((prev) => ({ ...prev, mercadopago_point_enabled: event.target.checked }))}
           />
-          Preparar Point (placeholder)
+          Preparar Point (base)
         </label>
         <label className="checkbox">
           <input

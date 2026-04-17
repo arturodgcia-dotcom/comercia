@@ -56,6 +56,11 @@ class Settings(BaseSettings):
     whatsapp_cloud_waba_id: str = Field(default="", alias="WHATSAPP_CLOUD_WABA_ID")
     whatsapp_default_to: str = Field(default="", alias="WHATSAPP_DEFAULT_TO")
     whatsapp_verify_token: str = Field(default="", alias="WHATSAPP_VERIFY_TOKEN")
+    mercadopago_access_token: str = Field(default="", alias="MERCADOPAGO_ACCESS_TOKEN")
+    mercadopago_public_key: str = Field(default="", alias="MERCADOPAGO_PUBLIC_KEY")
+    mercadopago_point_collector_id: str = Field(default="", alias="MERCADOPAGO_POINT_COLLECTOR_ID")
+    mercadopago_point_pos_id: str = Field(default="", alias="MERCADOPAGO_POINT_POS_ID")
+    mercadopago_notification_url: str = Field(default="", alias="MERCADOPAGO_NOTIFICATION_URL")
 
     model_config = SettingsConfigDict(
         env_file=".env",

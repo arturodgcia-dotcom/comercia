@@ -22,8 +22,10 @@ const PAYMENT_LABELS: Record<string, string> = {
   transfer: "Transferencia",
   mercado_pago_link: "Mercado Pago Link",
   mercado_pago_qr: "Mercado Pago QR",
-  mercado_pago_point_placeholder: "Mercado Pago Point (placeholder)",
-  tarjeta_manual_placeholder: "Tarjeta manual (placeholder)",
+  mercado_pago_point: "Mercado Pago Point",
+  tarjeta_manual: "Tarjeta manual",
+  mercado_pago_point_placeholder: "Mercado Pago Point",
+  tarjeta_manual_placeholder: "Tarjeta manual",
 };
 
 export function PosPage() {
@@ -364,8 +366,8 @@ export function PosPage() {
               <option value="transfer">Transferencia</option>
               <option value="mercado_pago_link">Mercado Pago Link</option>
               <option value="mercado_pago_qr">Mercado Pago QR</option>
-              <option value="mercado_pago_point_placeholder">Mercado Pago Point (placeholder)</option>
-              <option value="tarjeta_manual_placeholder">Tarjeta manual (placeholder)</option>
+              <option value="mercado_pago_point">Mercado Pago Point</option>
+              <option value="tarjeta_manual">Tarjeta manual</option>
             </select>
           </label>
           <label>

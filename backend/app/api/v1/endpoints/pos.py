@@ -23,9 +23,10 @@ from app.schemas.pos import (
 from app.services.pos_payment_service import (
     confirm_mercadopago_payment,
     create_mercadopago_payment_link,
-    create_mercadopago_qr_charge_placeholder,
+    create_mercadopago_qr_charge,
     list_pos_payments_by_tenant,
     register_pos_sale_payment,
+    smoke_test_mercadopago_api,
 )
 from app.services.pos_service import create_pos_sale
 from app.services.security_watch_service import create_security_alert, log_security_event
@@ -160,7 +161,7 @@ def create_mercadopago_qr(
     payload: PosPaymentCreateRequest, db: Session = Depends(get_db), _: User = Depends(get_current_user)
 ):
     try:
-        return create_mercadopago_qr_charge_placeholder(
+        return create_mercadopago_qr_charge(
             db,
             tenant_id=payload.tenant_id,
             amount=payload.amount,
@@ -189,6 +190,11 @@ def confirm_mercadopago(
     if not row:
         raise HTTPException(status_code=404, detail="transaccion POS no encontrada")
     return register_pos_sale_payment(db, transaction=row)
+
+
+@router.get("/payments/mercadopago/smoke/{tenant_id}")
+def smoke_mercadopago(tenant_id: int, db: Session = Depends(get_db), _: User = Depends(get_current_user)):
+    return smoke_test_mercadopago_api(db, tenant_id=tenant_id)
 
 
 @router.get("/payments/by-tenant/{tenant_id}", response_model=list[PosPaymentTransactionRead])
