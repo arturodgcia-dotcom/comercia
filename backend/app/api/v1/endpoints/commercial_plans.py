@@ -218,13 +218,19 @@ def create_commercial_plan_checkout_session(
         metadata["kind"] = "tenant_commercial_plan"
     elif checkout_item["item_type"] == "addon" and tenant:
         metadata["kind"] = "tenant_commercial_addon"
-    session = create_checkout_session_plan1(
-        secret_key=stripe_config.secret_key,
-        line_items=[{"price": stripe_price_id, "quantity": 1}],
-        success_url=payload.success_url,
-        cancel_url=payload.cancel_url,
-        metadata=metadata,
-    )
+    try:
+        session = create_checkout_session_plan1(
+            secret_key=stripe_config.secret_key,
+            line_items=[{"price": stripe_price_id, "quantity": 1}],
+            success_url=payload.success_url,
+            cancel_url=payload.cancel_url,
+            metadata=metadata,
+        )
+    except Exception as exc:
+        raise HTTPException(
+            status_code=502,
+            detail=f"No fue posible crear checkout en Stripe. Verifica credenciales/red externa ({exc.__class__.__name__}).",
+        ) from exc
     if tenant and checkout_item["item_type"] == "plan":
         tenant.commercial_plan_status = "checkout_pending"
         tenant.commercial_checkout_session_id = session.id
