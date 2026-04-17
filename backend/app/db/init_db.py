@@ -34,7 +34,7 @@ def _ensure_runtime_compat_schema() -> None:
 
     table_columns: dict[str, set[str]] = {}
     with engine.begin() as conn:
-        for table in ("tenants", "pos_sales"):
+        for table in ("tenants", "pos_sales", "products"):
             rows = conn.execute(text(f"PRAGMA table_info('{table}')")).mappings().all()
             table_columns[table] = {str(row["name"]) for row in rows}
 
@@ -86,6 +86,24 @@ def _ensure_runtime_compat_schema() -> None:
             conn.execute(text("ALTER TABLE tenants ADD COLUMN ai_tokens_lock_reason TEXT"))
         if "ai_tokens_last_reset_at" not in table_columns["tenants"]:
             conn.execute(text("ALTER TABLE tenants ADD COLUMN ai_tokens_last_reset_at DATETIME"))
+        if "available_ai_capabilities_json" not in table_columns["tenants"]:
+            conn.execute(text("ALTER TABLE tenants ADD COLUMN available_ai_capabilities_json TEXT"))
+            conn.execute(text("UPDATE tenants SET available_ai_capabilities_json = '[]' WHERE available_ai_capabilities_json IS NULL"))
+        if "active_ai_capabilities_json" not in table_columns["tenants"]:
+            conn.execute(text("ALTER TABLE tenants ADD COLUMN active_ai_capabilities_json TEXT"))
+            conn.execute(text("UPDATE tenants SET active_ai_capabilities_json = '[]' WHERE active_ai_capabilities_json IS NULL"))
+        if "ai_autonomy_level" not in table_columns["tenants"]:
+            conn.execute(text("ALTER TABLE tenants ADD COLUMN ai_autonomy_level INTEGER"))
+            conn.execute(text("UPDATE tenants SET ai_autonomy_level = 0 WHERE ai_autonomy_level IS NULL"))
+        if "ai_token_budget_monthly" not in table_columns["tenants"]:
+            conn.execute(text("ALTER TABLE tenants ADD COLUMN ai_token_budget_monthly INTEGER"))
+            conn.execute(text("UPDATE tenants SET ai_token_budget_monthly = COALESCE(ai_tokens_included, 0) WHERE ai_token_budget_monthly IS NULL"))
+        if "ai_token_budget_remaining" not in table_columns["tenants"]:
+            conn.execute(text("ALTER TABLE tenants ADD COLUMN ai_token_budget_remaining INTEGER"))
+            conn.execute(text("UPDATE tenants SET ai_token_budget_remaining = COALESCE(ai_tokens_balance, 0) WHERE ai_token_budget_remaining IS NULL"))
+        if "ai_token_budget_reserved" not in table_columns["tenants"]:
+            conn.execute(text("ALTER TABLE tenants ADD COLUMN ai_token_budget_reserved INTEGER"))
+            conn.execute(text("UPDATE tenants SET ai_token_budget_reserved = 0 WHERE ai_token_budget_reserved IS NULL"))
 
         if "commission_amount" not in table_columns["pos_sales"]:
             conn.execute(text("ALTER TABLE pos_sales ADD COLUMN commission_amount NUMERIC(12,2)"))
@@ -96,3 +114,19 @@ def _ensure_runtime_compat_schema() -> None:
         if "payment_mode" not in table_columns["pos_sales"]:
             conn.execute(text("ALTER TABLE pos_sales ADD COLUMN payment_mode VARCHAR(20)"))
             conn.execute(text("UPDATE pos_sales SET payment_mode = 'subscription' WHERE payment_mode IS NULL"))
+
+        if "sku" not in table_columns["products"]:
+            conn.execute(text("ALTER TABLE products ADD COLUMN sku VARCHAR(120)"))
+            conn.execute(text("UPDATE products SET sku = UPPER(COALESCE(slug, name, 'PROD')) WHERE sku IS NULL"))
+        if "barcode" not in table_columns["products"]:
+            conn.execute(text("ALTER TABLE products ADD COLUMN barcode VARCHAR(120)"))
+            conn.execute(text("UPDATE products SET barcode = COALESCE(sku, UPPER(COALESCE(slug, name, 'PROD'))) WHERE barcode IS NULL"))
+        if "barcode_type" not in table_columns["products"]:
+            conn.execute(text("ALTER TABLE products ADD COLUMN barcode_type VARCHAR(20)"))
+            conn.execute(text("UPDATE products SET barcode_type = 'code128' WHERE barcode_type IS NULL"))
+        if "external_barcode" not in table_columns["products"]:
+            conn.execute(text("ALTER TABLE products ADD COLUMN external_barcode BOOLEAN"))
+            conn.execute(text("UPDATE products SET external_barcode = 0 WHERE external_barcode IS NULL"))
+        if "auto_generated" not in table_columns["products"]:
+            conn.execute(text("ALTER TABLE products ADD COLUMN auto_generated BOOLEAN"))
+            conn.execute(text("UPDATE products SET auto_generated = 1 WHERE auto_generated IS NULL"))
