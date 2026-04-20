@@ -1329,3 +1329,33 @@ Se cerraron tres módulos finales para pruebas operativas:
 - Rutas productivas de preview actualizadas:
   - `/store/:tenantSlug/webapp-preview` (sin depender de `/templates/*`).
 - Demos siguen en `/internal/demo/*` y fuera del source of truth productivo.
+
+## Actualizacion ejecucion 65 (Wizard premium por sector/canal con modelo comercial + SEO/AEO)
+- Decision tecnica: se corrige el wizard actual (no se crea `Wizard v2`) porque el flujo ya estaba desacoplado de rutas demo productivas.
+- El wizard mantiene y explicita los 9 pasos funcionales aprobados:
+  1. identidad/marca
+  2. giro/sector
+  3. objetivo comercial
+  4. estilo visual
+  5. landing
+  6. ecommerce publico
+  7. ecommerce distribuidores
+  8. webapp/POS
+  9. revision final
+- Template Registry premium actualizado con campos:
+  - `template_id`, `channel`, `sector`, `style`, `business_model`, `status`, `component_key`, `version`, `seo_profile`, `aeo_profile`, `supports_banners`, `supports_brand_overrides`.
+- Resolver real por canal ahora considera:
+  - tenant/brand, `channel`, `sector`, `style`, `business_model`, `business_goal`.
+- Plantillas persisten por tenant en source of truth real:
+  - `landing_template`
+  - `public_store_template`
+  - `distributor_store_template`
+  - `webapp_template`
+- Formato oficial de `template_id`:
+  - `{sector}_{channel}_{style}_{business_model}_v1`
+  - ejemplo: `alimentos_public_store_impacto_commission_based_v1`.
+- Landing ahora exige base SEO/AEO antes de aprobar:
+  - `seo_title`, `seo_description`, `faq_items`, `quick_answer_blocks`, `schema_type`.
+- Separacion demo vs produccion confirmada:
+  - demo interna: `/internal/demo/*`
+  - flujo productivo: `/store/:tenantSlug*` y wizard de setup.

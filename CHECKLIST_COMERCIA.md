@@ -959,3 +959,17 @@
 - [x] Flujo productivo separado de demo (`/internal/demo/*`)
 - [x] Validacion ejecutada: `cd frontend && npm run build`
 - [x] Validacion ejecutada: `cd backend && .\\.venv\\Scripts\\python.exe -m py_compile app/api/v1/endpoints/brand_setup.py app/schemas/brand_setup.py`
+
+## Entregables ejecucion 65 (Wizard premium por canal/sector con modelo comercial y SEO/AEO)
+- [x] Decision tecnica documentada: se corrige wizard actual (sin Wizard v2)
+- [x] Pasos funcionales preservados en 9 etapas aprobadas
+- [x] `template_id` oficial extendido con `business_model`
+- [x] Template Registry ampliado con `business_model`, `seo_profile`, `aeo_profile`
+- [x] Resolver real actualizado para entrada tenant/brand + channel/sector/style/business_model/business_goal
+- [x] Copy comercial con y sin comision reflejado en experiencia por canal
+- [x] Landing draft extendida con campos SEO/AEO obligatorios
+- [x] Validacion de aprobacion landing exige SEO title/description + FAQ + bloques de respuesta
+- [x] Persistencia por tenant de `landing/public/distributor/webapp_template` mantenida como source of truth
+- [x] QA de 5 escenarios ejecutada (restaurante con/sin comision, ropa, barberia, maquinaria/b2b)
+- [x] Validacion ejecutada: `cd frontend && npm run build`
+- [x] Validacion ejecutada: `cd backend && .\\.venv\\Scripts\\python.exe -m py_compile app/api/v1/endpoints/brand_setup.py app/schemas/brand_setup.py app/services/brand_setup_generator.py`

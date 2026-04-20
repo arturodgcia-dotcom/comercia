@@ -1530,3 +1530,54 @@ Capas aplicadas:
 - `/store/:tenantSlug/distribuidores`
 - `/store/:tenantSlug/webapp-preview`
 - demo queda aislada en `/internal/demo/*`.
+
+## Ejecucion 65: arquitectura wizard premium con variante comercial y SEO/AEO
+Objetivo:
+- conservar onboarding de negocio y corregir el motor para resolver plantillas premium por sector/canal/modelo comercial, con landing preparada para SEO/AEO.
+
+Arquitectura aplicada:
+1) Decision tecnica
+- se corrige el wizard actual (no v2), porque la base de workflow ya era recuperable y estable.
+
+2) Pasos funcionales preservados/explicitados (9)
+- `brand_identity`
+- `sector_selection`
+- `business_goal`
+- `visual_style`
+- `landing_setup`
+- `ecommerce_setup`
+- `distributors_setup`
+- `pos_setup`
+- `final_review`
+
+3) Template Registry extendido
+- entidad `TemplateRegistryEntry` agrega:
+  - `business_model`
+  - `seo_profile`
+  - `aeo_profile`
+- formato `template_id`:
+  - `{sector}_{channel}_{style}_{business_model}_v1`.
+
+4) Resolver real por canal/modelo
+- entrada efectiva:
+  - tenant/brand payload
+  - `channel`, `sector`, `style`, `business_model`, `business_goal`
+- salida efectiva:
+  - `template_id`, `component_key`, banners sectoriales, overrides de marca y perfiles SEO/AEO.
+
+5) Source of truth por tenant
+- persistencia en `StorefrontConfig.config_json`:
+  - `landing_template`
+  - `public_store_template`
+  - `distributor_store_template`
+  - `webapp_template`
+  - `channel_templates` como snapshot coherente.
+
+6) Landing SEO/AEO obligatoria en wizard
+- `BrandLandingDraft` extiende:
+  - `seo_title`
+  - `seo_description`
+  - `faq_items`
+  - `quick_answer_blocks`
+  - `schema_type`
+- el paso de landing exige estos campos para aprobar.

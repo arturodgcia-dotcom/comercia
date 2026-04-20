@@ -819,3 +819,13 @@ Limpieza aplicada:
 | Overrides por marca | Inicial funcional | color/logo/hero CTA aplicados desde branding de tenant |
 | Persistencia `webapp_template` | Inicial funcional | backend + frontend + wizard |
 | Preview webapp productivo | Inicial funcional | `/store/:tenantSlug/webapp-preview` |
+
+## Actualizacion ejecucion 65 (Wizard premium con modelo comercial y SEO/AEO)
+| Modulo | Estado | Notas |
+|---|---|---|
+| Wizard 9 pasos funcionales | Inicial funcional | identidad, giro, objetivo, estilo, landing, publico, distribuidores, webapp, revision |
+| Resolver por modelo comercial | Inicial funcional | `fixed_subscription` y `commission_based` afectan `template_id` y copy comercial |
+| Registry con SEO/AEO | Inicial funcional | perfiles `seo_profile` y `aeo_profile` por sector |
+| Landing SEO/AEO obligatoria | Inicial funcional | `seo_title`, `seo_description`, FAQ, quick answers, schema |
+| Persistencia por canal (SoT) | Inicial funcional | landing/public/distributor/webapp templates por tenant |
+| Demo vs produccion | Inicial funcional | demo solo en `/internal/demo/*`; flujo productivo sin dependencia demo |
