@@ -54,7 +54,8 @@ import { AutomationAdminPage } from "../pages/AutomationAdminPage";
 import { ReinpiaDashboardPage } from "../pages/ReinpiaDashboardPage";
 import { ReinpiaDiagnosticsPage } from "../pages/ReinpiaDiagnosticsPage";
 import { ReinpiaBrandsNewPage } from "../pages/ReinpiaBrandsNewPage";
-import { BrandSetupWizard } from "../pages/BrandSetupWizard";
+import { BrandSetupWizardV2 } from "../pages/BrandSetupWizardV2";
+import { BrandSetupWizardLegacy } from "../pages/BrandSetupWizardLegacy";
 import { ReinpiaCommissionAgentsPage } from "../pages/ReinpiaCommissionAgentsPage";
 import { ReinpiaOperationsPage } from "../pages/ReinpiaOperationsPage";
 import { ReinpiaPaymentsPage } from "../pages/ReinpiaPaymentsPage";
@@ -196,7 +197,8 @@ export function AppRouter() {
             <Route element={<RoleRoute allowedRoles={["reinpia_admin", "super_admin"]} />}>
               <Route path="reinpia/dashboard" element={<ReinpiaDashboardPage />} />
               <Route path="reinpia/brands/new" element={<ReinpiaBrandsNewPage />} />
-              <Route path="reinpia/brands/:tenantId/setup" element={<BrandSetupWizard />} />
+              <Route path="reinpia/brands/:tenantId/setup" element={<BrandSetupWizardV2 />} />
+              <Route path="reinpia/brands/:tenantId/setup-legacy" element={<BrandSetupWizardLegacy />} />
               <Route path="reinpia/tenants" element={<ReinpiaTenantsPage />} />
               <Route path="reinpia/users" element={<UsersAdminPage />} />
               <Route path="reinpia/roles" element={<ReinpiaRolesPermissionsPage />} />
