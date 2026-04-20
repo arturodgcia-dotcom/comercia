@@ -89,6 +89,7 @@ import { ServicesAdminPage } from "../pages/ServicesAdminPage";
 import { ResolvedStorefrontDistributorsPage } from "../pages/ResolvedStorefrontDistributorsPage";
 import { ResolvedStorefrontLandingPage } from "../pages/ResolvedStorefrontLandingPage";
 import { ResolvedStorefrontPublicPage } from "../pages/ResolvedStorefrontPublicPage";
+import { ResolvedStorefrontWebappPage } from "../pages/ResolvedStorefrontWebappPage";
 import { StoreServicesPage } from "../pages/StoreServicesPage";
 import { StripeSettingsPage } from "../pages/StripeSettingsPage";
 import { TenantReportsOverviewPage } from "../pages/TenantReportsOverviewPage";
@@ -125,6 +126,7 @@ export function AppRouter() {
       <Route path="/store/:tenantSlug/service/:serviceId" element={<ServiceDetailPage />} />
       <Route path="/store/:tenantSlug/distribuidores" element={<ResolvedStorefrontDistributorsPage />} />
       <Route path="/store/:tenantSlug/distribuidores/registro" element={<DistributorRegistrationPage />} />
+      <Route path="/store/:tenantSlug/webapp-preview" element={<ResolvedStorefrontWebappPage />} />
 
       {/* -- Demo interna (vista de muestra no productiva) -- */}
       <Route path="/internal/demo" element={<InternalDemoHubPage />} />
@@ -132,12 +134,6 @@ export function AppRouter() {
       <Route path="/internal/demo/tienda-publica" element={<StorePublicTemplate />} />
       <Route path="/internal/demo/distribuidores" element={<StoreDistributorsTemplate />} />
       <Route path="/internal/demo/pos" element={<StorePOSTemplate />} />
-
-      {/* -- Compatibilidad de rutas demo legacy -- */}
-      <Route path="/templates/familia" element={<Navigate to="/internal/demo/familia" replace />} />
-      <Route path="/templates/tienda-publica" element={<Navigate to="/internal/demo/tienda-publica" replace />} />
-      <Route path="/templates/distribuidores" element={<Navigate to="/internal/demo/distribuidores" replace />} />
-      <Route path="/templates/pos" element={<Navigate to="/internal/demo/pos" replace />} />
 
       <Route element={<ProtectedRoute />}>
         <Route path="/" element={<AdminLayout />}>

@@ -213,6 +213,7 @@ export interface BrandSetupWorkflow {
   landing_template?: string | null;
   public_store_template?: string | null;
   distributor_store_template?: string | null;
+  webapp_template?: string | null;
   billing_model?: "fixed_subscription" | "commission_based" | string | null;
   commission_percentage?: number | null;
   commission_enabled?: boolean | null;
@@ -294,6 +295,9 @@ export interface BrandIdentityData {
   brand_name: string;
   business_description: string;
   business_type: "products" | "services" | "mixed" | string;
+  sector?: string | null;
+  visual_style?: "impacto" | "editorial" | "minimal" | string | null;
+  business_goal?: string | null;
   has_existing_landing: boolean;
   existing_landing_url?: string | null;
   primary_color: string;

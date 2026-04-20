@@ -82,9 +82,10 @@ DEFAULT_CHANNEL_SETTINGS = {
 }
 
 OFFICIAL_CHANNEL_TEMPLATE_DEFAULTS = {
-    "landing_template": "approved_landing_v1",
-    "public_store_template": "approved_public_v1",
-    "distributor_store_template": "approved_b2b_v1",
+    "landing_template": "retail_landing_impacto_v1",
+    "public_store_template": "retail_public_store_impacto_v1",
+    "distributor_store_template": "retail_distributor_store_impacto_v1",
+    "webapp_template": "retail_webapp_impacto_v1",
 }
 
 DEFAULT_BILLING_CONFIG = {
@@ -134,6 +135,7 @@ def get_brand_setup_workflow(tenant_id: int, db: Session = Depends(get_db)) -> B
         landing_template=channel_templates["landing_template"],
         public_store_template=channel_templates["public_store_template"],
         distributor_store_template=channel_templates["distributor_store_template"],
+        webapp_template=channel_templates["webapp_template"],
         billing_model=billing_config["billing_model"],
         commission_percentage=float(Decimal(str(billing_config["commission_percentage"]))),
         commission_enabled=bool(billing_config["commission_enabled"]),
@@ -241,6 +243,8 @@ def update_brand_setup_workflow(
         _set_channel_regeneration(raw_payload, "public")
     if "distributor_store_template" in update_data:
         _set_channel_regeneration(raw_payload, "distributors")
+    if "webapp_template" in update_data:
+        workflow["webapp_template"] = str(update_data["webapp_template"] or channel_templates["webapp_template"])
     if "pos_setup_data" in update_data and update_data["pos_setup_data"] is not None:
         pos_setup_data: BrandPosSetupData = (
             update_data["pos_setup_data"]
@@ -254,6 +258,7 @@ def update_brand_setup_workflow(
         existing_steps = [BrandSetupStepState(**step) for step in workflow.get("steps", _build_default_steps(flow_type))]
         workflow["steps"] = [step.model_dump() for step in _normalize_steps(existing_steps, flow_type=flow_type)]
     workflow["current_step"] = _next_step_code([BrandSetupStepState(**step) for step in workflow["steps"]])
+    channel_templates = _resolve_channel_templates(raw_payload, workflow)
     _apply_channel_templates(raw_payload, channel_templates)
     if not billing_updates:
         _apply_billing_config(raw_payload, billing_config)
@@ -724,11 +729,50 @@ def _sync_mercadopago_settings(db: Session, *, tenant_id: int, settings: dict) -
 
 
 def _resolve_channel_templates(payload: dict, workflow: dict | None = None) -> dict[str, str]:
-    # Se conservan los parametros para compatibilidad de firma y futuras extensiones.
+    identity = payload.get("identity_data", {})
+    if not isinstance(identity, dict):
+        identity = {}
+    sector_raw = str(identity.get("sector") or "").strip().lower()
+    style_raw = str(identity.get("visual_style") or "").strip().lower()
+    business_type = str(identity.get("business_type") or "").strip().lower()
+
+    sector_map = {
+        "alimentos": "alimentos",
+        "restaurante": "alimentos",
+        "comida": "alimentos",
+        "ropa": "ropa",
+        "moda": "ropa",
+        "servicios": "servicios",
+        "barberia": "servicios",
+        "maquinaria": "maquinaria",
+        "industrial": "maquinaria",
+        "salud": "salud",
+        "belleza": "belleza",
+        "educacion": "educacion",
+        "retail": "retail",
+        "distribuidores": "distribuidores",
+        "b2b": "distribuidores",
+    }
+    style_map = {"impacto": "impacto", "editorial": "editorial", "minimal": "minimal"}
+
+    if sector_raw in sector_map:
+        sector = sector_map[sector_raw]
+    elif business_type == "services":
+        sector = "servicios"
+    elif business_type == "products":
+        sector = "retail"
+    else:
+        sector = "distribuidores"
+    style = style_map.get(style_raw, "impacto")
+
+    def _template(channel: str) -> str:
+        return f"{sector}_{channel}_{style}_v1"
+
     return {
-        "landing_template": OFFICIAL_CHANNEL_TEMPLATE_DEFAULTS["landing_template"],
-        "public_store_template": OFFICIAL_CHANNEL_TEMPLATE_DEFAULTS["public_store_template"],
-        "distributor_store_template": OFFICIAL_CHANNEL_TEMPLATE_DEFAULTS["distributor_store_template"],
+        "landing_template": _template("landing"),
+        "public_store_template": _template("public_store"),
+        "distributor_store_template": _template("distributor_store"),
+        "webapp_template": _template("webapp"),
     }
 
 
@@ -736,13 +780,16 @@ def _apply_channel_templates(payload: dict, templates: dict[str, str]) -> None:
     payload["landing_template"] = templates["landing_template"]
     payload["public_store_template"] = templates["public_store_template"]
     payload["distributor_store_template"] = templates["distributor_store_template"]
+    payload["webapp_template"] = templates["webapp_template"]
     workflow = payload.setdefault("workflow", {})
     if isinstance(workflow, dict):
         workflow["selected_template"] = templates["landing_template"]
+        workflow["webapp_template"] = templates["webapp_template"]
     payload["channel_templates"] = {
         "landing_template": templates["landing_template"],
         "public_store_template": templates["public_store_template"],
         "distributor_store_template": templates["distributor_store_template"],
+        "webapp_template": templates["webapp_template"],
     }
 
 
@@ -943,7 +990,7 @@ def _build_channel_routes(tenant_slug: str) -> BrandChannelRoutesRead:
         public_preview_url=f"{public}?preview=1",
         distributors_url=distributors,
         distributors_preview_url=f"{distributors}?preview=1",
-        pos_preview_url=f"/templates/pos?tenant_slug={safe_slug}",
+        pos_preview_url=f"/store/{safe_slug}/webapp-preview",
     )
 
 

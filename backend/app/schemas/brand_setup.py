@@ -26,6 +26,9 @@ class BrandIdentityData(BaseModel):
     brand_name: str
     business_description: str
     business_type: str
+    sector: str | None = None
+    visual_style: str | None = None
+    business_goal: str | None = None
     has_existing_landing: bool = False
     existing_landing_url: str | None = None
     primary_color: str
@@ -158,6 +161,7 @@ class BrandSetupWorkflowRead(BaseModel):
     landing_template: str | None = None
     public_store_template: str | None = None
     distributor_store_template: str | None = None
+    webapp_template: str | None = None
     billing_model: str | None = None
     commission_percentage: float | None = None
     commission_enabled: bool | None = None
@@ -191,6 +195,7 @@ class BrandSetupWorkflowUpdate(BaseModel):
     landing_template: str | None = None
     public_store_template: str | None = None
     distributor_store_template: str | None = None
+    webapp_template: str | None = None
     billing_model: str | None = None
     commission_percentage: float | None = None
     commission_enabled: bool | None = None

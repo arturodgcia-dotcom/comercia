@@ -18,6 +18,6 @@ export function buildBrandChannelUrls(tenantSlug: string): BrandChannelUrls {
     publicPreviewUrl: `/store/${safeSlug}?preview=1`,
     distributorsUrl: `/store/${safeSlug}/distribuidores`,
     distributorsPreviewUrl: `/store/${safeSlug}/distribuidores?preview=1`,
-    posPreviewUrl: `/internal/demo/pos?tenant_slug=${encodeURIComponent(safeSlug)}`,
+    posPreviewUrl: `/store/${safeSlug}/webapp-preview`,
   };
 }

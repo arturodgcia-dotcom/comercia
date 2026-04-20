@@ -184,6 +184,7 @@ function BrandChannelShell({ channel }: { channel: ChannelKey }) {
   const landingTemplateKey = channelTemplates.landing_template;
   const publicTemplateKey = channelTemplates.public_store_template;
   const distributorTemplateKey = channelTemplates.distributor_store_template;
+  const webappTemplateKey = channelTemplates.webapp_template;
 
   const landingStep = getStep(workflow, "landing_setup");
   const ecommerceStep = getStep(workflow, "ecommerce_setup");
@@ -415,6 +416,7 @@ function BrandChannelShell({ channel }: { channel: ChannelKey }) {
               value={mercadoPago?.mercadopago_enabled ? "Configurado" : "Pendiente"}
             />
             <ChannelStateLabel label="NFC habilitado" value={channelSettings?.nfc_enabled ? "Si" : "No"} />
+            <ChannelStateLabel label="Plantilla webapp" value={webappTemplateKey} />
             <ChannelStateLabel label="Ruta POS" value={`${window.location.origin}${posUrl}`} />
             <ChannelStateLabel
               label="Ultima actualizacion de setup inicial"

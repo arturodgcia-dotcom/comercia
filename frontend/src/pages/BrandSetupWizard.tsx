@@ -7,6 +7,7 @@ import {
   OFFICIAL_DISTRIBUTOR_STORE_TEMPLATE,
   OFFICIAL_LANDING_TEMPLATE,
   OFFICIAL_PUBLIC_STORE_TEMPLATE,
+  OFFICIAL_WEBAPP_TEMPLATE,
 } from "../branding/officialChannelTemplates";
 import {
   BrandChannelSettings,
@@ -46,6 +47,9 @@ const defaultIdentity: BrandIdentityData = {
   brand_name: "",
   business_description: "",
   business_type: "mixed",
+  sector: "retail",
+  visual_style: "impacto",
+  business_goal: "conversion",
   has_existing_landing: false,
   existing_landing_url: "",
   primary_color: "#0447A6",
@@ -121,6 +125,7 @@ const OFFICIAL_CHANNEL_TEMPLATE_PAYLOAD = {
   landing_template: OFFICIAL_LANDING_TEMPLATE,
   public_store_template: OFFICIAL_PUBLIC_STORE_TEMPLATE,
   distributor_store_template: OFFICIAL_DISTRIBUTOR_STORE_TEMPLATE,
+  webapp_template: OFFICIAL_WEBAPP_TEMPLATE,
 } as const;
 
 function isStepCode(value: string): value is StepCode {
@@ -847,6 +852,37 @@ export function BrandSetupWizard() {
               <option value="mixed">Mixto</option>
             </select>
           </label>
+          <label>
+            Sector comercial
+            <select value={identity.sector ?? "retail"} onChange={(event) => setIdentity((prev) => ({ ...prev, sector: event.target.value }))}>
+              <option value="alimentos">Alimentos</option>
+              <option value="ropa">Ropa</option>
+              <option value="servicios">Servicios</option>
+              <option value="maquinaria">Maquinaria</option>
+              <option value="salud">Salud</option>
+              <option value="belleza">Belleza</option>
+              <option value="educacion">Educacion</option>
+              <option value="retail">Retail</option>
+              <option value="distribuidores">Distribuidores</option>
+            </select>
+          </label>
+          <label>
+            Estilo visual
+            <select value={identity.visual_style ?? "impacto"} onChange={(event) => setIdentity((prev) => ({ ...prev, visual_style: event.target.value }))}>
+              <option value="impacto">Impacto comercial</option>
+              <option value="editorial">Editorial premium</option>
+              <option value="minimal">Minimal ejecutivo</option>
+            </select>
+          </label>
+          <label>
+            Objetivo principal
+            <select value={identity.business_goal ?? "conversion"} onChange={(event) => setIdentity((prev) => ({ ...prev, business_goal: event.target.value }))}>
+              <option value="conversion">Conversion</option>
+              <option value="ticket_promedio">Subir ticket promedio</option>
+              <option value="fidelizacion">Fidelizacion</option>
+              <option value="expansion_b2b">Expansion B2B</option>
+            </select>
+          </label>
 
           <p>Ya tienes landing publicada?</p>
           <label className="checkbox">
@@ -1262,6 +1298,7 @@ export function BrandSetupWizard() {
           <p className="muted">
             Sucursales plan: {metricLabelValue(planMetrics, "branches_max")}
             {" | "}Ruta POS preview: {toAbsoluteUrl(channelRoutes.pos_preview_url)}
+            {" | "}Plantilla webapp: {workflow.webapp_template ?? OFFICIAL_WEBAPP_TEMPLATE}
           </p>
           <label className="checkbox">
             <input type="checkbox" checked={posSetupData.pos_enabled} onChange={(event) => setPosSetupData((prev) => ({ ...prev, pos_enabled: event.target.checked }))} />
@@ -1336,11 +1373,12 @@ export function BrandSetupWizard() {
           <p>
             Plantillas activas: landing={workflow.landing_template ?? OFFICIAL_LANDING_TEMPLATE}, publico=
             {workflow.public_store_template ?? OFFICIAL_PUBLIC_STORE_TEMPLATE}, distribuidores=
-            {workflow.distributor_store_template ?? OFFICIAL_DISTRIBUTOR_STORE_TEMPLATE}
+            {workflow.distributor_store_template ?? OFFICIAL_DISTRIBUTOR_STORE_TEMPLATE}, webapp=
+            {workflow.webapp_template ?? OFFICIAL_WEBAPP_TEMPLATE}
           </p>
           <p>
             Rutas: landing={toAbsoluteUrl(channelRoutes.landing_url)} | publico={toAbsoluteUrl(channelRoutes.public_url)} | distribuidores=
-            {toAbsoluteUrl(channelRoutes.distributors_url)}
+            {toAbsoluteUrl(channelRoutes.distributors_url)} | webapp={toAbsoluteUrl(channelRoutes.pos_preview_url)}
           </p>
           <ul className="marketing-list">
             {steps.map((row) => {
@@ -1368,6 +1406,9 @@ export function BrandSetupWizard() {
             </a>
             <a className="button button-outline" href={toAbsoluteUrl(channelRoutes.distributors_url)} target="_blank" rel="noreferrer">
               Ver ecommerce distribuidores
+            </a>
+            <a className="button button-outline" href={toAbsoluteUrl(channelRoutes.pos_preview_url)} target="_blank" rel="noreferrer">
+              Ver webapp
             </a>
             <button className="button" type="button" onClick={publishBrand} disabled={saving || hasBlockingIssues}>
               Publicar marca

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+ï»¿import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useAuth } from "../app/AuthContext";
 import { PageHeader } from "../components/PageHeader";
@@ -10,7 +10,7 @@ type ChannelKey = "landing" | "public" | "distributors" | "pos";
 
 const CHANNEL_LABELS: Record<ChannelKey, string> = {
   landing: "Landing",
-  public: "Ecommerce público",
+  public: "Ecommerce pÃºblico",
   distributors: "Ecommerce distribuidores",
   pos: "WebApp / POS",
 };
@@ -31,10 +31,10 @@ function resolveRoute(workflow: BrandSetupWorkflow | null, slug: string, channel
 
 function resolveTemplate(workflow: BrandSetupWorkflow | null, channel: ChannelKey): string {
   if (!workflow) return "Sin plantilla";
-  if (channel === "landing") return workflow.landing_template ?? "approved_landing_v1";
-  if (channel === "public") return workflow.public_store_template ?? "approved_public_v1";
-  if (channel === "distributors") return workflow.distributor_store_template ?? "approved_b2b_v1";
-  return "pos_webapp_operativo_v1";
+  if (channel === "landing") return workflow.landing_template ?? "retail_landing_impacto_v1";
+  if (channel === "public") return workflow.public_store_template ?? "retail_public_store_impacto_v1";
+  if (channel === "distributors") return workflow.distributor_store_template ?? "retail_distributor_store_impacto_v1";
+  return workflow.webapp_template ?? "retail_webapp_impacto_v1";
 }
 
 function resolveUpdated(workflow: BrandSetupWorkflow | null, channel: ChannelKey): string {
@@ -63,7 +63,7 @@ function resolveState(workflow: BrandSetupWorkflow | null, channel: ChannelKey):
   };
   const step = workflow.steps.find((item) => item.code === stepCode[channel]);
   if (step?.approved) return "creado";
-  if (step?.status === "in_progress") return "en configuración";
+  if (step?.status === "in_progress") return "en configuraciÃ³n";
   return "pendiente";
 }
 
@@ -134,7 +134,7 @@ export function ReinpiaCreatedChannelDetailPage() {
   if (!channelValid) {
     return (
       <section>
-        <PageHeader title="Detalle de canal" subtitle="Canal no vÃ¡lido." />
+        <PageHeader title="Detalle de canal" subtitle="Canal no vÃƒÂ¡lido." />
         <Link className="button" to="/reinpia/canales-creados">
           Volver a canales creados
         </Link>
@@ -179,11 +179,11 @@ export function ReinpiaCreatedChannelDetailPage() {
               <p>{summary.route}</p>
             </article>
             <article className="card">
-              <h4>País / idioma / moneda</h4>
+              <h4>PaÃ­s / idioma / moneda</h4>
               <p>{summary.locale}</p>
             </article>
             <article className="card">
-              <h4>Última regeneración/configuración</h4>
+              <h4>Ãšltima regeneraciÃ³n/configuraciÃ³n</h4>
               <p>{summary.updatedAt}</p>
             </article>
             <article className="card">
@@ -213,5 +213,7 @@ export function ReinpiaCreatedChannelDetailPage() {
     </section>
   );
 }
+
+
 
 

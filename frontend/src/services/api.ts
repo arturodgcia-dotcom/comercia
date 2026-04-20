@@ -311,6 +311,7 @@ export const api = {
       landing_template?: string;
       public_store_template?: string;
       distributor_store_template?: string;
+      webapp_template?: string;
       billing_model?: string;
       commission_percentage?: number;
       commission_enabled?: boolean;
