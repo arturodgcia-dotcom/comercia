@@ -327,6 +327,11 @@ export interface BrandLandingDraft {
   cta_secondary: string;
   sections: BrandLandingSection[];
   contact_cta: string;
+  seo_title: string;
+  seo_description: string;
+  faq_items: string[];
+  quick_answer_blocks: string[];
+  schema_type: string;
 }
 
 export interface BrandEcommerceData {

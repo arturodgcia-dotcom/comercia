@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { resolveLandingTemplate } from "../branding/channelTemplateResolver";
+import { resolveLandingTemplateRuntime } from "../branding/channelTemplateResolver";
 import {
   OFFICIAL_CHANNEL_TEMPLATE_DEFAULTS,
   resolveOfficialChannelTemplatesFromConfig,
@@ -34,7 +34,25 @@ export function ResolvedStorefrontLandingPage() {
       .finally(() => setLoading(false));
   }, [tenantSlug]);
 
+  const runtime = resolveLandingTemplateRuntime(templateId, payload);
+  const brandName = payload?.tenant.name ?? "Marca";
+  const title = runtime.resolved.seo_profile.title_template.replace("{brandName}", brandName);
+  const description = runtime.resolved.seo_profile.meta_description_template.replace("{brandName}", brandName);
+
+  useEffect(() => {
+    if (loading) return;
+    document.title = title;
+    let tag = document.querySelector("meta[name='description']");
+    if (!tag) {
+      tag = document.createElement("meta");
+      tag.setAttribute("name", "description");
+      document.head.appendChild(tag);
+    }
+    tag.setAttribute("content", description);
+  }, [description, loading, title]);
+
   if (loading) return <p>Cargando landing oficial...</p>;
-  const ResolvedTemplate = resolveLandingTemplate(templateId, payload);
+
+  const ResolvedTemplate = runtime.component;
   return <ResolvedTemplate />;
 }

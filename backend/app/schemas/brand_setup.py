@@ -58,6 +58,11 @@ class BrandLandingDraft(BaseModel):
     cta_secondary: str
     sections: list[BrandLandingSection] = Field(default_factory=list)
     contact_cta: str
+    seo_title: str = ""
+    seo_description: str = ""
+    faq_items: list[str] = Field(default_factory=list)
+    quick_answer_blocks: list[str] = Field(default_factory=list)
+    schema_type: str = "LocalBusiness"
 
 
 class BrandEcommerceData(BaseModel):

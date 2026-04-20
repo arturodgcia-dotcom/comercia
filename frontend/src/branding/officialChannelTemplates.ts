@@ -1,7 +1,7 @@
-export const OFFICIAL_LANDING_TEMPLATE = "retail_landing_impacto_v1";
-export const OFFICIAL_PUBLIC_STORE_TEMPLATE = "retail_public_store_impacto_v1";
-export const OFFICIAL_DISTRIBUTOR_STORE_TEMPLATE = "retail_distributor_store_impacto_v1";
-export const OFFICIAL_WEBAPP_TEMPLATE = "retail_webapp_impacto_v1";
+export const OFFICIAL_LANDING_TEMPLATE = "retail_landing_impacto_fixed_subscription_v1";
+export const OFFICIAL_PUBLIC_STORE_TEMPLATE = "retail_public_store_impacto_fixed_subscription_v1";
+export const OFFICIAL_DISTRIBUTOR_STORE_TEMPLATE = "retail_distributor_store_impacto_fixed_subscription_v1";
+export const OFFICIAL_WEBAPP_TEMPLATE = "retail_webapp_impacto_fixed_subscription_v1";
 
 export type OfficialChannelTemplateKey =
   | "landing_template"

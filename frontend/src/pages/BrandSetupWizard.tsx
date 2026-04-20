@@ -28,6 +28,9 @@ import { buildBrandChannelUrls } from "../utils/brandChannelUrls";
 
 type StepCode =
   | "brand_identity"
+  | "sector_selection"
+  | "business_goal"
+  | "visual_style"
   | "landing_setup"
   | "ecommerce_setup"
   | "distributors_setup"
@@ -36,12 +39,17 @@ type StepCode =
 
 const STEP_LABELS: Record<StepCode, string> = {
   brand_identity: "Identidad de marca",
+  sector_selection: "Giro / sector",
+  business_goal: "Objetivo comercial",
+  visual_style: "Estilo visual",
   landing_setup: "Landing",
   ecommerce_setup: "Ecommerce publico",
   distributors_setup: "Ecommerce distribuidores",
   pos_setup: "POS / WebApp",
   final_review: "Revision y publicacion",
 };
+
+const IDENTITY_FLOW_STEPS: StepCode[] = ["brand_identity", "sector_selection", "business_goal", "visual_style"];
 
 const defaultIdentity: BrandIdentityData = {
   brand_name: "",
@@ -78,6 +86,15 @@ const defaultLanding: BrandLandingDraft = {
     { title: "Bloque 3", body: "" },
   ],
   contact_cta: "",
+  seo_title: "",
+  seo_description: "",
+  faq_items: [
+    "Como ayuda esta solucion a crecer ventas?",
+    "Que incluye el canal ecommerce publico?",
+    "Como funciona el canal distribuidores?",
+  ],
+  quick_answer_blocks: ["Propuesta de valor", "Beneficio principal", "CTA inmediato"],
+  schema_type: "LocalBusiness",
 };
 
 const defaultEcommerce: BrandEcommerceData = {
@@ -129,7 +146,17 @@ const OFFICIAL_CHANNEL_TEMPLATE_PAYLOAD = {
 } as const;
 
 function isStepCode(value: string): value is StepCode {
-  return ["brand_identity", "landing_setup", "ecommerce_setup", "distributors_setup", "pos_setup", "final_review"].includes(value);
+  return [
+    "brand_identity",
+    "sector_selection",
+    "business_goal",
+    "visual_style",
+    "landing_setup",
+    "ecommerce_setup",
+    "distributors_setup",
+    "pos_setup",
+    "final_review",
+  ].includes(value);
 }
 
 function toUiError(error: unknown, fallback: string): string {
@@ -522,20 +549,35 @@ export function BrandSetupWizard() {
     }
   };
 
-  const saveIdentity = async (event: FormEvent) => {
+  const saveIdentityStep = async (event: FormEvent) => {
     event.preventDefault();
     if (!token || !workflow) return;
 
-    if (!identity.brand_name.trim() || !identity.business_description.trim()) {
-      setError("Completa nombre y descripcion de la marca para continuar.");
+    const currentIdentityStep = IDENTITY_FLOW_STEPS.includes(selectedStep) ? selectedStep : "brand_identity";
+    if (currentIdentityStep === "brand_identity") {
+      if (!identity.brand_name.trim() || !identity.business_description.trim()) {
+        setError("Completa nombre y descripcion de la marca para continuar.");
+        return;
+      }
+      if (!generated.prompt_master.trim()) {
+        setError("Escribe el prompt maestro del negocio para continuar.");
+        return;
+      }
+      if (identity.has_existing_landing && !identity.existing_landing_url?.trim()) {
+        setError("Si indicas landing existente, debes capturar su URL.");
+        return;
+      }
+    }
+    if (currentIdentityStep === "sector_selection" && !String(identity.sector ?? "").trim()) {
+      setError("Selecciona un sector para continuar.");
       return;
     }
-    if (!generated.prompt_master.trim()) {
-      setError("Escribe el prompt maestro del negocio para continuar.");
+    if (currentIdentityStep === "business_goal" && !String(identity.business_goal ?? "").trim()) {
+      setError("Selecciona el objetivo comercial para continuar.");
       return;
     }
-    if (identity.has_existing_landing && !identity.existing_landing_url?.trim()) {
-      setError("Si indicas landing existente, debes capturar su URL.");
+    if (currentIdentityStep === "visual_style" && !String(identity.visual_style ?? "").trim()) {
+      setError("Selecciona el estilo visual para continuar.");
       return;
     }
 
@@ -551,19 +593,19 @@ export function BrandSetupWizard() {
         ...OFFICIAL_CHANNEL_TEMPLATE_PAYLOAD,
       });
       setWorkflow(updated);
-      setMessage("Paso 1 guardado correctamente.");
+      setMessage(`Paso ${STEP_LABELS[currentIdentityStep]} guardado correctamente.`);
       try {
-        const approved = await api.approveBrandSetupStep(token, workflow.tenant_id, "brand_identity");
+        const approved = await api.approveBrandSetupStep(token, workflow.tenant_id, currentIdentityStep);
         setWorkflow(approved);
         if (isStepCode(approved.current_step)) {
           setSelectedStep(approved.current_step);
         }
-        setMessage("Paso 1 aprobado. Continuamos con la configuracion comercial.");
+        setMessage(`Paso ${STEP_LABELS[currentIdentityStep]} aprobado. Continuamos con el siguiente.`);
       } catch (approveError) {
-        setError(toUiError(approveError, "Los datos del paso 1 se guardaron, pero no se pudo aprobar automaticamente."));
+        setError(toUiError(approveError, `Los datos de ${STEP_LABELS[currentIdentityStep]} se guardaron, pero no se pudo aprobar automaticamente.`));
       }
     } catch (err) {
-      setError(toUiError(err, "No fue posible guardar el paso 1 del wizard."));
+      setError(toUiError(err, `No fue posible guardar el paso ${STEP_LABELS[currentIdentityStep]}.`));
     } finally {
       setSaving(false);
     }
@@ -601,6 +643,18 @@ export function BrandSetupWizard() {
     if (!token || !workflow) return;
     if (!landingDraft.hero_title.trim() || !landingDraft.hero_subtitle.trim() || !landingDraft.contact_cta.trim()) {
       setError("Completa hero y CTA final antes de aprobar la landing.");
+      return;
+    }
+    if (!landingDraft.seo_title.trim() || !landingDraft.seo_description.trim()) {
+      setError("Completa SEO title y SEO description antes de aprobar la landing.");
+      return;
+    }
+    if (!landingDraft.faq_items.length || landingDraft.faq_items.some((item) => !item.trim())) {
+      setError("Completa las FAQs de SEO/AEO antes de aprobar la landing.");
+      return;
+    }
+    if (!landingDraft.quick_answer_blocks.length || landingDraft.quick_answer_blocks.some((item) => !item.trim())) {
+      setError("Completa los bloques de respuesta rapida antes de aprobar la landing.");
       return;
     }
     try {
@@ -695,6 +749,7 @@ export function BrandSetupWizard() {
       await api.updateBrandChannelSettings(token, workflow.tenant_id, channelSettings);
       const updated = await api.updateBrandSetupWorkflow(token, workflow.tenant_id, {
         pos_setup_data: posSetupData,
+        webapp_template: workflow.webapp_template ?? OFFICIAL_WEBAPP_TEMPLATE,
       });
       setWorkflow(updated);
       await approveStep("pos_setup", "POS/WebApp aprobado. Ya puedes revisar y publicar.");
@@ -753,6 +808,11 @@ export function BrandSetupWizard() {
   }
 
   const currentMeta = stepStatus(selectedStep);
+  const isIdentityStep = IDENTITY_FLOW_STEPS.includes(selectedStep);
+  const showIdentityCore = selectedStep === "brand_identity";
+  const showSectorSelection = selectedStep === "sector_selection";
+  const showBusinessGoal = selectedStep === "business_goal";
+  const showVisualStyle = selectedStep === "visual_style";
   const wizardReturnTo = `/reinpia/brands/${workflow.tenant_id}/setup`;
   const scopedCatalogQuery = `?tenant_id=${workflow.tenant_id}&return_to=${encodeURIComponent(wizardReturnTo)}`;
 
@@ -832,10 +892,17 @@ export function BrandSetupWizard() {
         ) : null}
       </article>
 
-      {selectedStep === "brand_identity" ? (
-        <form className="card" onSubmit={saveIdentity}>
-          <h3>Paso 1: Identidad y decision de flujo</h3>
+      {isIdentityStep ? (
+        <form className="card" onSubmit={saveIdentityStep}>
+          <h3>{STEP_LABELS[selectedStep]}</h3>
           {error ? <p className="error">{error}</p> : null}
+          {showIdentityCore ? <p className="muted">Define datos base de la marca y el contexto principal del onboarding.</p> : null}
+          {showSectorSelection ? <p className="muted">Selecciona el giro para resolver familia premium por sector y canal.</p> : null}
+          {showBusinessGoal ? <p className="muted">Define objetivo y modelo comercial para ajustar copy y argumentario de conversion.</p> : null}
+          {showVisualStyle ? <p className="muted">Ajusta estilo visual y activos base de la marca.</p> : null}
+
+          {showIdentityCore ? (
+            <>
           <label>
             Nombre del comercio / marca
             <input value={identity.brand_name} onChange={(event) => setIdentity((prev) => ({ ...prev, brand_name: event.target.value }))} required />
@@ -852,6 +919,10 @@ export function BrandSetupWizard() {
               <option value="mixed">Mixto</option>
             </select>
           </label>
+            </>
+          ) : null}
+
+          {showSectorSelection ? (
           <label>
             Sector comercial
             <select value={identity.sector ?? "retail"} onChange={(event) => setIdentity((prev) => ({ ...prev, sector: event.target.value }))}>
@@ -866,14 +937,10 @@ export function BrandSetupWizard() {
               <option value="distribuidores">Distribuidores</option>
             </select>
           </label>
-          <label>
-            Estilo visual
-            <select value={identity.visual_style ?? "impacto"} onChange={(event) => setIdentity((prev) => ({ ...prev, visual_style: event.target.value }))}>
-              <option value="impacto">Impacto comercial</option>
-              <option value="editorial">Editorial premium</option>
-              <option value="minimal">Minimal ejecutivo</option>
-            </select>
-          </label>
+          ) : null}
+
+          {showBusinessGoal ? (
+            <>
           <label>
             Objetivo principal
             <select value={identity.business_goal ?? "conversion"} onChange={(event) => setIdentity((prev) => ({ ...prev, business_goal: event.target.value }))}>
@@ -881,6 +948,28 @@ export function BrandSetupWizard() {
               <option value="ticket_promedio">Subir ticket promedio</option>
               <option value="fidelizacion">Fidelizacion</option>
               <option value="expansion_b2b">Expansion B2B</option>
+            </select>
+          </label>
+            <p className="muted">
+              Modelo comercial oficial (solo lectura desde Stripe):{" "}
+              <strong>{billingModelLabel(planSnapshot?.billing_model ?? workflow.billing_model)}</strong>.
+              {" "}Comision:{" "}
+              <strong>{planSnapshot?.commission_enabled ? `${Number(planSnapshot.commission_percentage ?? 0).toFixed(2)}%` : "No aplica"}</strong>.
+            </p>
+            <p className="muted">
+              El wizard no permite editar billing_model, porcentaje de comision ni limites base del plan.
+            </p>
+            </>
+          ) : null}
+
+          {showVisualStyle ? (
+            <>
+          <label>
+            Estilo visual
+            <select value={identity.visual_style ?? "impacto"} onChange={(event) => setIdentity((prev) => ({ ...prev, visual_style: event.target.value }))}>
+              <option value="impacto">Impacto comercial</option>
+              <option value="editorial">Editorial premium</option>
+              <option value="minimal">Minimal ejecutivo</option>
             </select>
           </label>
 
@@ -938,17 +1027,10 @@ export function BrandSetupWizard() {
               <option value="tecnico">Tecnico</option>
             </select>
           </label>
+            </>
+          ) : null}
 
-          <p className="muted">
-            Modelo comercial oficial (solo lectura desde Stripe):{" "}
-            <strong>{billingModelLabel(planSnapshot?.billing_model ?? workflow.billing_model)}</strong>.
-            {" "}Comision:{" "}
-            <strong>{planSnapshot?.commission_enabled ? `${Number(planSnapshot.commission_percentage ?? 0).toFixed(2)}%` : "No aplica"}</strong>.
-          </p>
-          <p className="muted">
-            El wizard no permite editar billing_model, porcentaje de comision ni limites base del plan.
-          </p>
-
+          {showIdentityCore ? (
           <label>
             Prompt maestro de la marca
             <textarea
@@ -958,7 +1040,10 @@ export function BrandSetupWizard() {
               required
             />
           </label>
+          ) : null}
 
+          {showVisualStyle ? (
+            <>
           <label>
             Logotipo
             <input type="file" accept="image/*" onChange={(event) => uploadAsset(event, "logo")} />
@@ -994,9 +1079,11 @@ export function BrandSetupWizard() {
               </div>
             </div>
           ) : null}
+            </>
+          ) : null}
 
           <button className="button" type="submit" disabled={saving}>
-            Guardar y continuar
+            Guardar y aprobar paso
           </button>
         </form>
       ) : null}
@@ -1055,6 +1142,55 @@ export function BrandSetupWizard() {
             CTA final de contacto
             <input value={landingDraft.contact_cta} onChange={(event) => setLandingDraft((prev) => ({ ...prev, contact_cta: event.target.value }))} />
           </label>
+          <label>
+            SEO title
+            <input value={landingDraft.seo_title} onChange={(event) => setLandingDraft((prev) => ({ ...prev, seo_title: event.target.value }))} />
+          </label>
+          <label>
+            SEO description
+            <textarea value={landingDraft.seo_description} onChange={(event) => setLandingDraft((prev) => ({ ...prev, seo_description: event.target.value }))} />
+          </label>
+          <label>
+            Schema
+            <select value={landingDraft.schema_type} onChange={(event) => setLandingDraft((prev) => ({ ...prev, schema_type: event.target.value }))}>
+              <option value="LocalBusiness">LocalBusiness</option>
+              <option value="Organization">Organization</option>
+              <option value="Store">Store</option>
+            </select>
+          </label>
+
+          <article className="card">
+            <h4>FAQ para SEO/AEO</h4>
+            {landingDraft.faq_items.map((item, index) => (
+              <label key={`faq-${index}`}>
+                FAQ {index + 1}
+                <input
+                  value={item}
+                  onChange={(event) => {
+                    const next = [...landingDraft.faq_items];
+                    next[index] = event.target.value;
+                    setLandingDraft((prev) => ({ ...prev, faq_items: next }));
+                  }}
+                />
+              </label>
+            ))}
+          </article>
+          <article className="card">
+            <h4>Bloques de respuesta rapida (AEO)</h4>
+            {landingDraft.quick_answer_blocks.map((item, index) => (
+              <label key={`qa-${index}`}>
+                Bloque {index + 1}
+                <input
+                  value={item}
+                  onChange={(event) => {
+                    const next = [...landingDraft.quick_answer_blocks];
+                    next[index] = event.target.value;
+                    setLandingDraft((prev) => ({ ...prev, quick_answer_blocks: next }));
+                  }}
+                />
+              </label>
+            ))}
+          </article>
 
           <div className="row-gap">
             <a className="button button-outline" href={toAbsoluteUrl(channelRoutes.landing_url)} target="_blank" rel="noreferrer">
@@ -1438,7 +1574,16 @@ export function BrandSetupWizard() {
       </article>
 
       {message ? <p>{message}</p> : null}
-      {selectedStep !== "brand_identity" && selectedStep !== "landing_setup" && selectedStep !== "ecommerce_setup" && selectedStep !== "distributors_setup" && selectedStep !== "pos_setup" && selectedStep !== "final_review" && error ? (
+      {selectedStep !== "brand_identity" &&
+      selectedStep !== "sector_selection" &&
+      selectedStep !== "business_goal" &&
+      selectedStep !== "visual_style" &&
+      selectedStep !== "landing_setup" &&
+      selectedStep !== "ecommerce_setup" &&
+      selectedStep !== "distributors_setup" &&
+      selectedStep !== "pos_setup" &&
+      selectedStep !== "final_review" &&
+      error ? (
         <p className="error">{error}</p>
       ) : null}
     </section>

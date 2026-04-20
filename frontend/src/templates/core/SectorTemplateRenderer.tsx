@@ -1,7 +1,7 @@
 import { StorefrontDistributorsPage } from "../../pages/StorefrontDistributorsPage";
 import { StorefrontLandingPage } from "../../pages/StorefrontLandingPage";
 import { StorefrontPage } from "../../pages/StorefrontPage";
-import { TemplateChannel, TemplateSector, TemplateStyle } from "./types";
+import { TemplateBusinessModel, TemplateChannel, TemplateSector, TemplateStyle } from "./types";
 import { SECTOR_CATALOG } from "../sectors/sectorCatalog";
 
 function WebappPreview({
@@ -53,6 +53,8 @@ export function buildSectorChannelComponent({
   channel,
   sector,
   style,
+  businessModel,
+  businessGoal,
   brandName,
   primaryOverride,
   secondaryOverride,
@@ -62,6 +64,8 @@ export function buildSectorChannelComponent({
   channel: TemplateChannel;
   sector: TemplateSector;
   style: TemplateStyle;
+  businessModel: TemplateBusinessModel;
+  businessGoal: string;
   brandName: string;
   primaryOverride?: string | null;
   secondaryOverride?: string | null;
@@ -74,6 +78,7 @@ export function buildSectorChannelComponent({
   const ctaPrimary = meta.theme.ctaPrimary;
   const ctaSecondary = meta.theme.ctaSecondary;
   const banners = meta.banners[channel];
+  const businessCopy = meta.businessCopy[businessModel];
 
   return function SectorChannelComponent() {
     return (
@@ -98,7 +103,10 @@ export function buildSectorChannelComponent({
           <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", marginTop: "0.6rem" }}>
             <span style={{ background: "rgba(255,255,255,0.16)", padding: "0.25rem 0.6rem", borderRadius: "999px" }}>{ctaPrimary}</span>
             <span style={{ background: "rgba(255,255,255,0.16)", padding: "0.25rem 0.6rem", borderRadius: "999px" }}>{ctaSecondary}</span>
+            <span style={{ background: "rgba(255,255,255,0.16)", padding: "0.25rem 0.6rem", borderRadius: "999px" }}>{businessCopy.badge}</span>
+            <span style={{ background: "rgba(255,255,255,0.16)", padding: "0.25rem 0.6rem", borderRadius: "999px" }}>Objetivo: {businessGoal}</span>
           </div>
+          <p style={{ margin: "0.45rem 0 0" }}>{businessCopy.argument}</p>
         </header>
 
         <section style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "0.7rem", margin: "0.75rem" }}>
@@ -115,6 +123,7 @@ export function buildSectorChannelComponent({
             >
               <p style={{ margin: 0, fontSize: "0.75rem", textTransform: "uppercase", color: primary }}>Banner sectorial</p>
               <h3 style={{ margin: "0.35rem 0 0", fontSize: "1.04rem" }}>{banner}</h3>
+              <p style={{ margin: "0.45rem 0 0", fontSize: "0.85rem" }}>{businessCopy.cta}</p>
             </article>
           ))}
         </section>

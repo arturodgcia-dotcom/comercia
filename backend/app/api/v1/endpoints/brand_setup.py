@@ -45,6 +45,9 @@ ALLOWED_ASSET_TYPES = {"logo", "base_image"}
 
 DEFAULT_STEPS_WITHOUT_LANDING = [
     {"code": "brand_identity", "title": "Identidad de marca", "status": "pending", "approved": False},
+    {"code": "sector_selection", "title": "Giro / sector", "status": "pending", "approved": False},
+    {"code": "business_goal", "title": "Objetivo comercial", "status": "pending", "approved": False},
+    {"code": "visual_style", "title": "Estilo visual", "status": "pending", "approved": False},
     {"code": "landing_setup", "title": "Landing", "status": "pending", "approved": False},
     {"code": "ecommerce_setup", "title": "Ecommerce publico", "status": "pending", "approved": False},
     {"code": "distributors_setup", "title": "Ecommerce distribuidores", "status": "pending", "approved": False},
@@ -54,6 +57,9 @@ DEFAULT_STEPS_WITHOUT_LANDING = [
 
 DEFAULT_STEPS_WITH_EXISTING_LANDING = [
     {"code": "brand_identity", "title": "Identidad de marca", "status": "pending", "approved": False},
+    {"code": "sector_selection", "title": "Giro / sector", "status": "pending", "approved": False},
+    {"code": "business_goal", "title": "Objetivo comercial", "status": "pending", "approved": False},
+    {"code": "visual_style", "title": "Estilo visual", "status": "pending", "approved": False},
     {"code": "landing_setup", "title": "Landing", "status": "pending", "approved": False},
     {"code": "ecommerce_setup", "title": "Ecommerce publico", "status": "pending", "approved": False},
     {"code": "distributors_setup", "title": "Ecommerce distribuidores", "status": "pending", "approved": False},
@@ -82,10 +88,10 @@ DEFAULT_CHANNEL_SETTINGS = {
 }
 
 OFFICIAL_CHANNEL_TEMPLATE_DEFAULTS = {
-    "landing_template": "retail_landing_impacto_v1",
-    "public_store_template": "retail_public_store_impacto_v1",
-    "distributor_store_template": "retail_distributor_store_impacto_v1",
-    "webapp_template": "retail_webapp_impacto_v1",
+    "landing_template": "retail_landing_impacto_fixed_subscription_v1",
+    "public_store_template": "retail_public_store_impacto_fixed_subscription_v1",
+    "distributor_store_template": "retail_distributor_store_impacto_fixed_subscription_v1",
+    "webapp_template": "retail_webapp_impacto_fixed_subscription_v1",
 }
 
 DEFAULT_BILLING_CONFIG = {
@@ -734,7 +740,12 @@ def _resolve_channel_templates(payload: dict, workflow: dict | None = None) -> d
         identity = {}
     sector_raw = str(identity.get("sector") or "").strip().lower()
     style_raw = str(identity.get("visual_style") or "").strip().lower()
+    business_goal_raw = str(identity.get("business_goal") or "").strip().lower()
     business_type = str(identity.get("business_type") or "").strip().lower()
+    billing_payload = payload.get("billing_config", {})
+    if not isinstance(billing_payload, dict):
+        billing_payload = {}
+    business_model_raw = str(payload.get("billing_model") or billing_payload.get("billing_model") or "fixed_subscription").strip().lower()
 
     sector_map = {
         "alimentos": "alimentos",
@@ -764,9 +775,13 @@ def _resolve_channel_templates(payload: dict, workflow: dict | None = None) -> d
     else:
         sector = "distribuidores"
     style = style_map.get(style_raw, "impacto")
+    business_model = "commission_based" if business_model_raw == "commission_based" else "fixed_subscription"
 
     def _template(channel: str) -> str:
-        return f"{sector}_{channel}_{style}_v1"
+        channel_style = style
+        if business_goal_raw == "expansion_b2b" and channel in {"distributor_store", "webapp"} and channel_style == "minimal":
+            channel_style = "impacto"
+        return f"{sector}_{channel}_{channel_style}_{business_model}_v1"
 
     return {
         "landing_template": _template("landing"),

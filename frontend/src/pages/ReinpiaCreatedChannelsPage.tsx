@@ -68,10 +68,10 @@ function resolveRouteByChannel(workflow: BrandSetupWorkflow | undefined, tenantS
 
 function resolveTemplateByChannel(workflow: BrandSetupWorkflow | undefined, channel: ChannelKey): string {
   if (!workflow) return "Sin plantilla";
-  if (channel === "landing") return workflow.landing_template ?? "retail_landing_impacto_v1";
-  if (channel === "public") return workflow.public_store_template ?? "retail_public_store_impacto_v1";
-  if (channel === "distributors") return workflow.distributor_store_template ?? "retail_distributor_store_impacto_v1";
-  return workflow.webapp_template ?? "retail_webapp_impacto_v1";
+  if (channel === "landing") return workflow.landing_template ?? "retail_landing_impacto_fixed_subscription_v1";
+  if (channel === "public") return workflow.public_store_template ?? "retail_public_store_impacto_fixed_subscription_v1";
+  if (channel === "distributors") return workflow.distributor_store_template ?? "retail_distributor_store_impacto_fixed_subscription_v1";
+  return workflow.webapp_template ?? "retail_webapp_impacto_fixed_subscription_v1";
 }
 
 function resolveUpdatedByChannel(workflow: BrandSetupWorkflow | undefined, channel: ChannelKey): string {

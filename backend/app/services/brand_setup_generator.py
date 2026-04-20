@@ -35,6 +35,8 @@ def generate_brand_content(identity: BrandIdentityData, prompt_master: str) -> B
 
 def generate_landing_draft(identity: BrandIdentityData, generated: BrandGeneratedContent) -> BrandLandingDraft:
     brand_name = identity.brand_name
+    sector = (identity.sector or "retail").strip().lower()
+    goal = (identity.business_goal or "conversion").strip().lower()
     hero_title = f"{brand_name}: crecimiento comercial con estructura"
     hero_subtitle = generated.base_copy
     sections = [
@@ -61,4 +63,20 @@ def generate_landing_draft(identity: BrandIdentityData, generated: BrandGenerate
         cta_secondary="Hablar con un asesor",
         sections=sections,
         contact_cta="Agenda una llamada para activar tu marca con plan de crecimiento.",
+        seo_title=f"{brand_name} | {sector.title()} | Solucion comercial premium",
+        seo_description=(
+            f"{brand_name} acelera su {sector} con landing SEO/AEO, ecommerce por canal y webapp operativa. "
+            f"Objetivo principal: {goal}."
+        ),
+        faq_items=[
+            f"Como mejora {brand_name} su conversion en {sector}?",
+            "Que incluye la implementacion por canal?",
+            "Como elegir entre modelo sin comision y con comision?",
+        ],
+        quick_answer_blocks=[
+            "Resumen de propuesta comercial",
+            "Beneficio principal por canal",
+            "CTA de activacion inmediata",
+        ],
+        schema_type="LocalBusiness",
     )
