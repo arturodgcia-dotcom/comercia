@@ -1491,3 +1491,42 @@ Arquitectura aplicada:
   - omisiones recientes
   - tokens consumidos y ahorrados
   - estado del orquestador
+
+## Ejecucion 64: arquitectura de plantillas premium por sector y canal
+Objetivo:
+- eliminar el patron de una sola base repetida y resolver plantillas reales por canal/sector/estilo.
+
+Capas aplicadas:
+1) Registry formal de templates
+- archivo: `frontend/src/templates/registry/templateRegistry.ts`
+- entidad: `TemplateRegistryEntry`
+- claves: `template_id`, `channel`, `sector`, `style`, `status`, `component_key`, `version`, `supports_banners`, `supports_brand_overrides`.
+
+2) Resolver real por canal
+- archivo: `frontend/src/templates/registry/templateResolver.ts`
+- entrada: payload storefront + channel + templateId.
+- salida: componente real + metadatos resueltos (template, sector, style, banners, overrides).
+
+3) Catalogo sectorial premium
+- archivo: `frontend/src/templates/sectors/sectorCatalog.ts`
+- define tema visual + banners por canal para sectores iniciales.
+
+4) Render por canal
+- archivo: `frontend/src/templates/core/SectorTemplateRenderer.tsx`
+- landing/public/distributor usan vistas reales envueltas en shell sectorial.
+- webapp usa preview comercial dedicado (separado de landing/ecommerce).
+
+5) Persistencia y orquestacion wizard
+- backend `brand_setup` resuelve y persiste:
+  - `landing_template`
+  - `public_store_template`
+  - `distributor_store_template`
+  - `webapp_template`
+- criterios desde identidad: `sector`, `visual_style`, `business_goal`, `business_type`.
+
+6) Rutas productivas
+- `/store/:tenantSlug`
+- `/store/:tenantSlug/landing`
+- `/store/:tenantSlug/distribuidores`
+- `/store/:tenantSlug/webapp-preview`
+- demo queda aislada en `/internal/demo/*`.

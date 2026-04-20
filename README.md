@@ -1315,3 +1315,17 @@ Se cerraron tres módulos finales para pruebas operativas:
 - Se integra control de presupuesto antes de ejecutar (presupuesto, prioridad, criticidad y reglas de no ejecucion).
 - Se agrega trazabilidad completa de ejecucion/skip en `ai_orchestrator_executions`.
 - Panel inicial de IA autonoma actualizado para mostrar capacidades, ejecuciones, omisiones y ahorro de tokens.
+
+## Actualizacion ejecucion 64 (Registry de plantillas premium por sector/canal)
+- Se implemento un motor formal de plantillas en `frontend/src/templates` con:
+  - registry oficial (`template_id`, `channel`, `sector`, `style`, `status`, `component_key`, `version`, `supports_banners`, `supports_brand_overrides`).
+  - resolver real por canal que ya no ignora `templateId`.
+- Nuevas familias visuales premium por sector:
+  - alimentos, ropa, servicios, maquinaria, salud, belleza, educacion, retail, distribuidores.
+- Separacion real de canal:
+  - landing, ecommerce publico, ecommerce distribuidores, webapp preview.
+- `webapp_template` agregado como campo persistido en wizard/backend/frontend.
+- Wizard ahora toma criterios de negocio (`sector`, `visual_style`, `business_goal`) y backend resuelve templates por canal.
+- Rutas productivas de preview actualizadas:
+  - `/store/:tenantSlug/webapp-preview` (sin depender de `/templates/*`).
+- Demos siguen en `/internal/demo/*` y fuera del source of truth productivo.

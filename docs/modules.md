@@ -808,3 +808,14 @@ Limpieza aplicada:
 - `GET /api/v1/admin/ai-autonomy/orchestrator/dashboard`
 - `POST /api/v1/admin/ai-autonomy/orchestrator/events`
 - `GET /api/v1/admin/ai-autonomy/orchestrator/executions`
+
+## Actualizacion ejecucion 64 (Plantillas premium sectoriales)
+| Modulo | Estado | Notas |
+|---|---|---|
+| Template Registry formal | Inicial funcional | `frontend/src/templates/registry/templateRegistry.ts` |
+| Template Resolver real | Inicial funcional | `frontend/src/templates/registry/templateResolver.ts` |
+| Familias visuales por sector | Inicial funcional | `frontend/src/templates/sectors/sectorCatalog.ts` + estructura por carpetas |
+| Banners por sector/canal | Inicial funcional | definidos por sector y canal, usados por resolver |
+| Overrides por marca | Inicial funcional | color/logo/hero CTA aplicados desde branding de tenant |
+| Persistencia `webapp_template` | Inicial funcional | backend + frontend + wizard |
+| Preview webapp productivo | Inicial funcional | `/store/:tenantSlug/webapp-preview` |

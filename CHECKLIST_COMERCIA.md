@@ -946,3 +946,16 @@
 - [x] Compatibilidad preservada con planes/add-ons/creditos/paneles actuales
 - [x] Validacion backend compile OK
 - [x] Validacion frontend build OK
+
+## Entregables ejecucion 64 (Template Registry premium por sector/canal)
+- [x] Registry formal de templates implementado
+- [x] Resolver real de templates por canal implementado
+- [x] Estructura sectorial creada para: alimentos, ropa, servicios, maquinaria, salud, belleza, educacion, retail, distribuidores
+- [x] Banners por sector/canal integrados al resolver
+- [x] Overrides por marca aplicados desde branding tenant
+- [x] Persistencia `webapp_template` agregada en backend/frontend/wizard
+- [x] Wizard extendido con `sector`, `visual_style`, `business_goal`
+- [x] Preview webapp productivo agregado (`/store/:tenantSlug/webapp-preview`)
+- [x] Flujo productivo separado de demo (`/internal/demo/*`)
+- [x] Validacion ejecutada: `cd frontend && npm run build`
+- [x] Validacion ejecutada: `cd backend && .\\.venv\\Scripts\\python.exe -m py_compile app/api/v1/endpoints/brand_setup.py app/schemas/brand_setup.py`
