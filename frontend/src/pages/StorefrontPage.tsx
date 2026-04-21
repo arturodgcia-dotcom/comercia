@@ -63,8 +63,8 @@ export function StorefrontPage() {
       })
       .catch((err: unknown) => {
         if (err instanceof ApiError && err.status === 404) {
-          setError("No encontramos esta tienda o no está activa.");
-          setErrorDetail("Verifica que la marca esté publicada.");
+          setError("No encontramos esta tienda o no esta activa.");
+          setErrorDetail("Verifica que la marca este publicada.");
           return;
         }
         setError("No se pudo cargar la tienda en este momento.");
@@ -124,10 +124,7 @@ export function StorefrontPage() {
         .map((product) => ({ product, quantity: cart[product.id] })),
     [allProducts, cart]
   );
-  const cartTotal = useMemo(
-    () => cartItems.reduce((sum, item) => sum + Number(item.product.price_public) * item.quantity, 0),
-    [cartItems]
-  );
+  const cartTotal = useMemo(() => cartItems.reduce((sum, item) => sum + Number(item.product.price_public) * item.quantity, 0), [cartItems]);
 
   const updateCart = (productId: number, quantity: number) => {
     setCart((prev) => ({ ...prev, [productId]: Math.max(0, quantity) }));
@@ -171,22 +168,22 @@ export function StorefrontPage() {
       </main>
     );
   }
-  if (!data) return <p>Cargando ecommerce público...</p>;
+  if (!data) return <p>Cargando ecommerce publico...</p>;
 
   return (
     <main className="route-public-catalog">
       <section className="public-hero">
         <div>
-          <p className="public-kicker">Catálogo industrial masivo</p>
+          <p className="public-kicker">Catalogo industrial masivo</p>
           {isPreviewMode ? <p className="chip">Preview activo</p> : null}
           <h1>{data.branding?.hero_title ?? data.tenant.name}</h1>
-          <p>{data.branding?.hero_subtitle ?? "Catálogo robusto para compra inmediata, cotización y recompra técnica."}</p>
+          <p>{data.branding?.hero_subtitle ?? "Catalogo robusto para compra inmediata, cotizacion y recompra tecnica."}</p>
           <div className="public-actions">
             <Link className="button" to={`/store/${data.tenant.slug}/distribuidores`}>
               Portal B2B
             </Link>
             <Link className="button button-outline" to={`/store/${data.tenant.slug}/landing`}>
-              Ver landing técnica
+              Ver landing tecnica
             </Link>
           </div>
         </div>
@@ -194,32 +191,49 @@ export function StorefrontPage() {
           <h3>Checkout principal</h3>
           <p>Proveedor: {paymentProvider === "mercadopago" ? "Mercado Pago" : "Stripe"}</p>
           <p>Moneda: {checkoutCurrency}</p>
-          <p className={mercadopagoReady ? "chip" : "chip chip-warning"}>
+          <p className={mercadopagoReady ? "chip" : "chip"}>
             {paymentProvider === "mercadopago"
               ? mercadopagoReady
                 ? "Mercado Pago listo para cobro."
                 : "Mercado Pago pendiente de credenciales."
               : "Checkout con Stripe habilitado."}
           </p>
-          <p className="muted">{tenantConfig?.plan_type === "commission" ? "Modelo con comisión activa." : "Modelo sin comisión."}</p>
+          <p className="muted">{tenantConfig?.plan_type === "commission" ? "Modelo con comision activa." : "Modelo sin comision."}</p>
         </div>
       </section>
 
       <section className="public-shell">
+        <div className="public-logo-strip">
+          <img src="/client-assets/todoindustrialmx/logo_zsg.jpg" alt="ZSG" />
+          <img src="/client-assets/todoindustrialmx/logo_skf.jpg" alt="SKF" />
+          <img src="/client-assets/todoindustrialmx/logo_timken.png" alt="Timken" />
+          <img src="/client-assets/todoindustrialmx/logo_fag.png" alt="FAG" />
+          <img src="/client-assets/todoindustrialmx/logo_fulo.png" alt="FULO" />
+        </div>
+
         <div className="public-toolbar">
-          <input
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Buscar por SKU, producto o descripción técnica"
-          />
+          <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Buscar por SKU, producto o descripcion tecnica" />
           <select value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value === "all" ? "all" : Number(event.target.value))}>
-            <option value="all">Todas las categorías</option>
+            <option value="all">Todas las categorias</option>
             {data.categories.map((category) => (
               <option key={category.id} value={category.id}>
                 {category.name}
               </option>
             ))}
           </select>
+        </div>
+
+        <div className="public-category-rail">
+          {data.categories.map((category) => (
+            <button
+              key={category.id}
+              type="button"
+              className={`chip ${categoryFilter === category.id ? "chip-warning" : ""}`}
+              onClick={() => setCategoryFilter(category.id)}
+            >
+              {category.name}
+            </button>
+          ))}
         </div>
 
         <div className="public-banner-grid">
@@ -240,14 +254,14 @@ export function StorefrontPage() {
                 <div className="public-product-meta">
                   <p className="chip">SKU: {product.sku}</p>
                   <h3>{product.name}</h3>
-                  <p>{product.description ?? "Producto industrial para operación y mantenimiento."}</p>
+                  <p>{product.description ?? "Producto industrial para operacion y mantenimiento."}</p>
                   <strong>MXN ${Number(product.price_public).toLocaleString("es-MX")}</strong>
                   <div className="public-card-actions">
                     <button className="button button-outline" type="button" onClick={() => updateCart(product.id, (cart[product.id] ?? 0) + 1)}>
                       Agregar
                     </button>
                     <Link className="button button-outline" to={`/store/${data.tenant.slug}/product/${product.id}`}>
-                      Ficha técnica
+                      Ficha tecnica
                     </Link>
                   </div>
                 </div>
@@ -256,22 +270,22 @@ export function StorefrontPage() {
           </section>
 
           <aside className="public-checkout-aside">
-            <h2>Carrito y pago</h2>
+            <h2>Carrito y checkout</h2>
             <p className="chip">Total productos: {Object.values(cart).reduce((sum, qty) => sum + qty, 0)}</p>
             <p>Total: MXN ${cartTotal.toLocaleString("es-MX")}</p>
-            <input value={couponCode} onChange={(event) => setCouponCode(event.target.value)} placeholder="Cupón comercial" />
+            <input value={couponCode} onChange={(event) => setCouponCode(event.target.value)} placeholder="Cupon comercial" />
             <div className="public-checkout-buttons">
               <button className="button" type="button" onClick={handleCheckout} disabled={loadingCheckout || cartTotal <= 0}>
                 {loadingCheckout ? "Redirigiendo..." : paymentProvider === "mercadopago" ? "Pagar con Mercado Pago" : "Ir a checkout"}
               </button>
               <a className="button button-outline" href={`https://wa.me/52${data.branding?.contact_whatsapp ?? "5511791417"}`} target="_blank" rel="noreferrer">
-                Solicitar cotización
+                Solicitar cotizacion
               </a>
               <button className="button button-outline" type="button">
                 Transferencia bancaria
               </button>
             </div>
-            <p className="muted">Para mayoreo y crédito comercial, usa el portal de distribuidores.</p>
+            <p className="muted">Para mayoreo y credito comercial, usa el portal de distribuidores.</p>
           </aside>
         </div>
       </section>

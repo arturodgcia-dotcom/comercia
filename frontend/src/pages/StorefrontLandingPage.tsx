@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { api } from "../services/api";
 import { StorefrontHomePayload } from "../types/domain";
@@ -9,7 +9,6 @@ type LandingDraft = {
   hero_subtitle?: string;
   cta_primary?: string;
   cta_secondary?: string;
-  contact_cta?: string;
   sections?: LandingSection[];
   faq_items?: string[];
   quick_answer_blocks?: string[];
@@ -38,10 +37,23 @@ const INDUSTRIAL_CATEGORIES = [
 ];
 
 const INDUSTRIAL_FAQ = [
-  "¿Qué marcas industriales maneja TODOINDUSTRIALMX?",
-  "¿Realizan envíos en México y Latinoamérica?",
-  "¿Pueden cotizar por aplicación o por número de parte?",
-  "¿Aceptan Mercado Pago para anticipo y pedido especial?",
+  "Que marcas industriales maneja TODOINDUSTRIALMX?",
+  "Realizan envios en Mexico y Latinoamerica?",
+  "Pueden cotizar por aplicacion o por numero de parte?",
+  "Aceptan Mercado Pago para anticipo y pedido especial?",
+];
+
+const QUICK_ANSWERS = [
+  "Si, cotizamos por aplicacion, por marca y por SKU tecnico.",
+  "Si, tenemos cobertura para Mexico y atencion comercial para Latinoamerica.",
+  "Si, puedes pagar por Mercado Pago, transferencia o anticipo B2B.",
+];
+
+const LANDING_STATS = [
+  { label: "Anos de experiencia", value: "30+" },
+  { label: "Cobertura comercial", value: "MX + LATAM" },
+  { label: "Marcas distribuidas", value: "ZSG - SKF - Timken - FAG - FULO" },
+  { label: "Atencion tecnica", value: "Postventa especializada" },
 ];
 
 export function StorefrontLandingPage() {
@@ -67,7 +79,7 @@ export function StorefrontLandingPage() {
           <h1>Landing no disponible</h1>
           <p>{error}</p>
           <Link className="button" to={`/store/${tenantSlug}`}>
-            Ir al catálogo
+            Ir al catalogo
           </Link>
         </section>
       </main>
@@ -77,31 +89,17 @@ export function StorefrontLandingPage() {
 
   const config = parseConfig(data.storefront_config?.config_json);
   const draft = (config.landing_draft as LandingDraft | undefined) ?? {};
-  const heroTitle = draft.hero_title?.trim() || data.branding?.hero_title || "Entregamos soluciones en transmisión de potencia";
+  const sections = (draft.sections ?? []).filter((section) => section.title || section.body);
+  const faqItems = draft.faq_items?.filter((item) => item.trim()) ?? INDUSTRIAL_FAQ;
+  const quickAnswers = draft.quick_answer_blocks?.filter((item) => item.trim()) ?? QUICK_ANSWERS;
+  const heroTitle = draft.hero_title?.trim() || data.branding?.hero_title || "Entregamos soluciones en transmision de potencia";
   const heroSubtitle =
     draft.hero_subtitle?.trim() ||
     data.branding?.hero_subtitle ||
-    "Más de 30 años resolviendo refacciones industriales con marcas reconocidas, respuesta comercial rápida y cobertura nacional.";
-  const ctaPrimary = draft.cta_primary?.trim() || "Cotizar ahora";
-  const ctaSecondary = draft.cta_secondary?.trim() || "Ver catálogo industrial";
-  const sections = (draft.sections ?? []).filter((section) => section.title || section.body);
-  const faqItems = draft.faq_items?.filter((item) => item.trim()) ?? INDUSTRIAL_FAQ;
-  const quickAnswers = draft.quick_answer_blocks?.filter((item) => item.trim()) ?? [
-    "Sí, cotizamos por aplicación, por marca y por SKU técnico.",
-    "Sí, tenemos cobertura para México y atención comercial para Latinoamérica.",
-    "Sí, puedes pagar por Mercado Pago, transferencia o anticipo B2B.",
-  ];
-  const stats = useMemo(
-    () => [
-      { label: "Años de experiencia", value: "30+" },
-      { label: "Cobertura comercial", value: "MX + LATAM" },
-      { label: "Marcas distribuidas", value: "ZSG · SKF · Timken · FAG · FULO" },
-      { label: "Atención técnica", value: "Postventa especializada" },
-    ],
-    []
-  );
-
-  const whatsapp = data.branding?.contact_whatsapp ? `https://wa.me/52${data.branding.contact_whatsapp}` : undefined;
+    "Distribucion industrial de refacciones con respaldo tecnico, disponibilidad comercial y enfoque en continuidad operativa.";
+  const ctaPrimary = draft.cta_primary?.trim() || "Cotizar por WhatsApp";
+  const ctaSecondary = draft.cta_secondary?.trim() || "Ver catalogo industrial";
+  const whatsapp = data.branding?.contact_whatsapp ? `https://wa.me/52${data.branding.contact_whatsapp}` : "https://wa.me/525511791417";
 
   return (
     <main className="route-landing-industrial">
@@ -112,19 +110,21 @@ export function StorefrontLandingPage() {
         </div>
         <h1>{heroTitle}</h1>
         <p>{heroSubtitle}</p>
+        <img
+          className="landing-hero-visual"
+          src="/client-assets/todoindustrialmx/hero_baleros_caliper.jpg"
+          alt="Linea industrial TodoIndustrialMX"
+        />
         <div className="landing-hero-actions">
-          <Link className="button" to={`/store/${data.tenant.slug}`}>
+          <a className="button" href={whatsapp} target="_blank" rel="noreferrer">
+            {ctaPrimary}
+          </a>
+          <Link className="button button-outline" to={`/store/${data.tenant.slug}`}>
             {ctaSecondary}
           </Link>
-          {whatsapp ? (
-            <a className="button button-outline" href={whatsapp} target="_blank" rel="noreferrer">
-              {ctaPrimary}
-            </a>
-          ) : (
-            <Link className="button button-outline" to={`/store/${data.tenant.slug}/distribuidores`}>
-              {ctaPrimary}
-            </Link>
-          )}
+          <Link className="button button-outline" to={`/store/${data.tenant.slug}/distribuidores`}>
+            Portal distribuidores
+          </Link>
         </div>
       </section>
 
@@ -138,7 +138,7 @@ export function StorefrontLandingPage() {
         </div>
 
         <div className="landing-stat-grid">
-          {stats.map((stat) => (
+          {LANDING_STATS.map((stat) => (
             <article key={stat.label} className="landing-stat-card">
               <p>{stat.label}</p>
               <strong>{stat.value}</strong>
@@ -147,12 +147,12 @@ export function StorefrontLandingPage() {
         </div>
 
         <section className="landing-block">
-          <h2>Categorías técnicas prioritarias</h2>
+          <h2>Categorias tecnicas prioritarias</h2>
           <div className="landing-category-grid">
             {INDUSTRIAL_CATEGORIES.map((category) => (
               <article key={category} className="landing-category-card">
                 <h3>{category}</h3>
-                <p>Disponibilidad para industria, taller y distribución comercial.</p>
+                <p>Disponibilidad para industria, taller y distribucion comercial.</p>
               </article>
             ))}
           </div>
@@ -161,27 +161,39 @@ export function StorefrontLandingPage() {
         <section className="landing-block landing-two-col">
           <article>
             <h2>Propuesta de valor industrial</h2>
-            <p>Excelente calidad al mejor precio con asesoría técnica y seguimiento postventa real para continuidad operativa.</p>
+            <p>Excelente calidad al mejor precio con asesoria tecnica y seguimiento postventa para continuidad operativa.</p>
             <ul>
-              <li>Distribución de marcas reconocidas con respuesta rápida.</li>
-              <li>Soporte comercial para cotización por volumen y proyectos.</li>
-              <li>Atención para mantenimiento, reemplazo y línea automotriz.</li>
+              <li>Distribucion de marcas reconocidas con respuesta rapida.</li>
+              <li>Soporte comercial para cotizacion por volumen y proyectos.</li>
+              <li>Linea automotriz, retenes, lubricantes y material ferretero.</li>
             </ul>
           </article>
           <article>
-            <h2>Logística y cobertura</h2>
-            <p>Operación en CDMX con cobertura para México y soporte comercial para Latinoamérica.</p>
+            <h2>Experiencia, cobertura y logistica</h2>
+            <p>Operacion en CDMX con cobertura para Mexico y soporte comercial para Latinoamerica.</p>
             <ul>
               <li>Entrega programada y seguimiento por pedido.</li>
-              <li>Gestión de refacciones de rotación alta y recurrente.</li>
-              <li>Canal B2B con opciones de anticipo y crédito.</li>
+              <li>Gestion de refacciones de rotacion alta y recurrente.</li>
+              <li>Canal B2B con opciones de anticipo y credito.</li>
             </ul>
+          </article>
+        </section>
+
+        <section className="landing-block landing-two-col">
+          <article>
+            <h2>Bloque automotriz y servicio tecnico</h2>
+            <p>Suministro para automotriz, industria ligera y pesada con acompanamiento tecnico comercial.</p>
+          </article>
+          <article>
+            <h2>Mision y vision</h2>
+            <p>Mision: resolver necesidades de transmision de potencia con servicio tecnico comercial confiable.</p>
+            <p>Vision: consolidar una red industrial referente en Mexico y Latinoamerica para distribucion y postventa.</p>
           </article>
         </section>
 
         {sections.length > 0 ? (
           <section className="landing-block">
-            <h2>Contenido comercial</h2>
+            <h2>Contenido comercial adicional</h2>
             <div className="landing-category-grid">
               {sections.map((section, index) => (
                 <article key={`${section.title ?? "section"}-${index}`} className="landing-category-card">
@@ -195,7 +207,7 @@ export function StorefrontLandingPage() {
 
         <section className="landing-block landing-two-col">
           <article>
-            <h2>FAQ técnico comercial</h2>
+            <h2>FAQ tecnico comercial</h2>
             <ul>
               {faqItems.map((item) => (
                 <li key={item}>{item}</li>
@@ -203,7 +215,7 @@ export function StorefrontLandingPage() {
             </ul>
           </article>
           <article>
-            <h2>Respuestas rápidas (AEO)</h2>
+            <h2>Respuestas rapidas (AEO)</h2>
             <ul>
               {quickAnswers.map((item) => (
                 <li key={item}>{item}</li>
@@ -216,13 +228,13 @@ export function StorefrontLandingPage() {
           <h2>Contacto comercial</h2>
           <p>Tel: 55-90397409 · WhatsApp: 55-11791417 · Email: {data.branding?.contact_email ?? "todoindustrialmx@gmail.com"}</p>
           <p>Calle Zaragoza 18, Azcapotzalco Centro, CP 02000, CDMX</p>
-          <p>Contactos: Ing. Jorge Luis Perea · Flor María Cedeño</p>
+          <p>Contactos: Ing. Jorge Luis Perea · Flor Maria Cedeno</p>
           <div className="landing-hero-actions">
-            <Link className="button" to={`/store/${data.tenant.slug}`}>
-              Ver catálogo y comprar
-            </Link>
-            <Link className="button button-outline" to={`/store/${data.tenant.slug}/distribuidores`}>
-              Portal distribuidores B2B
+            <a className="button" href={whatsapp} target="_blank" rel="noreferrer">
+              Cotizar ahora
+            </a>
+            <Link className="button button-outline" to={`/store/${data.tenant.slug}`}>
+              Abrir catalogo
             </Link>
           </div>
         </section>

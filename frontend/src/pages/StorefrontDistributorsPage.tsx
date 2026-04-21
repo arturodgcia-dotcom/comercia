@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { api } from "../services/api";
 import { Product, StorefrontDistributorsPayload, TenantConfig } from "../types/domain";
@@ -30,9 +30,7 @@ export function StorefrontDistributorsPage() {
     ])
       .then(([distributorsPayload, homePayload, config]) => {
         setData(distributorsPayload);
-        setReferenceProducts(
-          [...(homePayload?.featured_products ?? []), ...(homePayload?.recent_products ?? [])].slice(0, 10)
-        );
+        setReferenceProducts([...(homePayload?.featured_products ?? []), ...(homePayload?.recent_products ?? [])].slice(0, 10));
         setStorefrontConfigJson(homePayload?.storefront_config?.config_json ?? null);
         setTenantConfig(config);
       })
@@ -56,84 +54,86 @@ export function StorefrontDistributorsPage() {
   const paymentProvider = String(parsedConfig.payment_provider ?? "stripe").toLowerCase();
   const paymentLabel = paymentProvider === "mercadopago" ? "Mercado Pago" : "Stripe";
   const distributorCount = data.distributors.length;
-
-  const pricingRows = useMemo(
-    () =>
-      referenceProducts.map((product) => {
-        const publicPrice = Number(product.price_public);
-        const wholesale = Number(product.price_wholesale ?? Math.max(0, publicPrice * 0.88));
-        const saving = Math.max(0, publicPrice - wholesale);
-        return {
-          id: product.id,
-          name: product.name,
-          sku: product.sku,
-          publicPrice,
-          wholesale,
-          saving,
-        };
-      }),
-    [referenceProducts]
-  );
+  const pricingRows = referenceProducts.map((product) => {
+    const publicPrice = Number(product.price_public);
+    const wholesale = Number(product.price_wholesale ?? Math.max(0, publicPrice * 0.88));
+    const saving = Math.max(0, publicPrice - wholesale);
+    return {
+      id: product.id,
+      name: product.name,
+      sku: product.sku,
+      publicPrice,
+      wholesale,
+      saving,
+    };
+  });
 
   return (
     <main className="route-distributor-b2b">
       <section className="b2b-hero">
         <div>
-          <p className="b2b-kicker">Portal mayoreo y repetición de pedido</p>
+          <p className="b2b-kicker">Portal mayoreo y recompra</p>
           <h1>Canal distribuidores de {data.tenant.name}</h1>
-          <p>Arquitectura B2B para volumen, crédito comercial, anticipo y pedidos recurrentes por línea industrial.</p>
+          <p>Arquitectura B2B para volumen, credito comercial, anticipo y pedidos recurrentes por linea industrial.</p>
           <div className="b2b-actions">
             <Link className="button" to={`/store/${data.tenant.slug}/distribuidores/registro`}>
               Alta de distribuidor
             </Link>
             <Link className="button button-outline" to={`/store/${data.tenant.slug}`}>
-              Ir a catálogo público
+              Ir a catalogo publico
             </Link>
           </div>
         </div>
         <div className="b2b-side-card">
           <h3>Estado comercial</h3>
           <p className="chip">Distribuidores activos: {distributorCount}</p>
-          <p>{tenantConfig?.plan_type === "commission" ? "Modelo con comisión" : "Modelo de suscripción"}</p>
+          <p>{tenantConfig?.plan_type === "commission" ? "Modelo con comision" : "Modelo de suscripcion"}</p>
           <p>Proveedor de cobro: {paymentLabel}</p>
           <p>Pago manual B2B: {b2bManualPayment ? "Habilitado" : "Pendiente"}</p>
         </div>
       </section>
 
       <section className="b2b-shell">
+        <div className="b2b-logo-strip">
+          <img src="/client-assets/todoindustrialmx/logo_zsg.jpg" alt="ZSG" />
+          <img src="/client-assets/todoindustrialmx/logo_skf.jpg" alt="SKF" />
+          <img src="/client-assets/todoindustrialmx/logo_timken.png" alt="Timken" />
+          <img src="/client-assets/todoindustrialmx/logo_fag.png" alt="FAG" />
+        </div>
+
         <div className="b2b-capability-grid">
           <article className="b2b-card">
-            <h3>Crédito y condiciones</h3>
-            <p>Solicitud de línea de crédito, validación documental y autorización comercial por segmento.</p>
+            <h3>Nivel Bronze</h3>
+            <p>Acceso mayoreo base, reposicion rapida y soporte comercial estandar.</p>
           </article>
           <article className="b2b-card">
-            <h3>Pedido recurrente</h3>
-            <p>Reposición rápida por SKU de alto movimiento y listas de compra guardadas por cliente.</p>
+            <h3>Nivel Silver</h3>
+            <p>Precios escalonados, prioridad de surtido y recomendacion de compra recurrente.</p>
+          </article>
+          <article className="b2b-card">
+            <h3>Nivel Gold</h3>
+            <p>Condiciones especiales por volumen, ejecutivo dedicado y soporte postventa extendido.</p>
           </article>
           <article className="b2b-card">
             <h3>Cobro B2B flexible</h3>
             <ul>
-              <li>Solicitud de cotización técnica</li>
+              <li>Solicitud de cotizacion tecnica</li>
               <li>Transferencia bancaria</li>
               <li>Link de pago Mercado Pago</li>
               <li>Anticipo por Mercado Pago</li>
             </ul>
           </article>
-          <article className="b2b-card">
-            <h3>Soporte postventa</h3>
-            <p>Atención comercial dedicada para aplicación, reposición y continuidad operativa.</p>
-          </article>
         </div>
 
         <div className="b2b-layout">
           <section className="b2b-table-wrap">
-            <h2>Lista mayoreo de referencia</h2>
+            <h2>Ventajas comerciales por producto</h2>
             <table className="table">
               <thead>
                 <tr>
                   <th>SKU</th>
                   <th>Producto</th>
-                  <th>Público</th>
+                  <th>Publico</th>
                   <th>Mayoreo</th>
                   <th>Ahorro</th>
                 </tr>
@@ -141,7 +141,7 @@ export function StorefrontDistributorsPage() {
               <tbody>
                 {pricingRows.length === 0 ? (
                   <tr>
-                    <td colSpan={5}>Sin productos de referencia aún.</td>
+                    <td colSpan={5}>Sin productos de referencia aun.</td>
                   </tr>
                 ) : null}
                 {pricingRows.map((row) => (
@@ -158,9 +158,9 @@ export function StorefrontDistributorsPage() {
           </section>
 
           <aside className="b2b-request-panel">
-            <h2>Solicitud rápida</h2>
+            <h2>Solicitud de alta y credito</h2>
             <label>
-              Razón social
+              Razon social
               <input placeholder="Empresa distribuidora" />
             </label>
             <label>
@@ -170,22 +170,23 @@ export function StorefrontDistributorsPage() {
             <label>
               Tipo de solicitud
               <select>
-                <option>Cotización por volumen</option>
-                <option>Alta con crédito</option>
+                <option>Cotizacion por volumen</option>
+                <option>Alta con credito</option>
                 <option>Pedido recurrente</option>
               </select>
             </label>
             <div className="b2b-panel-actions">
               <button className="button" type="button">
-                Solicitar evaluación comercial
+                Solicitar evaluacion comercial
               </button>
               <button className="button button-outline" type="button">
                 Generar anticipo MP
               </button>
+              <button className="button button-outline" type="button">
+                Generar link de pago MP
+              </button>
             </div>
-            <p className="muted">
-              La solicitud formal se completa desde el registro de distribuidores con validación administrativa.
-            </p>
+            <p className="muted">La solicitud formal se completa desde el registro con validacion administrativa.</p>
             <Link className="button button-outline" to={`/store/${data.tenant.slug}/distribuidores/registro`}>
               Ir al formulario completo
             </Link>
