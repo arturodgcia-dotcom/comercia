@@ -280,8 +280,35 @@ function distributorLayout(channel: WizardV2Channel, brandName: string) {
       </>
     );
   }
-  if (channel === "public_store") return <p style={{ margin: 0 }}>Catalogo orientado a compra empresarial y abastecimiento recurrente.</p>;
-  if (channel === "distributor_store") return <p style={{ margin: 0 }}>Portal B2B con escalas de precio, beneficios y recompra.</p>;
+  if (channel === "public_store") {
+    return (
+      <>
+        <div style={{ background: "#fff", borderRadius: 12, padding: 10 }}>
+          Catalogo empresarial con kits listos para recompra recurrente.
+        </div>
+        <div style={{ marginTop: 10, display: "grid", gridTemplateColumns: "repeat(2,minmax(0,1fr))", gap: 8 }}>
+          <div style={{ background: "#fff", borderRadius: 10, padding: 10 }}>Linea operativa</div>
+          <div style={{ background: "#fff", borderRadius: 10, padding: 10 }}>Linea premium</div>
+        </div>
+      </>
+    );
+  }
+  if (channel === "distributor_store") {
+    return (
+      <>
+        <div style={{ background: "#fff", borderRadius: 12, padding: 10 }}>
+          Portal B2B con escalas, margen por nivel y ordenes de alto volumen.
+        </div>
+        <div style={{ marginTop: 10, display: "grid", gridTemplateColumns: "repeat(3,minmax(0,1fr))", gap: 8 }}>
+          {"Nivel Silver,Nivel Gold,Nivel Platinum".split(",").map((item) => (
+            <div key={item} style={{ background: "#fff", borderRadius: 10, padding: 10 }}>
+              {item}
+            </div>
+          ))}
+        </div>
+      </>
+    );
+  }
   return <p style={{ margin: 0 }}>WebApp para operacion de pedidos mayoreo, cartera y seguimiento de rutas.</p>;
 }
 
