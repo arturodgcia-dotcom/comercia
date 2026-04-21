@@ -2,7 +2,7 @@ import { FormEvent, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../app/AuthContext";
 import { PageHeader } from "../components/PageHeader";
-import { api } from "../services/api";
+import { ApiError, api } from "../services/api";
 
 export function ReinpiaBrandsNewPage() {
   const { token } = useAuth();
@@ -30,7 +30,7 @@ export function ReinpiaBrandsNewPage() {
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
-    if (!token) return;
+    if (!token || saving) return;
     try {
       setSaving(true);
       setError("");
@@ -46,7 +46,21 @@ export function ReinpiaBrandsNewPage() {
       const created = await api.createTenant(token, payload);
       navigate(`/reinpia/brands/${created.id}/setup`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "No fue posible crear la marca.");
+      const message = err instanceof Error ? err.message : "No fue posible crear la marca.";
+      if (err instanceof ApiError && err.status === 400 && message.includes("slug o subdomain ya existen")) {
+        try {
+          const tenants = await api.getTenants(token);
+          const existing = tenants.find((tenant) => tenant.slug === form.slug || tenant.subdomain === form.subdomain);
+          if (existing) {
+            setError(`La marca ya existía (${existing.name}). Redirigiendo al workflow existente.`);
+            navigate(`/reinpia/brands/${existing.id}/setup`);
+            return;
+          }
+        } catch {
+          // Si falla el lookup, mostramos el error original.
+        }
+      }
+      setError(message);
     } finally {
       setSaving(false);
     }

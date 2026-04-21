@@ -245,12 +245,18 @@ def update_brand_setup_workflow(
             else BrandEcommerceData(**update_data["ecommerce_data"])
         )
         raw_payload["ecommerce_data"] = ecommerce_data.model_dump()
+    if "landing_template" in update_data:
+        raw_payload["landing_template"] = str(update_data["landing_template"] or channel_templates["landing_template"])
+        _set_channel_regeneration(raw_payload, "landing")
     if "public_store_template" in update_data:
+        raw_payload["public_store_template"] = str(update_data["public_store_template"] or channel_templates["public_store_template"])
         _set_channel_regeneration(raw_payload, "public")
     if "distributor_store_template" in update_data:
+        raw_payload["distributor_store_template"] = str(update_data["distributor_store_template"] or channel_templates["distributor_store_template"])
         _set_channel_regeneration(raw_payload, "distributors")
     if "webapp_template" in update_data:
-        workflow["webapp_template"] = str(update_data["webapp_template"] or channel_templates["webapp_template"])
+        raw_payload["webapp_template"] = str(update_data["webapp_template"] or channel_templates["webapp_template"])
+        workflow["webapp_template"] = raw_payload["webapp_template"]
     if "pos_setup_data" in update_data and update_data["pos_setup_data"] is not None:
         pos_setup_data: BrandPosSetupData = (
             update_data["pos_setup_data"]
@@ -735,6 +741,32 @@ def _sync_mercadopago_settings(db: Session, *, tenant_id: int, settings: dict) -
 
 
 def _resolve_channel_templates(payload: dict, workflow: dict | None = None) -> dict[str, str]:
+    template_keys = ("landing_template", "public_store_template", "distributor_store_template", "webapp_template")
+
+    existing_templates: dict[str, str] = {}
+    channel_templates_payload = payload.get("channel_templates", {})
+    if not isinstance(channel_templates_payload, dict):
+        channel_templates_payload = {}
+    workflow_dict = workflow if isinstance(workflow, dict) else {}
+
+    for key in template_keys:
+        candidate = payload.get(key)
+        if not candidate:
+            candidate = channel_templates_payload.get(key)
+        if not candidate:
+            candidate = workflow_dict.get(key)
+        value = str(candidate or "").strip()
+        if value:
+            existing_templates[key] = value
+
+    if all(key in existing_templates for key in template_keys):
+        return {
+            "landing_template": existing_templates["landing_template"],
+            "public_store_template": existing_templates["public_store_template"],
+            "distributor_store_template": existing_templates["distributor_store_template"],
+            "webapp_template": existing_templates["webapp_template"],
+        }
+
     identity = payload.get("identity_data", {})
     if not isinstance(identity, dict):
         identity = {}

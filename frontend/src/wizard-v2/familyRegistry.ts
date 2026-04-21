@@ -53,5 +53,29 @@ export function getWizardV2FamilyRegistry(model: WizardV2BusinessModel): WizardV
       ["Agenda visible en primer pliegue", "Paquetes por estilo", "CTA de reserva inmediata"],
       model
     ),
+    family(
+      "fashion_premium",
+      "ropa",
+      "Fashion Premium",
+      "Lookbook comercial de alto impacto para colecciones, drops y ticket premium.",
+      ["Hero editorial de temporada", "Carriles de coleccion", "Tarjetas de producto con narrativa visual"],
+      model
+    ),
+    family(
+      "clinic_trust",
+      "salud",
+      "Clinic Trust",
+      "Experiencia de confianza medica con conversion por especialidad y agenda.",
+      ["FAQ clinica para SEO/AEO", "Bloques de credenciales", "CTA de reservacion inmediata"],
+      model
+    ),
+    family(
+      "distributor_empire",
+      "retail",
+      "Distributor Empire",
+      "Arquitectura B2B premium para distribuidores, mayoreo y recompra recurrente.",
+      ["Portal B2B con escalas", "Bloques de margen y volumen", "WebApp operativa comercial"],
+      model
+    ),
   ];
 }

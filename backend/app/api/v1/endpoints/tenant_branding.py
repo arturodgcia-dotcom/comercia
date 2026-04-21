@@ -3,6 +3,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
+from app.services.role_permissions_service import role_matches_any_alias
 from app.db.session import get_db
 from app.models.models import Tenant, TenantBranding, User
 from app.schemas.tenant_branding import TenantBrandingRead, TenantBrandingUpsert
@@ -72,7 +73,7 @@ def update_branding(
 
 
 def _assert_tenant_scope(current_user: User, tenant_id: int) -> None:
-    if current_user.role == "reinpia_admin":
+    if role_matches_any_alias(current_user.role, {"super_admin"}):
         return
     if current_user.tenant_id != tenant_id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="sin acceso a esta marca")

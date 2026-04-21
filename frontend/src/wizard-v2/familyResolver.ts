@@ -3,7 +3,9 @@ import { WizardV2BusinessModel, WizardV2Channel, WizardV2Family, WizardV2Resolve
 
 const SECTOR_FAMILY_PRIORITY: Partial<Record<WizardV2Sector, WizardV2Family["family_id"][]>> = {
   alimentos: ["food_premium_delivery"],
+  ropa: ["fashion_premium"],
   retail: ["healthy_products"],
+  salud: ["clinic_trust"],
   servicios: ["barber_booking"],
 };
 
@@ -16,7 +18,13 @@ function pickFamily(input: WizardV2ResolveInput): WizardV2Family {
   }
 
   const candidates = registry.filter((item) => item.sector === input.sector);
-  if (candidates.length) return candidates[0];
+  if (candidates.length) {
+    if (input.business_goal === "expansion_b2b") {
+      const b2b = registry.find((item) => item.family_id === "distributor_empire");
+      if (b2b) return b2b;
+    }
+    return candidates[0];
+  }
 
   const orderedIds = SECTOR_FAMILY_PRIORITY[input.sector] ?? [];
   const ordered = orderedIds
@@ -25,7 +33,7 @@ function pickFamily(input: WizardV2ResolveInput): WizardV2Family {
   if (ordered.length) return ordered[0];
 
   if (input.business_goal === "expansion_b2b") {
-    return registry.find((item) => item.family_id === "barber_booking") ?? registry[0];
+    return registry.find((item) => item.family_id === "distributor_empire") ?? registry[0];
   }
   return registry[0];
 }

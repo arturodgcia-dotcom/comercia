@@ -111,6 +111,62 @@ function barberLayout(channel: WizardV2Channel, brandName: string) {
   return <p style={{ margin: 0 }}>{channel === "public_store" ? "Reservas premium por servicio" : "Canal para membresias corporativas y vouchers"}.</p>;
 }
 
+function fashionLayout(channel: WizardV2Channel, brandName: string) {
+  if (channel === "landing") {
+    return (
+      <>
+        <div style={{ borderRadius: 16, padding: 14, background: "#fff" }}>
+          <h3 style={{ margin: 0 }}>{brandName} Fashion Premium</h3>
+          <p style={{ margin: "8px 0 0", fontSize: 14 }}>Storytelling visual tipo revista con SEO de intencion de colecciones.</p>
+        </div>
+        <div style={{ marginTop: 10, display: "grid", gridTemplateColumns: "repeat(3,minmax(0,1fr))", gap: 8 }}>
+          {"Drop limitado,Lookbook,Tendencia".split(",").map((item) => <div key={item} style={{ background: "#fff", borderRadius: 10, padding: 10 }}>{item}</div>)}
+        </div>
+      </>
+    );
+  }
+  if (channel === "webapp") return <p style={{ margin: 0 }}>WebApp de inventario por talla, ventas asistidas y alertas de reposicion.</p>;
+  return <p style={{ margin: 0 }}>{channel === "public_store" ? "Ecommerce con carriles premium por temporada." : "Canal distribuidor de colecciones por volumen."}</p>;
+}
+
+function clinicLayout(channel: WizardV2Channel, brandName: string) {
+  if (channel === "landing") {
+    return (
+      <>
+        <div style={{ borderRadius: 16, padding: 14, background: "#fff" }}>
+          <h3 style={{ margin: 0 }}>{brandName} Clinic Trust</h3>
+          <p style={{ margin: "8px 0 0", fontSize: 14 }}>Landing de confianza: especialidades, evidencia y respuestas AEO para pacientes.</p>
+        </div>
+        <div style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap" }}>
+          {"Schema MedicalOrganization,FAQ clinica,CTA reservar".split(",").map((item) => <span key={item} style={{ background: "#fff", borderRadius: 999, padding: "3px 8px", fontSize: 12 }}>{item}</span>)}
+        </div>
+      </>
+    );
+  }
+  if (channel === "webapp") return <p style={{ margin: 0 }}>WebApp para agenda clinica, seguimiento y caja por consultorio.</p>;
+  return <p style={{ margin: 0 }}>{channel === "public_store" ? "Ecommerce de servicios medicos y programas preventivos." : "Canal institucional y convenios de salud."}</p>;
+}
+
+function distributorLayout(channel: WizardV2Channel, brandName: string) {
+  if (channel === "landing") {
+    return (
+      <>
+        <div style={{ borderRadius: 16, padding: 14, background: "#1f365a", color: "#fff" }}>
+          <h3 style={{ margin: 0 }}>{brandName} Distributor Empire</h3>
+          <p style={{ margin: "8px 0 0", fontSize: 14 }}>Propuesta B2B: margen, cobertura y control comercial por plaza.</p>
+        </div>
+        <div style={{ marginTop: 10, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+          <div style={{ background: "#fff", borderRadius: 10, padding: 10 }}>FAQ de volumen y logistica</div>
+          <div style={{ background: "#fff", borderRadius: 10, padding: 10 }}>CTA abrir cuenta comercial</div>
+        </div>
+      </>
+    );
+  }
+  if (channel === "public_store") return <p style={{ margin: 0 }}>Catalogo orientado a compra empresarial y abastecimiento recurrente.</p>;
+  if (channel === "distributor_store") return <p style={{ margin: 0 }}>Portal B2B con escalas de precio, beneficios y recompra.</p>;
+  return <p style={{ margin: 0 }}>WebApp para operacion de pedidos mayoreo, cartera y seguimiento de rutas.</p>;
+}
+
 export function FamilyPreview({ familyId, channel, brandName, businessModel }: FamilyPreviewProps) {
   if (familyId === "food_premium_delivery") {
     return frame(`Food Premium Delivery | ${channel}`, familyId, businessModel, foodLayout(channel, brandName));
@@ -120,6 +176,15 @@ export function FamilyPreview({ familyId, channel, brandName, businessModel }: F
   }
   if (familyId === "barber_booking") {
     return frame(`Barber Booking | ${channel}`, familyId, businessModel, barberLayout(channel, brandName));
+  }
+  if (familyId === "fashion_premium") {
+    return frame(`Fashion Premium | ${channel}`, familyId, businessModel, fashionLayout(channel, brandName));
+  }
+  if (familyId === "clinic_trust") {
+    return frame(`Clinic Trust | ${channel}`, familyId, businessModel, clinicLayout(channel, brandName));
+  }
+  if (familyId === "distributor_empire") {
+    return frame(`Distributor Empire | ${channel}`, familyId, businessModel, distributorLayout(channel, brandName));
   }
   return frame(`Preview ${channel}`, familyId, businessModel, <p style={{ margin: 0 }}>Familia en siguiente bloque.</p>);
 }

@@ -236,7 +236,15 @@ def get_tenant_storefront_config(
 def _validate_slug_and_subdomain_uniqueness(db: Session, slug: str, subdomain: str) -> None:
     exists = db.scalar(select(Tenant).where((Tenant.slug == slug) | (Tenant.subdomain == subdomain)))
     if exists:
-        raise HTTPException(status_code=400, detail="slug o subdomain ya existen")
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "message": "slug o subdomain ya existen",
+                "tenant_id": exists.id,
+                "tenant_slug": exists.slug,
+                "tenant_subdomain": exists.subdomain,
+            },
+        )
 
 
 def _assert_tenant_scope(current_user: User, tenant: Tenant) -> None:
