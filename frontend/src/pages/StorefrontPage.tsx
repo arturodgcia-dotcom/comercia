@@ -80,6 +80,7 @@ export function StorefrontPage() {
   const checkoutCurrency = String(parsedConfig.currency ?? "MXN").toUpperCase();
   const categoryImagesFromConfig = ((parsedConfig.catalog_visuals as Record<string, unknown> | undefined)?.category_images ??
     {}) as Record<string, string>;
+  const isTodoIndustrial = (data?.tenant.slug ?? "").toLowerCase() === "todoindustrialmx";
 
   const allProducts = useMemo(() => {
     if (!data) return [];
@@ -171,7 +172,11 @@ export function StorefrontPage() {
   if (!data) return <p>Cargando ecommerce publico...</p>;
 
   return (
-    <main className="route-public-catalog">
+    <main className={`route-public-catalog ${isTodoIndustrial ? "route-public-catalog-industrial" : ""}`}>
+      <section className="public-topbar">
+        <p>Distribucion industrial en Mexico y Latinoamerica</p>
+        <p>Atencion comercial: 55-90397409 · WhatsApp 55-11791417</p>
+      </section>
       <section className="public-hero">
         <div>
           <p className="public-kicker">Catalogo industrial masivo</p>
@@ -245,6 +250,29 @@ export function StorefrontPage() {
             </article>
           ))}
         </div>
+
+        <section className="public-rail-section">
+          <article className="im-card">
+            <h3>Destacados industriales</h3>
+            <div className="public-inline-rail">
+              {data.featured_products.slice(0, 6).map((product) => (
+                <div key={`featured-${product.id}`} className="im-chip">
+                  {product.name}
+                </div>
+              ))}
+            </div>
+          </article>
+          <article className="im-card">
+            <h3>Nuevos ingresos y recompra</h3>
+            <div className="public-inline-rail">
+              {data.recent_products.slice(0, 6).map((product) => (
+                <div key={`recent-${product.id}`} className="im-chip">
+                  {product.name}
+                </div>
+              ))}
+            </div>
+          </article>
+        </section>
 
         <div className="public-layout">
           <section className="public-product-grid">

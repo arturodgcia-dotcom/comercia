@@ -54,6 +54,7 @@ export function StorefrontDistributorsPage() {
   const paymentProvider = String(parsedConfig.payment_provider ?? "stripe").toLowerCase();
   const paymentLabel = paymentProvider === "mercadopago" ? "Mercado Pago" : "Stripe";
   const distributorCount = data.distributors.length;
+  const isTodoIndustrial = data.tenant.slug.toLowerCase() === "todoindustrialmx";
   const pricingRows = referenceProducts.map((product) => {
     const publicPrice = Number(product.price_public);
     const wholesale = Number(product.price_wholesale ?? Math.max(0, publicPrice * 0.88));
@@ -69,7 +70,7 @@ export function StorefrontDistributorsPage() {
   });
 
   return (
-    <main className="route-distributor-b2b">
+    <main className={`route-distributor-b2b ${isTodoIndustrial ? "route-distributor-b2b-industrial" : ""}`}>
       <section className="b2b-hero">
         <div>
           <p className="b2b-kicker">Portal mayoreo y recompra</p>
@@ -94,6 +95,11 @@ export function StorefrontDistributorsPage() {
       </section>
 
       <section className="b2b-shell">
+        <div className="b2b-alert-strip">
+          <span className="chip">Portal B2B activo</span>
+          <span className="chip">Mayoreo + recompra</span>
+          <span className="chip">Pago: {paymentLabel}</span>
+        </div>
         <div className="b2b-logo-strip">
           <img src="/client-assets/todoindustrialmx/logo_zsg.jpg" alt="ZSG" />
           <img src="/client-assets/todoindustrialmx/logo_skf.jpg" alt="SKF" />
@@ -187,6 +193,7 @@ export function StorefrontDistributorsPage() {
               </button>
             </div>
             <p className="muted">La solicitud formal se completa desde el registro con validacion administrativa.</p>
+            <p className="muted">Contacto comercial dedicado: todoindustrialmx@gmail.com · 55-90397409</p>
             <Link className="button button-outline" to={`/store/${data.tenant.slug}/distribuidores/registro`}>
               Ir al formulario completo
             </Link>

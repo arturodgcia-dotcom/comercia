@@ -2329,6 +2329,17 @@ textarea {
   background: #ecf2f9;
 }
 
+.public-topbar {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 10px 20px 0;
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 13px;
+  color: #344861;
+}
+
 .public-hero {
   max-width: 1240px;
   margin: 0 auto;
@@ -2375,6 +2386,19 @@ textarea {
   max-width: 1240px;
   margin: 0 auto;
   padding: 0 20px 24px;
+}
+
+.public-rail-section {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.public-inline-rail {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .public-logo-strip {
@@ -2503,6 +2527,10 @@ textarea {
   background: linear-gradient(180deg, #0b1422 0%, #111f31 34%, #e9eef5 100%);
 }
 
+.route-distributor-b2b-industrial {
+  color: #122238;
+}
+
 .b2b-hero {
   max-width: 1240px;
   margin: 0 auto;
@@ -2519,6 +2547,24 @@ textarea {
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: #9ab0c8;
+}
+
+.route-distributor-b2b-industrial .b2b-shell,
+.route-distributor-b2b-industrial .b2b-card,
+.route-distributor-b2b-industrial .b2b-table-wrap,
+.route-distributor-b2b-industrial .b2b-request-panel,
+.route-distributor-b2b-industrial .b2b-table-wrap th,
+.route-distributor-b2b-industrial .b2b-table-wrap td,
+.route-distributor-b2b-industrial .b2b-card p,
+.route-distributor-b2b-industrial .b2b-card li {
+  color: #122238;
+}
+
+.b2b-alert-strip {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
 }
 
 .b2b-side-card {
@@ -2603,10 +2649,21 @@ textarea {
   background: linear-gradient(180deg, #f0f4f8, #e6edf5);
 }
 
+.pos-runtime-industrial {
+  background: linear-gradient(180deg, #e8eef5, #dce6f1);
+}
+
 .pos-runtime-shell {
   max-width: 1240px;
   margin: 0 auto;
   padding: 18px 20px 24px;
+}
+
+.pos-top-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+  margin-bottom: 10px;
 }
 
 .pos-runtime-header {
@@ -2681,6 +2738,14 @@ textarea {
   gap: 8px;
 }
 
+.pos-payment-readiness {
+  margin-top: 12px;
+  border: 1px solid #d6deea;
+  border-radius: 10px;
+  background: #f8fbff;
+  padding: 10px;
+}
+
 .pos-runtime-footer {
   margin-top: 10px;
   display: flex;
@@ -2695,7 +2760,12 @@ textarea {
   .b2b-layout,
   .pos-runtime-grid,
   .pos-runtime-header,
-  .public-toolbar {
+  .public-toolbar,
+  .public-rail-section {
     grid-template-columns: 1fr;
+  }
+
+  .public-topbar {
+    flex-direction: column;
   }
 }

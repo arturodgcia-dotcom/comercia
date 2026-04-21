@@ -61,6 +61,7 @@ export function StorePOSTemplate({
   const landingHref = tenantSlugOverride ? `/store/${tenantSlugOverride}/landing` : `/comercia?brand=${theme.key}`;
   const publicHref = tenantSlugOverride ? `/store/${tenantSlugOverride}` : `/internal/demo/tienda-publica?brand=${theme.key}`;
   const distributorsHref = tenantSlugOverride ? `/store/${tenantSlugOverride}/distribuidores` : `/internal/demo/distribuidores?brand=${theme.key}`;
+  const isTodoIndustrial = (tenantSlugOverride ?? "").toLowerCase() === "todoindustrialmx";
 
   useEffect(() => {
     if (!tenantSlugOverride) return;
@@ -92,8 +93,14 @@ export function StorePOSTemplate({
   const total = ticketRows.reduce((sum, row) => sum + row.subtotal, 0);
 
   return (
-    <main className="pos-runtime-root" style={styleVars}>
+    <main className={`pos-runtime-root ${isTodoIndustrial ? "pos-runtime-industrial" : ""}`} style={styleVars}>
       <section className="pos-runtime-shell">
+        <section className="pos-top-metrics">
+          <article className="im-card"><h3>Inventario hoy</h3><p>2,418 referencias</p></article>
+          <article className="im-card"><h3>Pedidos abiertos</h3><p>37 pedidos en proceso</p></article>
+          <article className="im-card"><h3>Clientes frecuentes</h3><p>126 cuentas activas</p></article>
+          <article className="im-card"><h3>Cobro principal</h3><p>{paymentProvider === "mercadopago" ? "Mercado Pago" : paymentProvider}</p></article>
+        </section>
         <header className="pos-runtime-header">
           <div>
             <p className="tf-badge">{theme.channelBadge}</p>
@@ -165,6 +172,16 @@ export function StorePOSTemplate({
               <button className="button button-outline" type="button">Generar link de pago</button>
               <button className="button button-outline" type="button">Cobro Point</button>
               <button className="button button-outline" type="button" onClick={() => setTicket({})}>Limpiar ticket</button>
+            </div>
+            <div className="pos-payment-readiness">
+              <strong>Estado de pagos</strong>
+              <p>
+                {paymentProvider === "mercadopago"
+                  ? mpReady
+                    ? "Listo para cobro local, link y QR."
+                    : "Pendiente de credenciales en panel de pagos."
+                  : "Configurado con proveedor alterno."}
+              </p>
             </div>
           </aside>
         </section>
