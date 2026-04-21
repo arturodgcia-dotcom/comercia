@@ -1,4 +1,9 @@
 import { StorefrontPayload } from "../types/domain";
+import { BrandTemplateInput } from "../branding/multibrandTemplates";
+import { StoreDistributorsTemplate } from "../pages/templates/StoreDistributorsTemplate";
+import { StorePOSTemplate } from "../pages/templates/StorePOSTemplate";
+import { StorePublicTemplate } from "../pages/templates/StorePublicTemplate";
+import { resolveTemplateForChannel } from "../templates";
 import { FamilyPreview } from "./components/FamilyPreview";
 import { WizardV2BusinessModel, WizardV2Channel, WizardV2FamilyId } from "./types";
 
@@ -17,6 +22,114 @@ function parseBusinessModel(value: string): WizardV2BusinessModel | null {
   if (value.endsWith("_commission_based")) return "commission_based";
   if (value.endsWith("_fixed_subscription")) return "fixed_subscription";
   return null;
+}
+
+function normalizeBusinessType(value?: string | null): "products" | "services" | "mixed" {
+  const normalized = String(value ?? "").trim().toLowerCase();
+  if (normalized === "products" || normalized === "services" || normalized === "mixed") return normalized;
+  return "mixed";
+}
+
+function buildRuntimeBrandInput(
+  payload: StorefrontPayload | null,
+  familyId: WizardV2FamilyId,
+  model: WizardV2BusinessModel,
+  channel: WizardV2Channel
+): BrandTemplateInput {
+  const brandName = payload?.tenant.name ?? "Marca";
+  const slug = payload?.tenant.slug ?? "marca";
+  const primaryColor = payload?.branding?.primary_color ?? (familyId === "industrial_heavy_sales" ? "#1d3557" : "#1f5fc2");
+  const secondaryColor = payload?.branding?.secondary_color ?? (familyId === "industrial_heavy_sales" ? "#ff9f1c" : "#3f92ff");
+  const supportColor = familyId === "industrial_heavy_sales" ? "#f7b733" : "#2e9af6";
+  const businessType = normalizeBusinessType(payload?.tenant.business_type);
+  const promptMaster =
+    familyId === "industrial_heavy_sales"
+      ? "Distribucion industrial de transmision de potencia y refacciones con foco en cotizacion rapida y recompra."
+      : "Experiencia comercial premium por canal.";
+
+  const fallbackHeadlines: Record<WizardV2Channel, string> = {
+    landing: `${brandName}: propuesta comercial premium por canal`,
+    public_store: `${brandName}: catalogo ecommerce de alta conversion`,
+    distributor_store: `${brandName}: portal B2B de volumen`,
+    webapp: `${brandName}: operacion comercial en tiempo real`,
+  };
+
+  return {
+    key: slug,
+    name: brandName,
+    slug,
+    logoText: brandName,
+    logoAccent: familyId === "industrial_heavy_sales" ? "Industrial" : "",
+    primaryColor,
+    secondaryColor,
+    supportColor,
+    bgSoft: familyId === "industrial_heavy_sales" ? "#eef3f8" : "#f3f7ff",
+    promptMaster,
+    businessType,
+    tone: familyId === "industrial_heavy_sales" ? "tecnologico" : "premium",
+    baseImages: [],
+    hasExistingLanding: false,
+    monetizationPlan: model === "commission_based" ? "commission" : "subscription",
+    copy: {
+      headline: payload?.branding?.hero_title ?? fallbackHeadlines[channel],
+      subtitle:
+        payload?.branding?.hero_subtitle ??
+        (familyId === "industrial_heavy_sales"
+          ? "Entregamos soluciones en transmision de potencia con cobertura Mexico y Latinoamerica."
+          : "Activa una experiencia comercial premium con identidad por canal."),
+      ctaPrimary: "Cotizar ahora",
+      ctaSecondary: "Hablar por WhatsApp",
+      valueProp:
+        familyId === "industrial_heavy_sales"
+          ? "Excelente calidad al mejor precio con atencion postventa especializada."
+          : "Arquitectura visual premium por canal.",
+    },
+  };
+}
+
+function renderWizardV2Runtime(
+  familyId: WizardV2FamilyId,
+  channel: WizardV2Channel,
+  model: WizardV2BusinessModel,
+  payload: StorefrontPayload | null
+): JSX.Element {
+  const brandInput = buildRuntimeBrandInput(payload, familyId, model, channel);
+  const tenantSlug = payload?.tenant.slug;
+  const industrialMode = familyId === "industrial_heavy_sales" || familyId === "distributor_empire";
+
+  if (channel === "public_store") {
+    return (
+      <StorePublicTemplate
+        brandInputOverride={brandInput}
+        tenantSlugOverride={tenantSlug}
+        hideDemoBadge
+        industrialMode={industrialMode}
+      />
+    );
+  }
+
+  if (channel === "distributor_store") {
+    return <StoreDistributorsTemplate brandInputOverride={brandInput} tenantSlugOverride={tenantSlug} hideDemoBadge />;
+  }
+
+  if (channel === "webapp") {
+    return (
+      <StorePOSTemplate
+        brandInputOverride={brandInput}
+        tenantSlugOverride={tenantSlug}
+        hideDemoBadge
+        industrialMode={industrialMode}
+      />
+    );
+  }
+
+  if (channel === "landing") {
+    const landing = resolveTemplateForChannel(payload, "landing");
+    const LandingComponent = landing.component;
+    return <LandingComponent />;
+  }
+
+  return <FamilyPreview familyId={familyId} channel={channel} brandName={brandInput.name} businessModel={model} />;
 }
 
 export function isWizardV2TemplateId(templateId?: string): boolean {
@@ -49,13 +162,8 @@ export function resolveWizardV2RuntimeComponent(
   const familyId = parsed?.familyId ?? "food_premium_delivery";
   const channel = parsed?.channel ?? fallbackChannel;
   const model = parsed?.model ?? "fixed_subscription";
-  const brandName = payload?.tenant.name ?? "Marca";
 
   return function WizardV2ChannelRuntime(): JSX.Element {
-    return (
-      <section style={{ maxWidth: 1200, margin: "0 auto", padding: "1rem" }}>
-        <FamilyPreview familyId={familyId} channel={channel} brandName={brandName} businessModel={model} />
-      </section>
-    );
+    return renderWizardV2Runtime(familyId, channel, model, payload);
   };
 }

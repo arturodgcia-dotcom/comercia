@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { buildBrandTheme, getDemoBrandInput, tokensToCssVars } from "../../branding/multibrandTemplates";
+import { BrandTemplateInput, buildBrandTheme, getDemoBrandInput, tokensToCssVars } from "../../branding/multibrandTemplates";
 import "./TemplateFamily.css";
 
 const DISTRIBUTOR_PLANS = [
@@ -11,18 +11,33 @@ const DISTRIBUTOR_PLANS = [
 
 const B2B_FEATURES = [
   "Dashboard comercial con historial de recompra",
-  "Pricing por volumen y reglas por categoría",
+  "Pricing por volumen y reglas por categoria",
   "Listas frecuentes y pedidos recurrentes",
-  "Membresía comercial con beneficios escalonados",
+  "Membresia comercial con beneficios escalonados",
   "Seguimiento de pedidos y estado de cuenta",
 ];
 
-export function StoreDistributorsTemplate() {
+type StoreDistributorsTemplateProps = {
+  brandInputOverride?: BrandTemplateInput;
+  tenantSlugOverride?: string;
+  hideDemoBadge?: boolean;
+};
+
+export function StoreDistributorsTemplate({
+  brandInputOverride,
+  tenantSlugOverride,
+  hideDemoBadge = false,
+}: StoreDistributorsTemplateProps = {}) {
   const [searchParams] = useSearchParams();
   const [orderCount, setOrderCount] = useState(0);
-  const brandInput = getDemoBrandInput(searchParams.get("brand"));
+  const brandInput = brandInputOverride ?? getDemoBrandInput(searchParams.get("brand"));
   const theme = useMemo(() => buildBrandTheme(brandInput, "distributor_store"), [brandInput]);
   const styleVars = useMemo(() => tokensToCssVars(theme), [theme]);
+  const landingHref = tenantSlugOverride ? `/store/${tenantSlugOverride}/landing` : `/comercia?brand=${theme.key}`;
+  const publicHref = tenantSlugOverride
+    ? `/store/${tenantSlugOverride}`
+    : `/internal/demo/tienda-publica?brand=${theme.key}`;
+  const webappHref = tenantSlugOverride ? `/store/${tenantSlugOverride}/webapp` : `/internal/demo/pos?brand=${theme.key}`;
 
   return (
     <main className="tf-root" style={styleVars}>
@@ -36,16 +51,18 @@ export function StoreDistributorsTemplate() {
             </h1>
             <p className="tf-muted">Variante B2B para {theme.name}. Base visual compartida con landing, ecommerce y POS.</p>
           </div>
-          <div className="tf-demo-banner">
-            <strong>Demo</strong>
-            <span>Vista de muestra</span>
-            <span>No productivo</span>
-          </div>
+          {!hideDemoBadge ? (
+            <div className="tf-demo-banner">
+              <strong>Demo</strong>
+              <span>Vista de muestra</span>
+              <span>No productivo</span>
+            </div>
+          ) : null}
           <div className="tf-nav-actions">
-            <Link className="button button-outline" to={`/internal/demo/tienda-publica?brand=${theme.key}`}>
-              Ecommerce público
+            <Link className="button button-outline" to={publicHref}>
+              Ecommerce publico
             </Link>
-            <Link className="button button-outline" to={`/internal/demo/pos?brand=${theme.key}`}>
+            <Link className="button button-outline" to={webappHref}>
               POS
             </Link>
             <button type="button" className="button" onClick={() => setOrderCount((value) => value + 1)}>
@@ -86,10 +103,10 @@ export function StoreDistributorsTemplate() {
             <article className="tf-card" key={plan.tier}>
               <p className="tf-eyebrow">{plan.tier}</p>
               <h3>{plan.discount} de descuento</h3>
-              <p className="tf-muted">Mínimo por pedido: {plan.min}</p>
+              <p className="tf-muted">Minimo por pedido: {plan.min}</p>
               <p className="tf-muted">Entrega: {plan.delivery}</p>
               <button type="button" className="button button-outline" onClick={() => setOrderCount((value) => value + 1)}>
-                Solicitar cotización
+                Solicitar cotizacion
               </button>
             </article>
           ))}
@@ -98,7 +115,7 @@ export function StoreDistributorsTemplate() {
         <section className="tf-card tf-section-highlight">
           <h3>Panel comercial multimarcas</h3>
           <p>
-            Pricing de volumen, recompra rápida, historial de pedidos y estado de membresía comercial con el mismo ADN visual
+            Pricing de volumen, recompra rapida, historial de pedidos y estado de membresia comercial con el mismo ADN visual
             de la marca.
           </p>
           <div className="tf-row-between">
@@ -110,9 +127,9 @@ export function StoreDistributorsTemplate() {
         <footer className="tf-footer">
           <p>{theme.leadQuestion}</p>
           <div className="tf-footer-links">
-            <Link to={`/comercia?brand=${theme.key}`}>Landing de marca</Link>
-            <Link to={`/internal/demo/tienda-publica?brand=${theme.key}`}>Ecommerce público</Link>
-            <Link to={`/internal/demo/pos?brand=${theme.key}`}>POS WebApp</Link>
+            <Link to={landingHref}>Landing de marca</Link>
+            <Link to={publicHref}>Ecommerce publico</Link>
+            <Link to={webappHref}>POS WebApp</Link>
           </div>
         </footer>
       </section>
