@@ -19,6 +19,16 @@ import { calculatePlanTotals } from "../utils/monetization";
 type CartMap = Record<number, number>;
 const DEMO_CUSTOMER_ID = 1;
 
+function parseStorefrontConfig(raw?: string | null): Record<string, unknown> {
+  if (!raw) return {};
+  try {
+    const parsed = JSON.parse(raw);
+    return typeof parsed === "object" && parsed ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
 function isTulipanesTenant(data: StorefrontHomePayload): boolean {
   const name = data.tenant.name.toLowerCase();
   const slug = data.tenant.slug.toLowerCase();
@@ -404,6 +414,14 @@ export function StorefrontPage() {
 
   const primary = data.branding?.primary_color ?? "#0d3e86";
   const secondary = data.branding?.secondary_color ?? "#8dc4ff";
+  const parsedConfig = parseStorefrontConfig(data.storefront_config?.config_json);
+  const channelSettings = (parsedConfig.channel_settings as Record<string, unknown> | undefined) ?? {};
+  const paymentProvider = String(
+    parsedConfig.payment_provider ?? channelSettings.payment_provider ?? "stripe"
+  ).toLowerCase();
+  const mercadopagoEnabled = Boolean(channelSettings.mercadopago_enabled);
+  const mercadopagoReady = mercadopagoEnabled && Boolean(channelSettings.mercadopago_public_key || channelSettings.mercadopago_access_token);
+  const primaryCheckoutLabel = paymentProvider === "mercadopago" ? "Pagar con Mercado Pago" : "Comprar ahora";
 
   return (
     <main className="storefront premium-store" style={channelThemeStyle}>
@@ -422,6 +440,7 @@ export function StorefrontPage() {
         {isPreviewMode ? <p className="chip chip-neutral">Modo preview de ecommerce publico</p> : null}
         {!hasRealProducts ? <p className="chip chip-warning">Mostrando catalogo demo tenant-aware</p> : null}
         {tenantConfig ? <p className="chip">{tenantConfig.checkout_badge}</p> : null}
+        <p className="chip">Pago principal: {paymentProvider === "mercadopago" ? "Mercado Pago" : "Stripe"}</p>
         <h1>{data.branding?.hero_title ?? data.tenant.name}</h1>
         <p>{data.branding?.hero_subtitle ?? "Experiencia comercial premium con ecommerce y canal distribuidor separados."}</p>
         <div className="store-actions">
@@ -539,6 +558,13 @@ export function StorefrontPage() {
 
         <aside className="store-banner">
           <h2>Carrito y checkout</h2>
+          {paymentProvider === "mercadopago" ? (
+            <p className={mercadopagoReady ? "chip" : "chip chip-warning"}>
+              {mercadopagoReady
+                ? "Mercado Pago listo para cobro en MXN."
+                : "Mercado Pago pendiente de credenciales. Configura llaves en el panel de pagos."}
+            </p>
+          ) : null}
           <p>Subtotal: {selectedCurrency} {financialSummary.subtotal.toLocaleString("es-MX")}</p>
           {tenantConfig?.plan_type === "commission" ? (
             <>
@@ -579,7 +605,7 @@ export function StorefrontPage() {
             ))}
           </div>
           <button className="button" type="button" onClick={handleCheckout} disabled={loadingCheckout || cartItems.length === 0}>
-            {loadingCheckout ? "Redirigiendo..." : "Comprar ahora"}
+            {loadingCheckout ? "Redirigiendo..." : primaryCheckoutLabel}
           </button>
         </aside>
       </section>

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+﻿import { useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { BrandTemplateInput, buildBrandTheme, getDemoBrandInput, tokensToCssVars } from "../../branding/multibrandTemplates";
 import "./TemplateFamily.css";
@@ -37,7 +37,7 @@ export function StoreDistributorsTemplate({
   const publicHref = tenantSlugOverride
     ? `/store/${tenantSlugOverride}`
     : `/internal/demo/tienda-publica?brand=${theme.key}`;
-  const webappHref = tenantSlugOverride ? `/store/${tenantSlugOverride}/webapp` : `/internal/demo/pos?brand=${theme.key}`;
+  const webappHref = tenantSlugOverride ? `/store/${tenantSlugOverride}/webapp-preview` : `/internal/demo/pos?brand=${theme.key}`;
 
   return (
     <main className="tf-root" style={styleVars}>
@@ -136,3 +136,4 @@ export function StoreDistributorsTemplate({
     </main>
   );
 }
+

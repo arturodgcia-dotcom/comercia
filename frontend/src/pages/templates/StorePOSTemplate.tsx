@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+ï»¿import { useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { BrandTemplateInput, buildBrandTheme, getDemoBrandInput, tokensToCssVars } from "../../branding/multibrandTemplates";
 import "./TemplateFamily.css";
@@ -45,6 +45,7 @@ export function StorePOSTemplate({
     ? `/store/${tenantSlugOverride}/distribuidores`
     : `/internal/demo/distribuidores?brand=${theme.key}`;
   const items = industrialMode ? POS_ITEMS_INDUSTRIAL : POS_ITEMS;
+  const isRuntimeMode = Boolean(hideDemoBadge || tenantSlugOverride);
 
   const addItem = (itemId: number) => {
     setTicket((prev) => ({ ...prev, [itemId]: (prev[itemId] ?? 0) + 1 }));
@@ -92,11 +93,15 @@ export function StorePOSTemplate({
           <article className="tf-card">
             <p className="tf-eyebrow">Caja de venta</p>
             <h2>Operacion POS de {theme.name}</h2>
-            <p className="tf-muted">Login POS, carrito, cupones, puntos y resumen de compra en una vista de muestra.</p>
+            <p className="tf-muted">
+              {isRuntimeMode
+                ? "Login POS, carrito, cupones, puntos y resumen de compra para operacion diaria."
+                : "Login POS, carrito, cupones, puntos y resumen de compra en una vista de muestra."}
+            </p>
             <div className="tf-grid tf-grid-2">
               {items.map((item) => (
                 <button key={item.id} type="button" className="button button-outline" onClick={() => addItem(item.id)}>
-                  {item.name} · ${item.price.toLocaleString("es-MX")}
+                  {item.name} Â· ${item.price.toLocaleString("es-MX")}
                 </button>
               ))}
             </div>
@@ -110,7 +115,7 @@ export function StorePOSTemplate({
                 .filter((item) => (ticket[item.id] ?? 0) > 0)
                 .map((item) => (
                   <li key={item.id}>
-                    {item.name} x {ticket[item.id]} · ${((ticket[item.id] ?? 0) * item.price).toLocaleString("es-MX")}
+                    {item.name} x {ticket[item.id]} Â· ${((ticket[item.id] ?? 0) * item.price).toLocaleString("es-MX")}
                   </li>
                 ))}
             </ul>
@@ -139,3 +144,4 @@ export function StorePOSTemplate({
     </main>
   );
 }
+

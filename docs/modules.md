@@ -829,3 +829,13 @@ Limpieza aplicada:
 | Landing SEO/AEO obligatoria | Inicial funcional | `seo_title`, `seo_description`, FAQ, quick answers, schema |
 | Persistencia por canal (SoT) | Inicial funcional | landing/public/distributor/webapp templates por tenant |
 | Demo vs produccion | Inicial funcional | demo solo en `/internal/demo/*`; flujo productivo sin dependencia demo |
+
+## Actualizacion ejecucion 66 (Recuperacion visual premium)
+| Modulo | Estado | Notas |
+|---|---|---|
+| Runtime Wizard V2 visual | Inicial funcional | reutiliza paginas productivas reales para landing/publico/distribuidores |
+| Ecommerce publico catalogo fuerte | Inicial funcional | source: StorefrontPage en runtime _v2 |
+| Ecommerce distribuidores B2B | Inicial funcional | source: StorefrontDistributorsPage en runtime _v2 |
+| WebApp preview operativo | Inicial funcional | source: StorePOSTemplate en modo runtime (sin badge demo) |
+| Mercado Pago UI comercial | Inicial funcional | badges/estado en ecommerce publico y opciones B2B en distribuidores |
+

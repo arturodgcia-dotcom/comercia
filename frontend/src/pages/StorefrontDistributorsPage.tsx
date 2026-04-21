@@ -5,10 +5,21 @@ import { api } from "../services/api";
 import { Product, StorefrontDistributorsPayload, TenantConfig } from "../types/domain";
 import { calculatePlanTotals } from "../utils/monetization";
 
+function parseStorefrontConfig(raw?: string | null): Record<string, unknown> {
+  if (!raw) return {};
+  try {
+    const parsed = JSON.parse(raw);
+    return typeof parsed === "object" && parsed ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
 export function StorefrontDistributorsPage() {
   const { tenantSlug } = useParams();
   const [data, setData] = useState<StorefrontDistributorsPayload | null>(null);
   const [tenantConfig, setTenantConfig] = useState<TenantConfig | null>(null);
+  const [storefrontConfigJson, setStorefrontConfigJson] = useState<string | null>(null);
   const [referenceProducts, setReferenceProducts] = useState<Product[]>([]);
   const [error, setError] = useState("");
 
@@ -22,6 +33,7 @@ export function StorefrontDistributorsPage() {
       .then(([distributorsPayload, homePayload, config]) => {
         setData(distributorsPayload);
         setReferenceProducts((homePayload?.featured_products ?? []).slice(0, 6));
+        setStorefrontConfigJson(homePayload?.storefront_config?.config_json ?? null);
         setTenantConfig(config);
       })
       .catch((err) => setError(err instanceof Error ? err.message : "No fue posible cargar distribuidores"));
@@ -35,6 +47,9 @@ export function StorefrontDistributorsPage() {
       beneficios: ["Precios menudeo/mayoreo", "Pedidos recurrentes", "Atencion comercial dedicada"],
     };
   }, [data]);
+  const parsedConfig = parseStorefrontConfig(storefrontConfigJson);
+  const b2bManualPayment = Boolean(parsedConfig.b2b_manual_payment);
+  const paymentProvider = String(parsedConfig.payment_provider ?? "stripe").toLowerCase();
 
   const styleVars = useMemo(() => {
     if (!data) return undefined;
@@ -123,6 +138,18 @@ export function StorefrontDistributorsPage() {
               <li key={item}>{item}</li>
             ))}
           </ul>
+        </article>
+        <article className="card">
+          <h3>Pagos mayoreo</h3>
+          <ul className="marketing-list">
+            <li>Solicitar cotizacion por volumen</li>
+            <li>Transferencia bancaria</li>
+            <li>Link de pago Mercado Pago</li>
+            <li>Anticipo por Mercado Pago</li>
+          </ul>
+          <p className="muted">
+            Proveedor principal: {paymentProvider === "mercadopago" ? "Mercado Pago" : "Stripe"} | Pago manual B2B: {b2bManualPayment ? "Activo" : "Pendiente"}
+          </p>
         </article>
       </section>
 

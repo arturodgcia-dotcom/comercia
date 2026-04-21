@@ -1359,3 +1359,15 @@ Se cerraron tres módulos finales para pruebas operativas:
 - Separacion demo vs produccion confirmada:
   - demo interna: `/internal/demo/*`
   - flujo productivo: `/store/:tenantSlug*` y wizard de setup.
+
+## Actualizacion ejecucion 66 (Recuperacion de templates premium existentes)
+- Runtime real Wizard V2 actualizado para reutilizar layouts productivos existentes por canal (sin placeholders):
+  - landing: `/store/:tenantSlug/landing` -> `StorefrontLandingPage`
+  - ecommerce publico: `/store/:tenantSlug` -> `StorefrontPage` (catalogo fuerte tipo marketplace)
+  - ecommerce distribuidores: `/store/:tenantSlug/distribuidores` -> `StorefrontDistributorsPage` (B2B serio)
+  - webapp preview: `/store/:tenantSlug/webapp-preview` -> `StorePOSTemplate` en modo runtime
+- wizard-v2/runtime.tsx queda como source of truth visual para templates _v2 en produccion.
+- Se corrigio enlace runtime de webapp a webapp-preview en templates reutilizados.
+- TodoIndustrialMX priorizado con catalogo publico robusto y copy de pagos Mercado Pago en ecommerce/distribuidores.
+
+

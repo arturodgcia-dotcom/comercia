@@ -1,4 +1,4 @@
-# Arquitectura COMERCIA by REINPIA
+﻿# Arquitectura COMERCIA by REINPIA
 
 ## Sprint 1 - Cierre funcional (2026-04-15)
 Cambios estructurales ya aplicados:
@@ -160,19 +160,19 @@ Objetivo: base estable para BI/reporting sin dependencias de Excel en esta fase.
 Estructura oficial:
 - Panel global:
   - Inicio
-  - Creaci�n
-  - Administraci�n
+  - Creaciï¿½n
+  - Administraciï¿½n
   - Finanzas
-  - Operaci�n interna
+  - Operaciï¿½n interna
 - Wizard:
-  - flujo oficial de creaci�n/setup inicial por marca
+  - flujo oficial de creaciï¿½n/setup inicial por marca
 - Canales creados:
-  - administraci�n global posterior de landing, ecommerce p�blico, ecommerce distribuidores y webApp/POS
+  - administraciï¿½n global posterior de landing, ecommerce pï¿½blico, ecommerce distribuidores y webApp/POS
 - Panel de marca:
-  - operaci�n diaria, consumo/l�mites, soporte, add-ons y alertas
+  - operaciï¿½n diaria, consumo/lï¿½mites, soporte, add-ons y alertas
 
 Decisiones de limpieza:
-- Se retiran aliases legacy de administraci�n de tenants (`/tenants*`) para evitar duplicidad con rutas REINPIA.
+- Se retiran aliases legacy de administraciï¿½n de tenants (`/tenants*`) para evitar duplicidad con rutas REINPIA.
 - Se conserva una sola ficha administrativa de marca por ruta:
   - `/reinpia/tenants/:tenantId`
 
@@ -432,7 +432,7 @@ Se agrego base PWA para experiencia tipo app en celular:
 - `start_url` orientada a POS: `/pos`.
 - `service worker` para cache basico de shell estatico, manifest e iconos.
 - componentes UX:
-  - `InstallAppPrompt` (boton “Instalar WebApp”)
+  - `InstallAppPrompt` (boton â€œInstalar WebAppâ€)
   - `AppInstallHelp` (guia Android/iOS)
 - rutas:
   - usuario con sesion: entra directo a POS
@@ -573,7 +573,7 @@ Esto habilita un flujo de seguimiento comercial end-to-end sin depender de formu
   - contexto global no muestra modulos internos de marca como menu primario
 - Reubicacion de monedas en navegacion:
   - Global: Monedas y tipos de cambio
-  - Marca: Moneda de operaci�n
+  - Marca: Moneda de operaciï¿½n
 
 ## Conectividad API y Monedas (Ejecucion 36)
 - Se centralizo la URL base del frontend en `frontend/src/services/api.ts` para evitar desalineacion entre modulos.
@@ -635,7 +635,7 @@ Esto habilita un flujo de seguimiento comercial end-to-end sin depender de formu
 - POS principal de canal se normaliza a ruta tenant-aware:
   - `/pos?tenant_id={tenantId}`
 
-## Ejecucion 40: m�dulo independiente Diagn�stico inteligente
+## Ejecucion 40: mï¿½dulo independiente Diagnï¿½stico inteligente
 Se agrega un nuevo modulo desacoplado del wizard de marca y de la generacion de landing/ecommerce.
 
 Objetivo:
@@ -674,7 +674,7 @@ Endpoints:
 - `POST /api/v1/brand-diagnostics/{tenant_id}/improvement-plan`
 - `GET /api/v1/reinpia/diagnostics`
 
-Regla de dise�o:
+Regla de diseï¿½o:
 - no modifica wizard ni onboarding.
 - opera como modulo paralelo de evaluacion comercial y de visibilidad.
 
@@ -848,7 +848,7 @@ Rutas productivas oficiales:
 - `/store/:tenantSlug/distribuidores`
 
 Rutas legacy/demo:
-- `/internal/demo/*` (con redirección legacy desde `/templates/*`) no participan como motor principal de canales por marca.
+- `/internal/demo/*` (con redirecciÃ³n legacy desde `/templates/*`) no participan como motor principal de canales por marca.
 
 ## Ejecucion 47: separacion publica vs interna en mercadotecnia COMERCIA
 Objetivo:
@@ -1051,7 +1051,7 @@ Frontend:
 ## Ejecucion 52: UX de creditos IA y continuidad operativa
 - El dashboard de marca implementa una capa de lectura operativa de creditos IA con medidor visual tipo gasolina.
 - Se aplican umbrales de estado en frontend para saldo restante (30% advertencia, 10% critica).
-- El CTA 'Comprar m�s cr�ditos' dispara checkout comercial Stripe test del add-on extra_500_ai_credits.
+- El CTA 'Comprar mï¿½s crï¿½ditos' dispara checkout comercial Stripe test del add-on extra_500_ai_credits.
 - Al llegar a 0 creditos se comunica bloqueo de funciones IA no criticas, manteniendo acceso a panel, ventas y operacion basica.
 
 ## Ejecucion 53: add-ons en 1 clic desde alertas y dashboards
@@ -1204,14 +1204,14 @@ Arquitectura aplicada:
 1) Dominio INICIO
 - acceso unico a `Dashboard global`.
 
-2) Dominio CREACI�N
+2) Dominio CREACIï¿½N
 - Clientes
 - Marcas
 - Nueva marca
 - Wizard de configuracion
 - alcance exclusivo de setup inicial (sin pagos/soporte/alertas).
 
-3) Dominio ADMINISTRACI�N
+3) Dominio ADMINISTRACIï¿½N
 - Clientes comerciales
 - Marcas activas
 - Canales creados
@@ -1225,7 +1225,7 @@ Arquitectura aplicada:
 - Tokens IA
 - base preparada para rol `contador`.
 
-5) Dominio OPERACI�N INTERNA
+5) Dominio OPERACIï¿½N INTERNA
 - Soporte
 - Alertas / Centinela
 - Seguridad
@@ -1236,18 +1236,18 @@ Arquitectura aplicada:
 6) Limpieza de flujo principal
 - menu global sin accesos legacy mezclados.
 - se evita empujar flujo principal a `/tenants/:tenantId/branding`; selector de marca vuelve al dashboard de marca.
-- rutas legacy pueden permanecer en c�digo, pero fuera de la navegacion principal.
+- rutas legacy pueden permanecer en cï¿½digo, pero fuera de la navegacion principal.
 ## Ajuste de arquitectura local marca (2026-04-13)
 
-- Se reforz� separaci�n de contexto:
-  - Panel global para gobierno y administraci�n central.
-  - Panel cliente/marca para operaci�n local y decisiones de capacidad de su propia cuenta.
+- Se reforzï¿½ separaciï¿½n de contexto:
+  - Panel global para gobierno y administraciï¿½n central.
+  - Panel cliente/marca para operaciï¿½n local y decisiones de capacidad de su propia cuenta.
 - Flujo local agregado:
   - `/admin/brands/children` como vista operativa de marca principal y marcas hijas relacionadas.
-  - `/admin/branding` como ficha de revisi�n por marca (selector de principal/hija).
-- Navegaci�n:
-  - Se elimin� la secci�n `Canales` del men� de marca para simplificar IA/operaci�n.
-  - Canales se mantienen operativos dentro de la secci�n `Operaci�n`.
+  - `/admin/branding` como ficha de revisiï¿½n por marca (selector de principal/hija).
+- Navegaciï¿½n:
+  - Se eliminï¿½ la secciï¿½n `Canales` del menï¿½ de marca para simplificar IA/operaciï¿½n.
+  - Canales se mantienen operativos dentro de la secciï¿½n `Operaciï¿½n`.
 - Las acciones de crecimiento y soporte del resumen de marca resuelven dentro del contexto local del tenant.
 ## Arquitectura de navegacion global (2026-04-14)
 
@@ -1285,10 +1285,10 @@ Se incorporo una capa de monitoreo de tokens IA en dos niveles:
 
 Principio:
 - El panel de marca resuelve operacion diaria y acciones de compra para su cuenta.
-- El panel global supervisa distribucion, riesgo y reserva para evitar agotamiento sist�mico.
+- El panel global supervisa distribucion, riesgo y reserva para evitar agotamiento sistï¿½mico.
 ## Arquitectura final panel de marca (soporte/capacidad/respuestas) - 2026-04-14
 
-Se consolid� un flujo de operaci�n sin dependencias t�cnicas manuales para cliente:
+Se consolidï¿½ un flujo de operaciï¿½n sin dependencias tï¿½cnicas manuales para cliente:
 
 - Soporte operativo estructurado
   - Tickets persistentes por marca
@@ -1296,15 +1296,15 @@ Se consolid� un flujo de operaci�n sin dependencias t�cnicas manuales para
   - Chat IA condicionado por plan
   - Escalamiento humano preparado
 
-- Expansi�n de capacidad desacoplada
-  - Cat�logo centralizado de add-ons
-  - Recomendaci�n por consumo/riesgo
-  - Integraci�n con checkout comercial
+- Expansiï¿½n de capacidad desacoplada
+  - Catï¿½logo centralizado de add-ons
+  - Recomendaciï¿½n por consumo/riesgo
+  - Integraciï¿½n con checkout comercial
 
-- Configuraci�n de speech y atenci�n
+- Configuraciï¿½n de speech y atenciï¿½n
   - El cliente define lineamientos
-  - REINPIA aplica la configuraci�n v�a soporte
-  - Se evita activar/agregar agentes desde l�gica t�cnica manual en UI cliente
+  - REINPIA aplica la configuraciï¿½n vï¿½a soporte
+  - Se evita activar/agregar agentes desde lï¿½gica tï¿½cnica manual en UI cliente
 
 ## Ejecucion 58: puente de marketing Nervia x ComerCia (2026-04-14)
 Objetivo:
@@ -1386,41 +1386,41 @@ Cambios:
 
 
 ## Cierre Sprint 1 (2026-04-15)
-- Navegaci�n global y de marca reconciliada con rutas activas (sin rutas fantasma visibles).
+- Navegaciï¿½n global y de marca reconciliada con rutas activas (sin rutas fantasma visibles).
 - Reparto funcional final:
   - Dashboard: resumen ejecutivo.
-  - Planes: detalle contractual y l�mites.
-  - Expansi�n: add-ons y upgrade.
-- Correcci�n de textos visibles en espa�ol UTF-8 en m�dulos de soporte/comercial y dashboard.
+  - Planes: detalle contractual y lï¿½mites.
+  - Expansiï¿½n: add-ons y upgrade.
+- Correcciï¿½n de textos visibles en espaï¿½ol UTF-8 en mï¿½dulos de soporte/comercial y dashboard.
 
 ## Sprint 2 - Bloque 1 (2026-04-15): arquitectura de acceso por roles/permisos
 ### Capas nuevas
-1) Catálogo de identidad de acceso
+1) CatÃ¡logo de identidad de acceso
 - tablas:
   - `role_catalog`
   - `permission_catalog`
   - `role_permissions`
   - `user_role_assignments`
-- propósito: desacoplar control de acceso de strings sueltos en `users.role`.
+- propÃ³sito: desacoplar control de acceso de strings sueltos en `users.role`.
 
-2) Capa de resolución efectiva
+2) Capa de resoluciÃ³n efectiva
 - servicio `role_permissions_service`:
   - resuelve permisos efectivos por usuario
   - resuelve roles efectivos por usuario
   - mantiene fallback y mapeo para roles legacy
   - conserva compatibilidad operativa con cuentas existentes.
 
-3) Capa de API de administración
+3) Capa de API de administraciÃ³n
 - endpoints en `/api/v1/admin`:
   - `/roles`
   - `/permissions`
   - `/role-assignments`
-- habilita operación básica de asignación de rol por alcance (`global`, `client`, `brand`).
+- habilita operaciÃ³n bÃ¡sica de asignaciÃ³n de rol por alcance (`global`, `client`, `brand`).
 
 4) Capa de consumo frontend
 - `/auth/me` agrega `permissions` y `effective_roles`.
 - `RoleRoute` acepta `allowedPermissions`.
-- navegación global y de marca filtra módulos por permisos base con fallback legacy.
+- navegaciÃ³n global y de marca filtra mÃ³dulos por permisos base con fallback legacy.
 
 ## Ejecucion 63: arquitectura de IA autonoma eficiente por eventos (2026-04-16)
 Objetivo:
@@ -1581,3 +1581,31 @@ Arquitectura aplicada:
   - `quick_answer_blocks`
   - `schema_type`
 - el paso de landing exige estos campos para aprobar.
+
+## Ejecucion 66: recuperacion de layouts premium existentes en runtime real
+Objetivo:
+- evitar rediseño y reutilizar activos visuales de mayor calidad ya presentes en el repo.
+
+Arquitectura aplicada:
+1) Source of truth visual V2
+- archivo: `frontend/src/wizard-v2/runtime.tsx`.
+- templates _v2 ahora resuelven componentes productivos reales por canal.
+
+2) Mapeo productivo por canal
+- landing -> StorefrontLandingPage.
+- public_store -> StorefrontPage (catalogo robusto tipo marketplace).
+- distributor_store -> StorefrontDistributorsPage (B2B comercial).
+- webapp -> StorePOSTemplate en runtime sin sello demo.
+
+3) Separacion demo vs produccion
+- /internal/demo/* permanece como entorno interno.
+- flujo productivo tenant-aware usa exclusivamente /store/:tenantSlug*.
+
+4) Ajuste de rutas
+- enlaces runtime de webapp corregidos a /store/:tenantSlug/webapp-preview.
+
+5) Mercado Pago en UI comercial
+- ecommerce publico muestra proveedor principal y estado de readiness cuando aplica Mercado Pago.
+- distribuidores muestra opciones B2B: cotizacion, transferencia, link MP y anticipo MP.
+
+

@@ -1,9 +1,9 @@
 import { StorefrontPayload } from "../types/domain";
 import { BrandTemplateInput } from "../branding/multibrandTemplates";
-import { StoreDistributorsTemplate } from "../pages/templates/StoreDistributorsTemplate";
+import { StorefrontDistributorsPage } from "../pages/StorefrontDistributorsPage";
+import { StorefrontLandingPage } from "../pages/StorefrontLandingPage";
+import { StorefrontPage } from "../pages/StorefrontPage";
 import { StorePOSTemplate } from "../pages/templates/StorePOSTemplate";
-import { StorePublicTemplate } from "../pages/templates/StorePublicTemplate";
-import { resolveTemplateForChannel } from "../templates";
 import { FamilyPreview } from "./components/FamilyPreview";
 import { WizardV2BusinessModel, WizardV2Channel, WizardV2FamilyId } from "./types";
 
@@ -98,18 +98,11 @@ function renderWizardV2Runtime(
   const industrialMode = familyId === "industrial_heavy_sales" || familyId === "distributor_empire";
 
   if (channel === "public_store") {
-    return (
-      <StorePublicTemplate
-        brandInputOverride={brandInput}
-        tenantSlugOverride={tenantSlug}
-        hideDemoBadge
-        industrialMode={industrialMode}
-      />
-    );
+    return <StorefrontPage />;
   }
 
   if (channel === "distributor_store") {
-    return <StoreDistributorsTemplate brandInputOverride={brandInput} tenantSlugOverride={tenantSlug} hideDemoBadge />;
+    return <StorefrontDistributorsPage />;
   }
 
   if (channel === "webapp") {
@@ -124,9 +117,7 @@ function renderWizardV2Runtime(
   }
 
   if (channel === "landing") {
-    const landing = resolveTemplateForChannel(payload, "landing");
-    const LandingComponent = landing.component;
-    return <LandingComponent />;
+    return <StorefrontLandingPage />;
   }
 
   return <FamilyPreview familyId={familyId} channel={channel} brandName={brandInput.name} businessModel={model} />;

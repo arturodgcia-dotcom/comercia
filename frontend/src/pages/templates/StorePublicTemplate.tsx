@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+ï»¿import { useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { BrandTemplateInput, buildBrandTheme, getDemoBrandInput, tokensToCssVars } from "../../branding/multibrandTemplates";
 import "./TemplateFamily.css";
@@ -53,7 +53,7 @@ export function StorePublicTemplate({
   const distributorsHref = tenantSlugOverride
     ? `/store/${tenantSlugOverride}/distribuidores`
     : `/internal/demo/distribuidores?brand=${theme.key}`;
-  const webappHref = tenantSlugOverride ? `/store/${tenantSlugOverride}/webapp` : `/internal/demo/pos?brand=${theme.key}`;
+  const webappHref = tenantSlugOverride ? `/store/${tenantSlugOverride}/webapp-preview` : `/internal/demo/pos?brand=${theme.key}`;
 
   const visibleProducts = useMemo(() => {
     if (industrialMode) return PRODUCT_RUNTIME_INDUSTRIAL;
@@ -82,7 +82,7 @@ export function StorePublicTemplate({
               <span>{theme.logoAccent ? ` ${theme.logoAccent}` : ""}</span>
             </h1>
             <p className="tf-muted">
-              Marca: <strong>{theme.name}</strong> · Tipo de negocio: <strong>{theme.businessType}</strong>
+              Marca: <strong>{theme.name}</strong> Â· Tipo de negocio: <strong>{theme.businessType}</strong>
             </p>
           </div>
           {!hideDemoBadge ? (
@@ -151,7 +151,7 @@ export function StorePublicTemplate({
               <article className="tf-card" key={item.id}>
                 <p className="tf-eyebrow">{item.category}</p>
                 <h4>{item.name}</h4>
-                <p className="tf-muted">Valoracion {item.score} · Tarjeta heredada por marca</p>
+                <p className="tf-muted">Valoracion {item.score} Â· Tarjeta heredada por marca</p>
                 <p className="tf-price">${item.price.toLocaleString("es-MX")}</p>
                 <button type="button" className="button button-outline" onClick={() => setCartCount((value) => value + 1)}>
                   Agregar
@@ -173,3 +173,4 @@ export function StorePublicTemplate({
     </main>
   );
 }
+
