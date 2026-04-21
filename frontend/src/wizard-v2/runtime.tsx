@@ -4,6 +4,7 @@ import { WizardV2BusinessModel, WizardV2Channel, WizardV2FamilyId } from "./type
 
 const CHANNEL_SUFFIXES: WizardV2Channel[] = ["distributor_store", "public_store", "landing", "webapp"];
 const KNOWN_FAMILIES: WizardV2FamilyId[] = [
+  "industrial_heavy_sales",
   "food_premium_delivery",
   "healthy_products",
   "barber_booking",

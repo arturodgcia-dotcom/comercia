@@ -13,6 +13,7 @@ export type WizardV2Style = "impacto" | "editorial" | "minimal";
 export type WizardV2BusinessModel = "fixed_subscription" | "commission_based";
 
 export type WizardV2FamilyId =
+  | "industrial_heavy_sales"
   | "food_premium_delivery"
   | "healthy_products"
   | "barber_booking"

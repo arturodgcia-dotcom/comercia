@@ -1,0 +1,50 @@
+﻿[
+    {
+        "source":  "image11.jpg",
+        "target":  "hero_baleros_caliper.jpg"
+    },
+    {
+        "source":  "image26.jpg",
+        "target":  "brand_timken_banner.jpg"
+    },
+    {
+        "source":  "image12.png",
+        "target":  "producto_acople_rojo.png"
+    },
+    {
+        "source":  "image19.jpg",
+        "target":  "logo_skf.jpg"
+    },
+    {
+        "source":  "image27.png",
+        "target":  "logo_fulo.png"
+    },
+    {
+        "source":  "image39.jpg",
+        "target":  "producto_bomba_naranja.jpg"
+    },
+    {
+        "source":  "image37.png",
+        "target":  "catalogo_taller_baleros.png"
+    },
+    {
+        "source":  "image36.png",
+        "target":  "producto_banda_polyv.png"
+    },
+    {
+        "source":  "image22.png",
+        "target":  "logo_fag.png"
+    },
+    {
+        "source":  "image18.jpg",
+        "target":  "logo_zsg.jpg"
+    },
+    {
+        "source":  "image16.png",
+        "target":  "logo_timken.png"
+    },
+    {
+        "source":  "image14.png",
+        "target":  "hero_bandas_black_gold.png"
+    }
+]

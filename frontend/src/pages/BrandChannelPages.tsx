@@ -169,6 +169,9 @@ function BrandChannelShell({ channel }: { channel: ChannelKey }) {
   const ecommerceData = (parsedConfig.ecommerce_data as Record<string, unknown> | undefined) ?? {};
   const posSetupData = (parsedConfig.pos_setup_data as Record<string, unknown> | undefined) ?? {};
   const channelTemplates = resolveOfficialChannelTemplatesFromConfig(snapshot?.config?.config_json);
+  const partnerMode = toBoolean(parsedConfig.partner_mode, false);
+  const partnerBadge = String((parsedConfig.partner_billing_summary as Record<string, unknown> | undefined)?.badge ?? "").trim();
+  const marketingEnabled = toBoolean(parsedConfig.marketing_enabled, false);
 
   const categoriesCount = useMemo(() => {
     const ids = new Set(products.map((item) => item.category_id).filter(Boolean));
@@ -294,6 +297,22 @@ function BrandChannelShell({ channel }: { channel: ChannelKey }) {
 
       {!loading && channel === "public" ? (
         <>
+          {partnerMode ? (
+            <article className="card">
+              <h3>{partnerBadge || "Cliente Partner Estratégico"}</h3>
+              <p className="chip chip-warning">Programa partner activo para esta marca.</p>
+              <ul className="marketing-list">
+                <li>Membresía Plan Básico</li>
+                <li>Comisión 5%</li>
+                <li>Marketing mensual {marketingEnabled ? "habilitado" : "pendiente"}</li>
+                <li>IVA</li>
+                <li>Total</li>
+              </ul>
+              <Link className="button" to="/admin/brands/capacity-expansion">
+                Upgrade rápido a Growth
+              </Link>
+            </article>
+          ) : null}
           <article className="card">
             <h3>Estado de ecommerce publico</h3>
             <p className={statusClass(publicState)}>{publicState}</p>

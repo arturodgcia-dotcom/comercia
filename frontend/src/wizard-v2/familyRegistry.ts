@@ -10,7 +10,8 @@ function family(
   label: string,
   description: string,
   premium_notes: string[],
-  model: WizardV2BusinessModel
+  model: WizardV2BusinessModel,
+  channelOverrides?: Partial<Record<WizardV2Channel, string>>
 ): WizardV2Family {
   return {
     family_id,
@@ -19,16 +20,31 @@ function family(
     description,
     premium_notes,
     channel_templates: {
-      landing: buildTemplateId(family_id, "landing", model),
-      public_store: buildTemplateId(family_id, "public_store", model),
-      distributor_store: buildTemplateId(family_id, "distributor_store", model),
-      webapp: buildTemplateId(family_id, "webapp", model),
+      landing: channelOverrides?.landing ?? buildTemplateId(family_id, "landing", model),
+      public_store: channelOverrides?.public_store ?? buildTemplateId(family_id, "public_store", model),
+      distributor_store: channelOverrides?.distributor_store ?? buildTemplateId(family_id, "distributor_store", model),
+      webapp: channelOverrides?.webapp ?? buildTemplateId(family_id, "webapp", model),
     },
   };
 }
 
 export function getWizardV2FamilyRegistry(model: WizardV2BusinessModel): WizardV2Family[] {
   return [
+    family(
+      "industrial_heavy_sales",
+      "maquinaria",
+      "Industrial Heavy Sales",
+      "Familia premium industrial para transmision de potencia, refacciones y venta tecnica consultiva.",
+      [
+        "Landing SEO/AEO para busquedas industriales en Mexico",
+        "Catalogo publico robusto con enfoque de cotizacion y checkout Mercado Pago",
+        "Portal distribuidores B2B con volumen, anticipo y pago manual supervisado"
+      ],
+      model,
+      {
+        distributor_store: buildTemplateId("distributor_empire", "distributor_store", model),
+      }
+    ),
     family(
       "food_premium_delivery",
       "alimentos",

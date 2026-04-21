@@ -9,6 +9,7 @@ type FamilyPreviewProps = {
 };
 
 const FAMILY_COLORS: Record<WizardV2FamilyId, { primary: string; secondary: string; soft: string }> = {
+  industrial_heavy_sales: { primary: "#1a3a5f", secondary: "#ff9f1c", soft: "#edf4fb" },
   food_premium_delivery: { primary: "#9a2f12", secondary: "#ff8e3c", soft: "#fff2ea" },
   healthy_products: { primary: "#0f6a4a", secondary: "#52c796", soft: "#e9fbf2" },
   barber_booking: { primary: "#181818", secondary: "#7f5af0", soft: "#f4efff" },
@@ -16,6 +17,21 @@ const FAMILY_COLORS: Record<WizardV2FamilyId, { primary: string; secondary: stri
   clinic_trust: { primary: "#0c6262", secondary: "#3bc1be", soft: "#eafcfc" },
   distributor_empire: { primary: "#1f365a", secondary: "#5b89d6", soft: "#edf4ff" },
 };
+
+const INDUSTRIAL_ASSETS = {
+  hero: "/client-assets/todoindustrialmx/hero_baleros_caliper.jpg",
+  heroBelts: "/client-assets/todoindustrialmx/hero_bandas_black_gold.png",
+  timken: "/client-assets/todoindustrialmx/brand_timken_banner.jpg",
+  workshop: "/client-assets/todoindustrialmx/catalogo_taller_baleros.png",
+  belt: "/client-assets/todoindustrialmx/producto_banda_polyv.png",
+  coupling: "/client-assets/todoindustrialmx/producto_acople_rojo.png",
+  pump: "/client-assets/todoindustrialmx/producto_bomba_naranja.jpg",
+  zsg: "/client-assets/todoindustrialmx/logo_zsg.jpg",
+  skf: "/client-assets/todoindustrialmx/logo_skf.jpg",
+  fag: "/client-assets/todoindustrialmx/logo_fag.png",
+  fulo: "/client-assets/todoindustrialmx/logo_fulo.png",
+  timkenLogo: "/client-assets/todoindustrialmx/logo_timken.png",
+} as const;
 
 function modelBadge(model: WizardV2BusinessModel): string {
   return model === "commission_based" ? "Con comision" : "Sin comision";
@@ -312,7 +328,113 @@ function distributorLayout(channel: WizardV2Channel, brandName: string) {
   return <p style={{ margin: 0 }}>WebApp para operacion de pedidos mayoreo, cartera y seguimiento de rutas.</p>;
 }
 
+function industrialLayout(channel: WizardV2Channel, brandName: string) {
+  if (channel === "landing") {
+    return (
+      <>
+        <div style={{ display: "grid", gridTemplateColumns: "1.25fr 1fr", gap: 10 }}>
+          <div style={{ borderRadius: 16, padding: 14, background: "#0f2237", color: "#fff" }}>
+            <h3 style={{ margin: 0 }}>{brandName}</h3>
+            <p style={{ margin: "8px 0 0", fontSize: 14 }}>Entregamos soluciones en transmision de potencia.</p>
+            <p style={{ margin: "8px 0 0", fontSize: 13, opacity: 0.95 }}>Excelente calidad al mejor precio. Cobertura Mexico y Latinoamerica.</p>
+            <p style={{ margin: "8px 0 0", fontSize: 12, display: "inline-block", borderRadius: 999, padding: "4px 10px", background: "#ffcf70", color: "#222" }}>
+              Cliente Partner Estrategico
+            </p>
+            <div style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap" }}>
+              {"Cotizar ahora,Ver catalogo,WhatsApp 55-11791417".split(",").map((item) => (
+                <span key={item} style={{ borderRadius: 999, padding: "3px 9px", background: "#ff9f1c", color: "#1d1d1d", fontSize: 12 }}>
+                  {item}
+                </span>
+              ))}
+            </div>
+          </div>
+          <img src={INDUSTRIAL_ASSETS.hero} alt="Baleros industriales y precision tecnica" style={{ width: "100%", borderRadius: 16, objectFit: "cover", minHeight: 150 }} />
+        </div>
+        <div style={{ marginTop: 10, display: "grid", gridTemplateColumns: "repeat(3,minmax(0,1fr))", gap: 8 }}>
+          {"Baleros,Chumaceras,Cadenas,Catarinas,Bandas,Acoples,Retenes,Lubricantes,Ferremateriales,Automotriz".split(",").slice(0, 6).map((item) => (
+            <div key={item} style={{ background: "#fff", borderRadius: 10, padding: 10, border: "1px solid #d7e3f2" }}>
+              {item}
+            </div>
+          ))}
+        </div>
+        <div style={{ marginTop: 10, display: "grid", gridTemplateColumns: "repeat(4,minmax(0,1fr))", gap: 8, alignItems: "center" }}>
+          {[INDUSTRIAL_ASSETS.zsg, INDUSTRIAL_ASSETS.skf, INDUSTRIAL_ASSETS.fag, INDUSTRIAL_ASSETS.timkenLogo].map((src) => (
+            <div key={src} style={{ background: "#fff", borderRadius: 10, padding: 8, minHeight: 60, display: "grid", placeItems: "center" }}>
+              <img src={src} alt="Marca distribuida" style={{ maxWidth: "100%", maxHeight: 42, objectFit: "contain" }} />
+            </div>
+          ))}
+        </div>
+      </>
+    );
+  }
+
+  if (channel === "public_store") {
+    return (
+      <>
+        <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: 10 }}>
+          <img src={INDUSTRIAL_ASSETS.workshop} alt="Catalogo industrial con baleros y refacciones" style={{ width: "100%", borderRadius: 14, objectFit: "cover", minHeight: 140 }} />
+          <div style={{ background: "#fff", borderRadius: 14, padding: 12, border: "1px solid #d7e3f2" }}>
+            <p style={{ margin: 0, fontWeight: 600 }}>Catalogo industrial masivo</p>
+            <p style={{ margin: "6px 0 0", fontSize: 13 }}>Busqueda por SKU/marca/aplicacion + filtros robustos.</p>
+            <div style={{ marginTop: 8, display: "flex", gap: 6, flexWrap: "wrap" }}>
+              {"Pagar con Mercado Pago,Cotizar por WhatsApp,Novedades,Promociones".split(",").map((item) => (
+                <span key={item} style={{ fontSize: 12, borderRadius: 999, padding: "3px 8px", background: "#e9f2ff", color: "#1a3a5f" }}>
+                  {item}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+        <div style={{ marginTop: 10, display: "grid", gridTemplateColumns: "repeat(3,minmax(0,1fr))", gap: 8 }}>
+          {[INDUSTRIAL_ASSETS.belt, INDUSTRIAL_ASSETS.coupling, INDUSTRIAL_ASSETS.pump].map((src) => (
+            <img key={src} src={src} alt="Producto industrial destacado" style={{ width: "100%", borderRadius: 12, background: "#fff", border: "1px solid #d7e3f2", padding: 8 }} />
+          ))}
+        </div>
+      </>
+    );
+  }
+
+  if (channel === "distributor_store") {
+    return (
+      <>
+        <div style={{ borderRadius: 16, padding: 12, background: "#102942", color: "#fff" }}>
+          <p style={{ margin: 0, fontWeight: 600 }}>Portal B2B distribuidores</p>
+          <p style={{ margin: "6px 0 0", fontSize: 13 }}>
+            Precios por volumen, reorder rapido, solicitud de cotizacion, transferencia y anticipo por Mercado Pago.
+          </p>
+        </div>
+        <div style={{ marginTop: 10, display: "grid", gridTemplateColumns: "1.3fr 1fr", gap: 8 }}>
+          <img src={INDUSTRIAL_ASSETS.timken} alt="Linea industrial distribuida" style={{ width: "100%", borderRadius: 12, objectFit: "cover", minHeight: 120 }} />
+          <div style={{ display: "grid", gap: 8 }}>
+            {"Alta distribuidor,Solicitud mayoreo,Anticipo MP,Link de pago MP".split(",").map((item) => (
+              <div key={item} style={{ background: "#fff", borderRadius: 10, padding: 9, border: "1px solid #d7e3f2" }}>
+                {item}
+              </div>
+            ))}
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  return (
+    <>
+      <div style={{ background: "#fff", borderRadius: 14, padding: 12, border: "1px solid #d7e3f2" }}>
+        WebApp/POS industrial: cotizacion rapida, mostrador, busqueda SKU/barcode, inventario y clientes frecuentes.
+      </div>
+      <div style={{ marginTop: 10, display: "grid", gridTemplateColumns: "repeat(2,minmax(0,1fr))", gap: 8 }}>
+        <div style={{ background: "#edf4fb", borderRadius: 10, padding: 10 }}>Cobro QR Mercado Pago + ticket interno</div>
+        <div style={{ background: "#edf4fb", borderRadius: 10, padding: 10 }}>Point + conciliacion basica por canal</div>
+      </div>
+      <img src={INDUSTRIAL_ASSETS.heroBelts} alt="Bandas industriales para operacion" style={{ marginTop: 10, width: "100%", borderRadius: 12, objectFit: "cover", minHeight: 115 }} />
+    </>
+  );
+}
+
 export function FamilyPreview({ familyId, channel, brandName, businessModel }: FamilyPreviewProps) {
+  if (familyId === "industrial_heavy_sales") {
+    return frame(`Industrial Heavy Sales | ${channel}`, familyId, businessModel, industrialLayout(channel, brandName));
+  }
   if (familyId === "food_premium_delivery") {
     return frame(`Food Premium Delivery | ${channel}`, familyId, businessModel, foodLayout(channel, brandName));
   }
