@@ -1,8 +1,7 @@
+import { useEffect, useMemo, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
-import { useEffect, useState } from "react";
 import { api } from "../services/api";
 import { StorefrontHomePayload } from "../types/domain";
-import { resolveOfficialChannelTemplatesFromConfig } from "../branding/officialChannelTemplates";
 
 type LandingSection = { title?: string; body?: string };
 type LandingDraft = {
@@ -12,34 +11,8 @@ type LandingDraft = {
   cta_secondary?: string;
   contact_cta?: string;
   sections?: LandingSection[];
-};
-
-type WorkflowPayload = {
-  selected_template?: string;
-  flow_type?: string;
-  is_published?: boolean;
-};
-
-type IdentityPayload = {
-  has_existing_landing?: boolean;
-  existing_landing_url?: string;
-};
-
-type ParsedLandingConfig = {
-  landingDraft: LandingDraft | null;
-  selectedTemplate: string;
-  flowType: string;
-  isPublished: boolean;
-  identity: IdentityPayload;
-};
-
-type DemoLandingContent = {
-  heroTitle: string;
-  heroSubtitle: string;
-  ctaPrimary: string;
-  ctaSecondary: string;
-  contactCta: string;
-  sections: Array<{ title: string; body: string }>;
+  faq_items?: string[];
+  quick_answer_blocks?: string[];
 };
 
 function parseConfig(raw?: string | null): Record<string, unknown> {
@@ -52,104 +25,24 @@ function parseConfig(raw?: string | null): Record<string, unknown> {
   }
 }
 
-function normalizeExternalUrl(raw?: string): string | null {
-  const trimmed = (raw ?? "").trim();
-  if (!trimmed) return null;
-  const value = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
-  try {
-    return new URL(value).toString();
-  } catch {
-    return null;
-  }
-}
+const INDUSTRIAL_CATEGORIES = [
+  "Baleros",
+  "Chumaceras",
+  "Cadenas",
+  "Catarinas",
+  "Bandas",
+  "Acoples",
+  "Retenes",
+  "Lubricantes",
+  "Refacciones industriales",
+];
 
-function isUsableExternalUrl(url: string | null): boolean {
-  if (!url) return false;
-  try {
-    const parsed = new URL(url);
-    const host = parsed.hostname.toLowerCase();
-    return !(
-      host.endsWith(".demo") ||
-      host.endsWith(".local") ||
-      host.endsWith(".invalid") ||
-      host.includes("example")
-    );
-  } catch {
-    return false;
-  }
-}
-
-function resolveLandingConfig(payload: StorefrontHomePayload | null): ParsedLandingConfig {
-  const parsed = parseConfig(payload?.storefront_config?.config_json);
-  const workflow = (parsed.workflow as WorkflowPayload | undefined) ?? {};
-  const identity = (parsed.identity_data as IdentityPayload | undefined) ?? {};
-  const channelTemplates = resolveOfficialChannelTemplatesFromConfig(payload?.storefront_config?.config_json);
-  const selectedTemplate = channelTemplates.landing_template;
-  return {
-    landingDraft: (parsed.landing_draft as LandingDraft | undefined) ?? null,
-    selectedTemplate,
-    flowType: String(workflow.flow_type ?? "without_landing"),
-    isPublished: Boolean(workflow.is_published),
-    identity,
-  };
-}
-
-function buildDemoLandingContent(payload: StorefrontHomePayload): DemoLandingContent {
-  const tenantName = payload.tenant.name;
-  const businessType = payload.tenant.business_type;
-  const isTulipanes = tenantName.toLowerCase().includes("tulipanes");
-  if (isTulipanes) {
-    return {
-      heroTitle: payload.branding?.hero_title ?? `${tenantName}: formación profesional con enfoque práctico`,
-      heroSubtitle:
-        payload.branding?.hero_subtitle ??
-        "Especialízate en cosmetología, podología, cursos y diplomados con una experiencia educativa clara y orientada a resultados.",
-      ctaPrimary: "Solicitar diagnóstico académico",
-      ctaSecondary: "Ver programas disponibles",
-      contactCta: "Agenda una asesoría personalizada para construir tu ruta de formación profesional.",
-      sections: [
-        {
-          title: "Propuesta de valor",
-          body: "Formación profesional con metodología práctica, docentes especializados y seguimiento individual."
-        },
-        {
-          title: "Beneficios principales",
-          body: "Programas actualizados, enfoque en empleabilidad, acompañamiento comercial y crecimiento profesional."
-        },
-        {
-          title: "Oferta formativa",
-          body: "Cosmetología integral, podología clínica, cursos intensivos y diplomados para especialización."
-        }
-      ]
-    };
-  }
-
-  return {
-    heroTitle: payload.branding?.hero_title ?? `${tenantName}: landing comercial tenant-aware`,
-    heroSubtitle:
-      payload.branding?.hero_subtitle ??
-      (businessType === "services"
-        ? "Presenta servicios y convierte oportunidades con estructura comercial clara."
-        : "Muestra catálogo y propuesta de valor con una experiencia de marca coherente."),
-    ctaPrimary: "Solicitar diagnóstico comercial",
-    ctaSecondary: "Conocer propuesta completa",
-    contactCta: "Comparte tu objetivo y te mostramos una ruta comercial lista para ejecución.",
-    sections: [
-      {
-        title: "Propuesta de valor",
-        body: "Landing interna de revisión conectada al branding de la marca activa."
-      },
-      {
-        title: "Beneficios",
-        body: "Mensajes claros, jerarquía comercial y estructura lista para evaluación."
-      },
-      {
-        title: "Oferta principal",
-        body: "Bloques de contenido listos para validar antes de publicación definitiva."
-      }
-    ]
-  };
-}
+const INDUSTRIAL_FAQ = [
+  "¿Qué marcas industriales maneja TODOINDUSTRIALMX?",
+  "¿Realizan envíos en México y Latinoamérica?",
+  "¿Pueden cotizar por aplicación o por número de parte?",
+  "¿Aceptan Mercado Pago para anticipo y pedido especial?",
+];
 
 export function StorefrontLandingPage() {
   const { tenantSlug } = useParams();
@@ -162,123 +55,178 @@ export function StorefrontLandingPage() {
     api
       .getStorefrontHomeData(tenantSlug)
       .then((payload) => setData(payload))
-      .catch((err) => setError(err instanceof Error ? err.message : "No fue posible cargar la landing de la marca."));
+      .catch((err) => setError(err instanceof Error ? err.message : "No fue posible cargar la landing."));
   }, [tenantSlug]);
+
+  const isPreview = searchParams.get("preview") === "1";
 
   if (error) {
     return (
-      <main className="storefront">
-        <section className="store-banner">
-          <h1>Landing de marca no disponible</h1>
-          <p className="error">{error}</p>
+      <main className="route-landing-industrial">
+        <section className="landing-shell">
+          <h1>Landing no disponible</h1>
+          <p>{error}</p>
           <Link className="button" to={`/store/${tenantSlug}`}>
-            Ir al ecommerce publico
+            Ir al catálogo
           </Link>
         </section>
       </main>
     );
   }
+  if (!data) return <p>Cargando landing comercial...</p>;
 
-  if (!data) return <p>Cargando landing de marca...</p>;
-
-  const isPreview = searchParams.get("preview") === "1";
-  const landingConfig = resolveLandingConfig(data);
-  const demoContent = buildDemoLandingContent(data);
-  const landingDraft = landingConfig.landingDraft;
-  const hasInternalLanding =
-    Boolean(
-      landingDraft?.hero_title ||
-        landingDraft?.hero_subtitle ||
-        (landingDraft?.sections?.length ?? 0) > 0 ||
-        data.branding?.hero_title ||
-        data.storefront_config?.landing_enabled
-    );
-  const externalLandingUrl = normalizeExternalUrl(landingConfig.identity.existing_landing_url);
-  const externalLandingAvailable = Boolean(landingConfig.identity.has_existing_landing && isUsableExternalUrl(externalLandingUrl));
-  const landingSections =
-    landingDraft?.sections?.filter((section) => section.title || section.body) ??
-    demoContent.sections;
-  const heroTitle = landingDraft?.hero_title ?? data.branding?.hero_title ?? demoContent.heroTitle;
+  const config = parseConfig(data.storefront_config?.config_json);
+  const draft = (config.landing_draft as LandingDraft | undefined) ?? {};
+  const heroTitle = draft.hero_title?.trim() || data.branding?.hero_title || "Entregamos soluciones en transmisión de potencia";
   const heroSubtitle =
-    landingDraft?.hero_subtitle ??
-    data.branding?.hero_subtitle ??
-    demoContent.heroSubtitle;
-  const ctaPrimary = landingDraft?.cta_primary?.trim() || demoContent.ctaPrimary;
-  const ctaSecondary = landingDraft?.cta_secondary?.trim() || demoContent.ctaSecondary;
-  const publicationState = landingConfig.isPublished ? "publicado" : isPreview ? "en revision" : "borrador";
+    draft.hero_subtitle?.trim() ||
+    data.branding?.hero_subtitle ||
+    "Más de 30 años resolviendo refacciones industriales con marcas reconocidas, respuesta comercial rápida y cobertura nacional.";
+  const ctaPrimary = draft.cta_primary?.trim() || "Cotizar ahora";
+  const ctaSecondary = draft.cta_secondary?.trim() || "Ver catálogo industrial";
+  const sections = (draft.sections ?? []).filter((section) => section.title || section.body);
+  const faqItems = draft.faq_items?.filter((item) => item.trim()) ?? INDUSTRIAL_FAQ;
+  const quickAnswers = draft.quick_answer_blocks?.filter((item) => item.trim()) ?? [
+    "Sí, cotizamos por aplicación, por marca y por SKU técnico.",
+    "Sí, tenemos cobertura para México y atención comercial para Latinoamérica.",
+    "Sí, puedes pagar por Mercado Pago, transferencia o anticipo B2B.",
+  ];
+  const stats = useMemo(
+    () => [
+      { label: "Años de experiencia", value: "30+" },
+      { label: "Cobertura comercial", value: "MX + LATAM" },
+      { label: "Marcas distribuidas", value: "ZSG · SKF · Timken · FAG · FULO" },
+      { label: "Atención técnica", value: "Postventa especializada" },
+    ],
+    []
+  );
+
+  const whatsapp = data.branding?.contact_whatsapp ? `https://wa.me/52${data.branding.contact_whatsapp}` : undefined;
 
   return (
-    <main className="storefront premium-store">
-      <section
-        className="store-hero premium-hero"
-        style={{
-          background: `linear-gradient(130deg, ${data.branding?.primary_color ?? "#0d3e86"}, ${
-            data.branding?.secondary_color ?? "#5f97e3"
-          })`,
-        }}
-      >
-        <p className="marketing-eyebrow">{isPreview ? "Preview landing" : "Landing publicada"}</p>
-        <p className="chip">Template activo: {landingConfig.selectedTemplate}</p>
+    <main className="route-landing-industrial">
+      <section className="landing-hero-industrial">
+        <div className="landing-chip-row">
+          <span className="chip">{isPreview ? "Modo preview" : "Sitio productivo"}</span>
+          <span className="chip">Industrial premium</span>
+        </div>
         <h1>{heroTitle}</h1>
         <p>{heroSubtitle}</p>
-        <div className="row-gap">
+        <div className="landing-hero-actions">
           <Link className="button" to={`/store/${data.tenant.slug}`}>
-            {ctaPrimary}
-          </Link>
-          <Link className="button button-outline" to={`/store/${data.tenant.slug}/distribuidores`}>
             {ctaSecondary}
           </Link>
-          {externalLandingAvailable && !hasInternalLanding ? (
-            <a className="button button-outline" href={externalLandingUrl ?? undefined} target="_blank" rel="noreferrer">
-              Abrir landing externa
+          {whatsapp ? (
+            <a className="button button-outline" href={whatsapp} target="_blank" rel="noreferrer">
+              {ctaPrimary}
             </a>
-          ) : null}
+          ) : (
+            <Link className="button button-outline" to={`/store/${data.tenant.slug}/distribuidores`}>
+              {ctaPrimary}
+            </Link>
+          )}
         </div>
       </section>
 
-      <section className="card-grid">
-        <article className="card">
-          <h3>Marca</h3>
-          <p>{data.tenant.name}</p>
-          <p className="muted">Slug: {data.tenant.slug}</p>
-        </article>
-        <article className="card">
-          <h3>Estado de publicacion</h3>
-          <p className="chip">{publicationState}</p>
-          <p className="muted">Preview: {isPreview ? "Si" : "No"}</p>
-        </article>
-        <article className="card">
-          <h3>Tipo de landing</h3>
-          <p>{hasInternalLanding ? "Template interno aprobado" : externalLandingAvailable ? "Landing externa validada" : "Template en preparacion"}</p>
-          <p className="muted">Slug tenant: {data.tenant.slug}</p>
-        </article>
-      </section>
+      <section className="landing-shell">
+        <div className="landing-logo-strip">
+          <img src="/client-assets/todoindustrialmx/logo_zsg.jpg" alt="ZSG" />
+          <img src="/client-assets/todoindustrialmx/logo_skf.jpg" alt="SKF" />
+          <img src="/client-assets/todoindustrialmx/logo_timken.png" alt="Timken" />
+          <img src="/client-assets/todoindustrialmx/logo_fag.png" alt="FAG" />
+          <img src="/client-assets/todoindustrialmx/logo_fulo.png" alt="FULO" />
+        </div>
 
-      {landingSections.length > 0 ? (
-        <section className="card-grid">
-          {landingSections.map((section, index) => (
-            <article className="card" key={`${section.title ?? "section"}-${index}`}>
-              <h3>{section.title ?? `Seccion ${index + 1}`}</h3>
-              <p>{section.body ?? "Contenido en preparacion."}</p>
+        <div className="landing-stat-grid">
+          {stats.map((stat) => (
+            <article key={stat.label} className="landing-stat-card">
+              <p>{stat.label}</p>
+              <strong>{stat.value}</strong>
             </article>
           ))}
-        </section>
-      ) : (
-        <section className="store-banner">
-          <h2>Contenido de landing</h2>
-          <p>
-            Esta marca aun no tiene bloques de contenido publicados en su template interno. Puedes continuar con el ecommerce
-            publico mientras se finaliza la aprobacion del contenido comercial.
-          </p>
-        </section>
-      )}
+        </div>
 
-      {landingDraft?.contact_cta || demoContent.contactCta ? (
-        <section className="store-banner">
-          <h2>Llamado comercial</h2>
-          <p>{landingDraft?.contact_cta ?? demoContent.contactCta}</p>
+        <section className="landing-block">
+          <h2>Categorías técnicas prioritarias</h2>
+          <div className="landing-category-grid">
+            {INDUSTRIAL_CATEGORIES.map((category) => (
+              <article key={category} className="landing-category-card">
+                <h3>{category}</h3>
+                <p>Disponibilidad para industria, taller y distribución comercial.</p>
+              </article>
+            ))}
+          </div>
         </section>
-      ) : null}
+
+        <section className="landing-block landing-two-col">
+          <article>
+            <h2>Propuesta de valor industrial</h2>
+            <p>Excelente calidad al mejor precio con asesoría técnica y seguimiento postventa real para continuidad operativa.</p>
+            <ul>
+              <li>Distribución de marcas reconocidas con respuesta rápida.</li>
+              <li>Soporte comercial para cotización por volumen y proyectos.</li>
+              <li>Atención para mantenimiento, reemplazo y línea automotriz.</li>
+            </ul>
+          </article>
+          <article>
+            <h2>Logística y cobertura</h2>
+            <p>Operación en CDMX con cobertura para México y soporte comercial para Latinoamérica.</p>
+            <ul>
+              <li>Entrega programada y seguimiento por pedido.</li>
+              <li>Gestión de refacciones de rotación alta y recurrente.</li>
+              <li>Canal B2B con opciones de anticipo y crédito.</li>
+            </ul>
+          </article>
+        </section>
+
+        {sections.length > 0 ? (
+          <section className="landing-block">
+            <h2>Contenido comercial</h2>
+            <div className="landing-category-grid">
+              {sections.map((section, index) => (
+                <article key={`${section.title ?? "section"}-${index}`} className="landing-category-card">
+                  <h3>{section.title ?? `Bloque ${index + 1}`}</h3>
+                  <p>{section.body ?? ""}</p>
+                </article>
+              ))}
+            </div>
+          </section>
+        ) : null}
+
+        <section className="landing-block landing-two-col">
+          <article>
+            <h2>FAQ técnico comercial</h2>
+            <ul>
+              {faqItems.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+          </article>
+          <article>
+            <h2>Respuestas rápidas (AEO)</h2>
+            <ul>
+              {quickAnswers.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+          </article>
+        </section>
+
+        <section className="landing-contact">
+          <h2>Contacto comercial</h2>
+          <p>Tel: 55-90397409 · WhatsApp: 55-11791417 · Email: {data.branding?.contact_email ?? "todoindustrialmx@gmail.com"}</p>
+          <p>Calle Zaragoza 18, Azcapotzalco Centro, CP 02000, CDMX</p>
+          <p>Contactos: Ing. Jorge Luis Perea · Flor María Cedeño</p>
+          <div className="landing-hero-actions">
+            <Link className="button" to={`/store/${data.tenant.slug}`}>
+              Ver catálogo y comprar
+            </Link>
+            <Link className="button button-outline" to={`/store/${data.tenant.slug}/distribuidores`}>
+              Portal distribuidores B2B
+            </Link>
+          </div>
+        </section>
+      </section>
     </main>
   );
 }

@@ -1,24 +1,12 @@
-﻿import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
-import { LanguageSelector } from "../components/LanguageSelector";
 import { ApiError, api } from "../services/api";
-import { buildBrandTheme, tokensToCssVars } from "../branding/multibrandTemplates";
-import {
-  Banner,
-  Category,
-  CurrencySettings,
-  ExchangeRate,
-  MembershipPlan,
-  Product,
-  StorefrontHomePayload,
-  TenantConfig,
-  WishlistItem,
-} from "../types/domain";
-import { calculatePlanTotals } from "../utils/monetization";
+import { Product, StorefrontHomePayload, TenantConfig } from "../types/domain";
 
 type CartMap = Record<number, number>;
 const DEMO_CUSTOMER_ID = 1;
-const TODOINDUSTRIAL_CATEGORY_IMAGE_MAP: Record<string, string> = {
+
+const CATEGORY_IMAGE_MAP: Record<string, string> = {
   baleros: "/client-assets/todoindustrialmx/catalogo_taller_baleros.png",
   chumaceras: "/client-assets/todoindustrialmx/catalogo_taller_baleros.png",
   cadenas: "/client-assets/todoindustrialmx/hero_bandas_black_gold.png",
@@ -30,15 +18,7 @@ const TODOINDUSTRIAL_CATEGORY_IMAGE_MAP: Record<string, string> = {
   refaccionesindustriales: "/client-assets/todoindustrialmx/hero_baleros_caliper.jpg",
 };
 
-function normalizeKey(value: string): string {
-  return value
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]/g, "");
-}
-
-function parseStorefrontConfig(raw?: string | null): Record<string, unknown> {
+function parseConfig(raw?: string | null): Record<string, unknown> {
   if (!raw) return {};
   try {
     const parsed = JSON.parse(raw);
@@ -48,161 +28,26 @@ function parseStorefrontConfig(raw?: string | null): Record<string, unknown> {
   }
 }
 
-function isTulipanesTenant(data: StorefrontHomePayload): boolean {
-  const name = data.tenant.name.toLowerCase();
-  const slug = data.tenant.slug.toLowerCase();
-  return name.includes("tulipanes") || slug.includes("tulipanes");
-}
-
-function buildTenantAwareDemoCategories(data: StorefrontHomePayload): Category[] {
-  const base = isTulipanesTenant(data)
-    ? ["Cosmetologia", "Podologia", "Diplomados", "Cursos", "Talleres", "Kits y materiales"]
-    : ["Destacados", "Promociones", "Nuevos", "Servicios", "Especialidades", "Recomendados"];
-
-  return base.map((name, index) => ({
-    id: -100 - index,
-    tenant_id: data.tenant.id,
-    name,
-    slug: name.toLowerCase().replace(/\s+/g, "-"),
-    description: `Categoria sugerida para ${data.tenant.name}.`,
-    is_active: true,
-  }));
-}
-
-function buildTenantAwareDemoProducts(data: StorefrontHomePayload, categories: Category[]): Product[] {
-  if (isTulipanesTenant(data)) {
-    const drafts = [
-      ["Diplomado Integral en Cosmetologia", "Formacion profesional con enfoque practico y certificacion.", 4850],
-      ["Diplomado Profesional en Podologia", "Programa avanzado para atencion clinica y comercial.", 5200],
-      ["Curso Intensivo de Manicure Avanzado", "Curso corto orientado a salida laboral inmediata.", 1890],
-      ["Taller de Tecnicas de Colorimetria", "Especializacion para estilismo y asesoria de imagen.", 1450],
-      ["Kit de Practica Profesional", "Material base para iniciar practicas en laboratorio.", 1190],
-      ["Paquete de Inscripcion + Materiales", "Beneficio de temporada para nuevas inscripciones.", 2590],
-    ] as const;
-    return drafts.map((row, index) => ({
-      id: -1000 - index,
-      tenant_id: data.tenant.id,
-      category_id: categories[index % categories.length]?.id,
-      name: row[0],
-      slug: row[0].toLowerCase().replace(/[^a-z0-9]+/g, "-"),
-      sku: `DEMO-${(index + 1).toString().padStart(4, "0")}`,
-      barcode: `C128DEMO${(index + 1).toString().padStart(6, "0")}`,
-      barcode_type: "code128",
-      external_barcode: false,
-      auto_generated: true,
-      description: row[1],
-      price_public: row[2],
-      price_wholesale: undefined,
-      price_retail: undefined,
-      stripe_product_id: null,
-      stripe_price_id_public: null,
-      stripe_price_id_retail: null,
-      stripe_price_id_wholesale: null,
-      is_featured: index < 3,
-      is_active: true,
-    }));
-  }
-
-  const generic = [
-    ["Programa destacado de temporada", "Oferta principal para captacion y conversion comercial.", 1990],
-    ["Paquete premium de lanzamiento", "Incluye beneficios clave para nuevos clientes.", 2490],
-    ["Servicio especializado", "Atencion profesional con seguimiento personalizado.", 1390],
-    ["Bundle promocional", "Combinacion de servicios/productos con descuento.", 1590],
-    ["Curso o taller recomendado", "Contenido de alto valor para crecimiento del cliente.", 1290],
-    ["Kit de apoyo", "Material complementario para mejorar experiencia.", 890],
-  ] as const;
-  return generic.map((row, index) => ({
-    id: -2000 - index,
-    tenant_id: data.tenant.id,
-    category_id: categories[index % categories.length]?.id,
-    name: row[0],
-    slug: row[0].toLowerCase().replace(/[^a-z0-9]+/g, "-"),
-    sku: `GEN-${(index + 1).toString().padStart(4, "0")}`,
-    barcode: `C128GEN${(index + 1).toString().padStart(6, "0")}`,
-    barcode_type: "code128",
-    external_barcode: false,
-    auto_generated: true,
-    description: row[1],
-    price_public: row[2],
-    price_wholesale: undefined,
-    price_retail: undefined,
-    stripe_product_id: null,
-    stripe_price_id_public: null,
-    stripe_price_id_retail: null,
-    stripe_price_id_wholesale: null,
-    is_featured: index < 3,
-    is_active: true,
-  }));
-}
-
-function buildTenantAwareDemoBanners(data: StorefrontHomePayload): Banner[] {
-  const isTulipanes = isTulipanesTenant(data);
-  const rows = isTulipanes
-    ? [
-        ["Inscripciones abiertas", "Cupos disponibles para la nueva generacion.", "hero"],
-        ["Diplomado en cosmetologia", "Inicia este mes con plan academico profesional.", "store_top"],
-        ["Formacion profesional en podologia", "Programa con practica guiada y certificacion.", "store_top"],
-        ["Paquetes de inscripcion y materiales", "Aprovecha promociones por temporada.", "checkout_upsell"],
-      ]
-    : [
-        ["Oferta principal activa", "Promocion comercial destacada para nuevos clientes.", "hero"],
-        ["Coleccion recomendada", "Productos y servicios con mayor conversion.", "store_top"],
-      ];
-  return rows.map((row, index) => ({
-    id: -3000 - index,
-    tenant_id: data.tenant.id,
-    storefront_config_id: undefined,
-    title: row[0],
-    subtitle: row[1],
-    image_url: undefined,
-    target_type: "promotion",
-    target_value: undefined,
-    position: row[2],
-    priority: index + 1,
-    starts_at: undefined,
-    ends_at: undefined,
-    is_active: true,
-  }));
-}
-
-function buildTenantAwareDemoMemberships(data: StorefrontHomePayload): MembershipPlan[] {
-  if (isTulipanesTenant(data)) {
-    return [
-      {
-        id: -4001,
-        tenant_id: data.tenant.id,
-        name: "Membresia Alumno Activo",
-        description: "Acceso a beneficios en talleres y materiales durante 90 dias.",
-        duration_days: 90,
-        price: 690,
-        points_multiplier: 1,
-        benefits_json: undefined,
-        is_active: true,
-      },
-    ];
-  }
-  return [];
+function normalizeKey(value: string): string {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "");
 }
 
 export function StorefrontPage() {
   const { tenantSlug } = useParams();
   const [searchParams] = useSearchParams();
   const [data, setData] = useState<StorefrontHomePayload | null>(null);
+  const [tenantConfig, setTenantConfig] = useState<TenantConfig | null>(null);
   const [error, setError] = useState("");
   const [errorDetail, setErrorDetail] = useState("");
-  const [retryTick, setRetryTick] = useState(0);
   const [loadingCheckout, setLoadingCheckout] = useState(false);
-  const [loadingUpsell, setLoadingUpsell] = useState(false);
   const [cart, setCart] = useState<CartMap>({});
-  const [wishlist, setWishlist] = useState<WishlistItem[]>([]);
   const [couponCode, setCouponCode] = useState("");
-  const [usePoints, setUsePoints] = useState(false);
-  const [wantsRecurring, setWantsRecurring] = useState(false);
-  const [upsell, setUpsell] = useState<Product[]>([]);
-  const [currencySettings, setCurrencySettings] = useState<CurrencySettings | null>(null);
-  const [rates, setRates] = useState<ExchangeRate[]>([]);
-  const [selectedCurrency, setSelectedCurrency] = useState("MXN");
-  const [tenantConfig, setTenantConfig] = useState<TenantConfig | null>(null);
+  const [search, setSearch] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState<number | "all">("all");
   const isPreviewMode = searchParams.get("preview") === "1";
 
   useEffect(() => {
@@ -213,142 +58,64 @@ export function StorefrontPage() {
       .getStorefrontHomeData(tenantSlug)
       .then(async (homeData) => {
         setData(homeData);
-        const settings = await api.getCurrencySettings(homeData.tenant.id).catch(() => null);
-        const exchangeRates = await api.getExchangeRates().catch(() => []);
-        if (settings) {
-          setCurrencySettings(settings);
-          setSelectedCurrency(settings.base_currency);
-        }
-        setRates(exchangeRates);
         const config = await api.getTenantConfig({ tenantSlug }).catch(() => null);
         setTenantConfig(config);
-        try {
-          setWishlist(await api.getWishlist(homeData.tenant.id, DEMO_CUSTOMER_ID));
-        } catch {
-          setWishlist([]);
-        }
       })
       .catch((err: unknown) => {
-        const endpoint = `/api/v1/storefront/${tenantSlug}/home-data`;
-        console.error(`[Storefront] Error loading endpoint ${endpoint}`, err);
         if (err instanceof ApiError && err.status === 404) {
-          setError("No encontramos esta tienda o no esta activa.");
-          setErrorDetail("Verifica el slug del tenant o confirma que el tenant este activo en backend.");
-          return;
-        }
-        if (err instanceof TypeError) {
-          setError("No se pudo cargar la tienda en este momento.");
-          setErrorDetail("Revisa que el backend este corriendo y que CORS permita el puerto actual del frontend.");
+          setError("No encontramos esta tienda o no está activa.");
+          setErrorDetail("Verifica que la marca esté publicada.");
           return;
         }
         setError("No se pudo cargar la tienda en este momento.");
         setErrorDetail(err instanceof Error ? err.message : "Fallo inesperado al consultar storefront.");
       });
-  }, [tenantSlug, retryTick]);
+  }, [tenantSlug]);
 
-  const effectiveCategories = useMemo(() => {
-    if (!data) return [];
-    return data.categories.length > 0 ? data.categories : buildTenantAwareDemoCategories(data);
-  }, [data, tenantConfig]);
-  const categoryNameById = useMemo(() => {
-    const map = new Map<number, string>();
-    effectiveCategories.forEach((category) => map.set(category.id, category.name));
-    return map;
-  }, [effectiveCategories]);
-
-  const effectiveBanners = useMemo(() => {
-    if (!data) return [];
-    const banners = data.banners ?? [];
-    return banners.length > 0 ? banners : buildTenantAwareDemoBanners(data);
-  }, [data]);
-
-  const hasRealProducts = useMemo(() => {
-    if (!data) return false;
-    return (
-      data.featured_products.length > 0 ||
-      data.promo_products.length > 0 ||
-      data.recent_products.length > 0 ||
-      data.best_sellers.length > 0
-    );
-  }, [data]);
-
-  const effectiveFeaturedProducts = useMemo(() => {
-    if (!data) return [];
-    if (data.featured_products.length > 0) return data.featured_products;
-    return buildTenantAwareDemoProducts(data, effectiveCategories).slice(0, 6);
-  }, [data, effectiveCategories]);
-
-  const effectivePromoProducts = useMemo(() => {
-    if (!data) return [];
-    if (data.promo_products.length > 0) return data.promo_products;
-    const demo = buildTenantAwareDemoProducts(data, effectiveCategories);
-    return demo.slice(2, 8);
-  }, [data, effectiveCategories]);
-
-  const effectiveRecentProducts = useMemo(() => {
-    if (!data) return [];
-    if (data.recent_products.length > 0) return data.recent_products;
-    const demo = buildTenantAwareDemoProducts(data, effectiveCategories);
-    return demo.slice(1, 7);
-  }, [data, effectiveCategories]);
-
-  const effectiveBestSellerProducts = useMemo(() => {
-    if (!data) return [];
-    if (data.best_sellers.length > 0) return data.best_sellers;
-    const demo = buildTenantAwareDemoProducts(data, effectiveCategories);
-    return demo.slice(0, 6);
-  }, [data, effectiveCategories]);
-
-  const effectiveMembershipPlans = useMemo(() => {
-    if (!data) return [];
-    return data.membership_plans.length > 0 ? data.membership_plans : buildTenantAwareDemoMemberships(data);
-  }, [data]);
+  const parsedConfig = useMemo(() => parseConfig(data?.storefront_config?.config_json), [data?.storefront_config?.config_json]);
+  const channelSettings = ((parsedConfig.channel_settings as Record<string, unknown> | undefined) ?? {});
+  const paymentProvider = String(parsedConfig.payment_provider ?? channelSettings.payment_provider ?? "stripe").toLowerCase();
+  const mercadopagoEnabled = Boolean(channelSettings.mercadopago_enabled);
+  const mercadopagoReady = mercadopagoEnabled && Boolean(channelSettings.mercadopago_public_key || channelSettings.mercadopago_access_token);
+  const checkoutCurrency = String(parsedConfig.currency ?? "MXN").toUpperCase();
+  const categoryImagesFromConfig = ((parsedConfig.catalog_visuals as Record<string, unknown> | undefined)?.category_images ??
+    {}) as Record<string, string>;
 
   const allProducts = useMemo(() => {
     if (!data) return [];
     const unique = new Map<number, Product>();
-    [
-      ...effectiveFeaturedProducts,
-      ...effectiveRecentProducts,
-      ...effectivePromoProducts,
-      ...effectiveBestSellerProducts,
-    ].forEach((product) =>
+    [...data.featured_products, ...data.promo_products, ...data.recent_products, ...data.best_sellers].forEach((product) =>
       unique.set(product.id, product)
     );
     return Array.from(unique.values());
-  }, [data, effectiveFeaturedProducts, effectiveRecentProducts, effectivePromoProducts, effectiveBestSellerProducts]);
-
-  const channelThemeStyle = useMemo(() => {
-    if (!data) return undefined;
-    const theme = buildBrandTheme(
-      {
-        key: data.tenant.slug,
-        name: data.tenant.name,
-        slug: data.tenant.slug,
-        logoText: data.tenant.name,
-        logoAccent: "",
-        primaryColor: data.branding?.primary_color ?? "#0d3e86",
-        secondaryColor: data.branding?.secondary_color ?? "#80b8f5",
-        supportColor: "#3a8bf2",
-        bgSoft: "#eef4ff",
-        promptMaster: "",
-        businessType: (data.tenant.business_type === "services" || data.tenant.business_type === "mixed" ? data.tenant.business_type : "products"),
-        tone: "premium",
-        baseImages: [],
-        hasExistingLanding: true,
-        monetizationPlan: tenantConfig?.plan_type === "commission" ? "commission" : "subscription",
-        copy: {
-          headline: data.branding?.hero_title ?? data.tenant.name,
-          subtitle: data.branding?.hero_subtitle ?? "Ecommerce publico con identidad de marca sincronizada.",
-          ctaPrimary: "Comprar ahora",
-          ctaSecondary: "Canal distribuidores",
-          valueProp: "Misma base visual en landing, ecommerce y POS."
-        }
-      },
-      "public_store"
-    );
-    return tokensToCssVars(theme);
   }, [data]);
+
+  const categoryMap = useMemo(() => {
+    const map = new Map<number, string>();
+    data?.categories.forEach((category) => map.set(category.id, category.name));
+    return map;
+  }, [data]);
+
+  const resolveProductImage = (product: Product) => {
+    const categoryName = product.category_id ? categoryMap.get(product.category_id) ?? "" : "";
+    const normalized = normalizeKey(categoryName);
+    return (
+      categoryImagesFromConfig[normalized] ??
+      categoryImagesFromConfig[categoryName.toLowerCase()] ??
+      CATEGORY_IMAGE_MAP[normalized] ??
+      "/client-assets/todoindustrialmx/hero_baleros_caliper.jpg"
+    );
+  };
+
+  const filteredProducts = useMemo(() => {
+    const normalizedSearch = search.trim().toLowerCase();
+    return allProducts.filter((product) => {
+      const matchesCategory = categoryFilter === "all" ? true : product.category_id === categoryFilter;
+      const haystack = `${product.name} ${product.sku} ${product.description ?? ""}`.toLowerCase();
+      const matchesSearch = normalizedSearch ? haystack.includes(normalizedSearch) : true;
+      return matchesCategory && matchesSearch;
+    });
+  }, [allProducts, categoryFilter, search]);
 
   const cartItems = useMemo(
     () =>
@@ -357,67 +124,32 @@ export function StorefrontPage() {
         .map((product) => ({ product, quantity: cart[product.id] })),
     [allProducts, cart]
   );
-
-  useEffect(() => {
-    if (!data || cartItems.length === 0) {
-      setUpsell([]);
-      return;
-    }
-    setLoadingUpsell(true);
-    api
-      .getCheckoutUpsell(data.tenant.slug, cartItems.map((item) => item.product.id))
-      .then((result) => setUpsell(result.upsell_products))
-      .finally(() => setLoadingUpsell(false));
-  }, [data, cartItems.length]);
-
-  const getDisplayPrice = (amount: number, currency: string) => {
-    const settings = currencySettings;
-    if (!settings || currency === settings.base_currency) return Number(amount);
-    const rate = rates.find((r) => r.base_currency === settings.base_currency && r.target_currency === currency);
-    if (!rate) return Number(amount);
-    return Number(amount) * Number(rate.rate);
-  };
-
-  const subtotal = useMemo(
-    () => cartItems.reduce((acc, item) => acc + getDisplayPrice(Number(item.product.price_public), selectedCurrency) * item.quantity, 0),
-    [cartItems, selectedCurrency, rates, currencySettings]
+  const cartTotal = useMemo(
+    () => cartItems.reduce((sum, item) => sum + Number(item.product.price_public) * item.quantity, 0),
+    [cartItems]
   );
-
-  const financialSummary = useMemo(() => {
-    if (!tenantConfig) return calculatePlanTotals({ subtotal }, "subscription");
-    return calculatePlanTotals({ subtotal }, tenantConfig.plan_type, tenantConfig.commission_rules);
-  }, [subtotal, tenantConfig]);
-
-  const addToWishlist = async (productId: number) => {
-    if (!data) return;
-    const item = await api.addWishlistItem({ tenant_id: data.tenant.id, customer_id: DEMO_CUSTOMER_ID, product_id: productId });
-    setWishlist((prev) => (prev.find((existing) => existing.id === item.id) ? prev : [...prev, item]));
-  };
 
   const updateCart = (productId: number, quantity: number) => {
     setCart((prev) => ({ ...prev, [productId]: Math.max(0, quantity) }));
   };
 
   const handleCheckout = async () => {
-    if (!data || cartItems.length === 0) return;
-    const checkoutConfig = parseStorefrontConfig(data.storefront_config?.config_json);
-    const checkoutChannelSettings = (checkoutConfig.channel_settings as Record<string, unknown> | undefined) ?? {};
-    const checkoutPaymentProvider = String(
-      checkoutConfig.payment_provider ?? checkoutChannelSettings.payment_provider ?? "stripe"
-    ).toLowerCase();
-    const checkoutCurrency = String(checkoutConfig.currency ?? "MXN").toUpperCase();
+    if (!data || cartTotal <= 0) return;
+    const items = Object.entries(cart)
+      .filter(([, qty]) => qty > 0)
+      .map(([id, qty]) => ({ product_id: Number(id), quantity: qty }));
+    if (items.length === 0) return;
     try {
       setLoadingCheckout(true);
       const response = await api.createCheckoutSession({
         tenant_id: data.tenant.id,
-        items: cartItems.map((item) => ({ product_id: item.product.id, quantity: item.quantity })),
+        items,
         success_url: `${window.location.origin}/store/${data.tenant.slug}?checkout=success`,
         cancel_url: `${window.location.origin}/store/${data.tenant.slug}?checkout=cancel`,
         coupon_code: couponCode || undefined,
-        use_loyalty_points: usePoints,
         customer_id: DEMO_CUSTOMER_ID,
         applies_to: "public",
-        payment_provider: checkoutPaymentProvider,
+        payment_provider: paymentProvider,
         currency: checkoutCurrency,
       });
       window.location.href = response.session_url;
@@ -430,302 +162,119 @@ export function StorefrontPage() {
 
   if (error) {
     return (
-      <main className="storefront">
-        <section className="store-banner">
-          <h2>No se pudo cargar la tienda en este momento</h2>
+      <main className="route-public-catalog">
+        <section className="public-shell">
+          <h2>No se pudo cargar el ecommerce</h2>
           <p>{error}</p>
-          {errorDetail ? <p className="error">{errorDetail}</p> : null}
-          <button className="button" type="button" onClick={() => setRetryTick((value) => value + 1)}>
-            Reintentar
-          </button>
+          {errorDetail ? <p>{errorDetail}</p> : null}
         </section>
       </main>
     );
   }
-  if (!data) return <p>Cargando storefront...</p>;
-
-  const primary = data.branding?.primary_color ?? "#0d3e86";
-  const secondary = data.branding?.secondary_color ?? "#8dc4ff";
-  const parsedConfig = parseStorefrontConfig(data.storefront_config?.config_json);
-  const channelSettings = (parsedConfig.channel_settings as Record<string, unknown> | undefined) ?? {};
-  const paymentProvider = String(
-    parsedConfig.payment_provider ?? channelSettings.payment_provider ?? "stripe"
-  ).toLowerCase();
-  const categoryImagesFromConfig = (parsedConfig.catalog_visuals &&
-    typeof parsedConfig.catalog_visuals === "object" &&
-    (parsedConfig.catalog_visuals as Record<string, unknown>).category_images &&
-    typeof (parsedConfig.catalog_visuals as Record<string, unknown>).category_images === "object"
-    ? ((parsedConfig.catalog_visuals as Record<string, unknown>).category_images as Record<string, string>)
-    : {}) ?? {};
-  const resolveProductImage = (product: Product): string | undefined => {
-    const categoryName = product.category_id ? categoryNameById.get(product.category_id) ?? "" : "";
-    const normalizedCategory = normalizeKey(categoryName);
-    const configByCategory = categoryImagesFromConfig[normalizedCategory] ?? categoryImagesFromConfig[categoryName.toLowerCase()];
-    if (typeof configByCategory === "string" && configByCategory.trim()) {
-      return configByCategory.trim();
-    }
-    if ((tenantSlug ?? "").toLowerCase() === "todoindustrialmx") {
-      return TODOINDUSTRIAL_CATEGORY_IMAGE_MAP[normalizedCategory] ?? "/client-assets/todoindustrialmx/hero_baleros_caliper.jpg";
-    }
-    return undefined;
-  };
-  const mercadopagoEnabled = Boolean(channelSettings.mercadopago_enabled);
-  const mercadopagoReady = mercadopagoEnabled && Boolean(channelSettings.mercadopago_public_key || channelSettings.mercadopago_access_token);
-  const primaryCheckoutLabel = paymentProvider === "mercadopago" ? "Pagar con Mercado Pago" : "Comprar ahora";
+  if (!data) return <p>Cargando ecommerce público...</p>;
 
   return (
-    <main className="storefront premium-store" style={channelThemeStyle}>
-      <section className="store-hero premium-hero" style={{ background: `linear-gradient(130deg, ${primary}, ${secondary})` }}>
-        <div className="row-gap" style={{ justifyContent: "space-between" }}>
-          <LanguageSelector />
-          {currencySettings ? (
-            <select value={selectedCurrency} onChange={(e) => setSelectedCurrency(e.target.value)}>
-              {currencySettings.enabled_currencies.map((currency) => (
-                <option key={currency} value={currency}>{currency}</option>
-              ))}
-            </select>
-          ) : null}
-        </div>
-        <p className="marketing-eyebrow">Marca cliente en ComerCia</p>
-        {isPreviewMode ? <p className="chip chip-neutral">Modo preview de ecommerce publico</p> : null}
-        {!hasRealProducts ? <p className="chip chip-warning">Mostrando catalogo demo tenant-aware</p> : null}
-        {tenantConfig ? <p className="chip">{tenantConfig.checkout_badge}</p> : null}
-        <p className="chip">Pago principal: {paymentProvider === "mercadopago" ? "Mercado Pago" : "Stripe"}</p>
-        <h1>{data.branding?.hero_title ?? data.tenant.name}</h1>
-        <p>{data.branding?.hero_subtitle ?? "Experiencia comercial premium con ecommerce y canal distribuidor separados."}</p>
-        <div className="store-actions">
-          <Link to={`/store/${data.tenant.slug}/distribuidores`} className="button">
-            Canal distribuidores
-          </Link>
-          <Link to={`/store/${data.tenant.slug}/distribuidores/registro`} className="button button-outline">
-            Quiero ser distribuidor
-          </Link>
-          {(data.tenant.business_type === "services" || data.tenant.business_type === "mixed") && (
-            <Link to={`/store/${data.tenant.slug}/services`} className="button button-outline">
-              Ver servicios
+    <main className="route-public-catalog">
+      <section className="public-hero">
+        <div>
+          <p className="public-kicker">Catálogo industrial masivo</p>
+          {isPreviewMode ? <p className="chip">Preview activo</p> : null}
+          <h1>{data.branding?.hero_title ?? data.tenant.name}</h1>
+          <p>{data.branding?.hero_subtitle ?? "Catálogo robusto para compra inmediata, cotización y recompra técnica."}</p>
+          <div className="public-actions">
+            <Link className="button" to={`/store/${data.tenant.slug}/distribuidores`}>
+              Portal B2B
             </Link>
-          )}
+            <Link className="button button-outline" to={`/store/${data.tenant.slug}/landing`}>
+              Ver landing técnica
+            </Link>
+          </div>
+        </div>
+        <div className="public-payment-box">
+          <h3>Checkout principal</h3>
+          <p>Proveedor: {paymentProvider === "mercadopago" ? "Mercado Pago" : "Stripe"}</p>
+          <p>Moneda: {checkoutCurrency}</p>
+          <p className={mercadopagoReady ? "chip" : "chip chip-warning"}>
+            {paymentProvider === "mercadopago"
+              ? mercadopagoReady
+                ? "Mercado Pago listo para cobro."
+                : "Mercado Pago pendiente de credenciales."
+              : "Checkout con Stripe habilitado."}
+          </p>
+          <p className="muted">{tenantConfig?.plan_type === "commission" ? "Modelo con comisión activa." : "Modelo sin comisión."}</p>
         </div>
       </section>
 
-      <section className="card-grid">
-        <article className="card">
-          <h3>Venta directa</h3>
-          <p>Catalogo publico con promociones, favoritos y checkout online.</p>
-        </article>
-        <article className="card">
-          <h3>Canal comercial</h3>
-          <p>Ruta separada para distribuidores con reglas de negocio por volumen.</p>
-        </article>
-        <article className="card">
-          <h3>Operacion inteligente</h3>
-          <p>Preparado para fidelizacion, recurrencia, logistica y reportes de crecimiento.</p>
-        </article>
-      </section>
-
-      <section className="store-banner">
-        <h2>Categorias</h2>
-        <div className="chip-row">
-          {effectiveCategories.map((category) => (
-            <span key={category.id} className="chip">{category.name}</span>
-          ))}
+      <section className="public-shell">
+        <div className="public-toolbar">
+          <input
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Buscar por SKU, producto o descripción técnica"
+          />
+          <select value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value === "all" ? "all" : Number(event.target.value))}>
+            <option value="all">Todas las categorías</option>
+            {data.categories.map((category) => (
+              <option key={category.id} value={category.id}>
+                {category.name}
+              </option>
+            ))}
+          </select>
         </div>
-      </section>
 
-      <section className="store-banner">
-        <h2>Banners</h2>
-        <div className="card-grid">
-          {effectiveBanners.map((banner) => (
-            <article key={banner.id} className="card">
+        <div className="public-banner-grid">
+          {(data.banners ?? []).slice(0, 4).map((banner) => (
+            <article key={banner.id} className="public-banner-card">
+              {banner.image_url ? <img src={banner.image_url} alt={banner.title} /> : null}
               <h3>{banner.title}</h3>
               {banner.subtitle ? <p>{banner.subtitle}</p> : null}
-              {banner.image_url ? <img src={banner.image_url} alt={banner.title} className="store-banner-image" /> : null}
-              <p className="muted">Posicion: {banner.position}</p>
             </article>
           ))}
         </div>
-      </section>
 
-      <ProductRail
-        title="Destacados"
-        products={effectiveFeaturedProducts}
-        tenantSlug={data.tenant.slug}
-        resolveImage={resolveProductImage}
-        cart={cart}
-        onAdd={updateCart}
-        onWishlist={addToWishlist}
-        wishlist={wishlist}
-        selectedCurrency={selectedCurrency}
-        getDisplayPrice={getDisplayPrice}
-      />
-      <ProductRail
-        title="Promociones"
-        products={effectivePromoProducts}
-        tenantSlug={data.tenant.slug}
-        resolveImage={resolveProductImage}
-        cart={cart}
-        onAdd={updateCart}
-        onWishlist={addToWishlist}
-        wishlist={wishlist}
-        selectedCurrency={selectedCurrency}
-        getDisplayPrice={getDisplayPrice}
-      />
-      <ProductRail
-        title="Nuevos ingresos"
-        products={effectiveRecentProducts}
-        tenantSlug={data.tenant.slug}
-        resolveImage={resolveProductImage}
-        cart={cart}
-        onAdd={updateCart}
-        onWishlist={addToWishlist}
-        wishlist={wishlist}
-        selectedCurrency={selectedCurrency}
-        getDisplayPrice={getDisplayPrice}
-      />
-      <ProductRail
-        title="Mas vendidos"
-        products={effectiveBestSellerProducts}
-        tenantSlug={data.tenant.slug}
-        resolveImage={resolveProductImage}
-        cart={cart}
-        onAdd={updateCart}
-        onWishlist={addToWishlist}
-        wishlist={wishlist}
-        selectedCurrency={selectedCurrency}
-        getDisplayPrice={getDisplayPrice}
-      />
-
-      <section className="store-layout">
-        <article className="store-banner">
-          <h2>Membresias y recompra</h2>
-          <div className="card-grid">
-            {effectiveMembershipPlans.map((plan) => (
-              <article key={plan.id} className="card">
-                <h3>{plan.name}</h3>
-                <p>{plan.description}</p>
-                <p>Duracion: {plan.duration_days} dias</p>
-                <p>Precio: ${Number(plan.price).toLocaleString("es-MX")}</p>
+        <div className="public-layout">
+          <section className="public-product-grid">
+            {filteredProducts.map((product) => (
+              <article key={product.id} className="public-product-card">
+                <img src={resolveProductImage(product)} alt={product.name} />
+                <div className="public-product-meta">
+                  <p className="chip">SKU: {product.sku}</p>
+                  <h3>{product.name}</h3>
+                  <p>{product.description ?? "Producto industrial para operación y mantenimiento."}</p>
+                  <strong>MXN ${Number(product.price_public).toLocaleString("es-MX")}</strong>
+                  <div className="public-card-actions">
+                    <button className="button button-outline" type="button" onClick={() => updateCart(product.id, (cart[product.id] ?? 0) + 1)}>
+                      Agregar
+                    </button>
+                    <Link className="button button-outline" to={`/store/${data.tenant.slug}/product/${product.id}`}>
+                      Ficha técnica
+                    </Link>
+                  </div>
+                </div>
               </article>
             ))}
-          </div>
-        </article>
+          </section>
 
-        <aside className="store-banner">
-          <h2>Carrito y checkout</h2>
-          {paymentProvider === "mercadopago" ? (
-            <p className={mercadopagoReady ? "chip" : "chip chip-warning"}>
-              {mercadopagoReady
-                ? "Mercado Pago listo para cobro en MXN."
-                : "Mercado Pago pendiente de credenciales. Configura llaves en el panel de pagos."}
-            </p>
-          ) : null}
-          <p>Subtotal: {selectedCurrency} {financialSummary.subtotal.toLocaleString("es-MX")}</p>
-          {tenantConfig?.plan_type === "commission" ? (
-            <>
-              <p>Comision COMERCIA: {selectedCurrency} {financialSummary.commission.toLocaleString("es-MX")}</p>
-              <p className="muted">
-                Comision por uso de plataforma ({(financialSummary.commissionRate * 100).toFixed(2)}% - {financialSummary.commissionRule})
-              </p>
-              <p>Total: {selectedCurrency} {financialSummary.total.toLocaleString("es-MX")}</p>
-            </>
-          ) : (
-            <p className="chip">Sin comision - incluido en tu plan</p>
-          )}
-          {currencySettings?.display_mode === "localized_checkout" ? (
-            <p>El checkout intentara cobrar en moneda local cuando el flujo lo soporte. Fallback: moneda base.</p>
-          ) : (
-            <p>El checkout cobra en moneda base. La moneda elegida solo se usa para visualizacion.</p>
-          )}
-          <input placeholder="Codigo de cupon" value={couponCode} onChange={(e) => setCouponCode(e.target.value)} />
-          <label className="checkbox">
-            <input type="checkbox" checked={usePoints} onChange={(e) => setUsePoints(e.target.checked)} />
-            Aplicar puntos de fidelizacion
-          </label>
-          <label className="checkbox">
-            <input type="checkbox" checked={wantsRecurring} onChange={(e) => setWantsRecurring(e.target.checked)} />
-            Programar compra recurrente
-          </label>
-          {wantsRecurring ? <p className="muted">La recurrencia queda marcada para activarse desde panel admin en este MVP.</p> : null}
-          <h3>Upsell previo al pago</h3>
-          {loadingUpsell ? <p>Cargando upsell...</p> : null}
-          <div className="card-grid">
-            {upsell.map((product) => (
-              <article key={product.id} className="card">
-                <h4>{product.name}</h4>
-                <button className="button button-outline" type="button" onClick={() => updateCart(product.id, (cart[product.id] ?? 0) + 1)}>
-                  Agregar
-                </button>
-              </article>
-            ))}
-          </div>
-          <button className="button" type="button" onClick={handleCheckout} disabled={loadingCheckout || cartItems.length === 0}>
-            {loadingCheckout ? "Redirigiendo..." : primaryCheckoutLabel}
-          </button>
-        </aside>
-      </section>
-
-      <section className="store-banner">
-        <h2>Contacto</h2>
-        <p>Email: {data.branding?.contact_email ?? "contacto@marca.com"}</p>
-        <p>WhatsApp: {data.branding?.contact_whatsapp ?? "Disponible bajo solicitud"}</p>
+          <aside className="public-checkout-aside">
+            <h2>Carrito y pago</h2>
+            <p className="chip">Total productos: {Object.values(cart).reduce((sum, qty) => sum + qty, 0)}</p>
+            <p>Total: MXN ${cartTotal.toLocaleString("es-MX")}</p>
+            <input value={couponCode} onChange={(event) => setCouponCode(event.target.value)} placeholder="Cupón comercial" />
+            <div className="public-checkout-buttons">
+              <button className="button" type="button" onClick={handleCheckout} disabled={loadingCheckout || cartTotal <= 0}>
+                {loadingCheckout ? "Redirigiendo..." : paymentProvider === "mercadopago" ? "Pagar con Mercado Pago" : "Ir a checkout"}
+              </button>
+              <a className="button button-outline" href={`https://wa.me/52${data.branding?.contact_whatsapp ?? "5511791417"}`} target="_blank" rel="noreferrer">
+                Solicitar cotización
+              </a>
+              <button className="button button-outline" type="button">
+                Transferencia bancaria
+              </button>
+            </div>
+            <p className="muted">Para mayoreo y crédito comercial, usa el portal de distribuidores.</p>
+          </aside>
+        </div>
       </section>
     </main>
-  );
-}
-
-function ProductRail({
-  title,
-  products,
-  tenantSlug,
-  resolveImage,
-  cart,
-  onAdd,
-  onWishlist,
-  wishlist,
-  selectedCurrency,
-  getDisplayPrice
-}: {
-  title: string;
-  products: Product[];
-  tenantSlug: string;
-  resolveImage: (product: Product) => string | undefined;
-  cart: CartMap;
-  onAdd: (productId: number, quantity: number) => void;
-  onWishlist: (productId: number) => void;
-  wishlist: WishlistItem[];
-  selectedCurrency: string;
-  getDisplayPrice: (amount: number, currency: string) => number;
-}) {
-  return (
-    <section>
-      <h2>{title}</h2>
-      <div className="card-grid">
-        {products.map((product) => (
-          <article key={product.id} className="card product-card-premium">
-            {resolveImage(product) ? (
-              <img src={resolveImage(product)} alt={product.name} className="store-product-image" />
-            ) : null}
-            <div className="product-badge-row">
-              {product.is_featured ? <span className="chip">Destacado</span> : null}
-              {product.is_active ? <span className="chip">Disponible</span> : <span className="chip">Inactivo</span>}
-            </div>
-            <h3>{product.name}</h3>
-            <p>{product.description}</p>
-            <p className="product-price">{selectedCurrency} {Number(getDisplayPrice(Number(product.price_public), selectedCurrency)).toLocaleString("es-MX")}</p>
-            <div className="row-gap">
-              <button className="button button-outline" type="button" onClick={() => onAdd(product.id, (cart[product.id] ?? 0) + 1)}>
-                Agregar
-              </button>
-              <button className="button button-outline" type="button" onClick={() => onWishlist(product.id)}>
-                {wishlist.some((item) => item.product_id === product.id) ? "En wishlist" : "Wishlist"}
-              </button>
-              <Link className="button button-outline" to={`/store/${tenantSlug}/product/${product.id}`}>
-                Ver detalle
-              </Link>
-            </div>
-          </article>
-        ))}
-      </div>
-    </section>
   );
 }

@@ -1,9 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { buildBrandTheme, tokensToCssVars } from "../branding/multibrandTemplates";
 import { api } from "../services/api";
 import { Product, StorefrontDistributorsPayload, TenantConfig } from "../types/domain";
-import { calculatePlanTotals } from "../utils/monetization";
 
 function parseStorefrontConfig(raw?: string | null): Record<string, unknown> {
   if (!raw) return {};
@@ -32,180 +30,167 @@ export function StorefrontDistributorsPage() {
     ])
       .then(([distributorsPayload, homePayload, config]) => {
         setData(distributorsPayload);
-        setReferenceProducts((homePayload?.featured_products ?? []).slice(0, 6));
+        setReferenceProducts(
+          [...(homePayload?.featured_products ?? []), ...(homePayload?.recent_products ?? [])].slice(0, 10)
+        );
         setStorefrontConfigJson(homePayload?.storefront_config?.config_json ?? null);
         setTenantConfig(config);
       })
       .catch((err) => setError(err instanceof Error ? err.message : "No fue posible cargar distribuidores"));
   }, [tenantSlug]);
 
-  const stats = useMemo(() => {
-    const total = data?.distributors.length ?? 0;
-    return {
-      total,
-      activos: total,
-      beneficios: ["Precios menudeo/mayoreo", "Pedidos recurrentes", "Atencion comercial dedicada"],
-    };
-  }, [data]);
+  if (error) {
+    return (
+      <main className="route-distributor-b2b">
+        <section className="b2b-shell">
+          <h2>Portal B2B no disponible</h2>
+          <p>{error}</p>
+        </section>
+      </main>
+    );
+  }
+  if (!data) return <p>Cargando portal distribuidores...</p>;
+
   const parsedConfig = parseStorefrontConfig(storefrontConfigJson);
   const b2bManualPayment = Boolean(parsedConfig.b2b_manual_payment);
   const paymentProvider = String(parsedConfig.payment_provider ?? "stripe").toLowerCase();
+  const paymentLabel = paymentProvider === "mercadopago" ? "Mercado Pago" : "Stripe";
+  const distributorCount = data.distributors.length;
 
-  const styleVars = useMemo(() => {
-    if (!data) return undefined;
-    const theme = buildBrandTheme(
-      {
-        key: data.tenant.slug,
-        name: data.tenant.name,
-        slug: data.tenant.slug,
-        logoText: data.tenant.name,
-        primaryColor: "#0f3f91",
-        secondaryColor: "#3a78cf",
-        supportColor: "#70a7f0",
-        bgSoft: "#eef4ff",
-        promptMaster: "",
-        businessType: "mixed",
-        tone: "corporativo",
-        baseImages: [],
-        hasExistingLanding: true,
-        monetizationPlan: tenantConfig?.plan_type === "commission" ? "commission" : "subscription",
-        copy: {
-          headline: `Canal distribuidores de ${data.tenant.name}`,
-          subtitle: "Portal comercial B2B con branding coherente y reglas de volumen.",
-          ctaPrimary: "Solicitar acceso comercial",
-          ctaSecondary: "Ver beneficios B2B",
-          valueProp: "Misma identidad de marca con experiencia especializada para distribuidores."
-        }
-      },
-      "distributor_store"
-    );
-    return tokensToCssVars(theme);
-  }, [data, tenantConfig]);
-
-  if (error) return <p className="error">{error}</p>;
-  if (!data) return <p>Cargando distribuidores...</p>;
-
-  const rows = referenceProducts.map((product) => {
-    const totals = calculatePlanTotals(
-      { subtotal: Number(product.price_wholesale ?? product.price_public) },
-      tenantConfig?.plan_type ?? "subscription",
-      tenantConfig?.commission_rules
-    );
-    return {
-      id: product.id,
-      name: product.name,
-      price: Number(product.price_wholesale ?? product.price_public),
-      commission: totals.commission,
-      net: totals.net,
-    };
-  });
+  const pricingRows = useMemo(
+    () =>
+      referenceProducts.map((product) => {
+        const publicPrice = Number(product.price_public);
+        const wholesale = Number(product.price_wholesale ?? Math.max(0, publicPrice * 0.88));
+        const saving = Math.max(0, publicPrice - wholesale);
+        return {
+          id: product.id,
+          name: product.name,
+          sku: product.sku,
+          publicPrice,
+          wholesale,
+          saving,
+        };
+      }),
+    [referenceProducts]
+  );
 
   return (
-    <main className="storefront distributors-store" style={styleVars}>
-      <section className="store-hero premium-hero distributors-hero">
-        <p className="marketing-eyebrow">Canal comercial para negocios</p>
-        <h1>Canal distribuidores de {data.tenant.name}</h1>
-        <p>
-          Esta seccion esta disenada para comercios y distribuidores que requieren precios de volumen, recompra y
-          beneficios comerciales diferenciados.
-        </p>
-        <div className="store-actions">
-          <Link className="button" to={`/store/${data.tenant.slug}`}>
-            Volver a tienda publica
-          </Link>
-          <Link className="button button-outline" to={`/store/${data.tenant.slug}/distribuidores/registro`}>
-            Solicitar registro comercial
-          </Link>
-          <Link className="button button-outline" to="/login">
-            Acceso distribuidores
-          </Link>
+    <main className="route-distributor-b2b">
+      <section className="b2b-hero">
+        <div>
+          <p className="b2b-kicker">Portal mayoreo y repetición de pedido</p>
+          <h1>Canal distribuidores de {data.tenant.name}</h1>
+          <p>Arquitectura B2B para volumen, crédito comercial, anticipo y pedidos recurrentes por línea industrial.</p>
+          <div className="b2b-actions">
+            <Link className="button" to={`/store/${data.tenant.slug}/distribuidores/registro`}>
+              Alta de distribuidor
+            </Link>
+            <Link className="button button-outline" to={`/store/${data.tenant.slug}`}>
+              Ir a catálogo público
+            </Link>
+          </div>
+        </div>
+        <div className="b2b-side-card">
+          <h3>Estado comercial</h3>
+          <p className="chip">Distribuidores activos: {distributorCount}</p>
+          <p>{tenantConfig?.plan_type === "commission" ? "Modelo con comisión" : "Modelo de suscripción"}</p>
+          <p>Proveedor de cobro: {paymentLabel}</p>
+          <p>Pago manual B2B: {b2bManualPayment ? "Habilitado" : "Pendiente"}</p>
         </div>
       </section>
 
-      <section className="card-grid">
-        <article className="card">
-          <h3>Reglas de volumen</h3>
-          <p>Se aplican precios escalonados por menudeo/mayoreo y minimos por operacion comercial.</p>
-        </article>
-        <article className="card">
-          <h3>Compra recurrente</h3>
-          <p>El canal soporta pedidos programados para mantener continuidad de inventario.</p>
-        </article>
-        <article className="card">
-          <h3>Beneficios comerciales</h3>
-          <ul className="marketing-list">
-            {stats.beneficios.map((item) => (
-              <li key={item}>{item}</li>
-            ))}
-          </ul>
-        </article>
-        <article className="card">
-          <h3>Pagos mayoreo</h3>
-          <ul className="marketing-list">
-            <li>Solicitar cotizacion por volumen</li>
-            <li>Transferencia bancaria</li>
-            <li>Link de pago Mercado Pago</li>
-            <li>Anticipo por Mercado Pago</li>
-          </ul>
-          <p className="muted">
-            Proveedor principal: {paymentProvider === "mercadopago" ? "Mercado Pago" : "Stripe"} | Pago manual B2B: {b2bManualPayment ? "Activo" : "Pendiente"}
-          </p>
-        </article>
-      </section>
+      <section className="b2b-shell">
+        <div className="b2b-capability-grid">
+          <article className="b2b-card">
+            <h3>Crédito y condiciones</h3>
+            <p>Solicitud de línea de crédito, validación documental y autorización comercial por segmento.</p>
+          </article>
+          <article className="b2b-card">
+            <h3>Pedido recurrente</h3>
+            <p>Reposición rápida por SKU de alto movimiento y listas de compra guardadas por cliente.</p>
+          </article>
+          <article className="b2b-card">
+            <h3>Cobro B2B flexible</h3>
+            <ul>
+              <li>Solicitud de cotización técnica</li>
+              <li>Transferencia bancaria</li>
+              <li>Link de pago Mercado Pago</li>
+              <li>Anticipo por Mercado Pago</li>
+            </ul>
+          </article>
+          <article className="b2b-card">
+            <h3>Soporte postventa</h3>
+            <p>Atención comercial dedicada para aplicación, reposición y continuidad operativa.</p>
+          </article>
+        </div>
 
-      <section className="store-layout">
-        <article className="store-banner">
-          <h2>Directorio comercial activo</h2>
-          <div className="card-grid">
-            {data.distributors.length === 0 ? <p>No hay distribuidores activos por el momento.</p> : null}
-            {data.distributors.map((distributor) => (
-              <article key={distributor.id} className="card">
-                <h3>{distributor.full_name}</h3>
-                <p>Email: {distributor.email ?? "No definido"}</p>
-                <p>Telefono: {distributor.phone ?? "No definido"}</p>
-                <p className="muted">Estado: {distributor.is_active ? "Activo" : "Inactivo"}</p>
-              </article>
-            ))}
-          </div>
-        </article>
-
-        <aside className="store-banner">
-          <h2>Resumen del canal</h2>
-          <p className="chip">{tenantConfig?.plan_type === "commission" ? "Modelo comision" : "Sin comision"}</p>
-          <p>Distribuidores activos: {stats.activos}</p>
-          <p>Perfil de compra: menudeo y mayoreo.</p>
-          <p>Recurrencia: disponible para reposicion periodica.</p>
-          {tenantConfig?.plan_type === "subscription" ? (
-            <p className="muted">Precios limpios para distribuidores. El costo de plataforma ya esta cubierto por suscripcion.</p>
-          ) : (
-            <p className="muted">Cada pedido refleja comision de plataforma con total transparencia de margenes.</p>
-          )}
-          {rows.length > 0 ? (
-            <table className="table" style={{ marginTop: "0.8rem" }}>
+        <div className="b2b-layout">
+          <section className="b2b-table-wrap">
+            <h2>Lista mayoreo de referencia</h2>
+            <table className="table">
               <thead>
                 <tr>
+                  <th>SKU</th>
                   <th>Producto</th>
-                  <th>Precio</th>
-                  <th>Comision</th>
-                  <th>Neto</th>
+                  <th>Público</th>
+                  <th>Mayoreo</th>
+                  <th>Ahorro</th>
                 </tr>
               </thead>
               <tbody>
-                {rows.map((row) => (
+                {pricingRows.length === 0 ? (
+                  <tr>
+                    <td colSpan={5}>Sin productos de referencia aún.</td>
+                  </tr>
+                ) : null}
+                {pricingRows.map((row) => (
                   <tr key={row.id}>
+                    <td>{row.sku}</td>
                     <td>{row.name}</td>
-                    <td>${row.price.toLocaleString("es-MX")}</td>
-                    <td>{tenantConfig?.plan_type === "commission" ? `$${row.commission.toLocaleString("es-MX")}` : "Sin comision"}</td>
-                    <td>${row.net.toLocaleString("es-MX")}</td>
+                    <td>MXN ${row.publicPrice.toLocaleString("es-MX")}</td>
+                    <td>MXN ${row.wholesale.toLocaleString("es-MX")}</td>
+                    <td>MXN ${row.saving.toLocaleString("es-MX")}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
-          ) : null}
-          <Link className="button" to={`/store/${data.tenant.slug}/distribuidores/registro`}>
-            Iniciar proceso de autorizacion
-          </Link>
-        </aside>
+          </section>
+
+          <aside className="b2b-request-panel">
+            <h2>Solicitud rápida</h2>
+            <label>
+              Razón social
+              <input placeholder="Empresa distribuidora" />
+            </label>
+            <label>
+              Volumen estimado mensual
+              <input placeholder="Ej. 120,000 MXN" />
+            </label>
+            <label>
+              Tipo de solicitud
+              <select>
+                <option>Cotización por volumen</option>
+                <option>Alta con crédito</option>
+                <option>Pedido recurrente</option>
+              </select>
+            </label>
+            <div className="b2b-panel-actions">
+              <button className="button" type="button">
+                Solicitar evaluación comercial
+              </button>
+              <button className="button button-outline" type="button">
+                Generar anticipo MP
+              </button>
+            </div>
+            <p className="muted">
+              La solicitud formal se completa desde el registro de distribuidores con validación administrativa.
+            </p>
+            <Link className="button button-outline" to={`/store/${data.tenant.slug}/distribuidores/registro`}>
+              Ir al formulario completo
+            </Link>
+          </aside>
+        </div>
       </section>
     </main>
   );

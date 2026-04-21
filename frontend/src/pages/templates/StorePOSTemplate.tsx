@@ -1,23 +1,9 @@
-﻿import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { BrandTemplateInput, buildBrandTheme, getDemoBrandInput, tokensToCssVars } from "../../branding/multibrandTemplates";
+import { api } from "../../services/api";
+import { Product } from "../../types/domain";
 import "./TemplateFamily.css";
-
-type PosItem = { id: number; name: string; price: number };
-
-const POS_ITEMS: PosItem[] = [
-  { id: 1, name: "Producto rapido A", price: 120 },
-  { id: 2, name: "Producto rapido B", price: 280 },
-  { id: 3, name: "Servicio express", price: 390 },
-  { id: 4, name: "Membresia mensual", price: 890 },
-];
-
-const POS_ITEMS_INDUSTRIAL: PosItem[] = [
-  { id: 101, name: "Cotizacion rapida baleros", price: 1890 },
-  { id: 102, name: "Venta mostrador chumaceras", price: 2450 },
-  { id: 103, name: "Pedido recurrente cadenas", price: 3790 },
-  { id: 104, name: "Kit mantenimiento industrial", price: 1290 },
-];
 
 type StorePOSTemplateProps = {
   brandInputOverride?: BrandTemplateInput;
@@ -25,6 +11,35 @@ type StorePOSTemplateProps = {
   hideDemoBadge?: boolean;
   industrialMode?: boolean;
 };
+
+type PosItem = { id: number; name: string; sku: string; price: number };
+
+const POS_ITEMS_INDUSTRIAL: PosItem[] = [
+  { id: 101, name: "Balero industrial referencia rápida", sku: "SKF-6205-2RS", price: 185 },
+  { id: 102, name: "Chumacera UCP205", sku: "ZSG-UCP205", price: 365 },
+  { id: 103, name: "Banda Poly-V", sku: "FULO-PJ1220", price: 215 },
+  { id: 104, name: "Acople elastomérico", sku: "ZSG-L150", price: 485 },
+];
+
+function parseConfig(raw?: string | null): Record<string, unknown> {
+  if (!raw) return {};
+  try {
+    const parsed = JSON.parse(raw);
+    return typeof parsed === "object" && parsed ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+function toPosItems(products: Product[]): PosItem[] {
+  if (products.length === 0) return POS_ITEMS_INDUSTRIAL;
+  return products.slice(0, 12).map((product) => ({
+    id: product.id,
+    name: product.name,
+    sku: product.sku,
+    price: Number(product.price_public),
+  }));
+}
 
 export function StorePOSTemplate({
   brandInputOverride,
@@ -34,114 +49,154 @@ export function StorePOSTemplate({
 }: StorePOSTemplateProps = {}) {
   const [searchParams] = useSearchParams();
   const [ticket, setTicket] = useState<Record<number, number>>({});
+  const [query, setQuery] = useState("");
+  const [customerName, setCustomerName] = useState("Cliente mostrador");
+  const [storeProducts, setStoreProducts] = useState<Product[]>([]);
+  const [paymentProvider, setPaymentProvider] = useState("mercadopago");
+  const [mpReady, setMpReady] = useState(false);
+  const [loading, setLoading] = useState(false);
+
   const brandInput = brandInputOverride ?? getDemoBrandInput(searchParams.get("brand"));
   const theme = useMemo(() => buildBrandTheme(brandInput, "pos"), [brandInput]);
   const styleVars = useMemo(() => tokensToCssVars(theme), [theme]);
   const landingHref = tenantSlugOverride ? `/store/${tenantSlugOverride}/landing` : `/comercia?brand=${theme.key}`;
-  const publicHref = tenantSlugOverride
-    ? `/store/${tenantSlugOverride}`
-    : `/internal/demo/tienda-publica?brand=${theme.key}`;
+  const publicHref = tenantSlugOverride ? `/store/${tenantSlugOverride}` : `/internal/demo/tienda-publica?brand=${theme.key}`;
   const distributorsHref = tenantSlugOverride
     ? `/store/${tenantSlugOverride}/distribuidores`
     : `/internal/demo/distribuidores?brand=${theme.key}`;
-  const items = industrialMode ? POS_ITEMS_INDUSTRIAL : POS_ITEMS;
   const isRuntimeMode = Boolean(hideDemoBadge || tenantSlugOverride);
+
+  useEffect(() => {
+    if (!tenantSlugOverride) return;
+    setLoading(true);
+    api
+      .getStorefrontHomeData(tenantSlugOverride)
+      .then((payload) => {
+        const parsed = parseConfig(payload.storefront_config?.config_json);
+        const channelSettings = (parsed?.channel_settings ?? {}) as Record<string, unknown>;
+        setStoreProducts([...payload.featured_products, ...payload.recent_products]);
+        setPaymentProvider(String(parsed?.payment_provider ?? channelSettings.payment_provider ?? "mercadopago").toLowerCase());
+        setMpReady(Boolean(channelSettings.mercadopago_public_key || channelSettings.mercadopago_access_token));
+      })
+      .catch(() => {
+        setStoreProducts([]);
+      })
+      .finally(() => setLoading(false));
+  }, [tenantSlugOverride]);
+
+  const baseItems = industrialMode || isRuntimeMode ? toPosItems(storeProducts) : POS_ITEMS_INDUSTRIAL;
+  const filteredItems = useMemo(() => {
+    const value = query.trim().toLowerCase();
+    if (!value) return baseItems;
+    return baseItems.filter((item) => `${item.name} ${item.sku}`.toLowerCase().includes(value));
+  }, [baseItems, query]);
 
   const addItem = (itemId: number) => {
     setTicket((prev) => ({ ...prev, [itemId]: (prev[itemId] ?? 0) + 1 }));
   };
 
-  const total = useMemo(
+  const ticketRows = useMemo(
     () =>
-      items.reduce((sum, item) => {
-        const qty = ticket[item.id] ?? 0;
-        return sum + qty * item.price;
-      }, 0),
-    [items, ticket]
+      baseItems
+        .filter((item) => (ticket[item.id] ?? 0) > 0)
+        .map((item) => ({
+          ...item,
+          qty: ticket[item.id] ?? 0,
+          subtotal: (ticket[item.id] ?? 0) * item.price,
+        })),
+    [baseItems, ticket]
   );
 
+  const total = useMemo(() => ticketRows.reduce((sum, row) => sum + row.subtotal, 0), [ticketRows]);
+
   return (
-    <main className="tf-root" style={styleVars}>
-      <section className="tf-shell">
-        <header className="tf-header">
+    <main className="pos-runtime-root" style={styleVars}>
+      <section className="pos-runtime-shell">
+        <header className="pos-runtime-header">
           <div>
             <p className="tf-badge">{theme.channelBadge}</p>
-            <h1 className="tf-logo">
-              {theme.logoText}
-              <span>{theme.logoAccent ? ` ${theme.logoAccent}` : ""}</span>
-            </h1>
-            <p className="tf-muted">POS limpio y rapido con identidad de marca sincronizada con landing y ecommerce.</p>
+            <h1>{theme.name} · WebApp / POS operativo</h1>
+            <p className="tf-muted">Mostrador, cotización rápida, búsqueda SKU y cobro local para operación industrial.</p>
           </div>
           {!hideDemoBadge ? (
             <div className="tf-demo-banner">
-              <strong>Demo</strong>
-              <span>Vista de muestra</span>
-              <span>No productivo</span>
+              <strong>Modo interno</strong>
+              <span>Sincroniza con tenant para modo productivo</span>
             </div>
           ) : null}
-          <div className="tf-nav-actions">
+          <div className="pos-runtime-nav">
             <Link className="button button-outline" to={publicHref}>
-              Ecommerce publico
+              Ecommerce público
             </Link>
             <Link className="button button-outline" to={distributorsHref}>
-              Distribuidores
+              Portal B2B
             </Link>
           </div>
         </header>
 
-        <section className="tf-pos-grid">
-          <article className="tf-card">
-            <p className="tf-eyebrow">Caja de venta</p>
-            <h2>Operacion POS de {theme.name}</h2>
-            <p className="tf-muted">
-              {isRuntimeMode
-                ? "Login POS, carrito, cupones, puntos y resumen de compra para operacion diaria."
-                : "Login POS, carrito, cupones, puntos y resumen de compra en una vista de muestra."}
-            </p>
-            <div className="tf-grid tf-grid-2">
-              {items.map((item) => (
-                <button key={item.id} type="button" className="button button-outline" onClick={() => addItem(item.id)}>
-                  {item.name} · ${item.price.toLocaleString("es-MX")}
+        <section className="pos-runtime-grid">
+          <article className="pos-runtime-panel">
+            <h2>Venta mostrador</h2>
+            <p className="chip">Estado catálogo: {loading ? "Sincronizando..." : `${baseItems.length} referencias`}</p>
+            <input
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Buscar por SKU o producto"
+            />
+            <div className="pos-runtime-items">
+              {filteredItems.map((item) => (
+                <button key={item.id} type="button" className="pos-item" onClick={() => addItem(item.id)}>
+                  <strong>{item.name}</strong>
+                  <span>SKU: {item.sku}</span>
+                  <span>MXN ${item.price.toLocaleString("es-MX")}</span>
                 </button>
               ))}
             </div>
           </article>
 
-          <aside className="tf-card tf-pos-ticket">
-            <p className="tf-eyebrow">Resumen de compra</p>
-            <h3>Ticket actual</h3>
-            <ul className="tf-list">
-              {items
-                .filter((item) => (ticket[item.id] ?? 0) > 0)
-                .map((item) => (
-                  <li key={item.id}>
-                    {item.name} x {ticket[item.id]} · ${((ticket[item.id] ?? 0) * item.price).toLocaleString("es-MX")}
-                  </li>
-                ))}
+          <aside className="pos-runtime-summary">
+            <h2>Resumen de venta</h2>
+            <label>
+              Cliente
+              <input value={customerName} onChange={(event) => setCustomerName(event.target.value)} />
+            </label>
+            <ul>
+              {ticketRows.length === 0 ? <li>Sin productos en ticket.</li> : null}
+              {ticketRows.map((row) => (
+                <li key={row.id}>
+                  {row.qty} x {row.name} · MXN ${row.subtotal.toLocaleString("es-MX")}
+                </li>
+              ))}
             </ul>
-            <p className="tf-price">Total: ${total.toLocaleString("es-MX")}</p>
-            <div className="tf-hero-actions">
-              <button type="button" className="button">
-                Cobrar
+            <p className="pos-total">Total: MXN ${total.toLocaleString("es-MX")}</p>
+            <p className={paymentProvider === "mercadopago" && !mpReady ? "chip chip-warning" : "chip"}>
+              {paymentProvider === "mercadopago"
+                ? mpReady
+                  ? "Mercado Pago listo: Point / QR / Link"
+                  : "Mercado Pago pendiente de credenciales"
+                : `Cobro principal: ${paymentProvider}`}
+            </p>
+            <div className="pos-runtime-actions">
+              <button className="button" type="button">
+                Cobrar con QR
               </button>
-              <button type="button" className="button button-outline" onClick={() => setTicket({})}>
+              <button className="button button-outline" type="button">
+                Generar link de pago
+              </button>
+              <button className="button button-outline" type="button" onClick={() => setTicket({})}>
                 Limpiar ticket
               </button>
             </div>
-            <p className="tf-muted">Membresias, credenciales y puntos heredan los mismos tokens visuales.</p>
+            <p className="tf-muted">Accesos rápidos: inventario, clientes frecuentes, pedidos recurrentes y almacén.</p>
           </aside>
         </section>
 
-        <footer className="tf-footer">
-          <p>{theme.valueProp}</p>
-          <div className="tf-footer-links">
-            <Link to={landingHref}>Landing</Link>
-            <Link to={publicHref}>Tienda publica</Link>
-            <Link to={distributorsHref}>Canal B2B</Link>
-          </div>
+        <footer className="pos-runtime-footer">
+          <Link to={landingHref}>Landing</Link>
+          <Link to={publicHref}>Catálogo público</Link>
+          <Link to={distributorsHref}>Canal distribuidores</Link>
         </footer>
       </section>
     </main>
   );
 }
-
