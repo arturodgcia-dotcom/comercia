@@ -29,6 +29,8 @@ class CheckoutSessionRequest(BaseModel):
     gift_recipient_email: str | None = None
     gift_recipient_phone: str | None = None
     appointment_scheduled_for: datetime | None = None
+    payment_provider: str | None = None
+    currency: str | None = None
 
 
 class CheckoutSessionResponse(BaseModel):

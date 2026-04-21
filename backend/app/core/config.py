@@ -1,7 +1,7 @@
 from functools import lru_cache
 from typing import List
 
-from pydantic import Field, field_validator
+from pydantic import AliasChoices, Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -56,8 +56,20 @@ class Settings(BaseSettings):
     whatsapp_cloud_waba_id: str = Field(default="", alias="WHATSAPP_CLOUD_WABA_ID")
     whatsapp_default_to: str = Field(default="", alias="WHATSAPP_DEFAULT_TO")
     whatsapp_verify_token: str = Field(default="", alias="WHATSAPP_VERIFY_TOKEN")
-    mercadopago_access_token: str = Field(default="", alias="MERCADOPAGO_ACCESS_TOKEN")
-    mercadopago_public_key: str = Field(default="", alias="MERCADOPAGO_PUBLIC_KEY")
+    mercadopago_access_token: str = Field(
+        default="",
+        validation_alias=AliasChoices("MP_ACCESS_TOKEN", "MERCADOPAGO_ACCESS_TOKEN"),
+    )
+    mercadopago_public_key: str = Field(
+        default="",
+        validation_alias=AliasChoices("MP_PUBLIC_KEY", "MERCADOPAGO_PUBLIC_KEY"),
+    )
+    mercadopago_webhook_secret: str = Field(
+        default="",
+        validation_alias=AliasChoices("MP_WEBHOOK_SECRET", "MERCADOPAGO_WEBHOOK_SECRET"),
+    )
+    mercadopago_country: str = Field(default="MX", validation_alias=AliasChoices("MP_COUNTRY", "MERCADOPAGO_COUNTRY"))
+    mercadopago_currency: str = Field(default="MXN", validation_alias=AliasChoices("MP_CURRENCY", "MERCADOPAGO_CURRENCY"))
     mercadopago_point_collector_id: str = Field(default="", alias="MERCADOPAGO_POINT_COLLECTOR_ID")
     mercadopago_point_pos_id: str = Field(default="", alias="MERCADOPAGO_POINT_POS_ID")
     mercadopago_notification_url: str = Field(default="", alias="MERCADOPAGO_NOTIFICATION_URL")

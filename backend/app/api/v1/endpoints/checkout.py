@@ -7,10 +7,11 @@ from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
 from app.db.session import get_db
-from app.models.models import CommissionDetail, Order, OrderItem, Plan, Product, ServiceOffering, StripeConfig, Tenant
+from app.models.models import CommissionDetail, MercadoPagoSettings, Order, OrderItem, Plan, Product, ServiceOffering, StripeConfig, Tenant
 from app.schemas.checkout import CheckoutSessionRequest, CheckoutSessionResponse
 from app.services.coupon_service import apply_coupon
 from app.services.loyalty_service import compute_discount_from_points
+from app.services.pos_payment_service import create_mercadopago_payment_link
 from app.services.pricing_service import calculate_totals
 from app.services.stripe_service import create_checkout_session_plan1, create_checkout_session_plan2
 from app.services.tenant_config_service import build_tenant_config_payload
@@ -24,10 +25,6 @@ def create_checkout_session(payload: CheckoutSessionRequest, db: Session = Depen
     tenant = db.get(Tenant, payload.tenant_id)
     if not tenant:
         raise HTTPException(status_code=404, detail="tenant no encontrado")
-
-    stripe_config = db.scalar(select(StripeConfig).where(StripeConfig.tenant_id == payload.tenant_id))
-    if not stripe_config:
-        raise HTTPException(status_code=404, detail="stripe config no encontrado para tenant")
 
     plan = _resolve_tenant_plan(db, tenant)
 
@@ -202,34 +199,64 @@ def create_checkout_session(payload: CheckoutSessionRequest, db: Session = Depen
         "customer_id": str(payload.customer_id or ""),
         "loyalty_points_used": str(loyalty_points_used),
     }
-    if payment_mode == "plan1":
-        session = create_checkout_session_plan1(
-            secret_key=stripe_config.secret_key,
-            line_items=line_items,
-            success_url=payload.success_url,
-            cancel_url=payload.cancel_url,
-            metadata=metadata,
-        )
-    else:
-        if not stripe_config.stripe_account_id:
-            raise HTTPException(status_code=400, detail="stripe_account_id requerido para PLAN_2")
-        session = create_checkout_session_plan2(
-            secret_key=stripe_config.secret_key,
-            line_items=line_items,
-            success_url=payload.success_url,
-            cancel_url=payload.cancel_url,
-            metadata=metadata,
-            application_fee_amount=int((commission_amount * 100).to_integral_value(rounding=ROUND_HALF_UP)),
-            destination_account=stripe_config.stripe_account_id,
-        )
+    requested_provider = (payload.payment_provider or "").strip().lower()
+    payment_provider = requested_provider if requested_provider in {"stripe", "mercadopago"} else "stripe"
+    session_id: str
+    session_url: str
 
-    order.stripe_session_id = session.id
+    if payment_provider == "mercadopago":
+        _ensure_mercadopago_checkout_ready(db, tenant.id)
+        charge = create_mercadopago_payment_link(
+            db,
+            tenant_id=tenant.id,
+            amount=total_amount,
+            currency=(payload.currency or settings.mercadopago_currency or "MXN").upper(),
+            customer_id=payload.customer_id,
+            sale_payload={
+                "source": "storefront_checkout",
+                "order_id": order.id,
+                "items": [{"product_id": row["product_id"], "quantity": row["quantity"]} for row in order_items_data],
+            },
+            notes=f"Checkout storefront {tenant.slug} orden #{order.id}",
+        )
+        session_id = charge.external_reference or f"mplink-{charge.id}"
+        session_url = (charge.payment_url or "").strip()
+        if not session_url:
+            raise HTTPException(status_code=502, detail="Mercado Pago no devolvio URL de pago")
+    else:
+        stripe_config = db.scalar(select(StripeConfig).where(StripeConfig.tenant_id == payload.tenant_id))
+        if not stripe_config:
+            raise HTTPException(status_code=404, detail="stripe config no encontrado para tenant")
+        if payment_mode == "plan1":
+            session = create_checkout_session_plan1(
+                secret_key=stripe_config.secret_key,
+                line_items=line_items,
+                success_url=payload.success_url,
+                cancel_url=payload.cancel_url,
+                metadata=metadata,
+            )
+        else:
+            if not stripe_config.stripe_account_id:
+                raise HTTPException(status_code=400, detail="stripe_account_id requerido para PLAN_2")
+            session = create_checkout_session_plan2(
+                secret_key=stripe_config.secret_key,
+                line_items=line_items,
+                success_url=payload.success_url,
+                cancel_url=payload.cancel_url,
+                metadata=metadata,
+                application_fee_amount=int((commission_amount * 100).to_integral_value(rounding=ROUND_HALF_UP)),
+                destination_account=stripe_config.stripe_account_id,
+            )
+        session_id = session.id
+        session_url = session.url
+
+    order.stripe_session_id = session_id
     db.commit()
     db.refresh(order)
     return CheckoutSessionResponse(
         order_id=order.id,
-        session_id=session.id,
-        session_url=session.url,
+        session_id=session_id,
+        session_url=session_url,
         subtotal_amount=order.subtotal_amount,
         discount_amount=order.discount_amount,
         total_amount=order.total_amount,
@@ -249,3 +276,15 @@ def _resolve_tenant_plan(db: Session, tenant: Tenant) -> Plan:
     if not fallback:
         raise HTTPException(status_code=404, detail="no se encontro PLAN_1")
     return fallback
+
+
+def _ensure_mercadopago_checkout_ready(db: Session, tenant_id: int) -> MercadoPagoSettings:
+    mp_settings = db.scalar(select(MercadoPagoSettings).where(MercadoPagoSettings.tenant_id == tenant_id))
+    if not mp_settings or not mp_settings.mercadopago_enabled:
+        raise HTTPException(status_code=400, detail="Mercado Pago no esta habilitado para esta marca")
+    if mp_settings.mercadopago_active_for_pos_only:
+        raise HTTPException(status_code=400, detail="Mercado Pago esta habilitado solo para POS en esta marca")
+    has_access_token = bool((mp_settings.mercadopago_access_token or "").strip() or settings.mercadopago_access_token.strip())
+    if not has_access_token:
+        raise HTTPException(status_code=400, detail="Falta configurar MP_ACCESS_TOKEN para habilitar checkout")
+    return mp_settings

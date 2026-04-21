@@ -18,6 +18,25 @@ import { calculatePlanTotals } from "../utils/monetization";
 
 type CartMap = Record<number, number>;
 const DEMO_CUSTOMER_ID = 1;
+const TODOINDUSTRIAL_CATEGORY_IMAGE_MAP: Record<string, string> = {
+  baleros: "/client-assets/todoindustrialmx/catalogo_taller_baleros.png",
+  chumaceras: "/client-assets/todoindustrialmx/catalogo_taller_baleros.png",
+  cadenas: "/client-assets/todoindustrialmx/hero_bandas_black_gold.png",
+  catarinas: "/client-assets/todoindustrialmx/hero_bandas_black_gold.png",
+  bandas: "/client-assets/todoindustrialmx/producto_banda_polyv.png",
+  acoples: "/client-assets/todoindustrialmx/producto_acople_rojo.png",
+  retenes: "/client-assets/todoindustrialmx/brand_timken_banner.jpg",
+  lubricantes: "/client-assets/todoindustrialmx/producto_bomba_naranja.jpg",
+  refaccionesindustriales: "/client-assets/todoindustrialmx/hero_baleros_caliper.jpg",
+};
+
+function normalizeKey(value: string): string {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "");
+}
 
 function parseStorefrontConfig(raw?: string | null): Record<string, unknown> {
   if (!raw) return {};
@@ -231,6 +250,11 @@ export function StorefrontPage() {
     if (!data) return [];
     return data.categories.length > 0 ? data.categories : buildTenantAwareDemoCategories(data);
   }, [data, tenantConfig]);
+  const categoryNameById = useMemo(() => {
+    const map = new Map<number, string>();
+    effectiveCategories.forEach((category) => map.set(category.id, category.name));
+    return map;
+  }, [effectiveCategories]);
 
   const effectiveBanners = useMemo(() => {
     if (!data) return [];
@@ -376,6 +400,12 @@ export function StorefrontPage() {
 
   const handleCheckout = async () => {
     if (!data || cartItems.length === 0) return;
+    const checkoutConfig = parseStorefrontConfig(data.storefront_config?.config_json);
+    const checkoutChannelSettings = (checkoutConfig.channel_settings as Record<string, unknown> | undefined) ?? {};
+    const checkoutPaymentProvider = String(
+      checkoutConfig.payment_provider ?? checkoutChannelSettings.payment_provider ?? "stripe"
+    ).toLowerCase();
+    const checkoutCurrency = String(checkoutConfig.currency ?? "MXN").toUpperCase();
     try {
       setLoadingCheckout(true);
       const response = await api.createCheckoutSession({
@@ -386,7 +416,9 @@ export function StorefrontPage() {
         coupon_code: couponCode || undefined,
         use_loyalty_points: usePoints,
         customer_id: DEMO_CUSTOMER_ID,
-        applies_to: "public"
+        applies_to: "public",
+        payment_provider: checkoutPaymentProvider,
+        currency: checkoutCurrency,
       });
       window.location.href = response.session_url;
     } catch (err) {
@@ -419,6 +451,24 @@ export function StorefrontPage() {
   const paymentProvider = String(
     parsedConfig.payment_provider ?? channelSettings.payment_provider ?? "stripe"
   ).toLowerCase();
+  const categoryImagesFromConfig = (parsedConfig.catalog_visuals &&
+    typeof parsedConfig.catalog_visuals === "object" &&
+    (parsedConfig.catalog_visuals as Record<string, unknown>).category_images &&
+    typeof (parsedConfig.catalog_visuals as Record<string, unknown>).category_images === "object"
+    ? ((parsedConfig.catalog_visuals as Record<string, unknown>).category_images as Record<string, string>)
+    : {}) ?? {};
+  const resolveProductImage = (product: Product): string | undefined => {
+    const categoryName = product.category_id ? categoryNameById.get(product.category_id) ?? "" : "";
+    const normalizedCategory = normalizeKey(categoryName);
+    const configByCategory = categoryImagesFromConfig[normalizedCategory] ?? categoryImagesFromConfig[categoryName.toLowerCase()];
+    if (typeof configByCategory === "string" && configByCategory.trim()) {
+      return configByCategory.trim();
+    }
+    if ((tenantSlug ?? "").toLowerCase() === "todoindustrialmx") {
+      return TODOINDUSTRIAL_CATEGORY_IMAGE_MAP[normalizedCategory] ?? "/client-assets/todoindustrialmx/hero_baleros_caliper.jpg";
+    }
+    return undefined;
+  };
   const mercadopagoEnabled = Boolean(channelSettings.mercadopago_enabled);
   const mercadopagoReady = mercadopagoEnabled && Boolean(channelSettings.mercadopago_public_key || channelSettings.mercadopago_access_token);
   const primaryCheckoutLabel = paymentProvider === "mercadopago" ? "Pagar con Mercado Pago" : "Comprar ahora";
@@ -500,6 +550,7 @@ export function StorefrontPage() {
         title="Destacados"
         products={effectiveFeaturedProducts}
         tenantSlug={data.tenant.slug}
+        resolveImage={resolveProductImage}
         cart={cart}
         onAdd={updateCart}
         onWishlist={addToWishlist}
@@ -511,6 +562,7 @@ export function StorefrontPage() {
         title="Promociones"
         products={effectivePromoProducts}
         tenantSlug={data.tenant.slug}
+        resolveImage={resolveProductImage}
         cart={cart}
         onAdd={updateCart}
         onWishlist={addToWishlist}
@@ -522,6 +574,7 @@ export function StorefrontPage() {
         title="Nuevos ingresos"
         products={effectiveRecentProducts}
         tenantSlug={data.tenant.slug}
+        resolveImage={resolveProductImage}
         cart={cart}
         onAdd={updateCart}
         onWishlist={addToWishlist}
@@ -533,6 +586,7 @@ export function StorefrontPage() {
         title="Mas vendidos"
         products={effectiveBestSellerProducts}
         tenantSlug={data.tenant.slug}
+        resolveImage={resolveProductImage}
         cart={cart}
         onAdd={updateCart}
         onWishlist={addToWishlist}
@@ -623,6 +677,7 @@ function ProductRail({
   title,
   products,
   tenantSlug,
+  resolveImage,
   cart,
   onAdd,
   onWishlist,
@@ -633,6 +688,7 @@ function ProductRail({
   title: string;
   products: Product[];
   tenantSlug: string;
+  resolveImage: (product: Product) => string | undefined;
   cart: CartMap;
   onAdd: (productId: number, quantity: number) => void;
   onWishlist: (productId: number) => void;
@@ -646,6 +702,9 @@ function ProductRail({
       <div className="card-grid">
         {products.map((product) => (
           <article key={product.id} className="card product-card-premium">
+            {resolveImage(product) ? (
+              <img src={resolveImage(product)} alt={product.name} className="store-product-image" />
+            ) : null}
             <div className="product-badge-row">
               {product.is_featured ? <span className="chip">Destacado</span> : null}
               {product.is_active ? <span className="chip">Disponible</span> : <span className="chip">Inactivo</span>}

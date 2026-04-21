@@ -820,6 +820,8 @@ export interface CheckoutSessionRequest {
   gift_recipient_email?: string;
   gift_recipient_phone?: string;
   appointment_scheduled_for?: string;
+  payment_provider?: "stripe" | "mercadopago" | string;
+  currency?: string;
 }
 
 export interface CheckoutSessionResponse {

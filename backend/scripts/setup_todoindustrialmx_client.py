@@ -1,15 +1,21 @@
 import json
+import os
+import re
 from decimal import Decimal
 
 from sqlalchemy import select
 
 from app.db.session import SessionLocal
-from app.models.models import Banner, MercadoPagoSettings, StorefrontConfig, Tenant, TenantBranding
+from app.models.models import Banner, Category, MercadoPagoSettings, Product, StorefrontConfig, Tenant, TenantBranding
 from app.services.commercial_plan_service import get_plan_definition
 from app.services.currency_service import upsert_currency_settings
 from app.services.storefront_initializer import initialize_storefront
 
 TENANT_SLUG = "todoindustrialmx"
+
+
+def _slugify(value: str) -> str:
+    return re.sub(r"[^a-z0-9]+", "-", value.strip().lower()).strip("-")
 
 
 def _upsert_banner(db, tenant_id: int, config_id: int, *, title: str, subtitle: str, image_url: str, position: str, target_value: str) -> None:
@@ -35,6 +41,76 @@ def _upsert_banner(db, tenant_id: int, config_id: int, *, title: str, subtitle: 
     row.target_type = "promotion"
     row.target_value = target_value
     row.is_active = True
+
+
+def _upsert_category(db, tenant_id: int, *, name: str, description: str | None = None) -> Category:
+    slug = _slugify(name)
+    row = db.scalar(select(Category).where(Category.tenant_id == tenant_id, Category.slug == slug))
+    if not row:
+        row = Category(
+            tenant_id=tenant_id,
+            name=name,
+            slug=slug,
+            description=description,
+            is_active=True,
+        )
+        db.add(row)
+        db.flush()
+        return row
+    row.name = name
+    row.description = description
+    row.is_active = True
+    db.flush()
+    return row
+
+
+def _upsert_product(
+    db,
+    tenant_id: int,
+    *,
+    category_id: int | None,
+    name: str,
+    sku: str,
+    description: str,
+    price_public: str,
+    price_wholesale: str,
+    is_featured: bool = False,
+) -> Product:
+    slug = _slugify(name)
+    barcode = f"C128-{sku}"
+    row = db.scalar(select(Product).where(Product.tenant_id == tenant_id, Product.sku == sku))
+    if not row:
+        row = Product(
+            tenant_id=tenant_id,
+            category_id=category_id,
+            name=name,
+            slug=slug,
+            sku=sku,
+            barcode=barcode,
+            barcode_type="code128",
+            external_barcode=False,
+            auto_generated=False,
+            description=description,
+            price_public=Decimal(price_public),
+            price_wholesale=Decimal(price_wholesale),
+            price_retail=Decimal(price_public),
+            is_featured=is_featured,
+            is_active=True,
+        )
+        db.add(row)
+        db.flush()
+        return row
+    row.category_id = category_id
+    row.name = name
+    row.slug = slug
+    row.description = description
+    row.price_public = Decimal(price_public)
+    row.price_wholesale = Decimal(price_wholesale)
+    row.price_retail = Decimal(price_public)
+    row.is_featured = is_featured
+    row.is_active = True
+    db.flush()
+    return row
 
 
 def main() -> None:
@@ -88,6 +164,51 @@ def main() -> None:
                 payload = {}
         if not isinstance(payload, dict):
             payload = {}
+
+        mp_public_key = os.getenv("MP_PUBLIC_KEY") or os.getenv("MERCADOPAGO_PUBLIC_KEY")
+        mp_access_token = os.getenv("MP_ACCESS_TOKEN") or os.getenv("MERCADOPAGO_ACCESS_TOKEN")
+
+        category_specs = [
+            ("Baleros", "Baleros industriales para carga radial y axial."),
+            ("Chumaceras", "Soportes y conjuntos para ejes industriales."),
+            ("Cadenas", "Cadenas de transmision para lineas productivas."),
+            ("Catarinas", "Pinones y catarinas para potencia y arrastre."),
+            ("Bandas", "Bandas industriales V, sincronicas y Poly-V."),
+            ("Acoples", "Acoples elastomericos y de precision."),
+            ("Retenes", "Sellos y retenes para control de fugas."),
+            ("Lubricantes", "Lubricacion industrial y mantenimiento."),
+            ("Refacciones industriales", "Componentes de ferreteria y refacciones tecnicas."),
+        ]
+        category_rows: dict[str, Category] = {}
+        for name, description in category_specs:
+            category_rows[name] = _upsert_category(db, tenant.id, name=name, description=description)
+
+        product_specs = [
+            ("Baleros", "Balero Rígido SKF 6205 2RS", "SKF-6205-2RS", "Balero sellado para motores y bandas transportadoras.", "185.00", "165.00", True),
+            ("Baleros", "Balero FAG 6308 C3", "FAG-6308-C3", "Alta resistencia para servicio continuo industrial.", "420.00", "385.00", True),
+            ("Chumaceras", "Chumacera UCP205 ZSG", "ZSG-UCP205", "Chumacera montada para eje de 25 mm.", "365.00", "330.00", False),
+            ("Cadenas", "Cadena de Rodillos ASA 60", "CAD-ASA60", "Cadena para transmision de potencia en maquinaria.", "290.00", "260.00", False),
+            ("Catarinas", "Catarina 20B 18 Dientes", "CAT-20B-18", "Catarina templada para sistemas de arrastre.", "520.00", "470.00", True),
+            ("Bandas", "Banda Poly-V FULO PJ1220", "FULO-PJ1220", "Banda Poly-V para lineas de empaque y transportacion.", "215.00", "190.00", True),
+            ("Bandas", "Banda Sincronica HTD 8M", "FULO-HTD8M", "Banda dentada para sincronizacion de torque.", "340.00", "305.00", False),
+            ("Acoples", "Acople Elastomérico ZSG L-150", "ZSG-L150", "Acople de araña para absorber vibracion.", "485.00", "445.00", False),
+            ("Retenes", "Retén NBR 35x52x7", "RET-35-52-7", "Reten de alta durabilidad para ejes rotativos.", "95.00", "80.00", False),
+            ("Lubricantes", "Grasa Industrial EP2 400g", "LUB-EP2-400", "Lubricante multiproposito para mantenimiento.", "130.00", "112.00", False),
+            ("Refacciones industriales", "Adhesivo Fijador Industrial 250ml", "ADH-FIJ-250", "Adhesivo para fijacion de roscas y ensambles.", "175.00", "150.00", False),
+            ("Refacciones industriales", "Desengrasante Industrial 1L", "DES-IND-1L", "Desengrasante para limpieza de maquinaria.", "150.00", "128.00", False),
+        ]
+        for category_name, name, sku, description, public_price, wholesale_price, featured in product_specs:
+            _upsert_product(
+                db,
+                tenant.id,
+                category_id=category_rows[category_name].id,
+                name=name,
+                sku=sku,
+                description=description,
+                price_public=public_price,
+                price_wholesale=wholesale_price,
+                is_featured=featured,
+            )
 
         payload.update(
             {
@@ -179,6 +300,24 @@ def main() -> None:
                     "payment_link_enabled": True,
                     "notes": "Mostrador industrial con cotizacion y cobro local.",
                 },
+                "catalog_visuals": {
+                    "category_images": {
+                        "baleros": "/client-assets/todoindustrialmx/catalogo_taller_baleros.png",
+                        "chumaceras": "/client-assets/todoindustrialmx/catalogo_taller_baleros.png",
+                        "cadenas": "/client-assets/todoindustrialmx/hero_bandas_black_gold.png",
+                        "catarinas": "/client-assets/todoindustrialmx/hero_bandas_black_gold.png",
+                        "bandas": "/client-assets/todoindustrialmx/producto_banda_polyv.png",
+                        "acoples": "/client-assets/todoindustrialmx/producto_acople_rojo.png",
+                        "retenes": "/client-assets/todoindustrialmx/brand_timken_banner.jpg",
+                        "lubricantes": "/client-assets/todoindustrialmx/producto_bomba_naranja.jpg",
+                        "refaccionesindustriales": "/client-assets/todoindustrialmx/hero_baleros_caliper.jpg",
+                    }
+                },
+                "catalog_seed_summary": {
+                    "categories_seeded": len(category_specs),
+                    "products_seeded": len(product_specs),
+                    "editable": True,
+                },
                 "channel_settings": {
                     "nfc_enabled": False,
                     "nfc_setup_fee": 500,
@@ -186,8 +325,8 @@ def main() -> None:
                     "nfc_card_price_bulk": 150,
                     "nfc_bulk_threshold": 10,
                     "mercadopago_enabled": True,
-                    "mercadopago_public_key": None,
-                    "mercadopago_access_token": None,
+                    "mercadopago_public_key": mp_public_key,
+                    "mercadopago_access_token": mp_access_token,
                     "mercadopago_qr_enabled": True,
                     "mercadopago_payment_link_enabled": True,
                     "mercadopago_point_enabled": True,
@@ -301,8 +440,8 @@ def main() -> None:
             mp = MercadoPagoSettings(tenant_id=tenant.id)
             db.add(mp)
         mp.mercadopago_enabled = True
-        mp.mercadopago_public_key = None
-        mp.mercadopago_access_token = None
+        mp.mercadopago_public_key = mp_public_key
+        mp.mercadopago_access_token = mp_access_token
         mp.mercadopago_qr_enabled = True
         mp.mercadopago_payment_link_enabled = True
         mp.mercadopago_point_enabled = True
@@ -394,6 +533,8 @@ def main() -> None:
             "country": payload.get("country"),
             "currency": payload.get("currency"),
             "mercadopago_enabled": True,
+            "categories_seeded": len(category_specs),
+            "products_seeded": len(product_specs),
         }
         print(json.dumps(summary, ensure_ascii=False))
 
