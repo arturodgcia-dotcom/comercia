@@ -64,7 +64,37 @@ function foodLayout(channel: WizardV2Channel, brandName: string) {
   if (channel === "webapp") {
     return <p style={{ margin: 0 }}>Vista operativa: tickets de cocina, repartidores y tiempos por pedido.</p>;
   }
-  return <p style={{ margin: 0 }}>{channel === "public_store" ? "Cards de menu premium por categoria" : "Precios escalados para mayoreo alimenticio"}.</p>;
+  if (channel === "public_store") {
+    return (
+      <>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(2,minmax(0,1fr))", gap: 8 }}>
+          <div style={{ background: "#fff", borderRadius: 12, padding: 10 }}>Carril: Favoritos del chef</div>
+          <div style={{ background: "#fff", borderRadius: 12, padding: 10 }}>Carril: Combos familiares</div>
+        </div>
+        <div style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap" }}>
+          {"Entrega 30 min,Promos nocturnas,Add-ons".split(",").map((item) => (
+            <span key={item} style={{ background: "#fff", borderRadius: 999, padding: "3px 8px", fontSize: 12 }}>
+              {item}
+            </span>
+          ))}
+        </div>
+      </>
+    );
+  }
+  return (
+    <>
+      <div style={{ background: "#fff", borderRadius: 12, padding: 10 }}>
+        Portal distribuidor: escalas por volumen y regla de recompra semanal.
+      </div>
+      <div style={{ marginTop: 10, display: "grid", gridTemplateColumns: "repeat(3,minmax(0,1fr))", gap: 8 }}>
+        {"Caja 12, Caja 24, Caja 48".split(",").map((item) => (
+          <div key={item} style={{ background: "#fff", borderRadius: 10, padding: 10 }}>
+            {item}
+          </div>
+        ))}
+      </div>
+    </>
+  );
 }
 
 function healthyLayout(channel: WizardV2Channel, brandName: string) {
@@ -82,10 +112,33 @@ function healthyLayout(channel: WizardV2Channel, brandName: string) {
     );
   }
   if (channel === "public_store") {
-    return <p style={{ margin: 0 }}>Ecommerce premium con carriles por objetivo: energia, control, bienestar.</p>;
+    return (
+      <>
+        <div style={{ background: "#fff", borderRadius: 12, padding: 10 }}>
+          Ecommerce premium por objetivo: energia, control y bienestar.
+        </div>
+        <div style={{ marginTop: 10, display: "grid", gridTemplateColumns: "repeat(3,minmax(0,1fr))", gap: 8 }}>
+          {"Proteina,Limpieza,Inmunidad".split(",").map((item) => (
+            <div key={item} style={{ background: "#fff", borderRadius: 10, padding: 10 }}>
+              {item}
+            </div>
+          ))}
+        </div>
+      </>
+    );
   }
   if (channel === "distributor_store") {
-    return <p style={{ margin: 0 }}>Canal distribuidor con pack business y pricing por volumen saludable.</p>;
+    return (
+      <>
+        <div style={{ background: "#fff", borderRadius: 12, padding: 10 }}>
+          Canal distribuidor con packs business y precios por pallet saludable.
+        </div>
+        <div style={{ marginTop: 10, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+          <div style={{ background: "#fff", borderRadius: 10, padding: 10 }}>Nivel Bronze: 8%</div>
+          <div style={{ background: "#fff", borderRadius: 10, padding: 10 }}>Nivel Gold: 15%</div>
+        </div>
+      </>
+    );
   }
   return <p style={{ margin: 0 }}>WebApp para pedidos recurrentes, suscripcion y alertas de stock.</p>;
 }
@@ -108,7 +161,31 @@ function barberLayout(channel: WizardV2Channel, brandName: string) {
   if (channel === "webapp") {
     return <p style={{ margin: 0 }}>WebApp de turnos por barbero, caja rapida y control diario.</p>;
   }
-  return <p style={{ margin: 0 }}>{channel === "public_store" ? "Reservas premium por servicio" : "Canal para membresias corporativas y vouchers"}.</p>;
+  if (channel === "public_store") {
+    return (
+      <>
+        <div style={{ background: "#fff", borderRadius: 12, padding: 10 }}>Reservas premium por servicio y horario.</div>
+        <div style={{ marginTop: 10, display: "grid", gridTemplateColumns: "repeat(3,minmax(0,1fr))", gap: 8 }}>
+          {"Fade,Barba VIP,Tratamiento".split(",").map((item) => (
+            <div key={item} style={{ background: "#fff", borderRadius: 10, padding: 10 }}>
+              {item}
+            </div>
+          ))}
+        </div>
+      </>
+    );
+  }
+  return (
+    <>
+      <div style={{ background: "#fff", borderRadius: 12, padding: 10 }}>
+        Canal corporativo: vouchers, membresias y convenios para equipos.
+      </div>
+      <div style={{ marginTop: 10, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+        <div style={{ background: "#fff", borderRadius: 10, padding: 10 }}>Empresa 20 cortes/mes</div>
+        <div style={{ background: "#fff", borderRadius: 10, padding: 10 }}>Convenio sucursal</div>
+      </div>
+    </>
+  );
 }
 
 function fashionLayout(channel: WizardV2Channel, brandName: string) {
@@ -126,7 +203,29 @@ function fashionLayout(channel: WizardV2Channel, brandName: string) {
     );
   }
   if (channel === "webapp") return <p style={{ margin: 0 }}>WebApp de inventario por talla, ventas asistidas y alertas de reposicion.</p>;
-  return <p style={{ margin: 0 }}>{channel === "public_store" ? "Ecommerce con carriles premium por temporada." : "Canal distribuidor de colecciones por volumen."}</p>;
+  if (channel === "public_store") {
+    return (
+      <>
+        <div style={{ background: "#fff", borderRadius: 12, padding: 10 }}>Ecommerce editorial con drops, wishlist y upsell de look completo.</div>
+        <div style={{ marginTop: 10, display: "grid", gridTemplateColumns: "repeat(2,minmax(0,1fr))", gap: 8 }}>
+          <div style={{ background: "#fff", borderRadius: 10, padding: 10 }}>Coleccion Studio</div>
+          <div style={{ background: "#fff", borderRadius: 10, padding: 10 }}>Coleccion Street</div>
+        </div>
+      </>
+    );
+  }
+  return (
+    <>
+      <div style={{ background: "#fff", borderRadius: 12, padding: 10 }}>Portal distribuidor de temporadas y preventa por volumen.</div>
+      <div style={{ marginTop: 10, display: "grid", gridTemplateColumns: "repeat(3,minmax(0,1fr))", gap: 8 }}>
+        {"Pack 50,Pack 100,Pack 200".split(",").map((item) => (
+          <div key={item} style={{ background: "#fff", borderRadius: 10, padding: 10 }}>
+            {item}
+          </div>
+        ))}
+      </div>
+    </>
+  );
 }
 
 function clinicLayout(channel: WizardV2Channel, brandName: string) {
@@ -144,7 +243,26 @@ function clinicLayout(channel: WizardV2Channel, brandName: string) {
     );
   }
   if (channel === "webapp") return <p style={{ margin: 0 }}>WebApp para agenda clinica, seguimiento y caja por consultorio.</p>;
-  return <p style={{ margin: 0 }}>{channel === "public_store" ? "Ecommerce de servicios medicos y programas preventivos." : "Canal institucional y convenios de salud."}</p>;
+  if (channel === "public_store") {
+    return (
+      <>
+        <div style={{ background: "#fff", borderRadius: 12, padding: 10 }}>Servicios medicos y programas preventivos con conversion por especialidad.</div>
+        <div style={{ marginTop: 10, display: "grid", gridTemplateColumns: "repeat(2,minmax(0,1fr))", gap: 8 }}>
+          <div style={{ background: "#fff", borderRadius: 10, padding: 10 }}>Chequeo integral</div>
+          <div style={{ background: "#fff", borderRadius: 10, padding: 10 }}>Plan anual</div>
+        </div>
+      </>
+    );
+  }
+  return (
+    <>
+      <div style={{ background: "#fff", borderRadius: 12, padding: 10 }}>Canal institucional para convenios de salud y volumen corporativo.</div>
+      <div style={{ marginTop: 10, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+        <div style={{ background: "#fff", borderRadius: 10, padding: 10 }}>Convenio pyme</div>
+        <div style={{ background: "#fff", borderRadius: 10, padding: 10 }}>Convenio empresarial</div>
+      </div>
+    </>
+  );
 }
 
 function distributorLayout(channel: WizardV2Channel, brandName: string) {
