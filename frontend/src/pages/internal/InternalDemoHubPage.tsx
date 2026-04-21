@@ -8,6 +8,11 @@ const DEMO_ROUTES = [
     to: "/internal/demo/familia",
   },
   {
+    title: "Master industrial",
+    description: "Plantilla maestra premium de maquinaria por canal (landing, publico, B2B, webapp).",
+    to: "/internal/master/maquinaria",
+  },
+  {
     title: "Demo ecommerce público",
     description: "Vista de tienda pública demo sin conexión productiva.",
     to: "/internal/demo/tienda-publica",

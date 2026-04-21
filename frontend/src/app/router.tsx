@@ -6,6 +6,7 @@ import { StorePublicTemplate } from "../pages/templates/StorePublicTemplate";
 import { StoreDistributorsTemplate } from "../pages/templates/StoreDistributorsTemplate";
 import { StorePOSTemplate } from "../pages/templates/StorePOSTemplate";
 import { TemplateFamilyDemoPage } from "../pages/templates/TemplateFamilyDemoPage";
+import { MasterIndustrialTemplatePage } from "../pages/templates/MasterIndustrialTemplatePage";
 import { InternalDemoHubPage } from "../pages/internal/InternalDemoHubPage";
 import { AppointmentsAdminPage } from "../pages/AppointmentsAdminPage";
 import { BrandingEditorPage } from "../pages/BrandingEditorPage";
@@ -132,6 +133,7 @@ export function AppRouter() {
       {/* -- Demo interna (vista de muestra no productiva) -- */}
       <Route path="/internal/demo" element={<InternalDemoHubPage />} />
       <Route path="/internal/demo/familia" element={<TemplateFamilyDemoPage />} />
+      <Route path="/internal/master/maquinaria" element={<MasterIndustrialTemplatePage />} />
       <Route path="/internal/demo/tienda-publica" element={<StorePublicTemplate />} />
       <Route path="/internal/demo/distribuidores" element={<StoreDistributorsTemplate />} />
       <Route path="/internal/demo/pos" element={<StorePOSTemplate />} />
