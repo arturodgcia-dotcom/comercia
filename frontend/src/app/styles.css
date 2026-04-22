@@ -2533,6 +2533,7 @@ textarea {
 .route-distributor-b2b {
   min-height: 100vh;
   background: linear-gradient(180deg, #0b1422 0%, #111f31 34%, #e9eef5 100%);
+  position: relative;
 }
 
 .route-distributor-b2b-industrial {
@@ -2544,6 +2545,8 @@ textarea {
   margin: 0 auto;
   padding: 24px 20px;
   color: #edf2f7;
+  position: relative;
+  z-index: 2;
   display: grid;
   grid-template-columns: 1.7fr 1fr;
   gap: 14px;
@@ -2601,6 +2604,44 @@ textarea {
   max-width: 1240px;
   margin: 0 auto;
   padding: 0 20px 24px;
+  position: relative;
+  z-index: 2;
+}
+
+.b2b-main-surface {
+  background: #f5f9ff;
+  border: 1px solid #cfdaea;
+  border-radius: 16px;
+  padding-top: 14px;
+  box-shadow: 0 16px 36px rgba(10, 20, 34, 0.16);
+}
+
+.route-distributor-b2b-industrial .b2b-main-surface h1,
+.route-distributor-b2b-industrial .b2b-main-surface h2,
+.route-distributor-b2b-industrial .b2b-main-surface h3,
+.route-distributor-b2b-industrial .b2b-main-surface h4,
+.route-distributor-b2b-industrial .b2b-main-surface p,
+.route-distributor-b2b-industrial .b2b-main-surface li,
+.route-distributor-b2b-industrial .b2b-main-surface label,
+.route-distributor-b2b-industrial .b2b-main-surface th,
+.route-distributor-b2b-industrial .b2b-main-surface td {
+  color: #10243b;
+}
+
+.route-distributor-b2b-industrial .b2b-main-surface .button {
+  background: #12355b;
+  border-color: #12355b;
+  color: #fff;
+}
+
+.route-distributor-b2b-industrial .b2b-main-surface .button.button-outline {
+  background: #fff;
+  border-color: #12355b;
+  color: #12355b;
+}
+
+.route-distributor-b2b-industrial .b2b-main-surface .table {
+  background: #fff;
 }
 
 .b2b-logo-strip {

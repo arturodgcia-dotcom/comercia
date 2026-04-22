@@ -94,7 +94,7 @@ export function StorefrontDistributorsPage() {
         </div>
       </section>
 
-      <section className="b2b-shell">
+      <section className="b2b-shell b2b-main-surface">
         <div className="b2b-alert-strip">
           <span className="chip">Portal B2B activo</span>
           <span className="chip">Mayoreo + recompra</span>
