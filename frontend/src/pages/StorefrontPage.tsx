@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useParams, useSearchParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { ApiError, api } from "../services/api";
 import { Product, StorefrontHomePayload, TenantConfig } from "../types/domain";
 
@@ -38,7 +38,6 @@ function normalizeKey(value: string): string {
 
 export function StorefrontPage() {
   const { tenantSlug } = useParams();
-  const [searchParams] = useSearchParams();
   const [data, setData] = useState<StorefrontHomePayload | null>(null);
   const [tenantConfig, setTenantConfig] = useState<TenantConfig | null>(null);
   const [error, setError] = useState("");
@@ -48,7 +47,6 @@ export function StorefrontPage() {
   const [couponCode, setCouponCode] = useState("");
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<number | "all">("all");
-  const isPreviewMode = searchParams.get("preview") === "1";
 
   useEffect(() => {
     if (!tenantSlug) return;
@@ -180,7 +178,6 @@ export function StorefrontPage() {
       <section className="public-hero">
         <div>
           <p className="public-kicker">Catalogo industrial masivo</p>
-          {isPreviewMode ? <p className="chip">Preview activo</p> : null}
           <h1>{data.branding?.hero_title ?? data.tenant.name}</h1>
           <p>{data.branding?.hero_subtitle ?? "Catalogo robusto para compra inmediata, cotizacion y recompra tecnica."}</p>
           <div className="public-actions">
@@ -260,6 +257,7 @@ export function StorefrontPage() {
                   {product.name}
                 </div>
               ))}
+              {data.featured_products.length === 0 ? <span className="im-chip">Sin destacados activos aun</span> : null}
             </div>
           </article>
           <article className="im-card">
@@ -270,12 +268,26 @@ export function StorefrontPage() {
                   {product.name}
                 </div>
               ))}
+              {data.recent_products.length === 0 ? <span className="im-chip">Sin ingresos recientes aun</span> : null}
             </div>
           </article>
         </section>
 
         <div className="public-layout">
           <section className="public-product-grid">
+            {filteredProducts.length === 0 ? (
+              <article className="public-empty-state">
+                <h3>Catalogo en activacion comercial</h3>
+                <p>Esta marca aun no carga productos suficientes para venta online directa.</p>
+                <div className="public-checkout-buttons">
+                  <button className="button" type="button">Cargar catalogo</button>
+                  <a className="button button-outline" href={`https://wa.me/52${data.branding?.contact_whatsapp ?? "5511791417"}`} target="_blank" rel="noreferrer">
+                    Solicitar cotizacion
+                  </a>
+                  <button className="button button-outline" type="button">Solicitar alta comercial</button>
+                </div>
+              </article>
+            ) : null}
             {filteredProducts.map((product) => (
               <article key={product.id} className="public-product-card">
                 <img src={resolveProductImage(product)} alt={product.name} />

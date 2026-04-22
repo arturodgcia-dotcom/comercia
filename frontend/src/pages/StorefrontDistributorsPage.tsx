@@ -100,6 +100,12 @@ export function StorefrontDistributorsPage() {
           <span className="chip">Mayoreo + recompra</span>
           <span className="chip">Pago: {paymentLabel}</span>
         </div>
+        {distributorCount === 0 ? (
+          <article className="b2b-activation-state">
+            <h3>Canal distribuidores listo para activacion comercial</h3>
+            <p>Aun no hay distribuidores autorizados. Puedes iniciar alta, solicitud de credito y cotizacion de volumen.</p>
+          </article>
+        ) : null}
         <div className="b2b-logo-strip">
           <img src="/client-assets/todoindustrialmx/logo_zsg.jpg" alt="ZSG" />
           <img src="/client-assets/todoindustrialmx/logo_skf.jpg" alt="SKF" />

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useParams, useSearchParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { api } from "../services/api";
 import { StorefrontHomePayload } from "../types/domain";
 
@@ -58,7 +58,6 @@ const LANDING_STATS = [
 
 export function StorefrontLandingPage() {
   const { tenantSlug } = useParams();
-  const [searchParams] = useSearchParams();
   const [data, setData] = useState<StorefrontHomePayload | null>(null);
   const [error, setError] = useState("");
 
@@ -69,8 +68,6 @@ export function StorefrontLandingPage() {
       .then((payload) => setData(payload))
       .catch((err) => setError(err instanceof Error ? err.message : "No fue posible cargar la landing."));
   }, [tenantSlug]);
-
-  const isPreview = searchParams.get("preview") === "1";
 
   if (error) {
     return (
@@ -105,7 +102,7 @@ export function StorefrontLandingPage() {
     <main className="route-landing-industrial">
       <section className="landing-hero-industrial">
         <div className="landing-chip-row">
-          <span className="chip">{isPreview ? "Modo preview" : "Sitio productivo"}</span>
+          <span className="chip">Sitio productivo</span>
           <span className="chip">Industrial premium</span>
         </div>
         <h1>{heroTitle}</h1>

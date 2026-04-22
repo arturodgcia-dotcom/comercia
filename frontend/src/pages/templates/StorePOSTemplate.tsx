@@ -12,13 +12,13 @@ type StorePOSTemplateProps = {
   industrialMode?: boolean;
 };
 
-type PosItem = { id: number; name: string; sku: string; price: number };
+type PosItem = { id: number; name: string; sku: string; price: number; wholesalePrice: number };
 
 const FALLBACK_ITEMS: PosItem[] = [
-  { id: 101, name: "Balero industrial", sku: "SKF-6205-2RS", price: 185 },
-  { id: 102, name: "Chumacera UCP205", sku: "ZSG-UCP205", price: 365 },
-  { id: 103, name: "Banda Poly-V", sku: "FULO-PJ1220", price: 215 },
-  { id: 104, name: "Acople elastomerico", sku: "ZSG-L150", price: 485 },
+  { id: 101, name: "Balero industrial", sku: "SKF-6205-2RS", price: 185, wholesalePrice: 165 },
+  { id: 102, name: "Chumacera UCP205", sku: "ZSG-UCP205", price: 365, wholesalePrice: 330 },
+  { id: 103, name: "Banda Poly-V", sku: "FULO-PJ1220", price: 215, wholesalePrice: 190 },
+  { id: 104, name: "Acople elastomerico", sku: "ZSG-L150", price: 485, wholesalePrice: 445 },
 ];
 
 function parseConfig(raw?: string | null): Record<string, unknown> {
@@ -31,13 +31,14 @@ function parseConfig(raw?: string | null): Record<string, unknown> {
   }
 }
 
-function toPosItems(products: Product[]): PosItem[] {
-  if (products.length === 0) return FALLBACK_ITEMS;
+function toPosItems(products: Product[], allowFallback: boolean): PosItem[] {
+  if (products.length === 0) return allowFallback ? FALLBACK_ITEMS : [];
   return products.slice(0, 16).map((product) => ({
     id: product.id,
     name: product.name,
     sku: product.sku,
     price: Number(product.price_public),
+    wholesalePrice: Number(product.price_wholesale ?? Math.max(0, Number(product.price_public) * 0.9)),
   }));
 }
 
@@ -79,7 +80,7 @@ export function StorePOSTemplate({
       .finally(() => setLoading(false));
   }, [tenantSlugOverride]);
 
-  const baseItems = toPosItems(storeProducts);
+  const baseItems = toPosItems(storeProducts, !tenantSlugOverride);
   const filteredItems = useMemo(() => {
     const value = query.trim().toLowerCase();
     if (!value) return baseItems;
@@ -96,9 +97,9 @@ export function StorePOSTemplate({
     <main className={`pos-runtime-root ${isTodoIndustrial ? "pos-runtime-industrial" : ""}`} style={styleVars}>
       <section className="pos-runtime-shell">
         <section className="pos-top-metrics">
-          <article className="im-card"><h3>Inventario hoy</h3><p>2,418 referencias</p></article>
-          <article className="im-card"><h3>Pedidos abiertos</h3><p>37 pedidos en proceso</p></article>
-          <article className="im-card"><h3>Clientes frecuentes</h3><p>126 cuentas activas</p></article>
+          <article className="im-card"><h3>Inventario visible</h3><p>{baseItems.length} referencias</p></article>
+          <article className="im-card"><h3>Ticket activo</h3><p>{ticketRows.length} lineas</p></article>
+          <article className="im-card"><h3>Cliente actual</h3><p>{customerName.trim() || "Sin asignar"}</p></article>
           <article className="im-card"><h3>Cobro principal</h3><p>{paymentProvider === "mercadopago" ? "Mercado Pago" : paymentProvider}</p></article>
         </section>
         <header className="pos-runtime-header">
@@ -128,12 +129,23 @@ export function StorePOSTemplate({
             <h2>Catalogo y busqueda</h2>
             <p className="chip">Estado catalogo: {loading ? "Sincronizando..." : `${baseItems.length} referencias`}</p>
             <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar por SKU o producto" />
+            {baseItems.length === 0 ? (
+              <article className="pos-empty-state">
+                <h3>WebApp lista para arranque operativo</h3>
+                <p>Sin productos operativos cargados aun. Carga catalogo real para habilitar cobro en mostrador.</p>
+                <div className="pos-runtime-actions">
+                  <button className="button" type="button">Cargar catalogo</button>
+                  <button className="button button-outline" type="button">Solicitar cotizacion masiva</button>
+                </div>
+              </article>
+            ) : null}
             <div className="pos-runtime-items">
               {filteredItems.map((item) => (
                 <button key={item.id} type="button" className="pos-item" onClick={() => addItem(item.id)}>
                   <strong>{item.name}</strong>
                   <span>SKU: {item.sku}</span>
-                  <span>MXN ${item.price.toLocaleString("es-MX")}</span>
+                  <span>Publico: MXN ${item.price.toLocaleString("es-MX")}</span>
+                  <span>Distribuidor: MXN ${item.wholesalePrice.toLocaleString("es-MX")}</span>
                 </button>
               ))}
             </div>

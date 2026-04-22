@@ -2483,6 +2483,14 @@ textarea {
   gap: 12px;
 }
 
+.public-empty-state {
+  grid-column: 1 / -1;
+  background: #fff;
+  border: 1px dashed #cdd9e7;
+  border-radius: 12px;
+  padding: 16px;
+}
+
 .public-product-card {
   background: #fff;
   border: 1px solid #dbe4ef;
@@ -2565,6 +2573,14 @@ textarea {
   gap: 8px;
   flex-wrap: wrap;
   margin-bottom: 10px;
+}
+
+.b2b-activation-state {
+  margin-bottom: 10px;
+  background: #fff;
+  border: 1px dashed #cdd9e7;
+  border-radius: 12px;
+  padding: 14px;
 }
 
 .b2b-side-card {
@@ -2703,6 +2719,14 @@ textarea {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 10px;
+}
+
+.pos-empty-state {
+  margin-top: 10px;
+  border: 1px dashed #cdd9e7;
+  border-radius: 10px;
+  background: #fff;
+  padding: 12px;
 }
 
 .pos-quick-grid {
